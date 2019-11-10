@@ -38,13 +38,13 @@
       <Filter>dx12</Filter>
     </ClCompile>
     <ClCompile Include="..\extern\imgui\imgui.cpp">
-      <Filter>extern</Filter>
+      <Filter>extern\imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\extern\imgui\imgui_draw.cpp">
-      <Filter>extern</Filter>
+      <Filter>extern\imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\extern\imgui\imgui_widgets.cpp">
-      <Filter>extern</Filter>
+      <Filter>extern\imgui</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -103,22 +103,22 @@
       <Filter>dx12</Filter>
     </ClInclude>
     <ClInclude Include="..\extern\imgui\imconfig.h">
-      <Filter>extern</Filter>
+      <Filter>extern\imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\extern\imgui\imgui.h">
-      <Filter>extern</Filter>
+      <Filter>extern\imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\extern\imgui\imgui_internal.h">
-      <Filter>extern</Filter>
+      <Filter>extern\imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\extern\imgui\imstb_rectpack.h">
-      <Filter>extern</Filter>
+      <Filter>extern\imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\extern\imgui\imstb_textedit.h">
-      <Filter>extern</Filter>
+      <Filter>extern\imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\extern\imgui\imstb_truetype.h">
-      <Filter>extern</Filter>
+      <Filter>extern\imgui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -133,6 +133,9 @@
     </Filter>
     <Filter Include="extern">
       <UniqueIdentifier>{fdc0d768-648d-466e-8b82-51fe7867e557}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="extern\imgui">
+      <UniqueIdentifier>{c12770a0-aeca-4907-9392-b66b8a7818aa}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

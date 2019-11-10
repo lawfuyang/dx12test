@@ -8,6 +8,7 @@ GfxManager::GfxManager()
 {
 
 }
+
 GfxManager::~GfxManager()
 {
 

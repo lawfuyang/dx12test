@@ -49,7 +49,7 @@ void System::Loop()
 void System::Initialize()
 {
     // uncomment to profile engine init phase
-    const ProfilerInstance profilerInstance{ true };
+    //const ProfilerInstance profilerInstance{ true };
 
     bbeDebug("Initializing");
 

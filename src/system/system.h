@@ -36,12 +36,14 @@ public:
     static const uint32_t FPS_LIMIT          = 60;
 
     // Gfx Debug Layer
-    static const bool EnableGfxDebugLayer              = true;
-    static const bool GfxDebugLayerBreakOnWarnings     = true;
-    static const bool GfxDebugLayerBreakOnErrors       = true;
-    static const bool GfxDebugLayerLogVerbose          = true;
-    static const bool GfxDebuglayerEnableGPUValidation = true;
-    static const bool EnableRenderDocCapture           = false;
+    static const bool EnableGfxDebugLayer                             = true;
+    static const bool GfxDebugLayerBreakOnWarnings                    = true;
+    static const bool GfxDebugLayerBreakOnErrors                      = true;
+    static const bool GfxDebugLayerLogVerbose                         = true;
+    static const bool GfxDebugLayerEnableGPUValidation                = true;
+    static const bool GfxDebugLayerSynchronizedCommandQueueValidation = true;
+    static const bool GfxDebugLayerDisableStateTracking               = false;
+    static const bool EnableRenderDocCapture                          = false;
 
     void Initialize();
     void Shutdown();
@@ -108,3 +110,24 @@ private:
     inline static uint8_t ms_AvgRealFrameIdxCursor      = 0;
     inline static uint8_t ms_AvgCappedFrameIdxCursor    = 0;
 };
+
+// super simple lightweight ComPtr implementation
+template <typename T>
+class AutoComPtr
+{
+public:
+    explicit AutoComPtr(T* ptr) : m_Ptr(ptr) {}
+
+    ~AutoComPtr()
+    {
+        m_Ptr->Release();
+    }
+
+    T* operator->() const { return m_Ptr; }
+
+private:
+    T* m_Ptr;
+};
+
+template <typename T>
+const AutoComPtr<T> MakeAutoComPtr(T* ptr) { return AutoComPtr<T>{ptr}; }
