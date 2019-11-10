@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{9E787AE2-DBF1-4408-8CEB-6BBEF1D8C43F}</ProjectGuid>
+    <RootNamespace>dx12test</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+    <EnableUnitySupport>true</EnableUnitySupport>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)..\bin\</OutDir>
+    <EnableManagedIncrementalBuild>true</EnableManagedIncrementalBuild>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>false</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\;$(SolutionDir)..\src\;$(SolutionDir)..\extern\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\extern\easy\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>easy_profiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\extern\imgui\imgui.cpp" />
+    <ClCompile Include="..\extern\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\extern\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="..\src\graphichal\dx12utils.cpp" />
+    <ClCompile Include="..\src\graphic\gfxdevice.cpp" />
+    <ClCompile Include="..\src\graphic\gfxmanager.cpp" />
+    <ClCompile Include="..\src\graphic\gfxrenderer.cpp" />
+    <ClCompile Include="..\src\graphic\guimanager.cpp" />
+    <ClCompile Include="..\src\system\keyboard.cpp" />
+    <ClCompile Include="..\src\system\logger.cpp" />
+    <ClCompile Include="..\src\system\main.cpp" />
+    <ClCompile Include="..\src\system\mouse.cpp" />
+    <ClCompile Include="..\src\system\profiler.cpp" />
+    <ClCompile Include="..\src\system\system.cpp" />
+    <ClCompile Include="..\src\system\utils.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\extern\imgui\imconfig.h" />
+    <ClInclude Include="..\extern\imgui\imgui.h" />
+    <ClInclude Include="..\extern\imgui\imgui_internal.h" />
+    <ClInclude Include="..\extern\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\extern\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\extern\imgui\imstb_truetype.h" />
+    <ClInclude Include="..\src\graphichal\dx12utils.h" />
+    <ClInclude Include="..\src\graphic\gfxdevice.h" />
+    <ClInclude Include="..\src\graphic\gfxenums.h" />
+    <ClInclude Include="..\src\graphic\gfxmanager.h" />
+    <ClInclude Include="..\src\graphic\gfxrenderer.h" />
+    <ClInclude Include="..\src\graphic\gfxutils.h" />
+    <ClInclude Include="..\src\graphic\guimanager.h" />
+    <ClInclude Include="..\src\graphic\precomp.h" />
+    <ClInclude Include="..\src\system\keyboard.h" />
+    <ClInclude Include="..\src\system\logger.h" />
+    <ClInclude Include="..\src\system\math.h" />
+    <ClInclude Include="..\src\system\mouse.h" />
+    <ClInclude Include="..\src\system\precomp.h" />
+    <ClInclude Include="..\src\system\profiler.h" />
+    <ClInclude Include="..\src\system\stopwatch.h" />
+    <ClInclude Include="..\src\system\system.h" />
+    <ClInclude Include="..\src\system\utils.h" />
+    <ClInclude Include="..\src\system\win64includes.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

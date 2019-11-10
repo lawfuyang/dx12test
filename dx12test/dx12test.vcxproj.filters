@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\src\system\keyboard.cpp">
+      <Filter>system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\system\logger.cpp">
+      <Filter>system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\system\main.cpp">
+      <Filter>system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\system\mouse.cpp">
+      <Filter>system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\system\profiler.cpp">
+      <Filter>system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\system\system.cpp">
+      <Filter>system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\system\utils.cpp">
+      <Filter>system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxdevice.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxmanager.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxrenderer.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\guimanager.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphichal\dx12utils.cpp">
+      <Filter>dx12</Filter>
+    </ClCompile>
+    <ClCompile Include="..\extern\imgui\imgui.cpp">
+      <Filter>extern</Filter>
+    </ClCompile>
+    <ClCompile Include="..\extern\imgui\imgui_draw.cpp">
+      <Filter>extern</Filter>
+    </ClCompile>
+    <ClCompile Include="..\extern\imgui\imgui_widgets.cpp">
+      <Filter>extern</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\system\keyboard.h">
+      <Filter>system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\system\logger.h">
+      <Filter>system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\system\math.h">
+      <Filter>system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\system\mouse.h">
+      <Filter>system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\system\precomp.h">
+      <Filter>system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\system\profiler.h">
+      <Filter>system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\system\stopwatch.h">
+      <Filter>system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\system\system.h">
+      <Filter>system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\system\utils.h">
+      <Filter>system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\system\win64includes.h">
+      <Filter>system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxdevice.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxenums.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxmanager.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxrenderer.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxutils.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\guimanager.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\precomp.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphichal\dx12utils.h">
+      <Filter>dx12</Filter>
+    </ClInclude>
+    <ClInclude Include="..\extern\imgui\imconfig.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\extern\imgui\imgui.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\extern\imgui\imgui_internal.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\extern\imgui\imstb_rectpack.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\extern\imgui\imstb_textedit.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="..\extern\imgui\imstb_truetype.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="system">
+      <UniqueIdentifier>{c0f8e237-13be-4b4b-8c48-62f5df5db71e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="graphic">
+      <UniqueIdentifier>{15eb86ff-65b1-4204-8e76-757f7fdaeb58}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dx12">
+      <UniqueIdentifier>{fc42bfd4-3ab6-4f20-9431-e657b2698d47}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="extern">
+      <UniqueIdentifier>{fdc0d768-648d-466e-8b82-51fe7867e557}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
