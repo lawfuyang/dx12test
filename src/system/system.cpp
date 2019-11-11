@@ -1,4 +1,4 @@
-#include "system/precomp.h"
+#include "system/system.h"
 
 #include "graphic/gfxmanager.h"
 #include "graphic/guimanager.h"

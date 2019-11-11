@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <array>
 #include <numeric>
+#include <wrl.h>
 
 // Keep these 2 headers on top to prevent the build from exploding with warnings
 #include "system/win64includes.h"
@@ -23,6 +24,7 @@
 #include "system/profiler.h"
 
 typedef uint64_t WindowHandle;
+using Microsoft::WRL::ComPtr;
 
 class System
 {
@@ -30,20 +32,20 @@ class System
 
 public:
 
-    static inline const std::string APP_NAME = "Vulkan Test";
+    static inline const std::string APP_NAME = "DX12 Test";
     static const uint32_t APP_WINDOW_WIDTH   = 1600;
     static const uint32_t APP_WINDOW_HEIGHT  = 900;
     static const uint32_t FPS_LIMIT          = 60;
 
     // Gfx Debug Layer
-    static const bool EnableGfxDebugLayer                             = true;
-    static const bool GfxDebugLayerBreakOnWarnings                    = true;
-    static const bool GfxDebugLayerBreakOnErrors                      = true;
-    static const bool GfxDebugLayerLogVerbose                         = true;
-    static const bool GfxDebugLayerEnableGPUValidation                = true;
-    static const bool GfxDebugLayerSynchronizedCommandQueueValidation = true;
-    static const bool GfxDebugLayerDisableStateTracking               = false;
-    static const bool EnableRenderDocCapture                          = false;
+    static const bool EnableGfxDebugLayer                                 = true;
+    static const bool GfxDebugLayerBreakOnWarnings                        = EnableGfxDebugLayer && true;
+    static const bool GfxDebugLayerBreakOnErrors                          = EnableGfxDebugLayer && true;
+    static const bool GfxDebugLayerLogVerbose                             = EnableGfxDebugLayer && true;
+    static const bool GfxDebugLayerEnableGPUValidation                    = EnableGfxDebugLayer && true;
+    static const bool GfxDebugLayerSynchronizedCommandQueueValidation     = EnableGfxDebugLayer && true;
+    static const bool GfxDebugLayerDisableStateTracking                   = EnableGfxDebugLayer && false;
+    static const bool GfxDebugLayerEnableConservativeResorceStateTracking = EnableGfxDebugLayer && true;
 
     void Initialize();
     void Shutdown();
@@ -110,24 +112,3 @@ private:
     inline static uint8_t ms_AvgRealFrameIdxCursor      = 0;
     inline static uint8_t ms_AvgCappedFrameIdxCursor    = 0;
 };
-
-// super simple lightweight ComPtr implementation
-template <typename T>
-class AutoComPtr
-{
-public:
-    explicit AutoComPtr(T* ptr) : m_Ptr(ptr) {}
-
-    ~AutoComPtr()
-    {
-        m_Ptr->Release();
-    }
-
-    T* operator->() const { return m_Ptr; }
-
-private:
-    T* m_Ptr;
-};
-
-template <typename T>
-const AutoComPtr<T> MakeAutoComPtr(T* ptr) { return AutoComPtr<T>{ptr}; }

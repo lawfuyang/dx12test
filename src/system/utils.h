@@ -201,3 +201,9 @@ constexpr uint32_t GetCompileTimeCRC32(const char* str)
 {
     return ~UtilsPrivate::ConstExpr_CRC32(str, UtilsPrivate::ConstExpr_String_Length(str), ~uint32_t(0));
 }
+
+// Convert a wide Unicode string to an UTF8 string
+const std::string utf8_encode(const std::wstring& wstr);
+
+// Convert an UTF8 string to a wide Unicode String
+const std::wstring utf8_decode(const std::string& str);

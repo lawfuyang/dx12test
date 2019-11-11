@@ -1,6 +1,7 @@
-#include "graphic/precomp.h"
 #include "graphic/gfxmanager.h"
 
+#include "graphic/gfxadapter.h"
+#include "graphic/gfxdevice.h"
 #include "graphic/gfxrenderer.h"
 #include "graphic/guimanager.h"
 
@@ -18,22 +19,18 @@ void GfxManager::Initialize()
 {
     bbeProfileFunction();
 
-    GUIManager::GetInstance().Initialize();
+    GfxAdapter::GetInstance().Initialize();
 
-    m_MainDevice = std::make_unique<GfxDevice>();
-    m_MainDevice->InitializeForMainDevice();
+    m_MainDevice.InitializeForMainDevice();
 
     GfxRenderer::GetInstance().Initialize();
+
+    GUIManager::GetInstance().Initialize();
 }
 
 void GfxManager::ShutDown()
 {
     bbeProfileFunction();
-
-    GfxRenderer::GetInstance().ShutDown();
-
-    m_MainDevice->ShutDown();
-    m_MainDevice.release();
 
     GUIManager::GetInstance().ShutDown();
 }

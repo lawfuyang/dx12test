@@ -1,4 +1,4 @@
-#include "system/precomp.h"
+#include "system/system.h"
 #include "system/profiler.h"
 
 void SystemProfiler::EnableProfiling()

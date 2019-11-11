@@ -6,7 +6,6 @@ class GfxRenderer
 
 public:
     void Initialize();
-    void ShutDown();
 
 private:
 };

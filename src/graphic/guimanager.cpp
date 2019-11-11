@@ -1,4 +1,3 @@
-#include "graphic/precomp.h"
 #include "graphic/guimanager.h"
 
 extern ::HWND g_EngineWindowHandle;

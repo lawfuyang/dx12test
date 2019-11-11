@@ -1,6 +1,6 @@
 #pragma once
 
-class GfxDevice;
+#include "graphic/gfxdevice.h"
 
 class GfxManager
 {
@@ -13,8 +13,8 @@ public:
     void BeginFrame();
     void EndFrame();
 
-    GfxDevice& GetMainGfxDevice() { return *m_MainDevice; }
+    GfxDevice& GetMainGfxDevice() { return m_MainDevice; }
 
 private:
-    std::unique_ptr<GfxDevice> m_MainDevice;
+    GfxDevice m_MainDevice;
 };

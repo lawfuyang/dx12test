@@ -34,9 +34,6 @@
     <ClCompile Include="..\src\graphic\guimanager.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\graphichal\dx12utils.cpp">
-      <Filter>dx12</Filter>
-    </ClCompile>
     <ClCompile Include="..\extern\imgui\imgui.cpp">
       <Filter>extern\imgui</Filter>
     </ClCompile>
@@ -45,6 +42,18 @@
     </ClCompile>
     <ClCompile Include="..\extern\imgui\imgui_widgets.cpp">
       <Filter>extern\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxadapter.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\dx12utils.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxcommandqueue.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxswapchain.cpp">
+      <Filter>graphic</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -58,9 +67,6 @@
       <Filter>system</Filter>
     </ClInclude>
     <ClInclude Include="..\src\system\mouse.h">
-      <Filter>system</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\system\precomp.h">
       <Filter>system</Filter>
     </ClInclude>
     <ClInclude Include="..\src\system\profiler.h">
@@ -96,12 +102,6 @@
     <ClInclude Include="..\src\graphic\guimanager.h">
       <Filter>graphic</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\precomp.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphichal\dx12utils.h">
-      <Filter>dx12</Filter>
-    </ClInclude>
     <ClInclude Include="..\extern\imgui\imconfig.h">
       <Filter>extern\imgui</Filter>
     </ClInclude>
@@ -119,6 +119,18 @@
     </ClInclude>
     <ClInclude Include="..\extern\imgui\imstb_truetype.h">
       <Filter>extern\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxadapter.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\dx12utils.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxcommandqueue.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxswapchain.h">
+      <Filter>graphic</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
