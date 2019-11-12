@@ -1,14 +1,6 @@
 #include "system/system.h"
 #include "system/keyboard.h"
 
-Keyboard::Keyboard()
-{
-}
-
-Keyboard::~Keyboard()
-{
-}
-
 bool Keyboard::IsKeyPressed(Key key)
 {
     return GetInstance().m_Pressed[(uint32_t)key];

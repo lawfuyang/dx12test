@@ -155,6 +155,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
     BBE_UNUSED_PARAM(lpCmdLine);
     BBE_UNUSED_PARAM(nCmdShow);
 
+    // first, Init the logger
+    Logger::GetInstance().Initialize();
+
     EngineWindowThread::Initialize();
 
     System::GetInstance().Initialize();
@@ -162,4 +165,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
     System::GetInstance().Shutdown();
 
     EngineWindowThread::Shutdown();
+
+    Logger::GetInstance().Shutdown();
 }

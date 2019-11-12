@@ -1,15 +1,6 @@
 #include "system/system.h"
 #include "system/mouse.h"
 
-Mouse::Mouse()
-{
-
-}
-
-Mouse::~Mouse()
-{
-
-}
 
 void Mouse::ProcessMouseMove(uint32_t param, int32_t x, int32_t y)
 {
@@ -84,7 +75,7 @@ void Mouse::Tick(float timeDelta)
     bbeMemZeroArray(m_WasPressed);
     bbeMemZeroArray(m_WasReleased);
 
-    for (uint32_t i = 0; i < bbeGetArraySize(m_PressedTime); ++i)
+    for (uint32_t i = 0; i < _countof(m_PressedTime); ++i)
     {
         if (m_Pressed[i])
             m_PressedTime[i] += timeDelta;

@@ -2,14 +2,6 @@
 
 #include "graphic/dx12utils.h"
 
-GfxAdapter::GfxAdapter()
-{
-}
-
-GfxAdapter::~GfxAdapter()
-{
-}
-
 void GfxAdapter::Initialize()
 {
     bbeProfileFunction();

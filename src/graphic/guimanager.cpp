@@ -2,16 +2,6 @@
 
 extern ::HWND g_EngineWindowHandle;
 
-GUIManager::GUIManager()
-{
-
-}
-
-GUIManager::~GUIManager()
-{
-
-}
-
 void GUIManager::Initialize()
 {
     bbeProfileFunction();

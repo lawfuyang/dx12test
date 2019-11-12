@@ -35,6 +35,9 @@ public:
         Assert
     };
 
+    void Initialize();
+    void Shutdown();
+
     template <LogCategory Category, typename... Args>
     void Log(const char* format, const char* functionSrc, Args&&... args);
 

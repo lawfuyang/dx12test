@@ -1,13 +1,13 @@
 #include "system/system.h"
 #include "system/logger.h"
 
-Logger::Logger()
+void Logger::Initialize()
 {
     ::CreateDirectoryA("../bin", NULL);
     fopen_s(&m_File, "../bin/output.txt", "w");
 }
 
-Logger::~Logger()
+void Logger::Shutdown()
 {
     fclose(m_File);
 }

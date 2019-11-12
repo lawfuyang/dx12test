@@ -90,8 +90,8 @@ namespace UtilsPrivate
             return s_Instance;                           \
         }                                                \
     private:                                             \
-        ClassName();                                     \
-        ~ClassName();                                    \
+        ClassName() = default;                           \
+        ~ClassName() = default;                          \
         ClassName(const ClassName&) = delete;            \
         ClassName(ClassName&&) = delete;                 \
         ClassName& operator=(const ClassName&) = delete; \
@@ -176,12 +176,6 @@ static const std::string StringFormat(const char* format, Args&&... args)
 #define BBE_UNUSED_PARAM(p) ((void)&p)
 
 #define bbePrefetchData(address, offset_in_bytes) _mm_prefetch((const char*)(address) + offset_in_bytes, _MM_HINT_T0);
-
-#define BBE_STACK_ARRAY(TYPE, count) static_cast<TYPE*>(_malloca(count * sizeof(TYPE)))
-
-template <typename _CountofType, size_t _SizeOfArray>
-char(*__bbeGetArraySize_helper(_CountofType(&_Array)[_SizeOfArray]))[_SizeOfArray];
-#define bbeGetArraySize(_Array) ((uint32_t)sizeof(*::__bbeGetArraySize_helper(_Array)))
 
 #define bbeSimpleSwitchCaseString(x) case(x): return bbeTOSTRING(x);
 

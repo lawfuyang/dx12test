@@ -55,6 +55,9 @@
     <ClCompile Include="..\src\graphic\gfxswapchain.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxdescriptorheap.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -130,6 +133,9 @@
       <Filter>graphic</Filter>
     </ClInclude>
     <ClInclude Include="..\src\graphic\gfxswapchain.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxdescriptorheap.h">
       <Filter>graphic</Filter>
     </ClInclude>
   </ItemGroup>

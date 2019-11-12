@@ -3,16 +3,6 @@
 #include "graphic/gfxmanager.h"
 #include "graphic/guimanager.h"
 
-System::System()
-{
-
-}
-
-System::~System()
-{
-
-}
-
 void System::ProcessWindowMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     if (message == WM_CLOSE)

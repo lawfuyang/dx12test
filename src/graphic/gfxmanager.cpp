@@ -5,16 +5,6 @@
 #include "graphic/gfxrenderer.h"
 #include "graphic/guimanager.h"
 
-GfxManager::GfxManager()
-{
-
-}
-
-GfxManager::~GfxManager()
-{
-
-}
-
 void GfxManager::Initialize()
 {
     bbeProfileFunction();

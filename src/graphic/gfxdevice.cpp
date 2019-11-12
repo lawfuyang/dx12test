@@ -4,16 +4,6 @@
 #include "graphic/gfxadapter.h"
 #include "graphic/gfxenums.h"
 
-GfxDevice::GfxDevice()
-{
-
-}
-
-GfxDevice::~GfxDevice()
-{
-
-}
-
 void GfxDevice::InitializeForMainDevice()
 {
     bbeProfileFunction();
@@ -37,22 +27,24 @@ void GfxDevice::InitializeForMainDevice()
     {
         bbeProfile("D3D12CreateDevice");
 
-        if (SUCCEEDED(D3D12CreateDevice(GfxAdapter::GetInstance().GetAllAdapters()[0].Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_D3DDevice))))
+        if (SUCCEEDED(D3D12CreateDevice(GfxAdapter::GetInstance().GetAllAdapters()[0].Get(), level, IID_PPV_ARGS(&m_D3DDevice))))
         {
             bbeInfo("Created ID3D12Device. D3D_FEATURE_LEVEL: %s", GetD3DFeatureLevelName(level));
             break;
         }
     }
-    bbeAssert(m_D3DDevice.Get() != nullptr, "ID3D12Device not successfully created?");
+    bbeAssert(m_D3DDevice.Get() != nullptr, "");
 
     if constexpr (System::EnableGfxDebugLayer)
     {
         ConfigureDebugLayer();
     }
 
-    m_GfxCommandQueue.Initialize(this, D3D12_COMMAND_LIST_TYPE_DIRECT);
+    m_GfxCommandQueue.Initialize(this, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_QUEUE_FLAG_NONE);
 
     m_SwapChain.Initialize(this, System::APP_WINDOW_WIDTH, System::APP_WINDOW_HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM);
+
+    DX12_CALL(Dev()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_CommandAllocator)));
 }
 
 void GfxDevice::EnableDebugLayer()
@@ -84,7 +76,7 @@ void GfxDevice::ConfigureDebugLayer()
     bbeProfileFunction();
 
     ComPtr<ID3D12DebugDevice1> debugDevice1;
-    if (SUCCEEDED(m_D3DDevice.Get()->QueryInterface(IID_PPV_ARGS(&debugDevice1))))
+    if (SUCCEEDED(Dev()->QueryInterface(IID_PPV_ARGS(&debugDevice1))))
     {
         if (System::GfxDebugLayerEnableConservativeResorceStateTracking)
         {
@@ -108,7 +100,7 @@ void GfxDevice::ConfigureDebugLayer()
     }
 
     ComPtr<ID3D12InfoQueue> debugInfoQueue;
-    DX12_CALL(m_D3DDevice.Get()->QueryInterface(__uuidof(ID3D12InfoQueue), (LPVOID*)&debugInfoQueue));
+    DX12_CALL(Dev()->QueryInterface(__uuidof(ID3D12InfoQueue), (LPVOID*)&debugInfoQueue));
 
     debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, System::GfxDebugLayerBreakOnErrors);
     debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, System::GfxDebugLayerBreakOnWarnings);
