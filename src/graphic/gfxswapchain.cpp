@@ -45,16 +45,10 @@ void GfxSwapChain::Initialize(uint32_t width, uint32_t height, DXGI_FORMAT forma
 
     m_FrameIndex = m_SwapChain->GetCurrentBackBufferIndex();
 
-    m_SwapChainDescHeap.Initialize(&mainGfxDevice, ms_NumFrames, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
-
-    // Create swap chain frame resources
-    D3D12_CPU_DESCRIPTOR_HANDLE cpuDescHandle = m_SwapChainDescHeap.Dev()->GetCPUDescriptorHandleForHeapStart();
-
-    // Create a RTV for each frame.
     for (uint32_t i = 0; i < _countof(m_RenderTargets); ++i)
     {
-        DX12_CALL(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&m_RenderTargets[i])));
-        mainGfxDevice.Dev()->CreateRenderTargetView(m_RenderTargets[i].Get(), nullptr, cpuDescHandle);
-        cpuDescHandle.ptr += m_SwapChainDescHeap.GetDescSize();
+        ComPtr<ID3D12Resource> backBufferResource;
+        DX12_CALL(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&backBufferResource)));
+        m_RenderTargets[i].Initialize(mainGfxDevice, backBufferResource.Get());
     }
 }

@@ -58,6 +58,9 @@
     <ClCompile Include="..\src\graphic\gfxdescriptorheap.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxtextures.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -136,6 +139,9 @@
       <Filter>graphic</Filter>
     </ClInclude>
     <ClInclude Include="..\src\graphic\gfxdescriptorheap.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxtextures.h">
       <Filter>graphic</Filter>
     </ClInclude>
   </ItemGroup>

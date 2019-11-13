@@ -114,6 +114,7 @@
     <ClCompile Include="..\src\graphic\gfxmanager.cpp" />
     <ClCompile Include="..\src\graphic\gfxrenderer.cpp" />
     <ClCompile Include="..\src\graphic\gfxswapchain.cpp" />
+    <ClCompile Include="..\src\graphic\gfxtextures.cpp" />
     <ClCompile Include="..\src\graphic\guimanager.cpp" />
     <ClCompile Include="..\src\system\keyboard.cpp" />
     <ClCompile Include="..\src\system\logger.cpp" />
@@ -139,6 +140,7 @@
     <ClInclude Include="..\src\graphic\gfxmanager.h" />
     <ClInclude Include="..\src\graphic\gfxrenderer.h" />
     <ClInclude Include="..\src\graphic\gfxswapchain.h" />
+    <ClInclude Include="..\src\graphic\gfxtextures.h" />
     <ClInclude Include="..\src\graphic\gfxutils.h" />
     <ClInclude Include="..\src\graphic\guimanager.h" />
     <ClInclude Include="..\src\system\keyboard.h" />

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "graphic/gfxdescriptorheap.h"
+#include "graphic/gfxtextures.h"
 
 class GfxDevice;
 
@@ -12,10 +13,8 @@ public:
     void Initialize(uint32_t width, uint32_t height, DXGI_FORMAT);
 
 private:
-    GfxDescriptorHeap m_SwapChainDescHeap;
-
     ComPtr<IDXGISwapChain4> m_SwapChain;
-    ComPtr<ID3D12Resource> m_RenderTargets[ms_NumFrames];
+    GfxRenderTargetView m_RenderTargets[ms_NumFrames];
 
     uint32_t m_FrameIndex = 0;
 };
