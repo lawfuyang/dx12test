@@ -1,19 +1,19 @@
 #include "gfxswapchain.h"
 
+#include "graphic/gfxmanager.h"
 #include "graphic/gfxadapter.h"
 #include "graphic/dx12utils.h"
 #include "graphic/gfxdevice.h"
 
 extern ::HWND g_EngineWindowHandle;
 
-void GfxSwapChain::Initialize(GfxDevice* gfxDevice, uint32_t width, uint32_t height, DXGI_FORMAT format)
+void GfxSwapChain::Initialize(uint32_t width, uint32_t height, DXGI_FORMAT format)
 {
     bbeProfileFunction();
 
-    bbeAssert(gfxDevice, "");
     bbeAssert(m_SwapChain.Get() == nullptr, "");
 
-    m_OwnerDevice = gfxDevice;
+    GfxDevice& mainGfxDevice = GfxManager::GetInstance().GetMainGfxDevice();
 
     // Describe and create the swap chain.
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
@@ -31,7 +31,7 @@ void GfxSwapChain::Initialize(GfxDevice* gfxDevice, uint32_t width, uint32_t hei
     const auto dxgiFactory = GfxAdapter::GetInstance().GetDXGIFactory();
 
     ComPtr<IDXGISwapChain1> swapChain;
-    DX12_CALL(dxgiFactory->CreateSwapChainForHwnd(m_OwnerDevice->GetCommandQueue().Dev(), // Swap chain needs the queue so that it can force a flush on it.
+    DX12_CALL(dxgiFactory->CreateSwapChainForHwnd(mainGfxDevice.GetCommandQueue().Dev(), // Swap chain needs the queue so that it can force a flush on it.
                                                   g_EngineWindowHandle,
                                                   &swapChainDesc,
                                                   nullptr,
@@ -45,7 +45,7 @@ void GfxSwapChain::Initialize(GfxDevice* gfxDevice, uint32_t width, uint32_t hei
 
     m_FrameIndex = m_SwapChain->GetCurrentBackBufferIndex();
 
-    m_SwapChainDescHeap.Initialize(m_OwnerDevice, ms_NumFrames, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+    m_SwapChainDescHeap.Initialize(&mainGfxDevice, ms_NumFrames, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 
     // Create swap chain frame resources
     D3D12_CPU_DESCRIPTOR_HANDLE cpuDescHandle = m_SwapChainDescHeap.Dev()->GetCPUDescriptorHandleForHeapStart();
@@ -54,7 +54,7 @@ void GfxSwapChain::Initialize(GfxDevice* gfxDevice, uint32_t width, uint32_t hei
     for (uint32_t i = 0; i < _countof(m_RenderTargets); ++i)
     {
         DX12_CALL(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&m_RenderTargets[i])));
-        m_OwnerDevice->Dev()->CreateRenderTargetView(m_RenderTargets[i].Get(), nullptr, cpuDescHandle);
+        mainGfxDevice.Dev()->CreateRenderTargetView(m_RenderTargets[i].Get(), nullptr, cpuDescHandle);
         cpuDescHandle.ptr += m_SwapChainDescHeap.GetDescSize();
     }
 }

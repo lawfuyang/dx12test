@@ -13,6 +13,8 @@ void GfxManager::Initialize()
 
     m_MainDevice.InitializeForMainDevice();
 
+    m_SwapChain.Initialize(System::APP_WINDOW_WIDTH, System::APP_WINDOW_HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM);
+
     GfxRenderer::GetInstance().Initialize();
 
     GUIManager::GetInstance().Initialize();

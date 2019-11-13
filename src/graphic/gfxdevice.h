@@ -18,7 +18,6 @@ private:
     void ConfigureDebugLayer();
 
     GfxCommandQueue m_GfxCommandQueue;
-    GfxSwapChain m_SwapChain;
     GfxDeviceType m_DeviceType;
 
     ComPtr<ID3D12Device6> m_D3DDevice;

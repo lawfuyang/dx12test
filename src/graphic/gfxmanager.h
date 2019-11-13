@@ -17,4 +17,5 @@ public:
 
 private:
     GfxDevice m_MainDevice;
+    GfxSwapChain m_SwapChain;
 };

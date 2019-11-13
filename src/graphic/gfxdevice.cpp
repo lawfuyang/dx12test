@@ -42,8 +42,6 @@ void GfxDevice::InitializeForMainDevice()
 
     m_GfxCommandQueue.Initialize(this, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_QUEUE_FLAG_NONE);
 
-    m_SwapChain.Initialize(this, System::APP_WINDOW_WIDTH, System::APP_WINDOW_HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM);
-
     DX12_CALL(Dev()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_CommandAllocator)));
 }
 

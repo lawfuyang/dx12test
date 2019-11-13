@@ -9,10 +9,9 @@ class GfxSwapChain
 public:
     static const uint32_t ms_NumFrames = 2;
 
-    void Initialize(GfxDevice*, uint32_t width, uint32_t height, DXGI_FORMAT);
+    void Initialize(uint32_t width, uint32_t height, DXGI_FORMAT);
 
 private:
-    GfxDevice* m_OwnerDevice = nullptr;
     GfxDescriptorHeap m_SwapChainDescHeap;
 
     ComPtr<IDXGISwapChain4> m_SwapChain;
