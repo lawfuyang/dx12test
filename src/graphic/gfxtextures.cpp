@@ -4,6 +4,8 @@
 
 void GfxRenderTargetView::Initialize(GfxDevice& gfxDevice, ID3D12Resource* resource)
 {
+    bbeProfileFunction();
+
     m_Resource = resource;
 
     m_DescHeap.Initialize(gfxDevice, 1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);

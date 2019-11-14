@@ -31,12 +31,15 @@ void GfxSwapChain::Initialize(uint32_t width, uint32_t height, DXGI_FORMAT forma
     const auto dxgiFactory = GfxAdapter::GetInstance().GetDXGIFactory();
 
     ComPtr<IDXGISwapChain1> swapChain;
-    DX12_CALL(dxgiFactory->CreateSwapChainForHwnd(mainGfxDevice.GetCommandQueue().Dev(), // Swap chain needs the queue so that it can force a flush on it.
-                                                  g_EngineWindowHandle,
-                                                  &swapChainDesc,
-                                                  nullptr,
-                                                  nullptr,
-                                                  &swapChain));
+    {
+        bbeProfile("CreateSwapChainForHwnd");
+        DX12_CALL(dxgiFactory->CreateSwapChainForHwnd(mainGfxDevice.GetCommandQueue().Dev(), // Swap chain needs the queue so that it can force a flush on it.
+                                                      g_EngineWindowHandle,
+                                                      &swapChainDesc,
+                                                      nullptr,
+                                                      nullptr,
+                                                      &swapChain));
+    }
 
     // Disable Alt-Enter and other DXGI trickery...
     DX12_CALL(dxgiFactory->MakeWindowAssociation(g_EngineWindowHandle, DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER));
@@ -45,6 +48,7 @@ void GfxSwapChain::Initialize(uint32_t width, uint32_t height, DXGI_FORMAT forma
 
     m_FrameIndex = m_SwapChain->GetCurrentBackBufferIndex();
 
+    // Create a RTV for each frame.
     for (uint32_t i = 0; i < _countof(m_RenderTargets); ++i)
     {
         ComPtr<ID3D12Resource> backBufferResource;

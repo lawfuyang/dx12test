@@ -61,6 +61,12 @@
     <ClCompile Include="..\src\graphic\gfxtextures.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxcommandlist.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxfence.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -142,6 +148,12 @@
       <Filter>graphic</Filter>
     </ClInclude>
     <ClInclude Include="..\src\graphic\gfxtextures.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxcommandlist.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxfence.h">
       <Filter>graphic</Filter>
     </ClInclude>
   </ItemGroup>

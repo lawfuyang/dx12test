@@ -89,7 +89,7 @@ FrameRateController::~FrameRateController()
 
     bbeProfile("Idle");
 
-    ::WaitForSingleObject(ms_TimerHandle, INFINITE); // This is unreliable as fuck
+    //::WaitForSingleObject(ms_TimerHandle, INFINITE); // This is unreliable as fuck
     while (std::chrono::high_resolution_clock::now() < m_FrameEndTime) { std::this_thread::yield(); } // busy wait until exactly fps limit
 
     UpdateAvgCappedFrameTime(m_StopWatch.ElapsedUS());

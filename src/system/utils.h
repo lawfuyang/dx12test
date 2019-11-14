@@ -201,3 +201,5 @@ const std::string utf8_encode(const std::wstring& wstr);
 
 // Convert an UTF8 string to a wide Unicode String
 const std::wstring utf8_decode(const std::string& str);
+
+const std::string GetLastErrorAsString();

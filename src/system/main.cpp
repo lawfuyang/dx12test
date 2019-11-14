@@ -1,6 +1,6 @@
 #pragma once
 
-#include "system.h"
+#include "system/system.h"
 
 ::HWND g_EngineWindowHandle = 0;
 
@@ -64,20 +64,6 @@ private:
 
         System::GetInstance().ProcessWindowMessage(hWnd, message, wParam, lParam);
         return DefWindowProc(hWnd, message, wParam, lParam);
-    }
-
-    static std::string GetLastErrorAsString()
-    {
-        //Get the error message, if any.
-        DWORD errorMessageID = ::GetLastError();
-        if (errorMessageID == 0)
-            return ""; //No error message has been recorded
-
-        LPSTR messageBuffer = nullptr;
-        FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-            NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
-
-        return std::string{ messageBuffer };
     }
 
     static void Run()

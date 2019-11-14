@@ -43,6 +43,10 @@ void GfxDevice::InitializeForMainDevice()
     m_GfxCommandQueue.Initialize(this, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_QUEUE_FLAG_NONE);
 
     DX12_CALL(Dev()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_CommandAllocator)));
+
+    m_CommandList.Initialize(*this, D3D12_COMMAND_LIST_TYPE_DIRECT);
+
+    m_Fence.Initialize(*this, D3D12_FENCE_FLAG_NONE);
 }
 
 void GfxDevice::EnableDebugLayer()

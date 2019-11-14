@@ -108,9 +108,11 @@
     <ClCompile Include="..\extern\imgui\imgui_widgets.cpp" />
     <ClCompile Include="..\src\graphic\dx12utils.cpp" />
     <ClCompile Include="..\src\graphic\gfxadapter.cpp" />
+    <ClCompile Include="..\src\graphic\gfxcommandlist.cpp" />
     <ClCompile Include="..\src\graphic\gfxcommandqueue.cpp" />
     <ClCompile Include="..\src\graphic\gfxdescriptorheap.cpp" />
     <ClCompile Include="..\src\graphic\gfxdevice.cpp" />
+    <ClCompile Include="..\src\graphic\gfxfence.cpp" />
     <ClCompile Include="..\src\graphic\gfxmanager.cpp" />
     <ClCompile Include="..\src\graphic\gfxrenderer.cpp" />
     <ClCompile Include="..\src\graphic\gfxswapchain.cpp" />
@@ -133,10 +135,12 @@
     <ClInclude Include="..\extern\imgui\imstb_truetype.h" />
     <ClInclude Include="..\src\graphic\dx12utils.h" />
     <ClInclude Include="..\src\graphic\gfxadapter.h" />
+    <ClInclude Include="..\src\graphic\gfxcommandlist.h" />
     <ClInclude Include="..\src\graphic\gfxcommandqueue.h" />
     <ClInclude Include="..\src\graphic\gfxdescriptorheap.h" />
     <ClInclude Include="..\src\graphic\gfxdevice.h" />
     <ClInclude Include="..\src\graphic\gfxenums.h" />
+    <ClInclude Include="..\src\graphic\gfxfence.h" />
     <ClInclude Include="..\src\graphic\gfxmanager.h" />
     <ClInclude Include="..\src\graphic\gfxrenderer.h" />
     <ClInclude Include="..\src\graphic\gfxswapchain.h" />
