@@ -1,7 +1,5 @@
 #pragma once
 
-#include "system/system.h"
-
 ::HWND g_EngineWindowHandle = 0;
 
 class EngineWindowThread

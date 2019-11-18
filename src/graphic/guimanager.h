@@ -18,8 +18,6 @@
 
 class GUIManager
 {
-    DeclareSingletonFunctions(GUIManager);
-
 public:
     void Initialize();
     void ShutDown();

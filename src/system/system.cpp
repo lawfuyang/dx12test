@@ -1,5 +1,3 @@
-#include "system/system.h"
-
 #include "graphic/gfxmanager.h"
 #include "graphic/guimanager.h"
 
@@ -10,7 +8,7 @@ void System::ProcessWindowMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM
         m_Exit = true;
     }
 
-    GUIManager::GetInstance().HandleWindowsInput(hWnd, message, wParam, lParam);
+    GfxManager::GetInstance().GetGUIManager().HandleWindowsInput(hWnd, message, wParam, lParam);
 }
 
 void System::Loop()
@@ -38,6 +36,8 @@ void System::Loop()
 
 void System::Initialize()
 {
+    SystemProfiler::InitializeMainThread();
+
     // uncomment to profile engine init phase
     //const ProfilerInstance profilerInstance{ true };
 
@@ -71,7 +71,14 @@ void System::ShutdownGraphic()
 
 void System::Update()
 {
+    bbeProfileFunction();
 
+    tf::Taskflow tf;
+
+    tf::Task graphicTask = tf.emplace([](tf::Subflow& subflow) { GfxManager::GetInstance().ScheduleGraphicTasks(subflow); });
+    graphicTask.name("Graphic Tasks");
+
+    m_Executor.run(tf).wait();
 }
 
 FrameRateController::FrameRateController()

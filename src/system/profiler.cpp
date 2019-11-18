@@ -1,4 +1,3 @@
-#include "system/system.h"
 #include "system/profiler.h"
 
 void SystemProfiler::EnableProfiling()

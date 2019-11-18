@@ -1,7 +1,5 @@
 #include "graphic/guimanager.h"
 
-extern ::HWND g_EngineWindowHandle;
-
 void GUIManager::Initialize()
 {
     bbeProfileFunction();

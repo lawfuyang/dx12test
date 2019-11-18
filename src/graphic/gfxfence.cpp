@@ -3,6 +3,11 @@
 #include "graphic/dx12utils.h"
 #include "graphic/gfxdevice.h"
 
+GfxFence::~GfxFence()
+{
+    ::CloseHandle(m_FenceEvent);
+}
+
 void GfxFence::Initialize(GfxDevice& gfxDevice, D3D12_FENCE_FLAGS fenceFlags)
 {
     bbeProfileFunction();

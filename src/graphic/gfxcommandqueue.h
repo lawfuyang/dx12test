@@ -2,6 +2,14 @@
 
 class GfxDevice;
 
+enum class GfxQueueType
+{
+    Graphics,
+    Compute,
+    Copy,
+    NumQueueType,
+};
+
 class GfxCommandQueue
 {
 public:

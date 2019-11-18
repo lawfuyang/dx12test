@@ -1,19 +1,5 @@
 #pragma once
 
-enum class GfxDeviceType
-{
-    MainDevice,
-    DeferredDevice,
-    LoadingThreadDevice,
-    ComputeDevice,
-    CopyDevice,
-    CreationDevice,
-
-    GfxDeviceTypeCount,
-
-    InvalidDevice
-};
-
 /** @brief Resource memory access flags. */
 enum class GfxResourceAccessFlags
 {
@@ -47,15 +33,6 @@ enum class GfxTopology : uint8_t
     PatchList8CP,  // Patch list eight control points.
     PatchList9CP,  // Patch list nine control points.
     PatchList10CP, // Patch list ten control points.
-};
-
-/** @brief Queue type */
-enum class GfxQueueType
-{
-    Graphics,   // Graphics queue
-    Compute,    // Compute queue
-    Copy,       // Copy queue
-    NumQueueType,
 };
 
 /** @brief Specifies the shaders that can access the contents of a given layout slot. */

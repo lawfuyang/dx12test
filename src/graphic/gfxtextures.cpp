@@ -2,6 +2,11 @@
 
 #include "graphic/gfxdevice.h"
 
+D3D12_CPU_DESCRIPTOR_HANDLE GfxRenderTargetView::GetCPUDescHandle() const
+{
+    return D3D12_CPU_DESCRIPTOR_HANDLE{ m_DescHeap.Dev()->GetCPUDescriptorHandleForHeapStart() };
+}
+
 void GfxRenderTargetView::Initialize(GfxDevice& gfxDevice, ID3D12Resource* resource)
 {
     bbeProfileFunction();

@@ -299,6 +299,8 @@ inline void Executor::_spawn(unsigned N) {
   for(unsigned i=0; i<N; ++i) {
     _threads.emplace_back([this, i] () -> void {
 
+        SystemProfiler::InitializeWorkerThread(StringFormat("Worker Thread %d", i).c_str());
+
       PerThread& pt = _per_thread();  
       pt.pool = this;
       pt.worker_id = i;

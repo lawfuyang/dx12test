@@ -6,6 +6,8 @@
 class SystemProfiler
 {
 public:
+    static void InitializeMainThread() { EASY_MAIN_THREAD; }
+    static void InitializeWorkerThread(const char* name) { EASY_THREAD(name); }
     static void EnableProfiling();
 
 private:

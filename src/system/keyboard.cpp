@@ -1,4 +1,3 @@
-#include "system/system.h"
 #include "system/keyboard.h"
 
 bool Keyboard::IsKeyPressed(Key key)

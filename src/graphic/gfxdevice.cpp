@@ -8,7 +8,7 @@ void GfxDevice::InitializeForMainDevice()
 {
     bbeProfileFunction();
 
-    m_DeviceType = GfxDeviceType::MainDevice;
+    m_DeviceType = GfxDeviceType::Main;
 
     if constexpr (System::EnableGfxDebugLayer)
     {
@@ -44,9 +44,70 @@ void GfxDevice::InitializeForMainDevice()
 
     DX12_CALL(Dev()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_CommandAllocator)));
 
-    m_CommandList.Initialize(*this, D3D12_COMMAND_LIST_TYPE_DIRECT);
+    m_GfxCommandList.Initialize(*this, D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-    m_Fence.Initialize(*this, D3D12_FENCE_FLAG_NONE);
+    m_GfxFence.Initialize(*this, D3D12_FENCE_FLAG_NONE);
+}
+
+void GfxDevice::CheckStatus()
+{
+    const ::HRESULT result = m_D3DDevice->GetDeviceRemovedReason();
+
+    bbeAssert(result != DXGI_ERROR_DEVICE_HUNG, "Graphics Device Hung");
+    bbeAssert(result != DXGI_ERROR_DEVICE_REMOVED, "Graphics Device Removed");
+    bbeAssert(result != DXGI_ERROR_DEVICE_RESET, "Graphics Device Reset");
+    bbeAssert(result != DXGI_ERROR_DRIVER_INTERNAL_ERROR, "Graphics Device Internal Error");
+    bbeAssert(result != DXGI_ERROR_INVALID_CALL, "Graphics Device Invalid Call");
+}
+
+void GfxDevice::BeginFrame()
+{
+    // Command list allocators can only be reset when the associated 
+    // command lists have finished execution on the GPU; apps should use 
+    // fences to determine GPU execution progre
+    DX12_CALL(m_CommandAllocator->Reset());
+
+    // However, when ExecuteCommandList() is called on a particular command 
+    // list, that command list can then be reset at any time and must be before 
+    // re-recording.
+    DX12_CALL(m_GfxCommandList.Dev()->Reset(m_CommandAllocator.Get(), m_PipelineState.Get()));
+}
+
+void GfxDevice::EndFrame()
+{
+    DX12_CALL(m_GfxCommandList.Dev()->Close());
+
+    // Execute the command list.
+    ID3D12CommandList* ppCommandLists[] = { m_GfxCommandList.Dev() };
+    m_GfxCommandQueue.Dev()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+    // TODO: optimize this away
+    WaitForPreviousFrame();
+}
+
+void GfxDevice::ClearRenderTargetView(GfxRenderTargetView& rtv, const float(&clearColor)[4])
+{
+    const UINT numBarriers = 1;
+
+    const D3D12_RESOURCE_STATES oldResourceState = rtv.GetCurrentResourceState();
+
+    if (oldResourceState != D3D12_RESOURCE_STATE_RENDER_TARGET)
+    {
+        // Indicate that the GfxRenderTargetView will be used as a render target.
+        m_GfxCommandList.Dev()->ResourceBarrier(numBarriers, &CD3DX12_RESOURCE_BARRIER::Transition(rtv.Dev(), rtv.GetCurrentResourceState(), D3D12_RESOURCE_STATE_RENDER_TARGET));
+    }
+
+    const UINT numRects = 0;
+    const D3D12_RECT* pRects = nullptr;
+
+    // Record commands.
+    m_GfxCommandList.Dev()->ClearRenderTargetView(rtv.GetCPUDescHandle(), clearColor, numRects, pRects);
+
+    // Revert resource state back
+    if (oldResourceState != D3D12_RESOURCE_STATE_RENDER_TARGET)
+    {
+        m_GfxCommandList.Dev()->ResourceBarrier(numBarriers, &CD3DX12_RESOURCE_BARRIER::Transition(rtv.Dev(), D3D12_RESOURCE_STATE_RENDER_TARGET, oldResourceState));
+    }
 }
 
 void GfxDevice::EnableDebugLayer()
@@ -106,4 +167,22 @@ void GfxDevice::ConfigureDebugLayer()
 
     debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, System::GfxDebugLayerBreakOnErrors);
     debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, System::GfxDebugLayerBreakOnWarnings);
+}
+
+void GfxDevice::WaitForPreviousFrame()
+{
+    // WAITING FOR THE FRAME TO COMPLETE BEFORE CONTINUING IS NOT BEST PRACTICE.
+    // This is code implemented as such for simplicity
+
+    // Signal and increment the fence value.
+    const UINT64 fence = m_GfxFence.GetFenceValue();
+    DX12_CALL(m_GfxCommandQueue.Dev()->Signal(m_GfxFence.Dev(), fence));
+    m_GfxFence.IncrementFenceValue();
+
+    // Wait until the previous frame is finished.
+    if (m_GfxFence.Dev()->GetCompletedValue() < fence)
+    {
+        DX12_CALL(m_GfxFence.Dev()->SetEventOnCompletion(fence, m_GfxFence.GetFenceEvent()));
+        WaitForSingleObject(m_GfxFence.GetFenceEvent(), INFINITE);
+    }
 }

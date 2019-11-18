@@ -54,5 +54,18 @@ void GfxSwapChain::Initialize(uint32_t width, uint32_t height, DXGI_FORMAT forma
         ComPtr<ID3D12Resource> backBufferResource;
         DX12_CALL(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&backBufferResource)));
         m_RenderTargets[i].Initialize(mainGfxDevice, backBufferResource.Get());
+        m_RenderTargets[i].SetCurrentResourceState(D3D12_RESOURCE_STATE_PRESENT);
     }
+}
+
+void GfxSwapChain::Present()
+{
+    // TODO: init these values properly
+    const UINT syncInterval = 1;
+    const UINT flags = 0;
+
+    // Present the frame.
+    DX12_CALL(m_SwapChain.Get()->Present(syncInterval, flags));
+
+    m_FrameIndex = m_SwapChain.Get()->GetCurrentBackBufferIndex();
 }

@@ -1,4 +1,3 @@
-#include "system/system.h"
 #include "system/logger.h"
 
 void Logger::Initialize()

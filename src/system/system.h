@@ -12,9 +12,6 @@
 #include <numeric>
 #include <wrl.h>
 
-// Keep these 2 headers on top to prevent the build from exploding with warnings
-#include "system/win64includes.h"
-
 #include "system/utils.h"
 #include "system/math.h"
 #include "system/stopwatch.h"
@@ -22,6 +19,8 @@
 #include "system/keyboard.h"
 #include "system/mouse.h"
 #include "system/profiler.h"
+
+#include "extern/taskflow/taskflow.hpp"
 
 typedef uint64_t WindowHandle;
 using Microsoft::WRL::ComPtr;
@@ -72,6 +71,8 @@ private:
     inline static float ms_AvgCappedFrameTimeMs = 0.0f;
     inline static float ms_AvgCappedFPS         = 0.0f;
 
+    tf::Executor m_Executor;
+
     friend class FrameRateController;
 };
 
@@ -112,3 +113,35 @@ private:
     inline static uint8_t ms_AvgRealFrameIdxCursor      = 0;
     inline static uint8_t ms_AvgCappedFrameIdxCursor    = 0;
 };
+
+// General purpose ParallelFor with iterators input
+template <typename BeginIter, typename EndIter, typename Lambda>
+static void ParallelFor(BeginIter begin, EndIter end, Lambda&& lambda)
+{
+    bbeProfileFunction();
+
+    tf::Taskflow tf;
+    tf.parallel_for(begin, end, lambda);
+    System::GetInstance().m_Executor.run(tf).wait();
+}
+
+// General purpose ParallelFor with containers input
+template <typename ContainerType, typename Lambda>
+static void ParallelFor(const ContainerType& container, Lambda&& lambda)
+{
+    ParallelFor(container.cbegin(), container.cend(), std::forward<Lambda>(lambda));
+}
+
+// General purpose ParallelFor with const containers input
+template <typename ContainerType, typename Lambda>
+static void ParallelFor(ContainerType& container, Lambda&& lambda)
+{
+    ParallelFor(const_cast<const ContainerType&>(container), std::forward<Lambda>(lambda));
+}
+
+// General purpose ParallelFor with C-Style array input
+template <typename ArrayType, uint32_t ArraySize, typename Lambda>
+static void ParallelFor(ArrayType(&arr)[ArraySize], Lambda&& lambda)
+{
+    ParallelFor(arr, arr + ArraySize, std::forward<Lambda>(lambda));
+}
