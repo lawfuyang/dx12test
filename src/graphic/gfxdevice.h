@@ -1,9 +1,12 @@
 #pragma once
 
+#include "extern/boost/pool/object_pool.hpp"
+
 #include "graphic/gfxcommandqueue.h"
 #include "graphic/gfxswapchain.h"
 #include "graphic/gfxcommandlist.h"
 #include "graphic/gfxfence.h"
+#include "graphic/gfxpipelinestate.h"
 
 enum class GfxDeviceType
 {
@@ -20,16 +23,15 @@ class GfxDevice
 public:
     ID3D12Device* Dev() const { return m_D3DDevice.Get(); }
 
-    ID3D12CommandAllocator* GetCommandAllocator() const { return m_CommandAllocator.Get(); }
-    ID3D12PipelineState* GetPipelineState() const { return m_PipelineState.Get(); }
     GfxCommandQueue& GetCommandQueue() { return m_GfxCommandQueue; }
-    GfxCommandList& GetCommandList() { return m_GfxCommandList; }
 
     void InitializeForMainDevice();
     void CheckStatus();
-    void BeginFrame();
-    void EndFrame();
+    void ExecuteAllActiveCommandLists();
     void WaitForPreviousFrame();
+
+    GfxCommandList* NewCommandList(const std::string& cmdListName = "");
+    GfxCommandList* GetCurrentCommandList() { return m_CurrentCommandList; }
 
     // TODO: Convert to use math lib's vec4
     void ClearRenderTargetView(GfxRenderTargetView&, const float(&)[4]);
@@ -40,11 +42,17 @@ private:
 
     GfxDeviceType m_DeviceType;
 
+    boost::object_pool<GfxCommandList> m_CommandListsPool;
+
+    GfxCommandList* m_CurrentCommandList = nullptr;
+    std::vector<GfxCommandList*> m_FreeCommandLists;
+    std::vector<GfxCommandList*> m_ActiveCommandLists;
+    SpinLock m_FreeCommandListsLock;
+    SpinLock m_ActiveCommandListsLock;
+
     GfxCommandQueue m_GfxCommandQueue;
-    GfxCommandList m_GfxCommandList;
     GfxFence m_GfxFence;
+    GfxPipelineState m_PipelineState;
 
     ComPtr<ID3D12Device6> m_D3DDevice;
-    ComPtr<ID3D12CommandAllocator> m_CommandAllocator;
-    ComPtr<ID3D12PipelineState> m_PipelineState;
 };

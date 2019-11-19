@@ -54,12 +54,23 @@ void GfxSwapChain::Initialize(uint32_t width, uint32_t height, DXGI_FORMAT forma
         ComPtr<ID3D12Resource> backBufferResource;
         DX12_CALL(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&backBufferResource)));
         m_RenderTargets[i].Initialize(mainGfxDevice, backBufferResource.Get());
-        m_RenderTargets[i].SetCurrentResourceState(D3D12_RESOURCE_STATE_PRESENT);
+        SetDebugName(m_RenderTargets[i].GetHazardTrackedResource().Dev(), StringFormat("Back Buffer RTV %d", i));
     }
+}
+
+void GfxSwapChain::TransitionBackBufferForPresent()
+{
+    bbeProfileFunction();
+
+    GfxHazardTrackedResource& resource = m_RenderTargets[m_FrameIndex].GetHazardTrackedResource();
+    GfxDevice& mainGfxDevice = GfxManager::GetInstance().GetMainGfxDevice();
+    resource.Transition(*mainGfxDevice.GetCurrentCommandList(), D3D12_RESOURCE_STATE_PRESENT);
 }
 
 void GfxSwapChain::Present()
 {
+    bbeProfileFunction();
+
     // TODO: init these values properly
     const UINT syncInterval = 1;
     const UINT flags = 0;

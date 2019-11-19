@@ -55,13 +55,14 @@ void GfxManager::BeginFrame()
     // check for DXGI_ERRORs on all GfxDevices
     m_MainDevice->CheckStatus();
 
-    m_MainDevice->BeginFrame();
     m_GUIManager->BeginFrame();
 }
 
 void GfxManager::Render()
 {
     bbeProfileFunction();
+
+    m_MainDevice->NewCommandList("Main Command List");
 
     const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
     m_MainDevice->ClearRenderTargetView(m_SwapChain->GetCurrentBackBuffer(), clearColor);
@@ -70,8 +71,11 @@ void GfxManager::Render()
 void GfxManager::EndFrame()
 {
     bbeProfileFunction();
-    m_MainDevice->EndFrame();
+
     m_GUIManager->EndFrameAndRenderGUI();
 
+    m_SwapChain->TransitionBackBufferForPresent();
+    m_MainDevice->ExecuteAllActiveCommandLists();
     m_SwapChain->Present();
+    m_MainDevice->WaitForPreviousFrame();
 }

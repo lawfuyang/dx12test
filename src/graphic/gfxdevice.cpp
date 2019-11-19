@@ -42,10 +42,6 @@ void GfxDevice::InitializeForMainDevice()
 
     m_GfxCommandQueue.Initialize(this, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_QUEUE_FLAG_NONE);
 
-    DX12_CALL(Dev()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_CommandAllocator)));
-
-    m_GfxCommandList.Initialize(*this, D3D12_COMMAND_LIST_TYPE_DIRECT);
-
     m_GfxFence.Initialize(*this, D3D12_FENCE_FLAG_NONE);
 }
 
@@ -60,54 +56,16 @@ void GfxDevice::CheckStatus()
     bbeAssert(result != DXGI_ERROR_INVALID_CALL, "Graphics Device Invalid Call");
 }
 
-void GfxDevice::BeginFrame()
-{
-    // Command list allocators can only be reset when the associated 
-    // command lists have finished execution on the GPU; apps should use 
-    // fences to determine GPU execution progre
-    DX12_CALL(m_CommandAllocator->Reset());
-
-    // However, when ExecuteCommandList() is called on a particular command 
-    // list, that command list can then be reset at any time and must be before 
-    // re-recording.
-    DX12_CALL(m_GfxCommandList.Dev()->Reset(m_CommandAllocator.Get(), m_PipelineState.Get()));
-}
-
-void GfxDevice::EndFrame()
-{
-    DX12_CALL(m_GfxCommandList.Dev()->Close());
-
-    // Execute the command list.
-    ID3D12CommandList* ppCommandLists[] = { m_GfxCommandList.Dev() };
-    m_GfxCommandQueue.Dev()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-    // TODO: optimize this away
-    WaitForPreviousFrame();
-}
-
 void GfxDevice::ClearRenderTargetView(GfxRenderTargetView& rtv, const float(&clearColor)[4])
 {
     const UINT numBarriers = 1;
 
-    const D3D12_RESOURCE_STATES oldResourceState = rtv.GetCurrentResourceState();
-
-    if (oldResourceState != D3D12_RESOURCE_STATE_RENDER_TARGET)
-    {
-        // Indicate that the GfxRenderTargetView will be used as a render target.
-        m_GfxCommandList.Dev()->ResourceBarrier(numBarriers, &CD3DX12_RESOURCE_BARRIER::Transition(rtv.Dev(), rtv.GetCurrentResourceState(), D3D12_RESOURCE_STATE_RENDER_TARGET));
-    }
+    rtv.GetHazardTrackedResource().Transition(*m_CurrentCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
     const UINT numRects = 0;
     const D3D12_RECT* pRects = nullptr;
 
-    // Record commands.
-    m_GfxCommandList.Dev()->ClearRenderTargetView(rtv.GetCPUDescHandle(), clearColor, numRects, pRects);
-
-    // Revert resource state back
-    if (oldResourceState != D3D12_RESOURCE_STATE_RENDER_TARGET)
-    {
-        m_GfxCommandList.Dev()->ResourceBarrier(numBarriers, &CD3DX12_RESOURCE_BARRIER::Transition(rtv.Dev(), D3D12_RESOURCE_STATE_RENDER_TARGET, oldResourceState));
-    }
+    m_CurrentCommandList->Dev()->ClearRenderTargetView(rtv.GetCPUDescHandle(), clearColor, numRects, pRects);
 }
 
 void GfxDevice::EnableDebugLayer()
@@ -169,8 +127,41 @@ void GfxDevice::ConfigureDebugLayer()
     debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, System::GfxDebugLayerBreakOnWarnings);
 }
 
+void GfxDevice::ExecuteAllActiveCommandLists()
+{
+    bbeProfileFunction();
+
+    std::vector<GfxCommandList*> cmdListsToExecute;
+    {
+        bbeAutoLock(m_ActiveCommandListsLock);
+        cmdListsToExecute.swap(m_ActiveCommandLists);
+    }
+
+    ID3D12CommandList** ppCommandLists = (ID3D12CommandList**)alloca(cmdListsToExecute.size());
+    for (uint32_t i = 0; i < cmdListsToExecute.size(); ++i)
+    {
+        DX12_CALL(cmdListsToExecute[i]->Dev()->Close());
+        ppCommandLists[i] = cmdListsToExecute[i]->Dev();
+    }
+
+    m_GfxCommandQueue.Dev()->ExecuteCommandLists(cmdListsToExecute.size(), ppCommandLists);
+
+    {
+        bbeAutoLock(m_FreeCommandListsLock);
+        m_FreeCommandLists.reserve(cmdListsToExecute.size());
+        for (GfxCommandList* gfxCmdList : cmdListsToExecute)
+        {
+            m_FreeCommandLists.push_back(gfxCmdList);
+        }
+    }
+
+    m_CurrentCommandList = nullptr;
+}
+
 void GfxDevice::WaitForPreviousFrame()
 {
+    bbeProfileFunction();
+
     // WAITING FOR THE FRAME TO COMPLETE BEFORE CONTINUING IS NOT BEST PRACTICE.
     // This is code implemented as such for simplicity
 
@@ -185,4 +176,41 @@ void GfxDevice::WaitForPreviousFrame()
         DX12_CALL(m_GfxFence.Dev()->SetEventOnCompletion(fence, m_GfxFence.GetFenceEvent()));
         WaitForSingleObject(m_GfxFence.GetFenceEvent(), INFINITE);
     }
+}
+
+GfxCommandList* GfxDevice::NewCommandList(const std::string& cmdListName)
+{
+    bbeProfileFunction();
+
+    GfxCommandList* newCmdList = nullptr;
+    auto RenameNewCmdListAndReturn = [&]()
+    {
+        newCmdList->BeginRecording();
+        if (cmdListName.size())
+        {
+            SetDebugName(newCmdList->Dev(), cmdListName);
+        }
+        m_CurrentCommandList = newCmdList;
+        return newCmdList;
+    };
+
+    {
+        bbeAutoLock(m_FreeCommandListsLock);
+        if (m_FreeCommandLists.size())
+        {
+            newCmdList = m_FreeCommandLists.back();
+            m_FreeCommandLists.pop_back();
+            return RenameNewCmdListAndReturn();
+        }
+    }
+
+    newCmdList = m_CommandListsPool.construct();
+
+    {
+        bbeAutoLock(m_ActiveCommandListsLock);
+        m_ActiveCommandLists.push_back(newCmdList);
+    }
+
+    newCmdList->Initialize(*this, D3D12_COMMAND_LIST_TYPE_DIRECT);
+    return RenameNewCmdListAndReturn();
 }

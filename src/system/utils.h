@@ -162,8 +162,6 @@ namespace UtilsPrivate
 #define bbeMemZeroArray(dst)  memset(dst, 0, sizeof(dst))
 #define bbeMemZeroStruct(dst) memset(&dst, 0, sizeof(dst))
 
-#define bbeAutoLock(lock) lock.Lock(); bbeOnExitScope {lock.Unlock();}
-
 template<typename... Args>
 static const std::string StringFormat(const char* format, Args&&... args)
 {

@@ -52,16 +52,19 @@
     <ClCompile Include="..\src\graphic\gfxswapchain.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxdescriptorheap.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxtextures.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\graphic\gfxcommandlist.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
     <ClCompile Include="..\src\graphic\gfxfence.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxtexturesandbuffers.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\system\locks.cpp">
+      <Filter>system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxpipelinestate.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
   </ItemGroup>
@@ -135,16 +138,22 @@
     <ClInclude Include="..\src\graphic\gfxswapchain.h">
       <Filter>graphic</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxdescriptorheap.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxtextures.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\graphic\gfxcommandlist.h">
       <Filter>graphic</Filter>
     </ClInclude>
     <ClInclude Include="..\src\graphic\gfxfence.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxtexturesandbuffers.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\system\freelistpool.h">
+      <Filter>system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\system\locks.h">
+      <Filter>system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxpipelinestate.h">
       <Filter>graphic</Filter>
     </ClInclude>
   </ItemGroup>

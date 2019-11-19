@@ -1,7 +1,6 @@
 #pragma once
 
-#include "graphic/gfxdescriptorheap.h"
-#include "graphic/gfxtextures.h"
+#include "graphic/gfxtexturesandbuffers.h"
 
 class GfxDevice;
 
@@ -13,6 +12,7 @@ public:
     GfxRenderTargetView& GetCurrentBackBuffer() { return m_RenderTargets[m_FrameIndex]; }
 
     void Initialize(uint32_t width, uint32_t height, DXGI_FORMAT);
+    void TransitionBackBufferForPresent();
     void Present();
 
 private:

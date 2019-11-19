@@ -9,10 +9,9 @@ public:
     static void InitializeMainThread() { EASY_MAIN_THREAD; }
     static void InitializeWorkerThread(const char* name) { EASY_THREAD(name); }
     static void EnableProfiling();
-
-private:
     static void DisableProfilingAndDumpToFile();
 
+private:
     inline static uint32_t ms_FramesProfiled = 0;
     inline static float    ms_MsProfiled     = 0.0f;
 
