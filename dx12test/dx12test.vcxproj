@@ -68,7 +68,7 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ForcedIncludeFiles>system/system.h;windows.h;d3d12.h;dxgi1_6.h;d3d12/d3dx12.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ForcedIncludeFiles>system/system.h;windows.h;d3d12.h;D3d12SDKLayers.h;dxgi1_6.h;d3d12/d3dx12.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <DisableSpecificWarnings>4267;</DisableSpecificWarnings>
     </ClCompile>
     <Link>
@@ -93,7 +93,7 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ForcedIncludeFiles>system/system.h;windows.h;d3d12.h;dxgi1_6.h;d3d12/d3dx12.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ForcedIncludeFiles>system/system.h;windows.h;d3d12.h;D3d12SDKLayers.h;dxgi1_6.h;d3d12/d3dx12.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <DisableSpecificWarnings>4267;</DisableSpecificWarnings>
     </ClCompile>
     <Link>
@@ -111,7 +111,7 @@
     <ClCompile Include="..\src\graphic\dx12utils.cpp" />
     <ClCompile Include="..\src\graphic\gfxadapter.cpp" />
     <ClCompile Include="..\src\graphic\gfxcommandlist.cpp" />
-    <ClCompile Include="..\src\graphic\gfxcommandqueue.cpp" />
+    <ClCompile Include="..\src\graphic\gfxcontext.cpp" />
     <ClCompile Include="..\src\graphic\gfxdevice.cpp" />
     <ClCompile Include="..\src\graphic\gfxfence.cpp" />
     <ClCompile Include="..\src\graphic\gfxmanager.cpp" />
@@ -119,6 +119,8 @@
     <ClCompile Include="..\src\graphic\gfxswapchain.cpp" />
     <ClCompile Include="..\src\graphic\gfxtexturesandbuffers.cpp" />
     <ClCompile Include="..\src\graphic\guimanager.cpp" />
+    <ClCompile Include="..\src\graphic\renderpasses\gfxrenderpass.cpp" />
+    <ClCompile Include="..\src\graphic\renderpasses\gfxtestrenderpass.cpp" />
     <ClCompile Include="..\src\system\keyboard.cpp" />
     <ClCompile Include="..\src\system\locks.cpp" />
     <ClCompile Include="..\src\system\logger.cpp" />
@@ -138,7 +140,7 @@
     <ClInclude Include="..\src\graphic\dx12utils.h" />
     <ClInclude Include="..\src\graphic\gfxadapter.h" />
     <ClInclude Include="..\src\graphic\gfxcommandlist.h" />
-    <ClInclude Include="..\src\graphic\gfxcommandqueue.h" />
+    <ClInclude Include="..\src\graphic\gfxcontext.h" />
     <ClInclude Include="..\src\graphic\gfxdevice.h" />
     <ClInclude Include="..\src\graphic\gfxenums.h" />
     <ClInclude Include="..\src\graphic\gfxfence.h" />
@@ -148,6 +150,8 @@
     <ClInclude Include="..\src\graphic\gfxtexturesandbuffers.h" />
     <ClInclude Include="..\src\graphic\gfxutils.h" />
     <ClInclude Include="..\src\graphic\guimanager.h" />
+    <ClInclude Include="..\src\graphic\renderpasses\gfxrenderpass.h" />
+    <ClInclude Include="..\src\graphic\renderpasses\gfxtestrenderpass.h" />
     <ClInclude Include="..\src\system\freelistpool.h" />
     <ClInclude Include="..\src\system\keyboard.h" />
     <ClInclude Include="..\src\system\locks.h" />

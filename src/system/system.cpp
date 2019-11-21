@@ -28,7 +28,7 @@ void System::Loop()
         // make sure I/O ticks happen last
         g_Keyboard.Tick();
         g_Mouse.Tick(ms_LastFrameTimeMs);
-
+        ++ms_SystemFrameNumber;
     } while (!m_Exit);
 
     bbeDebug("Exiting main loop");

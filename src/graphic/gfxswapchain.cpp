@@ -1,9 +1,10 @@
-#include "gfxswapchain.h"
+#include "graphic/gfxswapchain.h"
 
 #include "graphic/gfxmanager.h"
 #include "graphic/gfxadapter.h"
 #include "graphic/dx12utils.h"
 #include "graphic/gfxdevice.h"
+#include "graphic/gfxcontext.h"
 
 extern ::HWND g_EngineWindowHandle;
 
@@ -13,7 +14,7 @@ void GfxSwapChain::Initialize(uint32_t width, uint32_t height, DXGI_FORMAT forma
 
     bbeAssert(m_SwapChain.Get() == nullptr, "");
 
-    GfxDevice& mainGfxDevice = GfxManager::GetInstance().GetMainGfxDevice();
+    GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
 
     // Describe and create the swap chain.
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
@@ -33,7 +34,7 @@ void GfxSwapChain::Initialize(uint32_t width, uint32_t height, DXGI_FORMAT forma
     ComPtr<IDXGISwapChain1> swapChain;
     {
         bbeProfile("CreateSwapChainForHwnd");
-        DX12_CALL(dxgiFactory->CreateSwapChainForHwnd(mainGfxDevice.GetCommandQueue().Dev(), // Swap chain needs the queue so that it can force a flush on it.
+        DX12_CALL(dxgiFactory->CreateSwapChainForHwnd(gfxDevice.GetCommandListsManager().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT), // Swap chain needs the queue so that it can force a flush on it.
                                                       g_EngineWindowHandle,
                                                       &swapChainDesc,
                                                       nullptr,
@@ -45,6 +46,7 @@ void GfxSwapChain::Initialize(uint32_t width, uint32_t height, DXGI_FORMAT forma
     DX12_CALL(dxgiFactory->MakeWindowAssociation(g_EngineWindowHandle, DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER));
 
     DX12_CALL(swapChain.As(&m_SwapChain));
+    swapChain->QueryInterface(IID_PPV_ARGS(&m_SwapChain));
 
     m_FrameIndex = m_SwapChain->GetCurrentBackBufferIndex();
 
@@ -53,18 +55,17 @@ void GfxSwapChain::Initialize(uint32_t width, uint32_t height, DXGI_FORMAT forma
     {
         ComPtr<ID3D12Resource> backBufferResource;
         DX12_CALL(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&backBufferResource)));
-        m_RenderTargets[i].Initialize(mainGfxDevice, backBufferResource.Get());
+        m_RenderTargets[i].Initialize(backBufferResource.Get());
         SetDebugName(m_RenderTargets[i].GetHazardTrackedResource().Dev(), StringFormat("Back Buffer RTV %d", i));
     }
 }
 
-void GfxSwapChain::TransitionBackBufferForPresent()
+void GfxSwapChain::TransitionBackBufferForPresent(GfxContext& context)
 {
     bbeProfileFunction();
 
     GfxHazardTrackedResource& resource = m_RenderTargets[m_FrameIndex].GetHazardTrackedResource();
-    GfxDevice& mainGfxDevice = GfxManager::GetInstance().GetMainGfxDevice();
-    resource.Transition(*mainGfxDevice.GetCurrentCommandList(), D3D12_RESOURCE_STATE_PRESENT);
+    resource.Transition(*context.GetCommandList(), D3D12_RESOURCE_STATE_PRESENT);
 }
 
 void GfxSwapChain::Present()

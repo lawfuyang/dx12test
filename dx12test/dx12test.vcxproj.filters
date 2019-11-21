@@ -46,9 +46,6 @@
     <ClCompile Include="..\src\graphic\dx12utils.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxcommandqueue.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\graphic\gfxswapchain.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
@@ -66,6 +63,15 @@
     </ClCompile>
     <ClCompile Include="..\src\graphic\gfxpipelinestate.cpp">
       <Filter>graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxcontext.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\renderpasses\gfxrenderpass.cpp">
+      <Filter>graphic\renderpasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\renderpasses\gfxtestrenderpass.cpp">
+      <Filter>graphic\renderpasses</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -132,9 +138,6 @@
     <ClInclude Include="..\src\graphic\dx12utils.h">
       <Filter>graphic</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxcommandqueue.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\graphic\gfxswapchain.h">
       <Filter>graphic</Filter>
     </ClInclude>
@@ -156,6 +159,15 @@
     <ClInclude Include="..\src\graphic\gfxpipelinestate.h">
       <Filter>graphic</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxcontext.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\renderpasses\gfxrenderpass.h">
+      <Filter>graphic\renderpasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\renderpasses\gfxtestrenderpass.h">
+      <Filter>graphic\renderpasses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="system">
@@ -172,6 +184,9 @@
     </Filter>
     <Filter Include="extern\imgui">
       <UniqueIdentifier>{c12770a0-aeca-4907-9392-b66b8a7818aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="graphic\renderpasses">
+      <UniqueIdentifier>{406acab7-fe2d-4363-aa67-ad3dc6e25050}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

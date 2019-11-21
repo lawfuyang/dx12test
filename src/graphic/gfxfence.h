@@ -9,7 +9,7 @@ public:
 
     ID3D12Fence* Dev() const { return m_Fence.Get(); }
 
-    void Initialize(GfxDevice& gfxDevice, D3D12_FENCE_FLAGS);
+    void Initialize(D3D12_FENCE_FLAGS);
 
     ::HANDLE GetFenceEvent() const { return m_FenceEvent; }
 

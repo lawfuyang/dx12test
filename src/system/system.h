@@ -57,6 +57,8 @@ public:
     static float GetCappedFrameTimeMs() { return ms_AvgCappedFrameTimeMs; }
     static float GetCappedFPS()         { return ms_AvgCappedFPS; }
 
+    static uint32_t GetSystemFrameNumber() { return ms_SystemFrameNumber; }
+
 private:
     void InitializeGraphic();
     void ShutdownGraphic();
@@ -73,6 +75,8 @@ private:
     inline static float ms_AvgCappedFPS         = 0.0f;
 
     tf::Executor m_Executor;
+
+    inline static uint32_t ms_SystemFrameNumber = 0;
 
     friend class FrameRateController;
 };

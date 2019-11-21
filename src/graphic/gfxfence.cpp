@@ -1,5 +1,6 @@
 #include "graphic/gfxfence.h"
 
+#include "graphic/gfxmanager.h"
 #include "graphic/dx12utils.h"
 #include "graphic/gfxdevice.h"
 
@@ -8,9 +9,11 @@ GfxFence::~GfxFence()
     ::CloseHandle(m_FenceEvent);
 }
 
-void GfxFence::Initialize(GfxDevice& gfxDevice, D3D12_FENCE_FLAGS fenceFlags)
+void GfxFence::Initialize(D3D12_FENCE_FLAGS fenceFlags)
 {
     bbeProfileFunction();
+
+    GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
 
     const uint64_t initialValue = 0;
 

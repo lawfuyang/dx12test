@@ -1,11 +1,14 @@
 #include "graphic/gfxtexturesandbuffers.h"
 
+#include "graphic/gfxmanager.h"
 #include "graphic/gfxdevice.h"
 #include "graphic/dx12utils.h"
 
-void GfxDescriptorHeap::Initialize(GfxDevice& gfxDevice, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS flags)
+void GfxDescriptorHeap::Initialize(uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS flags)
 {
     bbeProfileFunction();
+
+    GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
 
     bbeAssert(m_DescriptorHeap.Get() == nullptr, "");
 
@@ -44,13 +47,15 @@ D3D12_CPU_DESCRIPTOR_HANDLE GfxRenderTargetView::GetCPUDescHandle() const
     return D3D12_CPU_DESCRIPTOR_HANDLE{ m_DescHeap.Dev()->GetCPUDescriptorHandleForHeapStart() };
 }
 
-void GfxRenderTargetView::Initialize(GfxDevice& gfxDevice, ID3D12Resource* resource)
+void GfxRenderTargetView::Initialize(ID3D12Resource* resource)
 {
     bbeProfileFunction();
 
+    GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
+
     m_HazardTrackedResource.Set(resource);
 
-    m_DescHeap.Initialize(gfxDevice, 1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+    m_DescHeap.Initialize(1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 
     // TODO: Fill In
     //D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};

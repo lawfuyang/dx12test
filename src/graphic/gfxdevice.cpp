@@ -2,13 +2,11 @@
 
 #include "graphic/dx12utils.h"
 #include "graphic/gfxadapter.h"
-#include "graphic/gfxenums.h"
+#include "graphic/gfxcontext.h"
 
-void GfxDevice::InitializeForMainDevice()
+void GfxDevice::Initialize()
 {
     bbeProfileFunction();
-
-    m_DeviceType = GfxDeviceType::Main;
 
     if constexpr (System::EnableGfxDebugLayer)
     {
@@ -40,9 +38,9 @@ void GfxDevice::InitializeForMainDevice()
         ConfigureDebugLayer();
     }
 
-    m_GfxCommandQueue.Initialize(this, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_QUEUE_FLAG_NONE);
+    m_CommandListsManager.Initialize();
 
-    m_GfxFence.Initialize(*this, D3D12_FENCE_FLAG_NONE);
+    m_GfxFence.Initialize(D3D12_FENCE_FLAG_NONE);
 }
 
 void GfxDevice::CheckStatus()
@@ -54,18 +52,6 @@ void GfxDevice::CheckStatus()
     bbeAssert(result != DXGI_ERROR_DEVICE_RESET, "Graphics Device Reset");
     bbeAssert(result != DXGI_ERROR_DRIVER_INTERNAL_ERROR, "Graphics Device Internal Error");
     bbeAssert(result != DXGI_ERROR_INVALID_CALL, "Graphics Device Invalid Call");
-}
-
-void GfxDevice::ClearRenderTargetView(GfxRenderTargetView& rtv, const float(&clearColor)[4])
-{
-    const UINT numBarriers = 1;
-
-    rtv.GetHazardTrackedResource().Transition(*m_CurrentCommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-    const UINT numRects = 0;
-    const D3D12_RECT* pRects = nullptr;
-
-    m_CurrentCommandList->Dev()->ClearRenderTargetView(rtv.GetCPUDescHandle(), clearColor, numRects, pRects);
 }
 
 void GfxDevice::EnableDebugLayer()
@@ -127,35 +113,9 @@ void GfxDevice::ConfigureDebugLayer()
     debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, System::GfxDebugLayerBreakOnWarnings);
 }
 
-void GfxDevice::ExecuteAllActiveCommandLists()
+void GfxDevice::EndFrame()
 {
-    bbeProfileFunction();
-
-    std::vector<GfxCommandList*> cmdListsToExecute;
-    {
-        bbeAutoLock(m_ActiveCommandListsLock);
-        cmdListsToExecute.swap(m_ActiveCommandLists);
-    }
-
-    ID3D12CommandList** ppCommandLists = (ID3D12CommandList**)alloca(cmdListsToExecute.size());
-    for (uint32_t i = 0; i < cmdListsToExecute.size(); ++i)
-    {
-        DX12_CALL(cmdListsToExecute[i]->Dev()->Close());
-        ppCommandLists[i] = cmdListsToExecute[i]->Dev();
-    }
-
-    m_GfxCommandQueue.Dev()->ExecuteCommandLists(cmdListsToExecute.size(), ppCommandLists);
-
-    {
-        bbeAutoLock(m_FreeCommandListsLock);
-        m_FreeCommandLists.reserve(cmdListsToExecute.size());
-        for (GfxCommandList* gfxCmdList : cmdListsToExecute)
-        {
-            m_FreeCommandLists.push_back(gfxCmdList);
-        }
-    }
-
-    m_CurrentCommandList = nullptr;
+    m_CommandListsManager.ExecuteAllActiveCommandLists();
 }
 
 void GfxDevice::WaitForPreviousFrame()
@@ -167,7 +127,7 @@ void GfxDevice::WaitForPreviousFrame()
 
     // Signal and increment the fence value.
     const UINT64 fence = m_GfxFence.GetFenceValue();
-    DX12_CALL(m_GfxCommandQueue.Dev()->Signal(m_GfxFence.Dev(), fence));
+    DX12_CALL(m_CommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT)->Signal(m_GfxFence.Dev(), fence));
     m_GfxFence.IncrementFenceValue();
 
     // Wait until the previous frame is finished.
@@ -178,39 +138,13 @@ void GfxDevice::WaitForPreviousFrame()
     }
 }
 
-GfxCommandList* GfxDevice::NewCommandList(const std::string& cmdListName)
+GfxContext GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType)
 {
-    bbeProfileFunction();
+    uint32_t frameNum = System::GetSystemFrameNumber();
 
-    GfxCommandList* newCmdList = nullptr;
-    auto RenameNewCmdListAndReturn = [&]()
-    {
-        newCmdList->BeginRecording();
-        if (cmdListName.size())
-        {
-            SetDebugName(newCmdList->Dev(), cmdListName);
-        }
-        m_CurrentCommandList = newCmdList;
-        return newCmdList;
-    };
+    GfxContext newContext;
+    newContext.m_Device = this;
+    newContext.m_CommandList = m_CommandListsManager.Allocate(cmdListType);
 
-    {
-        bbeAutoLock(m_FreeCommandListsLock);
-        if (m_FreeCommandLists.size())
-        {
-            newCmdList = m_FreeCommandLists.back();
-            m_FreeCommandLists.pop_back();
-            return RenameNewCmdListAndReturn();
-        }
-    }
-
-    newCmdList = m_CommandListsPool.construct();
-
-    {
-        bbeAutoLock(m_ActiveCommandListsLock);
-        m_ActiveCommandLists.push_back(newCmdList);
-    }
-
-    newCmdList->Initialize(*this, D3D12_COMMAND_LIST_TYPE_DIRECT);
-    return RenameNewCmdListAndReturn();
+    return newContext;
 }

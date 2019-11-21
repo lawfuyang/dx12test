@@ -15,15 +15,14 @@ public:
     void ScheduleGraphicTasks(tf::Subflow&);
 
     void BeginFrame();
-    void Render();
     void EndFrame();
 
-    GfxDevice& GetMainGfxDevice() { return *m_MainDevice; }
-
+    GfxDevice& GetGfxDevice() { return *m_GfxDevice; }
+    GfxSwapChain& GetSwapChain() { return *m_SwapChain; }
     GUIManager& GetGUIManager() { return *m_GUIManager; }
 
 private:
-    GfxDevice* m_MainDevice = nullptr;
+    GfxDevice* m_GfxDevice = nullptr;
     GfxSwapChain* m_SwapChain = nullptr;
     GUIManager* m_GUIManager = nullptr;
 };

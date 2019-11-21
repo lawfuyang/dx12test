@@ -2,7 +2,7 @@
 
 #include "graphic/gfxtexturesandbuffers.h"
 
-class GfxDevice;
+class GfxContext;
 
 class GfxSwapChain
 {
@@ -12,7 +12,7 @@ public:
     GfxRenderTargetView& GetCurrentBackBuffer() { return m_RenderTargets[m_FrameIndex]; }
 
     void Initialize(uint32_t width, uint32_t height, DXGI_FORMAT);
-    void TransitionBackBufferForPresent();
+    void TransitionBackBufferForPresent(GfxContext&);
     void Present();
 
 private:
