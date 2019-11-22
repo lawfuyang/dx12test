@@ -4,11 +4,6 @@
 #include "graphic/dx12utils.h"
 #include "graphic/gfxdevice.h"
 
-GfxFence::~GfxFence()
-{
-    ::CloseHandle(m_FenceEvent);
-}
-
 void GfxFence::Initialize(D3D12_FENCE_FLAGS fenceFlags)
 {
     bbeProfileFunction();
@@ -22,8 +17,5 @@ void GfxFence::Initialize(D3D12_FENCE_FLAGS fenceFlags)
 
     // Create an event handle to use for frame synchronization.
     m_FenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-    if (m_FenceEvent == nullptr)
-    {
-        DX12_CALL(HRESULT_FROM_WIN32(GetLastError()));
-    }
+    bbeAssert(m_FenceEvent, "%s", GetLastErrorAsString().c_str());
 }

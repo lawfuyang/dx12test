@@ -11,9 +11,12 @@ public:
     static void EnableProfiling();
     static void DisableProfilingAndDumpToFile();
 
+    static bool IsDumpingBlocks() { return ms_DumpingBlocks; }
+
 private:
     inline static uint32_t ms_FramesProfiled = 0;
     inline static float    ms_MsProfiled     = 0.0f;
+    inline static bool     ms_DumpingBlocks  = false;
 
     friend class ProfilerInstance;
 };

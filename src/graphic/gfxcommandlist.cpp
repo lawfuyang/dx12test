@@ -75,82 +75,49 @@ void GfxCommandListsManager::Initialize()
     DX12_CALL(gfxDevice.Dev()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&pool.m_CommandQueue)));
 }
 
-BBE_OPTIMIZE_OFF;
-
 GfxCommandList* GfxCommandListsManager::Allocate(D3D12_COMMAND_LIST_TYPE cmdListType)
 {
     bbeProfileFunction();
 
     CommandListPool& pool = m_Pools[cmdListType];
     GfxCommandList* newCmdList = nullptr;
-    bbeOnExitScope{ newCmdList->BeginRecording(); };
-
+    bbeOnExitScope
     {
-        bbeAutoLock(pool.m_FreeCommandListsLock);
-        if (pool.m_FreeCommandLists.size())
+        newCmdList->BeginRecording(); 
+        pool.m_ActiveCommandLists.push(newCmdList);
+    };
+
+    pool.m_FreeCommandLists.consume_one([&](GfxCommandList* poppedFreeList)
         {
-            newCmdList = pool.m_FreeCommandLists.back();
-            pool.m_FreeCommandLists.pop_back();
-            return newCmdList;
-        }
+            newCmdList = poppedFreeList;
+        });
+    if (newCmdList)
+    {
+        return newCmdList;
     }
 
     newCmdList = pool.m_CommandListsPool.construct();
-    {
-        bbeAutoLock(pool.m_ActiveCommandListsLock);
-        pool.m_ActiveCommandLists.push_back(newCmdList);
-    }
-
     newCmdList->Initialize(cmdListType);
+
     return newCmdList;
-}
-
-BBE_OPTIMIZE_ON;
-
-void GfxCommandListsManager::Free(GfxCommandList* cmdList)
-{
-    CommandListPool& pool = m_Pools[cmdList->GetType()];
-
-    bbeAutoLock(pool.m_FreeCommandListsLock);
-    pool.m_FreeCommandLists.push_back(cmdList);
-}
-
-void GfxCommandListsManager::ExecuteCommandLists(std::vector<GfxCommandList*>& cmdListsToExecute, CommandListPool& pool)
-{
-    ID3D12CommandList** ppCommandLists = (ID3D12CommandList**)alloca(cmdListsToExecute.size());
-
-    for (uint32_t i = 0; i < cmdListsToExecute.size(); ++i)
-    {
-        cmdListsToExecute[i]->EndRecording();
-        ppCommandLists[i] = cmdListsToExecute[i]->Dev();
-    }
-
-    pool.m_CommandQueue->ExecuteCommandLists(cmdListsToExecute.size(), ppCommandLists);
 }
 
 void GfxCommandListsManager::ExecuteAllActiveCommandLists()
 {
     bbeProfileFunction();
 
-    for (std::pair<const D3D12_COMMAND_LIST_TYPE, CommandListPool>& cmdListTypePoolPair : m_Pools)
+    for (auto& cmdListTypePoolPair : m_Pools)
     {
         CommandListPool& pool = cmdListTypePoolPair.second;
 
-        std::vector<GfxCommandList*> cmdListsToExecute;
-        {
-            bbeAutoLock(pool.m_ActiveCommandListsLock);
-            cmdListsToExecute.swap(pool.m_ActiveCommandLists);
-        }
-
-        // due to a call to "alloca", the logic is moved into a helper function
-        ExecuteCommandLists(cmdListsToExecute, pool);
-
-        {
-            bbeAutoLock(pool.m_FreeCommandListsLock);
-            for (GfxCommandList* gfxCmdList : cmdListsToExecute)
+        pool.m_ActiveCommandLists.consume_all([&](GfxCommandList* cmdListToConsume)
             {
-                pool.m_FreeCommandLists.push_back(gfxCmdList);
-            }
-        }
+                cmdListToConsume->EndRecording();
+
+                ID3D12CommandList* ppCommandLists[] = { cmdListToConsume->Dev() };
+                pool.m_CommandQueue->ExecuteCommandLists(1, ppCommandLists);
+
+                pool.m_FreeCommandLists.push(cmdListToConsume);
+            });
     }
 }

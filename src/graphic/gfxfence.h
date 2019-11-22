@@ -5,7 +5,10 @@ class GfxDevice;
 class GfxFence
 {
 public:
-    ~GfxFence();
+    ~GfxFence()
+    {
+        ::CloseHandle(m_FenceEvent);
+    }
 
     ID3D12Fence* Dev() const { return m_Fence.Get(); }
 
@@ -19,6 +22,6 @@ public:
 private:
     ComPtr<ID3D12Fence> m_Fence;
 
-    uint64_t m_FenceValue = 1;
+    uint64_t m_FenceValue = 0;
     ::HANDLE m_FenceEvent = nullptr;
 };

@@ -3,15 +3,18 @@
 #include "graphic/gfxcontext.h"
 #include "graphic/gfxswapchain.h"
 #include "graphic/gfxmanager.h"
+#include "graphic/gfxdevice.h"
 
 GfxTestRenderPass::GfxTestRenderPass()
     : GfxRenderPass("GfxTestRenderPass")
 {
 }
 
-void GfxTestRenderPass::Render(GfxContext& context)
+void GfxTestRenderPass::Render(GfxDevice& gfxDevice)
 {
     bbeProfileFunction();
+
+    GfxContext context = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
     GfxSwapChain& swapChain = GfxManager::GetInstance().GetSwapChain();
 

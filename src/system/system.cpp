@@ -27,7 +27,7 @@ void System::Loop()
 
         // make sure I/O ticks happen last
         g_Keyboard.Tick();
-        g_Mouse.Tick(ms_LastFrameTimeMs);
+        g_Mouse.Tick(ms_RealFrameTimeMs);
         ++ms_SystemFrameNumber;
     } while (!m_Exit);
 
@@ -57,15 +57,12 @@ void System::Shutdown()
 void System::InitializeGraphic()
 {
     bbeProfileFunction();
-    bbeDebug("Initializing Graphic");
 
     GfxManager::GetInstance().Initialize();
 }
 
 void System::ShutdownGraphic()
 {
-    bbeDebug("Shutting down Graphic");
-
     GfxManager::GetInstance().ShutDown();
 }
 
@@ -92,27 +89,19 @@ FrameRateController::FrameRateController()
 
 FrameRateController::~FrameRateController()
 {
-    UpdateAvgRealFrameTime(m_StopWatch.ElapsedUS());
+    float realFrameTimeMs = (float)m_StopWatch.ElapsedUS() / 1000;
+    float fps = 1000.0f / realFrameTimeMs;
 
     bbeProfile("Idle");
 
     //::WaitForSingleObject(ms_TimerHandle, INFINITE); // This is unreliable as fuck
     while (std::chrono::high_resolution_clock::now() < m_FrameEndTime) { std::this_thread::yield(); } // busy wait until exactly fps limit
 
-    UpdateAvgCappedFrameTime(m_StopWatch.ElapsedUS());
+    float cappedFrameTimeMs = (float)m_StopWatch.ElapsedUS() / 1000;
+    float cappedFPS = 1000.0f / cappedFrameTimeMs;
 
-    System::ms_LastFrameTimeMs      = (float)m_StopWatch.ElapsedUS() / 1000;
-    System::ms_AvgRealFrameTimeMs   = ms_AvgRealFrameTimeMs;
-    System::ms_AvgFPS               = ms_AvgFPS;
-    System::ms_AvgCappedFrameTimeMs = ms_AvgCappedFrameTimeMs;
-    System::ms_AvgCappedFPS         = ms_AvgCappedFPS;
-}
-
-void FrameRateController::UpdateAvgFrameTimeInternal(FpsArray& array, uint8_t& arrCursor, uint64_t elapsedUs, float& avgFrameTime, float& avgFPS)
-{
-    array[arrCursor++] = elapsedUs;
-    arrCursor = arrCursor % NUM_AVG_FRAMES;
-
-    avgFrameTime = (float)(std::accumulate(array, array + NUM_AVG_FRAMES, UINT64_C(0)) / NUM_AVG_FRAMES) / 1000;
-    avgFPS = 1000.0f / avgFrameTime;
+    System::ms_RealFrameTimeMs   = realFrameTimeMs;
+    System::ms_FPS               = fps;
+    System::ms_CappedFrameTimeMs = cappedFrameTimeMs;
+    System::ms_CappedFPS         = cappedFPS;
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-class GfxContext;
+class GfxDevice;
 
 class GfxRenderPass
 {
@@ -11,7 +11,7 @@ public:
 
     virtual ~GfxRenderPass() {}
 
-    virtual void Render(GfxContext&) = 0;
+    virtual void Render(GfxDevice&) = 0;
 
     const char* GetName() const { return m_Name; }
 

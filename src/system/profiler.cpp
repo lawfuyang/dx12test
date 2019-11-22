@@ -18,6 +18,8 @@ void SystemProfiler::DisableProfilingAndDumpToFile()
         return;
     }
 
+    BBE_SCOPED_UNSET(bool, ms_DumpingBlocks, true);
+
     const std::string dumpFilePath = StringFormat("..\\bin\\%s.prof", GetTimeStamp().c_str());
     bbeInfo("Dumping profile capture %s", dumpFilePath.c_str());
 

@@ -122,26 +122,24 @@ void GfxDevice::WaitForPreviousFrame()
 {
     bbeProfileFunction();
 
-    // WAITING FOR THE FRAME TO COMPLETE BEFORE CONTINUING IS NOT BEST PRACTICE.
-    // This is code implemented as such for simplicity
-
     // Signal and increment the fence value.
-    const UINT64 fence = m_GfxFence.GetFenceValue();
-    DX12_CALL(m_CommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT)->Signal(m_GfxFence.Dev(), fence));
     m_GfxFence.IncrementFenceValue();
+    DX12_CALL(m_CommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT)->Signal(m_GfxFence.Dev(), m_GfxFence.GetFenceValue()));
 
-    // Wait until the previous frame is finished.
-    if (m_GfxFence.Dev()->GetCompletedValue() < fence)
+    if (m_GfxFence.Dev()->GetCompletedValue() < m_GfxFence.GetFenceValue())
     {
-        DX12_CALL(m_GfxFence.Dev()->SetEventOnCompletion(fence, m_GfxFence.GetFenceEvent()));
-        WaitForSingleObject(m_GfxFence.GetFenceEvent(), INFINITE);
+        DX12_CALL(m_GfxFence.Dev()->SetEventOnCompletion(m_GfxFence.GetFenceValue(), m_GfxFence.GetFenceEvent()));
+
+        // Dumping profiling blocks may long, so we must wait until the previous frame is finished, else GfxCommandList will try to Reset while executing
+        if (SystemProfiler::IsDumpingBlocks())
+        {
+            WaitForSingleObject(m_GfxFence.GetFenceEvent(), INFINITE);
+        }
     }
 }
 
 GfxContext GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType)
 {
-    uint32_t frameNum = System::GetSystemFrameNumber();
-
     GfxContext newContext;
     newContext.m_Device = this;
     newContext.m_CommandList = m_CommandListsManager.Allocate(cmdListType);

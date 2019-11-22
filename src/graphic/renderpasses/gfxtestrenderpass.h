@@ -7,7 +7,7 @@ class GfxTestRenderPass : public GfxRenderPass
 public:
     GfxTestRenderPass();
 
-    void Render(GfxContext&) override;
+    void Render(GfxDevice&) override;
 
 private:
 };

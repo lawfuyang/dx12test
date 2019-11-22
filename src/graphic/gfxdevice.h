@@ -23,9 +23,7 @@ private:
     void ConfigureDebugLayer();
 
     GfxCommandListsManager m_CommandListsManager;
-
     GfxFence m_GfxFence;
-    GfxPipelineState m_PipelineState;
 
     ComPtr<ID3D12Device6> m_D3DDevice;
 };

@@ -47,7 +47,7 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& sf)
 {
     bbeProfileFunction();
 
-    tf::Task beginFrameTask = sf.emplace([this]() { BeginFrame(); });
+    tf::Task beginFrameTask = sf.emplace([&]() { BeginFrame(); });
     
     std::vector<tf::Task> allRenderTasks;
     allRenderTasks.reserve(GfxManagerSingletons::gs_RenderPasses.size());
@@ -56,15 +56,14 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& sf)
     {
         tf::Task newRenderTask = sf.emplace([&]()
             {
-                GfxContext newContext = m_GfxDevice->GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
-                renderPass->Render(newContext);
+                renderPass->Render(*m_GfxDevice);
             });
         newRenderTask.name(renderPass->GetName());
         allRenderTasks.push_back(newRenderTask);
     }
     beginFrameTask.precede(allRenderTasks);
 
-    tf::Task endFrameTask = sf.emplace([this]() { EndFrame(); });
+    tf::Task endFrameTask = sf.emplace([&]() { EndFrame(); });
     endFrameTask.succeed(allRenderTasks);
 }
 
@@ -74,15 +73,11 @@ void GfxManager::BeginFrame()
 
     // check for DXGI_ERRORs on all GfxDevices
     m_GfxDevice->CheckStatus();
-
-    m_GUIManager->BeginFrame();
 }
 
 void GfxManager::EndFrame()
 {
     bbeProfileFunction();
-
-    m_GUIManager->EndFrameAndRenderGUI();
 
     m_GfxDevice->EndFrame();
     m_SwapChain->Present();

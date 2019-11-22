@@ -1,6 +1,7 @@
 #pragma once
 
 #include "extern/boost/pool/object_pool.hpp"
+#include "extern/boost/lockfree/stack.hpp"
 
 class GfxCommandList
 {
@@ -28,26 +29,19 @@ public:
     void Initialize();
 
     GfxCommandList* Allocate(D3D12_COMMAND_LIST_TYPE);
-    void Free(GfxCommandList*);
     void ExecuteAllActiveCommandLists();
 
     ID3D12CommandQueue* GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) { return m_Pools[type].m_CommandQueue.Get(); }
 
 private:
-
     struct CommandListPool
     {
         ComPtr<ID3D12CommandQueue> m_CommandQueue;
 
-        boost::object_pool<GfxCommandList> m_CommandListsPool;
-
-        std::vector<GfxCommandList*> m_FreeCommandLists;
-        std::vector<GfxCommandList*> m_ActiveCommandLists;
-        SpinLock m_FreeCommandListsLock;
-        SpinLock m_ActiveCommandListsLock;
+        boost::object_pool<GfxCommandList>      m_CommandListsPool;
+        boost::lockfree::stack<GfxCommandList*> m_FreeCommandLists{ 32 };
+        boost::lockfree::stack<GfxCommandList*> m_ActiveCommandLists{ 32 };
     };
-
-    void ExecuteCommandLists(std::vector<GfxCommandList*>& cmdListsToExecute, CommandListPool& pool);
 
     std::unordered_map<D3D12_COMMAND_LIST_TYPE, CommandListPool> m_Pools;
 };

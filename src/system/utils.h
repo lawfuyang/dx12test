@@ -43,6 +43,25 @@ namespace UtilsPrivate
         return ExitScopeGuard<typename std::decay<ExitFunction>::type>(std::forward<ExitFunction>(fn));
     }
 
+    template<class T>
+    class MemberAutoUnset
+    {
+        T& m_MemberRef;
+        T   m_BackupVal;
+
+    public:
+        MemberAutoUnset(T& member, T value)
+            : m_MemberRef(member)
+        {
+            m_BackupVal = m_MemberRef;
+            m_MemberRef = value;
+        }
+        ~MemberAutoUnset()
+        {
+            m_MemberRef = m_BackupVal;
+        }
+    };
+
     template <uint32_t c, int32_t k = 8>
     struct CompileTimeCRCTableBuilder : CompileTimeCRCTableBuilder<((c & 1) ? 0xedb88320 : 0) ^ (c >> 1), k - 1> {};
     template <uint32_t c>
@@ -109,9 +128,11 @@ namespace UtilsPrivate
 #define bbeJOIN( Arg1, Arg2 )               bbeDO_JOIN( Arg1, Arg2 )
 #define bbeUniqueVariable(basename)         bbeJOIN(basename, __COUNTER__)
 
-#define bbeOnExitScope \
-    auto bbeUniqueVariable(AutoOnExitVar) \
+#define bbeOnExitScope                         \
+    auto bbeUniqueVariable(AutoOnExitVar)      \
     = UtilsPrivate::ScopeGuardOnExit() + [&]()
+
+#define BBE_SCOPED_UNSET(type, var, val) UtilsPrivate::MemberAutoUnset<type> bbeUniqueVariable(autoUnset){var, val};
 
 #define BBE_DEFINE_ENUM_OPERATOR(enumType)                                                                                                                         \
     inline enumType operator|( enumType a, enumType b )                                                                                                            \
