@@ -9,7 +9,10 @@
     }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-const std::string GetD3DFeatureLevelName(D3D_FEATURE_LEVEL FeatureLevel);
+const char* GetD3DFeatureLevelName(D3D_FEATURE_LEVEL FeatureLevel);
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------
+const char* GetD3DShaderModelName(D3D_SHADER_MODEL shaderModel);
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 const std::string GetD3D12ResourceName(ID3D12Resource* resource);

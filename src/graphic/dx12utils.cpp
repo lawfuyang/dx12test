@@ -4,21 +4,37 @@
 static const GUID GUID_ParentPointer = { 0x4aa579ab, 0x315b, 0x4d6b,{ 0xbe, 0x23, 0x17, 0xff, 0xd8, 0x40, 0x23, 0x16 } };
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-const std::string GetD3DFeatureLevelName(D3D_FEATURE_LEVEL FeatureLevel)
+const char* GetD3DFeatureLevelName(D3D_FEATURE_LEVEL FeatureLevel)
 {
     switch (FeatureLevel)
     {
-    case D3D_FEATURE_LEVEL_9_1: return "9.1";
-    case D3D_FEATURE_LEVEL_9_2: return "9.2";
-    case D3D_FEATURE_LEVEL_9_3: return "9.3";
-    case D3D_FEATURE_LEVEL_10_0: return "10.0";
-    case D3D_FEATURE_LEVEL_10_1: return "10.1";
-    case D3D_FEATURE_LEVEL_11_0: return "11.0";
-    case D3D_FEATURE_LEVEL_11_1: return "11.1";
-    case D3D_FEATURE_LEVEL_12_0: return "12.0";
-    case D3D_FEATURE_LEVEL_12_1: return "12.1";
+        bbeSimpleSwitchCaseString(D3D_FEATURE_LEVEL_9_1);
+        bbeSimpleSwitchCaseString(D3D_FEATURE_LEVEL_9_2);
+        bbeSimpleSwitchCaseString(D3D_FEATURE_LEVEL_9_3);
+        bbeSimpleSwitchCaseString(D3D_FEATURE_LEVEL_10_0);
+        bbeSimpleSwitchCaseString(D3D_FEATURE_LEVEL_10_1);
+        bbeSimpleSwitchCaseString(D3D_FEATURE_LEVEL_11_0);
+        bbeSimpleSwitchCaseString(D3D_FEATURE_LEVEL_11_1);
+        bbeSimpleSwitchCaseString(D3D_FEATURE_LEVEL_12_0);
+        bbeSimpleSwitchCaseString(D3D_FEATURE_LEVEL_12_1);
 
-    default: return "12.1+";
+    default: return "D3D_FEATURE_LEVEL_12_1+";
+    }
+}
+
+const char* GetD3DShaderModelName(D3D_SHADER_MODEL shaderModel)
+{
+    switch (shaderModel)
+    {
+        bbeSimpleSwitchCaseString(D3D_SHADER_MODEL_5_1);
+        bbeSimpleSwitchCaseString(D3D_SHADER_MODEL_6_0);
+        bbeSimpleSwitchCaseString(D3D_SHADER_MODEL_6_1);
+        bbeSimpleSwitchCaseString(D3D_SHADER_MODEL_6_2);
+        bbeSimpleSwitchCaseString(D3D_SHADER_MODEL_6_3);
+        bbeSimpleSwitchCaseString(D3D_SHADER_MODEL_6_4);
+        bbeSimpleSwitchCaseString(D3D_SHADER_MODEL_6_5);
+
+    default: return "D3D_SHADER_MODEL_6_5+";
     }
 }
 

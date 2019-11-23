@@ -3,7 +3,7 @@
 #include "graphic/gfxcommandlist.h"
 #include "graphic/gfxtexturesandbuffers.h"
 
-void GfxContext::ClearRenderTargetView(GfxRenderTargetView& rtv, const float(&clearColor)[4])
+void GfxContext::ClearRenderTargetView(GfxRenderTargetView& rtv, const float(&clearColor)[4]) const
 {
     const UINT numBarriers = 1;
 

@@ -10,11 +10,9 @@ GfxTestRenderPass::GfxTestRenderPass()
 {
 }
 
-void GfxTestRenderPass::Render(GfxDevice& gfxDevice)
+void GfxTestRenderPass::Render(const GfxContext& context)
 {
     bbeProfileFunction();
-
-    GfxContext context = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
     GfxSwapChain& swapChain = GfxManager::GetInstance().GetSwapChain();
 

@@ -37,16 +37,6 @@ public:
     static const uint32_t APP_WINDOW_HEIGHT  = 900;
     static const uint32_t FPS_LIMIT          = 60;
 
-    // Gfx Debug Layer
-    static const bool EnableGfxDebugLayer                                 = true;
-    static const bool GfxDebugLayerBreakOnWarnings                        = EnableGfxDebugLayer && true;
-    static const bool GfxDebugLayerBreakOnErrors                          = EnableGfxDebugLayer && true;
-    static const bool GfxDebugLayerLogVerbose                             = EnableGfxDebugLayer && true;
-    static const bool GfxDebugLayerEnableGPUValidation                    = EnableGfxDebugLayer && true;
-    static const bool GfxDebugLayerSynchronizedCommandQueueValidation     = EnableGfxDebugLayer && true;
-    static const bool GfxDebugLayerDisableStateTracking                   = EnableGfxDebugLayer && false;
-    static const bool GfxDebugLayerEnableConservativeResorceStateTracking = EnableGfxDebugLayer && true;
-
     void Initialize();
     void Shutdown();
     void ProcessWindowMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);

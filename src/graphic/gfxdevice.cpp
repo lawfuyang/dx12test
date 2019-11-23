@@ -4,11 +4,20 @@
 #include "graphic/gfxadapter.h"
 #include "graphic/gfxcontext.h"
 
+const bool        g_EnableGfxDebugLayer                     = true;
+static const bool gs_BreakOnWarnings                        = g_EnableGfxDebugLayer && true;
+static const bool gs_BreakOnErrors                          = g_EnableGfxDebugLayer && true;
+static const bool gs_LogVerbose                             = g_EnableGfxDebugLayer && true;
+static const bool gs_EnableGPUValidation                    = g_EnableGfxDebugLayer && true;
+static const bool gs_SynchronizedCommandQueueValidation     = g_EnableGfxDebugLayer && true;
+static const bool gs_DisableStateTracking                   = g_EnableGfxDebugLayer && false;
+static const bool gs_EnableConservativeResorceStateTracking = g_EnableGfxDebugLayer && true;
+
 void GfxDevice::Initialize()
 {
     bbeProfileFunction();
 
-    if constexpr (System::EnableGfxDebugLayer)
+    if constexpr (g_EnableGfxDebugLayer)
     {
         EnableDebugLayer();
     }
@@ -33,7 +42,7 @@ void GfxDevice::Initialize()
     }
     bbeAssert(m_D3DDevice.Get() != nullptr, "");
 
-    if constexpr (System::EnableGfxDebugLayer)
+    if constexpr (g_EnableGfxDebugLayer)
     {
         ConfigureDebugLayer();
     }
@@ -41,6 +50,8 @@ void GfxDevice::Initialize()
     m_CommandListsManager.Initialize();
 
     m_GfxFence.Initialize(D3D12_FENCE_FLAG_NONE);
+
+    CheckFeaturesSupports();
 }
 
 void GfxDevice::CheckStatus()
@@ -66,14 +77,14 @@ void GfxDevice::EnableDebugLayer()
         ComPtr<ID3D12Debug1> debugController1;
         if (SUCCEEDED(debugController->QueryInterface(IID_PPV_ARGS(&debugController1))))
         {
-            debugController1->SetEnableGPUBasedValidation(System::GfxDebugLayerEnableGPUValidation);
-            debugController1->SetEnableSynchronizedCommandQueueValidation(System::GfxDebugLayerSynchronizedCommandQueueValidation);
+            debugController1->SetEnableGPUBasedValidation(gs_EnableGPUValidation);
+            debugController1->SetEnableSynchronizedCommandQueueValidation(gs_SynchronizedCommandQueueValidation);
         }
 
         ComPtr<ID3D12Debug2> debugController2;
         if (SUCCEEDED(debugController->QueryInterface(IID_PPV_ARGS(&debugController2))))
         {
-            debugController2->SetGPUBasedValidationFlags(System::GfxDebugLayerDisableStateTracking ? D3D12_GPU_BASED_VALIDATION_FLAGS_DISABLE_STATE_TRACKING : D3D12_GPU_BASED_VALIDATION_FLAGS_NONE);
+            debugController2->SetGPUBasedValidationFlags(gs_DisableStateTracking ? D3D12_GPU_BASED_VALIDATION_FLAGS_DISABLE_STATE_TRACKING : D3D12_GPU_BASED_VALIDATION_FLAGS_NONE);
         }
     }
 }
@@ -85,7 +96,7 @@ void GfxDevice::ConfigureDebugLayer()
     ComPtr<ID3D12DebugDevice1> debugDevice1;
     if (SUCCEEDED(Dev()->QueryInterface(IID_PPV_ARGS(&debugDevice1))))
     {
-        if (System::GfxDebugLayerEnableConservativeResorceStateTracking)
+        if (gs_EnableConservativeResorceStateTracking)
         {
             const D3D12_DEBUG_FEATURE debugFeatures
             {
@@ -94,7 +105,7 @@ void GfxDevice::ConfigureDebugLayer()
             debugDevice1->SetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_FEATURE_FLAGS, &debugFeatures, sizeof(debugFeatures));
         }
 
-        if (System::GfxDebugLayerEnableGPUValidation)
+        if (gs_EnableGPUValidation)
         {
             const D3D12_DEBUG_DEVICE_GPU_BASED_VALIDATION_SETTINGS gpuValidationSettings
             {
@@ -109,12 +120,61 @@ void GfxDevice::ConfigureDebugLayer()
     ComPtr<ID3D12InfoQueue> debugInfoQueue;
     DX12_CALL(Dev()->QueryInterface(__uuidof(ID3D12InfoQueue), (LPVOID*)&debugInfoQueue));
 
-    debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, System::GfxDebugLayerBreakOnErrors);
-    debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, System::GfxDebugLayerBreakOnWarnings);
+    debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, gs_BreakOnErrors);
+    debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, gs_BreakOnWarnings);
+}
+
+void GfxDevice::CheckFeaturesSupports()
+{
+    bbeProfileFunction();
+
+    IDXGIFactory7* dxgiFactory = GfxAdapter::GetInstance().GetDXGIFactory();
+
+    // tearing, or adaptive sync
+    BOOL tearingSupported;
+    DX12_CALL(dxgiFactory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &tearingSupported, sizeof(tearingSupported)));
+    m_TearingSupported = tearingSupported;
+
+    if (FAILED(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &m_RootSigSupport, sizeof(m_RootSigSupport))))
+    {
+        m_RootSigSupport.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
+    }
+
+    // Query the level of support of Shader Model.
+    constexpr D3D12_FEATURE_DATA_SHADER_MODEL shaderModels[] = 
+    {
+        D3D_SHADER_MODEL_6_5,
+        D3D_SHADER_MODEL_6_4,
+        D3D_SHADER_MODEL_6_3,
+        D3D_SHADER_MODEL_6_2,
+        D3D_SHADER_MODEL_6_1,
+        D3D_SHADER_MODEL_6_0,
+        D3D_SHADER_MODEL_5_1
+        
+    };
+    for (D3D12_FEATURE_DATA_SHADER_MODEL shaderModel : shaderModels)
+    {
+        if (SUCCEEDED(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel))))
+        {
+            bbeInfo("D3D12_FEATURE_SHADER_MODEL support: %s", GetD3DShaderModelName(shaderModel.HighestShaderModel));
+            m_D3DHighestShaderModel.HighestShaderModel = shaderModel.HighestShaderModel;
+            break;
+        }
+    }
+
+    DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &m_D3D12Options, sizeof(m_D3D12Options)));
+    DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS1, &m_D3D12Options1, sizeof(m_D3D12Options1)));
+    DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS2, &m_D3D12Options2, sizeof(m_D3D12Options2)));
+    DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &m_D3D12Options3, sizeof(m_D3D12Options3)));
+    DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS4, &m_D3D12Options4, sizeof(m_D3D12Options4)));
+    DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS4, &m_D3D12Options5, sizeof(m_D3D12Options4)));
+    DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_GPU_VIRTUAL_ADDRESS_SUPPORT, &m_D3D12GPUVirtualAddressSupport, sizeof(m_D3D12GPUVirtualAddressSupport)));
 }
 
 void GfxDevice::EndFrame()
 {
+    bbeProfileFunction();
+
     m_CommandListsManager.ExecuteAllActiveCommandLists();
 }
 
@@ -122,8 +182,10 @@ void GfxDevice::WaitForPreviousFrame()
 {
     bbeProfileFunction();
 
-    // Signal and increment the fence value.
+    // increment device fence value to signify end of frame numbmer
     m_GfxFence.IncrementFenceValue();
+
+    // Increment & signal the fence value for direct queue to signify end of cmdQueue execution
     DX12_CALL(m_CommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT)->Signal(m_GfxFence.Dev(), m_GfxFence.GetFenceValue()));
 
     if (m_GfxFence.Dev()->GetCompletedValue() < m_GfxFence.GetFenceValue())

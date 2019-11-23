@@ -47,6 +47,8 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& sf)
 {
     bbeProfileFunction();
 
+    GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
+
     tf::Task beginFrameTask = sf.emplace([&]() { BeginFrame(); });
     
     std::vector<tf::Task> allRenderTasks;
@@ -54,9 +56,10 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& sf)
 
     for (const std::unique_ptr<GfxRenderPass>& renderPass : GfxManagerSingletons::gs_RenderPasses)
     {
-        tf::Task newRenderTask = sf.emplace([&]()
+        GfxContext context = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
+        tf::Task newRenderTask = sf.emplace([&, context]()
             {
-                renderPass->Render(*m_GfxDevice);
+                renderPass->Render(context);
             });
         newRenderTask.name(renderPass->GetName());
         allRenderTasks.push_back(newRenderTask);

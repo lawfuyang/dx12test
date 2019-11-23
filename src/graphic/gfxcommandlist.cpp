@@ -73,6 +73,14 @@ void GfxCommandListsManager::Initialize()
     queueDesc.NodeMask = 0; // For single-adapter, set to 0. Else, set a bit to identify the node
 
     DX12_CALL(gfxDevice.Dev()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&pool.m_CommandQueue)));
+
+    // Init some free cmd lists
+    for (uint32_t i = 0; i < 32; ++i)
+    {
+        GfxCommandList* newCmdList = pool.m_CommandListsPool.construct();
+        newCmdList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT);
+        pool.m_FreeCommandLists.push(newCmdList);
+    }
 }
 
 GfxCommandList* GfxCommandListsManager::Allocate(D3D12_COMMAND_LIST_TYPE cmdListType)

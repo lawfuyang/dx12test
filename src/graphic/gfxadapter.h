@@ -1,7 +1,6 @@
 #pragma once
 
-#include <vector>
-#include <wrl.h>
+extern const bool g_EnableGfxDebugLayer;
 
 struct IDXGIAdapter1;
 
@@ -12,7 +11,7 @@ class GfxAdapter
 public:
     void Initialize();
 
-    const ComPtr<IDXGIFactory7> GetDXGIFactory() const { return m_DXGIFactory; }
+    IDXGIFactory7* GetDXGIFactory() const { return m_DXGIFactory.Get(); }
     const std::vector<ComPtr<IDXGIAdapter1>>& GetAllAdapters() const { return m_AllAdapters; }
 
 private:
