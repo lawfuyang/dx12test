@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cinttypes>
 #include <atomic>
 #include <chrono>
 #include <cstdio>
