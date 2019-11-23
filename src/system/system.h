@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <array>
 #include <numeric>
+#include <mutex>
 #include <wrl.h>
 
 #include "system/utils.h"
