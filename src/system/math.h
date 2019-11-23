@@ -1,20 +1,9 @@
 #pragma once
 
-//using bbeVector2 = mathfu::float2;
-//using bbeVector3 = mathfu::float3;
-//using bbeVector4 = mathfu::float4;
-//
-//using bbeVector2I = mathfu::int2;
-//using bbeVector3I = mathfu::int3;
-//using bbeVector4I = mathfu::int4;
-//
-//using bbeVector2U = mathfu::uint2;
-//using bbeVector3U = mathfu::uint3;
-//using bbeVector4U = mathfu::uint4;
-//
-//using bbeMatrix22 = mathfu::float2x2;
-//using bbeMatrix33 = mathfu::float3x3;
-//using bbeMatrix44 = mathfu::float4x4;
+#include "extern/directxmath/DirectXMath.h"
+#include "extern/directxmath/DirectXColors.h"
+#include "extern/directxmath/DirectXCollision.h"
+#include "extern/directxmath/DirectXPackedVector.h"
 
 static constexpr float  bbeEPSILON_F32 = 1.192092896e-07F;
 static constexpr double bbeEPSILON_F64 = 2.2204460492503131e-016;
@@ -34,7 +23,6 @@ inline constexpr _Type bbeMin(_Type lsh, _Type rsh)
 {
     return lsh <= rsh ? lsh : rsh;
 }
-
 
 template <typename T>
 inline constexpr T bbeClamp(T v, T a, T b)
