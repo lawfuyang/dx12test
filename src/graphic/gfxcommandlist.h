@@ -31,7 +31,7 @@ public:
     GfxCommandList* Allocate(D3D12_COMMAND_LIST_TYPE);
     void ExecuteAllActiveCommandLists();
 
-    ID3D12CommandQueue* GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) { return m_Pools[type].m_CommandQueue.Get(); }
+    ID3D12CommandQueue* GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) { return GetPoolFromType(type).m_CommandQueue.Get(); }
 
 private:
     struct CommandListPool
@@ -42,6 +42,7 @@ private:
         boost::lockfree::stack<GfxCommandList*> m_FreeCommandLists{ 32 };
         boost::lockfree::stack<GfxCommandList*> m_ActiveCommandLists{ 32 };
     };
+    CommandListPool& GetPoolFromType(D3D12_COMMAND_LIST_TYPE);
 
-    std::unordered_map<D3D12_COMMAND_LIST_TYPE, CommandListPool> m_Pools;
+    CommandListPool m_DirectPool;
 };

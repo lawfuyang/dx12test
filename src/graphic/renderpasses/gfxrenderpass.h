@@ -11,7 +11,7 @@ public:
 
     virtual ~GfxRenderPass() {}
 
-    virtual void Render(const GfxContext&) = 0;
+    virtual void Render(GfxContext&) = 0;
 
     const char* GetName() const { return m_Name; }
 

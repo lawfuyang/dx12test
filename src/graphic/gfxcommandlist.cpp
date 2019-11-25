@@ -61,7 +61,7 @@ void GfxCommandListsManager::Initialize()
 
     GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
 
-    CommandListPool& pool = m_Pools[D3D12_COMMAND_LIST_TYPE_DIRECT];
+    CommandListPool& pool = GetPoolFromType(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
     assert(pool.m_CommandQueue.Get() == nullptr);
 
@@ -87,7 +87,7 @@ GfxCommandList* GfxCommandListsManager::Allocate(D3D12_COMMAND_LIST_TYPE cmdList
 {
     bbeProfileFunction();
 
-    CommandListPool& pool = m_Pools[cmdListType];
+    CommandListPool& pool = GetPoolFromType(cmdListType);
     GfxCommandList* newCmdList = nullptr;
     bbeOnExitScope
     {
@@ -114,18 +114,30 @@ void GfxCommandListsManager::ExecuteAllActiveCommandLists()
 {
     bbeProfileFunction();
 
-    for (auto& cmdListTypePoolPair : m_Pools)
+    CommandListPool* const allPools[] =
     {
-        CommandListPool& pool = cmdListTypePoolPair.second;
+        &m_DirectPool,
+    };
 
-        pool.m_ActiveCommandLists.consume_all([&](GfxCommandList* cmdListToConsume)
+    for (CommandListPool* pool : allPools)
+    {
+        pool->m_ActiveCommandLists.consume_all([&](GfxCommandList* cmdListToConsume)
             {
                 cmdListToConsume->EndRecording();
 
                 ID3D12CommandList* ppCommandLists[] = { cmdListToConsume->Dev() };
-                pool.m_CommandQueue->ExecuteCommandLists(1, ppCommandLists);
+                pool->m_CommandQueue->ExecuteCommandLists(1, ppCommandLists);
 
-                pool.m_FreeCommandLists.push(cmdListToConsume);
+                pool->m_FreeCommandLists.push(cmdListToConsume);
             });
+    }
+}
+
+GfxCommandListsManager::CommandListPool& GfxCommandListsManager::GetPoolFromType(D3D12_COMMAND_LIST_TYPE type)
+{
+    switch (type)
+    {
+    case D3D12_COMMAND_LIST_TYPE_DIRECT: return m_DirectPool;
+    default: assert(false); return m_DirectPool;
     }
 }

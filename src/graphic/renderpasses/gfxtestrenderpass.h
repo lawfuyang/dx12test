@@ -7,7 +7,7 @@ class GfxTestRenderPass : public GfxRenderPass
 public:
     GfxTestRenderPass();
 
-    void Render(const GfxContext&) override;
+    void Render(GfxContext&) override;
 
 private:
 };

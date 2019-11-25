@@ -10,7 +10,7 @@ GfxTestRenderPass::GfxTestRenderPass()
 {
 }
 
-void GfxTestRenderPass::Render(const GfxContext& context)
+void GfxTestRenderPass::Render(GfxContext& context)
 {
     bbeProfileFunction();
 

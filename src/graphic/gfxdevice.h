@@ -4,6 +4,7 @@
 #include "graphic/gfxfence.h"
 #include "graphic/gfxpipelinestate.h"
 #include "graphic/gfxswapchain.h"
+#include "graphic/gfxdescriptorheap.h"
 
 class GfxDevice
 {
@@ -15,7 +16,7 @@ public:
     void EndFrame();
     void WaitForPreviousFrame();
 
-    GfxContext GenerateNewContext(D3D12_COMMAND_LIST_TYPE);
+    GfxContext& GenerateNewContext(D3D12_COMMAND_LIST_TYPE);
     GfxCommandListsManager& GetCommandListsManager() { return m_CommandListsManager; }
 
 private:
@@ -24,12 +25,14 @@ private:
     void CheckFeaturesSupports();
 
     GfxCommandListsManager m_CommandListsManager;
+    GfxDescriptorHeapManager m_DescriptorHeapManager;
     GfxFence m_GfxFence;
+
+    std::vector<GfxContext> m_AllContexts;
 
     ComPtr<ID3D12Device6> m_D3DDevice;
 
     bool m_TearingSupported = false;
-
     D3D12_FEATURE_DATA_D3D12_OPTIONS               m_D3D12Options                  = {};
     D3D12_FEATURE_DATA_D3D12_OPTIONS1              m_D3D12Options1                 = {};
     D3D12_FEATURE_DATA_D3D12_OPTIONS2              m_D3D12Options2                 = {};

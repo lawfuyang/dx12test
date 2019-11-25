@@ -3,6 +3,7 @@
 #include "graphic/dx12utils.h"
 #include "graphic/gfxadapter.h"
 #include "graphic/gfxcontext.h"
+#include "graphic/gfxdescriptorheap.h"
 
 const bool        g_EnableGfxDebugLayer                     = true;
 static const bool gs_BreakOnWarnings                        = g_EnableGfxDebugLayer && true;
@@ -48,6 +49,7 @@ void GfxDevice::Initialize()
     }
 
     m_CommandListsManager.Initialize();
+    m_DescriptorHeapManager.Initalize();
 
     m_GfxFence.Initialize(D3D12_FENCE_FLAG_NONE);
 
@@ -176,6 +178,7 @@ void GfxDevice::EndFrame()
     bbeProfileFunction();
 
     m_CommandListsManager.ExecuteAllActiveCommandLists();
+    m_AllContexts.clear();
 }
 
 void GfxDevice::WaitForPreviousFrame()
@@ -200,9 +203,12 @@ void GfxDevice::WaitForPreviousFrame()
     }
 }
 
-GfxContext GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType)
+GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType)
 {
-    GfxContext newContext;
+    bbeProfileFunction();
+
+    m_AllContexts.push_back(GfxContext{});
+    GfxContext& newContext = m_AllContexts.back();
     newContext.m_Device = this;
     newContext.m_CommandList = m_CommandListsManager.Allocate(cmdListType);
 
