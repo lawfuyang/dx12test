@@ -40,7 +40,7 @@ void GfxDevice::Initialize()
             break;
         }
     }
-    bbeAssert(m_D3DDevice.Get() != nullptr, "");
+    assert(m_D3DDevice.Get() != nullptr);
 
     if constexpr (g_EnableGfxDebugLayer)
     {
@@ -58,11 +58,11 @@ void GfxDevice::CheckStatus()
 {
     const ::HRESULT result = m_D3DDevice->GetDeviceRemovedReason();
 
-    bbeAssert(result != DXGI_ERROR_DEVICE_HUNG, "Graphics Device Hung");
-    bbeAssert(result != DXGI_ERROR_DEVICE_REMOVED, "Graphics Device Removed");
-    bbeAssert(result != DXGI_ERROR_DEVICE_RESET, "Graphics Device Reset");
-    bbeAssert(result != DXGI_ERROR_DRIVER_INTERNAL_ERROR, "Graphics Device Internal Error");
-    bbeAssert(result != DXGI_ERROR_INVALID_CALL, "Graphics Device Invalid Call");
+    assert(result != DXGI_ERROR_DEVICE_HUNG);
+    assert(result != DXGI_ERROR_DEVICE_REMOVED);
+    assert(result != DXGI_ERROR_DEVICE_RESET);
+    assert(result != DXGI_ERROR_DRIVER_INTERNAL_ERROR);
+    assert(result != DXGI_ERROR_INVALID_CALL);
 }
 
 void GfxDevice::EnableDebugLayer()

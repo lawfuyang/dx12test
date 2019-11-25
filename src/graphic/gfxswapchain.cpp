@@ -12,7 +12,7 @@ void GfxSwapChain::Initialize(uint32_t width, uint32_t height, DXGI_FORMAT forma
 {
     bbeProfileFunction();
 
-    bbeAssert(m_SwapChain.Get() == nullptr, "");
+    assert(m_SwapChain.Get() == nullptr);
 
     GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
 

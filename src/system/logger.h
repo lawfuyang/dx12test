@@ -8,18 +8,6 @@
 
 #define bbeError(condition, str, ...)   if (!(condition)) bbeLogInternal(Error, str, __VA_ARGS__)
 #define bbeWarning(condition, str, ...) if (!(condition)) bbeLogInternal(Warning, str, __VA_ARGS__)
-#define bbeAssert(condition, str, ...)                      \
-    if (!(condition))                                       \
-    {                                                       \
-        ::OutputDebugStringA("ASSERT FAILED! Condition: "); \
-        ::OutputDebugStringA(bbeTOSTRING(condition));       \
-        ::OutputDebugStringA("\n");                         \
-        ::OutputDebugStringA(bbeFILEandLINE);               \
-        ::OutputDebugStringA("\n");                         \
-        bbeLogInternal(Assert, str,__VA_ARGS__);            \
-        BreakIntoDebugger();                                \
-    }
-#define bbeVerify(code, str, ...) bbeAssert((code), str, __VA_ARGS__)
 
 class Logger
 {
@@ -32,7 +20,6 @@ public:
         Debug,
         Error,
         Warning,
-        Assert
     };
 
     void Initialize();
@@ -50,7 +37,6 @@ public:
         case Debug: return "Debug"; break;
         case Warning: return "Warning"; break;
         case Error: return "Error"; break;
-        case Assert: return "Assert"; break;
         default: return "Unknown Log Category";
         }
     }

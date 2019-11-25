@@ -1,6 +1,5 @@
 #pragma once
 
-#define IM_ASSERT(_EXPR) bbeAssert(_EXPR, #_EXPR)
 #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 
 // TODO: implement imgui vec to dx math

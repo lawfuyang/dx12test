@@ -17,5 +17,5 @@ void GfxFence::Initialize(D3D12_FENCE_FLAGS fenceFlags)
 
     // Create an event handle to use for frame synchronization.
     m_FenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-    bbeAssert(m_FenceEvent, "%s", GetLastErrorAsString().c_str());
+    assert(m_FenceEvent);
 }

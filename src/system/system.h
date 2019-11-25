@@ -14,6 +14,10 @@
 #include <mutex>
 #include <wrl.h>
 
+// uncomment to disable all asserts
+// #define NDEBUG
+#include <cassert>
+
 #include "system/utils.h"
 #include "system/math.h"
 #include "system/stopwatch.h"

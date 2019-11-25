@@ -10,7 +10,7 @@ void GfxDescriptorHeap::Initialize(uint32_t numDescriptors, D3D12_DESCRIPTOR_HEA
 
     GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
 
-    bbeAssert(m_DescriptorHeap.Get() == nullptr, "");
+    assert(m_DescriptorHeap.Get() == nullptr);
 
     // Describe and create a render target view (RTV) descriptor heap.
     D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};

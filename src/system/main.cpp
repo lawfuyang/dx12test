@@ -74,7 +74,11 @@ private:
         wc.hbrBackground = (HBRUSH)(COLOR_BACKGROUND);
         wc.lpszClassName = System::APP_NAME.c_str();
 
-        bbeVerify(SUCCEEDED(RegisterClass(&wc)), "ApplicationWin : Failed to create window: %s", GetLastErrorAsString().c_str());
+        if (FAILED(RegisterClass(&wc)))
+        {
+            bbeError("ApplicationWin : Failed to create window: %s", GetLastErrorAsString().c_str());
+            assert(false);
+        }
 
         DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_VISIBLE;
         RECT rect;
@@ -98,7 +102,11 @@ private:
                                rect.bottom - rect.top,
                                0, 0, hInstance, NULL);
 
-        bbeAssert(g_EngineWindowHandle != 0, "ApplicationWin : Failed to create window: %s", GetLastErrorAsString().c_str());
+        if (g_EngineWindowHandle == 0)
+        {
+            bbeError("ApplicationWin : Failed to create window: %s", GetLastErrorAsString().c_str());
+            assert(false);
+        }
 
         ShowCursor(true);
         SetCursor(LoadCursor(NULL, IDC_ARROW));

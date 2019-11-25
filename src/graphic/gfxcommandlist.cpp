@@ -24,7 +24,7 @@ void GfxCommandList::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType)
 
     for (uint32_t i = 0; i < 2; ++i)
     {
-        bbeAssert(m_CommandList[i] == nullptr, "");
+        assert(m_CommandList[i] == nullptr);
 
         // Create the command list.
         DX12_CALL(gfxDevice.Dev()->CreateCommandList(nodeMask, m_Type, m_CommandAllocator.Get(), initialState, IID_PPV_ARGS(&m_CommandList[i])));
@@ -63,7 +63,7 @@ void GfxCommandListsManager::Initialize()
 
     CommandListPool& pool = m_Pools[D3D12_COMMAND_LIST_TYPE_DIRECT];
 
-    bbeAssert(pool.m_CommandQueue.Get() == nullptr, "");
+    assert(pool.m_CommandQueue.Get() == nullptr);
 
     // Describe and create the command queue.
     D3D12_COMMAND_QUEUE_DESC queueDesc = {};
