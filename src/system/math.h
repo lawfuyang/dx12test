@@ -5,6 +5,8 @@
 #include "extern/directxmath/DirectXCollision.h"
 #include "extern/directxmath/DirectXPackedVector.h"
 
+using namespace DirectX;
+
 static constexpr float  bbeEPSILON_F32 = 1.192092896e-07F;
 static constexpr double bbeEPSILON_F64 = 2.2204460492503131e-016;
 

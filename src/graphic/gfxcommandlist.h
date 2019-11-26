@@ -1,8 +1,5 @@
 #pragma once
 
-#include "extern/boost/pool/object_pool.hpp"
-#include "extern/boost/lockfree/stack.hpp"
-
 class GfxCommandList
 {
 public:

@@ -134,52 +134,6 @@ namespace UtilsPrivate
 
 #define BBE_SCOPED_UNSET(type, var, val) UtilsPrivate::MemberAutoUnset<type> bbeUniqueVariable(autoUnset){var, val};
 
-#define BBE_DEFINE_ENUM_OPERATOR(enumType)                                                                                                                         \
-    inline enumType operator|( enumType a, enumType b )                                                                                                            \
-    {                                                                                                                                                              \
-        return static_cast< enumType >( static_cast< std::underlying_type< enumType >::type >( a ) | static_cast< std::underlying_type< enumType >::type >( b ) ); \
-    }                                                                                                                                                              \
-    inline enumType operator&( enumType a, enumType b )                                                                                                            \
-    {                                                                                                                                                              \
-        return static_cast< enumType >( static_cast< std::underlying_type< enumType >::type >( a ) & static_cast< std::underlying_type< enumType >::type >( b ) ); \
-    }                                                                                                                                                              \
-    inline enumType operator^( enumType a, enumType b )                                                                                                            \
-    {                                                                                                                                                              \
-        return static_cast< enumType >( static_cast< std::underlying_type< enumType >::type >( a ) ^ static_cast< std::underlying_type< enumType >::type >( b ) ); \
-    }                                                                                                                                                              \
-    inline enumType operator~( enumType a )                                                                                                                        \
-    {                                                                                                                                                              \
-        return static_cast< enumType >( ~static_cast< std::underlying_type< enumType >::type >( a ) );                                                             \
-    }                                                                                                                                                              \
-    inline enumType& operator&=( enumType& a, enumType b )                                                                                                         \
-    {                                                                                                                                                              \
-        a = a & b;                                                                                                                                                 \
-        return a;                                                                                                                                                  \
-    }                                                                                                                                                              \
-    inline enumType& operator|=( enumType& a, enumType b )                                                                                                         \
-    {                                                                                                                                                              \
-        a = a | b;                                                                                                                                                 \
-        return a;                                                                                                                                                  \
-    }                                                                                                                                                              \
-    inline enumType& operator^=( enumType& a, enumType b )                                                                                                         \
-    {                                                                                                                                                              \
-        a = a ^ b;                                                                                                                                                 \
-        return a;                                                                                                                                                  \
-    }                                                                                                                                                              \
-    inline enumType operator<<( enumType a, uint32_t shift )                                                                                                       \
-    {                                                                                                                                                              \
-        return static_cast< enumType >( static_cast< std::underlying_type< enumType >::type >( a ) << shift );                                                     \
-    }                                                                                                                                                              \
-    inline enumType operator<<=( enumType& a, uint32_t shift )                                                                                                     \
-    {                                                                                                                                                              \
-        a = a << shift;                                                                                                                                            \
-        return a;                                                                                                                                                  \
-    }                                                                                                                                                              \
-    inline bool IsSet( enumType a )                                                                                                                                \
-    {                                                                                                                                                              \
-        return (static_cast<uint32_t>(a) != 0);                                                                                                                    \
-    }
-
 #define bbeMemZeroArray(dst)  memset(dst, 0, sizeof(dst))
 #define bbeMemZeroStruct(dst) memset(&dst, 0, sizeof(dst))
 

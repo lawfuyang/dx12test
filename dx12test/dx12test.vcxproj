@@ -113,7 +113,6 @@
     <ClCompile Include="..\src\graphic\gfxcommandlist.cpp" />
     <ClCompile Include="..\src\graphic\gfxcontext.cpp" />
     <ClCompile Include="..\src\graphic\gfxdescriptorheap.cpp" />
-    <ClCompile Include="..\src\graphic\gfxdescriptorheappage.cpp" />
     <ClCompile Include="..\src\graphic\gfxdevice.cpp" />
     <ClCompile Include="..\src\graphic\gfxfence.cpp" />
     <ClCompile Include="..\src\graphic\gfxmanager.cpp" />
@@ -144,7 +143,6 @@
     <ClInclude Include="..\src\graphic\gfxcommandlist.h" />
     <ClInclude Include="..\src\graphic\gfxcontext.h" />
     <ClInclude Include="..\src\graphic\gfxdescriptorheap.h" />
-    <ClInclude Include="..\src\graphic\gfxdescriptorheappage.h" />
     <ClInclude Include="..\src\graphic\gfxdevice.h" />
     <ClInclude Include="..\src\graphic\gfxenums.h" />
     <ClInclude Include="..\src\graphic\gfxfence.h" />

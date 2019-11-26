@@ -13,7 +13,7 @@ enum class GfxResourceAccessFlags
     CPUWriteCombined = (1 << 5),           // CPU write combined memory.
     MaxAccessFlags   = (1 << 6),           // Max value for access flags.
 };
-BBE_DEFINE_ENUM_OPERATOR(GfxResourceAccessFlags);
+DEFINE_ENUM_FLAG_OPERATORS(GfxResourceAccessFlags);
 
 /** @brief  Render topology. */
 enum class GfxTopology : uint8_t
@@ -133,7 +133,7 @@ enum class GfxDebugFlags
     ValidateBarriers       = (1 << 5), // Validate barriers.
     ValidateRootParameters = (1 << 6), // Validate root parameters.
 };
-BBE_DEFINE_ENUM_OPERATOR(GfxDebugFlags);
+DEFINE_ENUM_FLAG_OPERATORS(GfxDebugFlags);
 
 /** @brief Texture sampling addressing modes. */
 enum class GfxAddressMode : uint32_t
@@ -166,7 +166,7 @@ enum class GfxColorWriteMask
     RGBA = A | RGB,  // Red, green, blue and alpha channel.
     All  = RGBA      // Red, green, blue and alpha channel.
 };
-BBE_DEFINE_ENUM_OPERATOR(GfxColorWriteMask);
+DEFINE_ENUM_FLAG_OPERATORS(GfxColorWriteMask);
 
 enum class GfxTextureCreationFlags
 {
@@ -185,7 +185,7 @@ enum class GfxTextureBindFlags
     CopyDst      = (1 << 4), // Can bind as a copy destination.
     SwapChain    = (1 << 5)  // Can bind as a swap chain
 };
-BBE_DEFINE_ENUM_OPERATOR(GfxTextureBindFlags);
+DEFINE_ENUM_FLAG_OPERATORS(GfxTextureBindFlags);
 
 /** @brief Texture flags. */
 enum class GfxTextureFlags
@@ -198,7 +198,7 @@ enum class GfxTextureFlags
     ColorCompression   = (1 << 5), // Enable color compression.
     DCCCompression     = (1 << 6), // Enable Direct Color Compression
 };
-BBE_DEFINE_ENUM_OPERATOR(GfxTextureFlags);
+DEFINE_ENUM_FLAG_OPERATORS(GfxTextureFlags);
 
 /** @brief Texture flags. */
 enum class GfxTextureViewFlags
@@ -209,7 +209,7 @@ enum class GfxTextureViewFlags
     FMask            = (1 << 3), // Creates a FMask view, only valid if the texture is a render target
     CubeMapAs2DArray = (1 << 4)  // Creates a FMask view, only valid if the texture is a render target
 };
-BBE_DEFINE_ENUM_OPERATOR(GfxTextureViewFlags);
+DEFINE_ENUM_FLAG_OPERATORS(GfxTextureViewFlags);
 
 enum class GfxBufferCreationFlags
 {
@@ -232,7 +232,7 @@ enum class GfxBufferBindFlags
     CopySrc           = (1 << 7), // Can bind as a copy source.
     CopyDst           = (1 << 8), // Can bind as a copy destination.
 };
-BBE_DEFINE_ENUM_OPERATOR(GfxBufferBindFlags);
+DEFINE_ENUM_FLAG_OPERATORS(GfxBufferBindFlags);
 
 /** @brief  Descriptor heap type. */
 enum class GfxDescriptorHeapType
@@ -268,7 +268,7 @@ enum class GfxDescriptorFeatureFlags
     EnableOverlappingRanges = (1 << 4), // Makes the ranges in a table all start at the same register on platforms that support this feature
     EnableCustomSpaces      = (1 << 5), // Enable calling the custom space index extension for this table
 };
-BBE_DEFINE_ENUM_OPERATOR(GfxDescriptorFeatureFlags);
+DEFINE_ENUM_FLAG_OPERATORS(GfxDescriptorFeatureFlags);
 
 /** @brief Clear depth stencil flags. */
 enum class GfxClearDSFlags
