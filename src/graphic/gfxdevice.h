@@ -19,6 +19,8 @@ public:
     GfxContext& GenerateNewContext(D3D12_COMMAND_LIST_TYPE);
     GfxCommandListsManager& GetCommandListsManager() { return m_CommandListsManager; }
 
+    D3D_ROOT_SIGNATURE_VERSION GetHighSupportedRootSignature() const { return m_RootSigSupport.HighestVersion; }
+
 private:
     static void EnableDebugLayer();
     void ConfigureDebugLayer();
@@ -41,5 +43,5 @@ private:
     D3D12_FEATURE_DATA_D3D12_OPTIONS5              m_D3D12Options5                 = {};
     D3D12_FEATURE_DATA_GPU_VIRTUAL_ADDRESS_SUPPORT m_D3D12GPUVirtualAddressSupport = {};
     D3D12_FEATURE_DATA_SHADER_MODEL                m_D3DHighestShaderModel         = { D3D_SHADER_MODEL_5_1 };
-    D3D12_FEATURE_DATA_ROOT_SIGNATURE              m_RootSigSupport                = {};
+    D3D12_FEATURE_DATA_ROOT_SIGNATURE              m_RootSigSupport                = { D3D_ROOT_SIGNATURE_VERSION_1_1 };
 };

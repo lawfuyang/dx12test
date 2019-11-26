@@ -4,6 +4,7 @@
 #include "graphic/gfxcontext.h"
 #include "graphic/gfxdevice.h"
 #include "graphic/guimanager.h"
+#include "graphic/gfxrootsignature.h"
 
 #include "graphic/renderpasses/gfxtestrenderpass.h"
 
@@ -25,11 +26,8 @@ void GfxManager::Initialize()
     m_GUIManager = &GfxManagerSingletons::gs_GUIManager;
 
     GfxAdapter::GetInstance().Initialize();
-
     m_GfxDevice->Initialize();
-
     m_SwapChain->Initialize(System::APP_WINDOW_WIDTH, System::APP_WINDOW_HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM);
-
     m_GUIManager->Initialize();
 
     GfxManagerSingletons::gs_RenderPasses.push_back(std::make_unique<GfxTestRenderPass>());

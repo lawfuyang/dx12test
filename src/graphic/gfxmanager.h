@@ -3,6 +3,7 @@
 class GfxDevice;
 class GfxSwapChain;
 class GUIManager;
+class GfxRootSignatureManager;
 
 class GfxManager
 {

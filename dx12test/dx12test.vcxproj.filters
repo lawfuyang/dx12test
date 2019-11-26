@@ -76,6 +76,9 @@
     <ClCompile Include="..\src\graphic\gfxdescriptorheap.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxrootsignature.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -172,6 +175,12 @@
       <Filter>graphic\renderpasses</Filter>
     </ClInclude>
     <ClInclude Include="..\src\graphic\gfxdescriptorheap.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxrootsignature.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxdescriptorheap.hpp">
       <Filter>graphic</Filter>
     </ClInclude>
   </ItemGroup>

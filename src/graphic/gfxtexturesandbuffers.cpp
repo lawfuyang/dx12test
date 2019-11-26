@@ -42,9 +42,15 @@ void GfxHazardTrackedResource::Transition(GfxCommandList& cmdList, D3D12_RESOURC
     }
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE GfxRenderTargetView::GetCPUDescHandle() const
+void GfxResourceView::InitializeCommon(ID3D12Resource* resource, D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags)
 {
-    return D3D12_CPU_DESCRIPTOR_HANDLE{ m_DescHeap.Dev()->GetCPUDescriptorHandleForHeapStart() };
+    bbeProfileFunction();
+
+    GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
+
+    m_HazardTrackedResource.Set(resource);
+
+    m_DescHeap.Initialize(1, heapType, heapFlags);
 }
 
 void GfxRenderTargetView::Initialize(ID3D12Resource* resource)
@@ -53,9 +59,7 @@ void GfxRenderTargetView::Initialize(ID3D12Resource* resource)
 
     GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
 
-    m_HazardTrackedResource.Set(resource);
-
-    m_DescHeap.Initialize(1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+    InitializeCommon(resource, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 
     // TODO: Fill In
     //D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
@@ -65,4 +69,11 @@ void GfxRenderTargetView::Initialize(ID3D12Resource* resource)
     //rtvDesc.Texture2D.PlaneSlice = ;
 
     gfxDevice.Dev()->CreateRenderTargetView(m_HazardTrackedResource.Dev(), nullptr, m_DescHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
+}
+
+void GfxShaderResourceView::Initialize(ID3D12Resource* resource)
+{
+    bbeProfileFunction();
+
+    InitializeCommon(resource, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 }

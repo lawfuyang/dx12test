@@ -137,6 +137,7 @@ void GfxDevice::CheckFeaturesSupports()
     DX12_CALL(dxgiFactory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &tearingSupported, sizeof(tearingSupported)));
     m_TearingSupported = tearingSupported;
 
+    // D3D_ROOT_SIGNATURE_VERSION_1_1 is the highest version the sample supports. If CheckFeatureSupport succeeds, the HighestVersion returned will not be greater than this.
     if (FAILED(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &m_RootSigSupport, sizeof(m_RootSigSupport))))
     {
         m_RootSigSupport.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;

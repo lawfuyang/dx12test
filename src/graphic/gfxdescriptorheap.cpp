@@ -4,6 +4,7 @@
 #include "graphic/dx12utils.h"
 #include "graphic/gfxdevice.h"
 
+//------------------------------------------------------------------------------------------------------------------------------------------------------
 void GfxDescriptorHeapPageCommon::InitializeCommon(D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS flags)
 {
     bbeProfileFunction();
@@ -28,11 +29,7 @@ void GfxDescriptorHeapPageCommon::InitializeCommon(D3D12_DESCRIPTOR_HEAP_TYPE he
     }
 }
 
-void GfxDescriptorHeapManager::Initalize()
-{
-    bbeProfileFunction();
-}
-
+//------------------------------------------------------------------------------------------------------------------------------------------------------
 void GfxDescriptorNonShaderVisibleHeapPage::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE type)
 {
     bbeProfileFunction();
@@ -40,6 +37,7 @@ void GfxDescriptorNonShaderVisibleHeapPage::Initialize(D3D12_DESCRIPTOR_HEAP_TYP
     InitializeCommon(type, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 }
 
+//------------------------------------------------------------------------------------------------------------------------------------------------------
 void GfxDescriptorShaderVisibleHeapPage::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE type)
 {
     bbeProfileFunction();
@@ -50,4 +48,21 @@ void GfxDescriptorShaderVisibleHeapPage::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE t
     {
         m_GPUDescriptorHandles[i].ptr = m_DescriptorHeap->GetGPUDescriptorHandleForHeapStart().ptr + m_DescriptorSize * i;
     }
+}
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------
+void GfxDescriptorHeapManager::Initalize()
+{
+    bbeProfileFunction();
+}
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------
+GfxDescriptorHeapHandle GfxDescriptorHeapManager::Allocate(D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags)
+{
+    return GfxDescriptorHeapHandle(D3D12_CPU_DESCRIPTOR_HANDLE{}, D3D12_GPU_DESCRIPTOR_HANDLE{});
+}
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------
+void GfxDescriptorHeapManager::Free(GfxDescriptorHeapHandle)
+{
 }

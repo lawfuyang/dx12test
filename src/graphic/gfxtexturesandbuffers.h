@@ -31,17 +31,32 @@ private:
     ComPtr<ID3D12Resource> m_Resource;
 };
 
-class GfxRenderTargetView
+class GfxResourceView
 {
 public:
-    D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescHandle() const;
-    
+    virtual ~GfxResourceView() {}
+
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescHandle() const { return D3D12_CPU_DESCRIPTOR_HANDLE{ m_DescHeap.Dev()->GetCPUDescriptorHandleForHeapStart() }; }
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescHandle() const { return D3D12_GPU_DESCRIPTOR_HANDLE{ m_DescHeap.Dev()->GetGPUDescriptorHandleForHeapStart() }; }
+
     GfxHazardTrackedResource& GetHazardTrackedResource() { return m_HazardTrackedResource; }
 
-    void Initialize(ID3D12Resource*);
+protected:
+    void InitializeCommon(ID3D12Resource*, D3D12_DESCRIPTOR_HEAP_TYPE, D3D12_DESCRIPTOR_HEAP_FLAGS);
 
-private:
     GfxDescriptorHeap m_DescHeap; // TODO: Change to Descriptor heap allocator
 
     GfxHazardTrackedResource m_HazardTrackedResource;
+};
+
+class GfxRenderTargetView : public GfxResourceView
+{
+public:
+    void Initialize(ID3D12Resource*);
+};
+
+class GfxShaderResourceView : public GfxResourceView
+{
+public:
+    void Initialize(ID3D12Resource*);
 };

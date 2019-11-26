@@ -9,3 +9,5 @@ dx12test/x64/Release Unity
 dx12test/.vs
 dx12test/enc_temp_folder
 /src/system/.vs
+/src/template.h
+/src/template.cpp
