@@ -37,7 +37,7 @@ private:
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-enum class GfxDescriptorHeapType
+enum class GfxDescriptorHeapFlags
 {
     Static,
     ShaderVisible,
@@ -45,44 +45,46 @@ enum class GfxDescriptorHeapType
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-template <GfxDescriptorHeapType> struct GfxDescriptorHeapPoolType;
-template <> struct GfxDescriptorHeapPoolType<GfxDescriptorHeapType::Static>        { using Type = GfxDescriptorNonShaderVisibleHeapPage; };
-template <> struct GfxDescriptorHeapPoolType<GfxDescriptorHeapType::ShaderVisible> { using Type = GfxDescriptorShaderVisibleHeapPage; };
-template <> struct GfxDescriptorHeapPoolType<GfxDescriptorHeapType::Null>          { using Type = GfxDescriptorNonShaderVisibleHeapPage; };
-
-template <GfxDescriptorHeapType PoolType>
-using GfxDescriptorHeapPoolType_v = typename GfxDescriptorHeapPoolType<PoolType>::Type;
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------
-template <GfxDescriptorHeapType PoolType>
-class GfxDescriptorHeapPool
+struct GfxDescriptorHeapHandle
 {
-public:
-    void Initialize();
-
-private:
-    GfxDescriptorHeapPoolType_v<PoolType> m_Pool;
-};
-using GfxStaticDescriptorHeapPool   = GfxDescriptorHeapPool<GfxDescriptorHeapType::Static>;
-using GfxVolatileDescriptorHeapPool = GfxDescriptorHeapPool<GfxDescriptorHeapType::ShaderVisible>;
-using GfxNullDescriptorHeapPool     = GfxDescriptorHeapPool<GfxDescriptorHeapType::Null>;
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------
-class GfxDescriptorHeapHandle
-{
-public:
-    explicit GfxDescriptorHeapHandle(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle)
-        : m_CPUHandle(cpuHandle)
-        , m_GPUHandle(gpuHandle)
-    {}
-
-    D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle() const { return m_CPUHandle; }
-    D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle() const { return m_GPUHandle; }
-
-private:
     D3D12_CPU_DESCRIPTOR_HANDLE m_CPUHandle = {};
     D3D12_GPU_DESCRIPTOR_HANDLE m_GPUHandle = {};
 };
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------
+class GfxDescriptorHeapPoolBase
+{
+public:
+    virtual ~GfxDescriptorHeapPoolBase() {}
+
+    virtual void Initialize(D3D12_DESCRIPTOR_HEAP_TYPE) = 0;
+};
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------
+template <GfxDescriptorHeapFlags HeapFlags>
+class GfxDescriptorHeapPool : public GfxDescriptorHeapPoolBase
+{
+public:
+    void Initialize(D3D12_DESCRIPTOR_HEAP_TYPE) override;
+
+private:
+    template <GfxDescriptorHeapFlags> struct GfxDescriptorHeapPoolType;
+    template <> struct GfxDescriptorHeapPoolType<GfxDescriptorHeapFlags::Static>        { using Type = GfxDescriptorNonShaderVisibleHeapPage; };
+    template <> struct GfxDescriptorHeapPoolType<GfxDescriptorHeapFlags::ShaderVisible> { using Type = GfxDescriptorShaderVisibleHeapPage; };
+    template <> struct GfxDescriptorHeapPoolType<GfxDescriptorHeapFlags::Null>          { using Type = GfxDescriptorNonShaderVisibleHeapPage; };
+
+    using GfxDescriptorHeapPageType = typename GfxDescriptorHeapPoolType<HeapFlags>::Type;
+
+    boost::object_pool<GfxDescriptorHeapPageType> m_Pool;
+    SpinLock m_PoolLock;
+
+    std::vector<GfxDescriptorHeapPageType*> m_AvailablePages;
+    std::vector<GfxDescriptorHeapPageType*> m_FullPages;
+    SpinLock m_PagesLock;
+};
+using GfxStaticDescriptorHeapPool   = GfxDescriptorHeapPool<GfxDescriptorHeapFlags::Static>;
+using GfxVolatileDescriptorHeapPool = GfxDescriptorHeapPool<GfxDescriptorHeapFlags::ShaderVisible>;
+using GfxNullDescriptorHeapPool     = GfxDescriptorHeapPool<GfxDescriptorHeapFlags::Null>;
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 class GfxDescriptorHeapManager
@@ -90,10 +92,23 @@ class GfxDescriptorHeapManager
 public:
     void Initalize();
 
-    GfxDescriptorHeapHandle Allocate(D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags);
+    GfxDescriptorHeapHandle Allocate(D3D12_DESCRIPTOR_HEAP_TYPE heapType, GfxDescriptorHeapFlags heapFlags);
     void Free(GfxDescriptorHeapHandle);
 
 private:
+    using PoolKeyType = uint16_t;
+    std::unordered_map<PoolKeyType, GfxDescriptorHeapPoolBase*> m_PoolsMap;
+
+    constexpr PoolKeyType ToPoolKey(D3D12_DESCRIPTOR_HEAP_TYPE heapType, GfxDescriptorHeapFlags heapFlags) const
+    {
+        return (heapType << 8) | (uint8_t)heapFlags;
+    }
+
+    constexpr D3D12_DESCRIPTOR_HEAP_TYPE ToHeapType(PoolKeyType key) const
+    {
+        return (D3D12_DESCRIPTOR_HEAP_TYPE)(key >> 8);
+    }
+
     GfxStaticDescriptorHeapPool   m_StaticPools[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
     GfxVolatileDescriptorHeapPool m_ShaderVisiblePools[2]; // CBV_SRV_UAV & SAMPLER
     GfxNullDescriptorHeapPool     m_NullPools[2]; // CBV_SRV_UAV & SAMPLER

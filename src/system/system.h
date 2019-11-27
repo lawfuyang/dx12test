@@ -57,6 +57,8 @@ public:
 
     static uint32_t GetSystemFrameNumber() { return ms_SystemFrameNumber; }
 
+    tf::Executor& GetTasksExecutor() { return m_Executor; }
+
 private:
     void InitializeGraphic();
     void ShutdownGraphic();
@@ -90,35 +92,3 @@ private:
 
     std::chrono::high_resolution_clock::time_point m_FrameEndTime;
 };
-
-// General purpose ParallelFor with iterators input
-template <typename BeginIter, typename EndIter, typename Lambda>
-static void ParallelFor(BeginIter begin, EndIter end, Lambda&& lambda)
-{
-    bbeProfileFunction();
-
-    tf::Taskflow tf;
-    tf.parallel_for(begin, end, lambda);
-    System::GetInstance().m_Executor.run(tf).wait();
-}
-
-// General purpose ParallelFor with containers input
-template <typename ContainerType, typename Lambda>
-static void ParallelFor(const ContainerType& container, Lambda&& lambda)
-{
-    ParallelFor(container.cbegin(), container.cend(), std::forward<Lambda>(lambda));
-}
-
-// General purpose ParallelFor with const containers input
-template <typename ContainerType, typename Lambda>
-static void ParallelFor(ContainerType& container, Lambda&& lambda)
-{
-    ParallelFor(const_cast<const ContainerType&>(container), std::forward<Lambda>(lambda));
-}
-
-// General purpose ParallelFor with C-Style array input
-template <typename ArrayType, uint32_t ArraySize, typename Lambda>
-static void ParallelFor(ArrayType(&arr)[ArraySize], Lambda&& lambda)
-{
-    ParallelFor(arr, arr + ArraySize, std::forward<Lambda>(lambda));
-}

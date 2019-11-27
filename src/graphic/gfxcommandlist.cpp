@@ -72,15 +72,31 @@ void GfxCommandListsManager::Initialize()
     queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     queueDesc.NodeMask = 0; // For single-adapter, set to 0. Else, set a bit to identify the node
 
-    DX12_CALL(gfxDevice.Dev()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&pool.m_CommandQueue)));
+    // init ID3D12CommandQueue & some free ID3D12GraphicsCommandLists in parallel
+    tf::Taskflow tf;
 
-    // Init some free cmd lists
+    tf.emplace([&]()
+        {
+            bbeProfile("CreateCommandQueue");
+            DX12_CALL(gfxDevice.Dev()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&pool.m_CommandQueue)));
+        });
+
     for (uint32_t i = 0; i < 32; ++i)
     {
-        GfxCommandList* newCmdList = pool.m_CommandListsPool.construct();
-        newCmdList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT);
-        pool.m_FreeCommandLists.push(newCmdList);
+        tf.emplace([&]()
+            {
+                GfxCommandList* newCmdList = nullptr;
+                {
+                    bbeAutoLock(pool.m_PoolLock);
+                    newCmdList = pool.m_CommandListsPool.construct();
+                }
+                assert(newCmdList);
+
+                newCmdList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT);
+                pool.m_FreeCommandLists.push(newCmdList);
+            });
     }
+    System::GetInstance().GetTasksExecutor().run(tf).wait();
 }
 
 GfxCommandList* GfxCommandListsManager::Allocate(D3D12_COMMAND_LIST_TYPE cmdListType)
@@ -104,7 +120,10 @@ GfxCommandList* GfxCommandListsManager::Allocate(D3D12_COMMAND_LIST_TYPE cmdList
         return newCmdList;
     }
 
-    newCmdList = pool.m_CommandListsPool.construct();
+    {
+        bbeAutoLock(pool.m_PoolLock);
+        newCmdList = pool.m_CommandListsPool.construct();
+    }
     newCmdList->Initialize(cmdListType);
 
     return newCmdList;

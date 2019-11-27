@@ -5,14 +5,14 @@
 #include "graphic/gfxcontext.h"
 #include "graphic/gfxdescriptorheap.h"
 
-const bool        g_EnableGfxDebugLayer                     = true;
-static const bool gs_BreakOnWarnings                        = g_EnableGfxDebugLayer && true;
-static const bool gs_BreakOnErrors                          = g_EnableGfxDebugLayer && true;
-static const bool gs_LogVerbose                             = g_EnableGfxDebugLayer && true;
-static const bool gs_EnableGPUValidation                    = g_EnableGfxDebugLayer && true;
-static const bool gs_SynchronizedCommandQueueValidation     = g_EnableGfxDebugLayer && true;
-static const bool gs_DisableStateTracking                   = g_EnableGfxDebugLayer && false;
-static const bool gs_EnableConservativeResorceStateTracking = g_EnableGfxDebugLayer && true;
+const bool            g_EnableGfxDebugLayer                     = true;
+static constexpr bool gs_BreakOnWarnings                        = g_EnableGfxDebugLayer && true;
+static constexpr bool gs_BreakOnErrors                          = g_EnableGfxDebugLayer && true;
+static constexpr bool gs_LogVerbose                             = g_EnableGfxDebugLayer && true;
+static constexpr bool gs_EnableGPUValidation                    = g_EnableGfxDebugLayer && true;
+static constexpr bool gs_SynchronizedCommandQueueValidation     = g_EnableGfxDebugLayer && true;
+static constexpr bool gs_DisableStateTracking                   = g_EnableGfxDebugLayer && false;
+static constexpr bool gs_EnableConservativeResorceStateTracking = g_EnableGfxDebugLayer && true;
 
 void GfxDevice::Initialize()
 {

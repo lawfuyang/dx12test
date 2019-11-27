@@ -7,35 +7,12 @@
 
 using namespace DirectX;
 
-static constexpr float  bbeEPSILON_F32 = 1.192092896e-07F;
-static constexpr double bbeEPSILON_F64 = 2.2204460492503131e-016;
-
-static constexpr float bbeTolerance = bbeEPSILON_F32;
-
-#define bbeBIG_Float    (1e10f) // use instead of FLT_MAX when overflowing is a concern
-
-template <typename _Type>
-inline constexpr _Type bbeMax(_Type lsh, _Type rsh)
-{
-    return lsh >= rsh ? lsh : rsh;
-}
-
-template <typename _Type>
-inline constexpr _Type bbeMin(_Type lsh, _Type rsh)
-{
-    return lsh <= rsh ? lsh : rsh;
-}
-
-template <typename T>
-inline constexpr T bbeClamp(T v, T a, T b)
-{
-    return bbeMin(b, bbeMax(a, v));
-}
+#define bbeBIG_Float (1e10f) // use instead of FLT_MAX when overflowing is a concern
 
 template <typename T>
 inline constexpr T bbeSaturate(T v)
 {
-    return bbeClamp(v, static_cast<T>(0), static_cast<T>(1));
+    return std::clamp(v, static_cast<T>(0), static_cast<T>(1));
 }
 
 //damps a value using a deltatime and a speed
@@ -43,20 +20,20 @@ template <typename _Type>
 inline _Type bbeDamp(_Type val, _Type target, _Type speed, float dt)
 {
     _Type maxDelta = speed * dt;
-    return val + bbeClamp(target - val, -maxDelta, maxDelta);
+    return val + std::clamp(target - val, -maxDelta, maxDelta);
 }
 
 template <typename _Type>
 inline _Type bbeSmoothStep(_Type min, _Type max, _Type f)
 {
-    f = bbeClamp((f - min) / (max - min), _Type(0.f), _Type(1.f));
+    f = std::clamp((f - min) / (max - min), _Type(0.f), _Type(1.f));
     return f * f * (_Type(3.f) - _Type(2.f) * f);
 }
 
 template <typename _Type>
 inline _Type bbeSmootherStep(_Type min, _Type max, _Type f)
 {
-    f = bbeClamp((f - min) / (max - min), _Type(0.f), _Type(1.f));
+    f = std::clamp((f - min) / (max - min), _Type(0.f), _Type(1.f));
     return f * f * f * (f * (f * _Type(6.f) - _Type(15.f)) + _Type(10.f));
 }
 
@@ -225,8 +202,8 @@ inline uint32_t bbeGetLog2(uint32_t val)
 #define bbeSqrt15       3.8729833462074168851792653997824f
 #define bbeSqrtPi       1.772453850905516027298167483341fs
 
-#define bbeNullWithEpsilon(a)                   std::fabs(a) <= popTolerance
-#define bbeEqualWithEpsilon(a, b)               std::fabs(a - b) <= popTolerance
+#define bbeNullWithEpsilon(a)                   std::fabs(a) <= FLT_EPSILON
+#define bbeEqualWithEpsilon(a, b)               std::fabs(a - b) <= FLT_EPSILON
 #define bbeGreaterWithEpsilon(a, b)             ((a) - (b) > popTolerance)
 #define bbeGreaterOrEqualWithEpsilon(a, b)      ((b) - (a) < popTolerance)
 #define bbeLesserWithEpsilon(a, b)              ((b) - (a) > popTolerance)

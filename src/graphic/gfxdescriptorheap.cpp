@@ -54,12 +54,29 @@ void GfxDescriptorShaderVisibleHeapPage::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE t
 void GfxDescriptorHeapManager::Initalize()
 {
     bbeProfileFunction();
+
+    m_PoolsMap[ToPoolKey(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, GfxDescriptorHeapFlags::Static)]        = &m_StaticPools[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV];
+    m_PoolsMap[ToPoolKey(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, GfxDescriptorHeapFlags::Static)]            = &m_StaticPools[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER];
+    m_PoolsMap[ToPoolKey(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, GfxDescriptorHeapFlags::Static)]                = &m_StaticPools[D3D12_DESCRIPTOR_HEAP_TYPE_RTV];
+    m_PoolsMap[ToPoolKey(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, GfxDescriptorHeapFlags::Static)]                = &m_StaticPools[D3D12_DESCRIPTOR_HEAP_TYPE_DSV];
+    m_PoolsMap[ToPoolKey(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, GfxDescriptorHeapFlags::ShaderVisible)] = &m_StaticPools[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV];
+    m_PoolsMap[ToPoolKey(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, GfxDescriptorHeapFlags::ShaderVisible)]     = &m_StaticPools[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER];
+    m_PoolsMap[ToPoolKey(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, GfxDescriptorHeapFlags::Null)]          = &m_StaticPools[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV];
+    m_PoolsMap[ToPoolKey(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, GfxDescriptorHeapFlags::Null)]              = &m_StaticPools[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER];
+
+    for (auto& pool : m_PoolsMap)
+    {
+        const PoolKeyType poolKey = pool.first;
+        GfxDescriptorHeapPoolBase* poolBase = pool.second;
+
+        poolBase->Initialize(ToHeapType(poolKey));
+    }
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-GfxDescriptorHeapHandle GfxDescriptorHeapManager::Allocate(D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags)
+GfxDescriptorHeapHandle GfxDescriptorHeapManager::Allocate(D3D12_DESCRIPTOR_HEAP_TYPE heapType, GfxDescriptorHeapFlags heapFlags)
 {
-    return GfxDescriptorHeapHandle(D3D12_CPU_DESCRIPTOR_HANDLE{}, D3D12_GPU_DESCRIPTOR_HANDLE{});
+    return GfxDescriptorHeapHandle{};
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------

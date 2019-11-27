@@ -35,4 +35,6 @@ void GfxAdapter::Initialize()
             break;
         }
     }
+
+    assert(m_AllAdapters.empty() == false);
 }
