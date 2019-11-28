@@ -1,20 +1,8 @@
 #pragma once
 
+#include "graphic/gfxdescriptorheap.h"
+
 class GfxCommandList;
-
-class GfxDescriptorHeap
-{
-public:
-    ID3D12DescriptorHeap* Dev() const { return m_DescriptorHeap.Get(); }
-
-    void Initialize(uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS flags);
-
-    uint32_t GetDescSize() const { return m_DescriptorSize; }
-
-private:
-    ComPtr<ID3D12DescriptorHeap> m_DescriptorHeap;
-    uint32_t m_DescriptorSize = 0;
-};
 
 class GfxHazardTrackedResource
 {
@@ -36,15 +24,15 @@ class GfxResourceView
 public:
     virtual ~GfxResourceView() {}
 
-    D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescHandle() const { return D3D12_CPU_DESCRIPTOR_HANDLE{ m_DescHeap.Dev()->GetCPUDescriptorHandleForHeapStart() }; }
-    D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescHandle() const { return D3D12_GPU_DESCRIPTOR_HANDLE{ m_DescHeap.Dev()->GetGPUDescriptorHandleForHeapStart() }; }
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescHandle() const { return m_DescHeapHandle.m_CPUHandle; }
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescHandle() const { return m_DescHeapHandle.m_GPUHandle; }
 
     GfxHazardTrackedResource& GetHazardTrackedResource() { return m_HazardTrackedResource; }
 
 protected:
     void InitializeCommon(ID3D12Resource*, D3D12_DESCRIPTOR_HEAP_TYPE, D3D12_DESCRIPTOR_HEAP_FLAGS);
 
-    GfxDescriptorHeap m_DescHeap; // TODO: Change to Descriptor heap allocator
+    GfxDescriptorHeapHandle m_DescHeapHandle;
 
     GfxHazardTrackedResource m_HazardTrackedResource;
 };

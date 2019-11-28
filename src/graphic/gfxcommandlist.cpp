@@ -107,15 +107,12 @@ GfxCommandList* GfxCommandListsManager::Allocate(D3D12_COMMAND_LIST_TYPE cmdList
     GfxCommandList* newCmdList = nullptr;
     bbeOnExitScope
     {
+        assert(newCmdList);
         newCmdList->BeginRecording(); 
         pool.m_ActiveCommandLists.push(newCmdList);
     };
 
-    pool.m_FreeCommandLists.consume_one([&](GfxCommandList* poppedFreeList)
-        {
-            newCmdList = poppedFreeList;
-        });
-    if (newCmdList)
+    if (pool.m_FreeCommandLists.pop(newCmdList))
     {
         return newCmdList;
     }

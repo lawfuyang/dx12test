@@ -26,28 +26,56 @@ void GfxDescriptorHeapPageCommon::InitializeCommon(D3D12_DESCRIPTOR_HEAP_TYPE he
     for (uint32_t i = 0; i < NbDescHandles; ++i)
     {
         m_CPUDescriptorHandles[i].ptr = m_DescriptorHeap->GetCPUDescriptorHandleForHeapStart().ptr + m_DescriptorSize * i;
+        m_FreeHandlesIdx.push(NbDescHandles - i - 1); // since its a stack, init descendingly
+        m_ActiveHandlesIdx[i] = false;
     }
+}
+
+void GfxDescriptorHeapPageCommon::AllocateCommon(D3D12_DESCRIPTOR_HEAP_TYPE heapType, GfxDescriptorHeapFlags heapFlags, GfxDescriptorHeapHandle& newHandle, bool& pageIsFull)
+{
+    newHandle.m_HeapType = heapType;
+    newHandle.m_HeapFlags = heapFlags;
+    
+    // take first free list
+    m_FreeHandlesIdx.consume_one([&](uint32_t freeIdx)
+        {
+            m_ActiveHandlesIdx[freeIdx] = true;
+            newHandle.m_PageIdx = freeIdx;
+            newHandle.m_CPUHandle = m_CPUDescriptorHandles[freeIdx];
+        });
+
+    // need to tell GfxDescriptorHeapPool if theres no more free heaps, so that it can allocate a new page
+    pageIsFull = m_FreeHandlesIdx.empty();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 void GfxDescriptorNonShaderVisibleHeapPage::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE type)
 {
-    bbeProfileFunction();
-
     InitializeCommon(type, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+}
+
+void GfxDescriptorNonShaderVisibleHeapPage::Allocate(D3D12_DESCRIPTOR_HEAP_TYPE heapType, GfxDescriptorHeapFlags heapFlags, GfxDescriptorHeapHandle& newHandle, bool& pageIsFull)
+{
+    AllocateCommon(heapType, heapFlags, newHandle, pageIsFull);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 void GfxDescriptorShaderVisibleHeapPage::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE type)
 {
-    bbeProfileFunction();
-
     InitializeCommon(type, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 
     for (uint32_t i = 0; i < NbDescHandles; ++i)
     {
         m_GPUDescriptorHandles[i].ptr = m_DescriptorHeap->GetGPUDescriptorHandleForHeapStart().ptr + m_DescriptorSize * i;
     }
+}
+
+void GfxDescriptorShaderVisibleHeapPage::Allocate(D3D12_DESCRIPTOR_HEAP_TYPE heapType, GfxDescriptorHeapFlags heapFlags, GfxDescriptorHeapHandle& newHandle, bool& pageIsFull)
+{
+    AllocateCommon(heapType, heapFlags, newHandle, pageIsFull);
+
+    // need to init GPU Desc Handle for shader visible desc heaps
+    newHandle.m_GPUHandle = m_GPUDescriptorHandles[newHandle.m_PageIdx];
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -76,10 +104,15 @@ void GfxDescriptorHeapManager::Initalize()
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 GfxDescriptorHeapHandle GfxDescriptorHeapManager::Allocate(D3D12_DESCRIPTOR_HEAP_TYPE heapType, GfxDescriptorHeapFlags heapFlags)
 {
-    return GfxDescriptorHeapHandle{};
-}
+    const uint32_t poolIdx = ToPoolKey(heapType, heapFlags);
 
-//------------------------------------------------------------------------------------------------------------------------------------------------------
-void GfxDescriptorHeapManager::Free(GfxDescriptorHeapHandle)
-{
+    GfxDescriptorHeapPoolBase* poolToAllocateFrom = m_PoolsMap.at(poolIdx);
+    assert(poolToAllocateFrom);
+
+    GfxDescriptorHeapHandle newHandle = poolToAllocateFrom->Allocate(heapType);
+    assert(newHandle.m_PoolIdx != 0xDEADBEEF);
+
+    newHandle.m_ManagerPoolIdx = poolIdx;
+
+    return newHandle;
 }

@@ -37,7 +37,7 @@ private:
 
         boost::object_pool<GfxCommandList>      m_CommandListsPool;
         boost::lockfree::stack<GfxCommandList*> m_FreeCommandLists{ 32 };
-        boost::lockfree::stack<GfxCommandList*> m_ActiveCommandLists{ 32 };
+        boost::lockfree::queue<GfxCommandList*> m_ActiveCommandLists{ 32 };
 
         SpinLock m_PoolLock;
     };

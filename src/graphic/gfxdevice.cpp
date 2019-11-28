@@ -54,6 +54,8 @@ void GfxDevice::Initialize()
     m_GfxFence.Initialize(D3D12_FENCE_FLAG_NONE);
 
     CheckFeaturesSupports();
+
+    m_AllContexts.reserve(16);
 }
 
 void GfxDevice::CheckStatus()

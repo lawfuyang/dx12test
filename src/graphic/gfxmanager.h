@@ -13,7 +13,7 @@ public:
     void Initialize();
     void ShutDown();
 
-    void ScheduleGraphicTasks(tf::Subflow&);
+    void ScheduleGraphicTasks(tf::Taskflow&);
 
     void BeginFrame();
     void EndFrame();

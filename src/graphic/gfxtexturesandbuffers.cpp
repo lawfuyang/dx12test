@@ -4,26 +4,6 @@
 #include "graphic/gfxdevice.h"
 #include "graphic/dx12utils.h"
 
-void GfxDescriptorHeap::Initialize(uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS flags)
-{
-    bbeProfileFunction();
-
-    GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
-
-    assert(m_DescriptorHeap.Get() == nullptr);
-
-    // Describe and create a render target view (RTV) descriptor heap.
-    D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-    heapDesc.NumDescriptors = numDescriptors;
-    heapDesc.Type = heapType;
-    heapDesc.Flags = flags;
-    heapDesc.NodeMask = 0; // For single-adapter, set to 0. Else, set a bit to identify the node
-
-    DX12_CALL(gfxDevice.Dev()->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_DescriptorHeap)));
-
-    m_DescriptorSize = gfxDevice.Dev()->GetDescriptorHandleIncrementSize(heapType);
-}
-
 void GfxHazardTrackedResource::Transition(GfxCommandList& cmdList, D3D12_RESOURCE_STATES newState)
 {
     if (m_CurrentResourceState != newState)
@@ -50,7 +30,8 @@ void GfxResourceView::InitializeCommon(ID3D12Resource* resource, D3D12_DESCRIPTO
 
     m_HazardTrackedResource.Set(resource);
 
-    m_DescHeap.Initialize(1, heapType, heapFlags);
+    m_DescHeapHandle = gfxDevice.GetDescriptorHeapManager().Allocate(heapType, heapFlags == D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE ? GfxDescriptorHeapFlags::ShaderVisible : GfxDescriptorHeapFlags::Static);
+    assert(m_DescHeapHandle.m_ManagerPoolIdx != 0xDEADBEEF);
 }
 
 void GfxRenderTargetView::Initialize(ID3D12Resource* resource)
@@ -68,7 +49,10 @@ void GfxRenderTargetView::Initialize(ID3D12Resource* resource)
     //rtvDesc.Texture2D.MipSlice = ;
     //rtvDesc.Texture2D.PlaneSlice = ;
 
-    gfxDevice.Dev()->CreateRenderTargetView(m_HazardTrackedResource.Dev(), nullptr, m_DescHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
+    {
+        bbeProfile("CreateRenderTargetView");
+        gfxDevice.Dev()->CreateRenderTargetView(m_HazardTrackedResource.Dev(), nullptr, m_DescHeapHandle.m_CPUHandle);
+    }
 }
 
 void GfxShaderResourceView::Initialize(ID3D12Resource* resource)

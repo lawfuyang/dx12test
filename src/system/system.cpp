@@ -72,8 +72,7 @@ void System::Update()
 
     tf::Taskflow tf;
 
-    tf::Task graphicTask = tf.emplace([](tf::Subflow& subflow) { GfxManager::GetInstance().ScheduleGraphicTasks(subflow); });
-    graphicTask.name("Graphic Tasks");
+    GfxManager::GetInstance().ScheduleGraphicTasks(tf);
 
     m_Executor.run(tf).wait();
 }

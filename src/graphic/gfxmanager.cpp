@@ -14,7 +14,7 @@ namespace GfxManagerSingletons
     static GfxSwapChain gs_SwapChain;
     static GUIManager   gs_GUIManager;
 
-    static std::vector<std::unique_ptr<GfxRenderPass>> gs_RenderPasses;
+    static boost::container::small_vector<std::unique_ptr<GfxRenderPass>, 16> gs_RenderPasses;
 }
 
 void GfxManager::Initialize()
@@ -41,30 +41,30 @@ void GfxManager::ShutDown()
     m_GfxDevice->WaitForPreviousFrame();
 }
 
-void GfxManager::ScheduleGraphicTasks(tf::Subflow& sf)
+void GfxManager::ScheduleGraphicTasks(tf::Taskflow& tf)
 {
     bbeProfileFunction();
 
     GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
 
-    tf::Task beginFrameTask = sf.emplace([&]() { BeginFrame(); });
+    tf::Task beginFrameTask = tf.emplace([&]() { BeginFrame(); });
     
-    std::vector<tf::Task> allRenderTasks;
-    allRenderTasks.reserve(GfxManagerSingletons::gs_RenderPasses.size());
-
-    for (const std::unique_ptr<GfxRenderPass>& renderPass : GfxManagerSingletons::gs_RenderPasses)
-    {
-        GfxContext& context = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
-        tf::Task newRenderTask = sf.emplace([&]()
+    tf::Task allRenderTasks = tf.emplace([&](tf::Subflow& sf)
+        {
+            for (const std::unique_ptr<GfxRenderPass>& renderPass : GfxManagerSingletons::gs_RenderPasses)
             {
-                renderPass->Render(context);
-            });
-        newRenderTask.name(renderPass->GetName());
-        allRenderTasks.push_back(newRenderTask);
-    }
-    beginFrameTask.precede(allRenderTasks);
+                GfxContext& context = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
+                tf::Task newRenderTask = sf.emplace([&]()
+                    {
+                        renderPass->Render(context);
+                    });
+                newRenderTask.name(renderPass->GetName());
+            }
+        }
+    );
+    allRenderTasks.succeed(beginFrameTask);
 
-    tf::Task endFrameTask = sf.emplace([&]() { EndFrame(); });
+    tf::Task endFrameTask = tf.emplace([&]() { EndFrame(); });
     endFrameTask.succeed(allRenderTasks);
 }
 

@@ -2,7 +2,7 @@
 
 extern const bool g_EnableGfxDebugLayer;
 
-struct IDXGIAdapter1;
+using GfxAdapterArray = boost::container::small_vector<ComPtr<IDXGIAdapter1>, 4>;
 
 class GfxAdapter
 {
@@ -12,9 +12,9 @@ public:
     void Initialize();
 
     IDXGIFactory7* GetDXGIFactory() const { return m_DXGIFactory.Get(); }
-    const std::vector<ComPtr<IDXGIAdapter1>>& GetAllAdapters() const { return m_AllAdapters; }
+    const GfxAdapterArray& GetAllAdapters() const { return m_AllAdapters; }
 
 private:
     ComPtr<IDXGIFactory7> m_DXGIFactory;
-    std::vector<ComPtr<IDXGIAdapter1>> m_AllAdapters;
+    GfxAdapterArray m_AllAdapters;
 };

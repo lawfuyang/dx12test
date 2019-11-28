@@ -18,6 +18,7 @@ public:
 
     GfxContext& GenerateNewContext(D3D12_COMMAND_LIST_TYPE);
     GfxCommandListsManager& GetCommandListsManager() { return m_CommandListsManager; }
+    GfxDescriptorHeapManager& GetDescriptorHeapManager() { return m_DescriptorHeapManager; }
 
     D3D_ROOT_SIGNATURE_VERSION GetHighSupportedRootSignature() const { return m_RootSigSupport.HighestVersion; }
 
