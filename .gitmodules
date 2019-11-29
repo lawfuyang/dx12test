@@ -1,0 +1,3 @@
+[submodule "extern/microprofile"]
+	path = extern/microprofile
+	url = https://github.com/jonasmr/microprofile.git
