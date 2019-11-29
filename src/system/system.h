@@ -28,10 +28,10 @@
 #include "system/locks.h"
 
 #include "extern/cpp-taskflow/taskflow/taskflow.hpp"
-#include "extern/boost/pool/object_pool.hpp"
-#include "extern/boost/lockfree/stack.hpp"
-#include "extern/boost/lockfree/queue.hpp"
-#include "extern/boost/container/small_vector.hpp"
+#include "boost/pool/object_pool.hpp"
+#include "boost/lockfree/stack.hpp"
+#include "boost/lockfree/queue.hpp"
+#include "boost/container/small_vector.hpp"
 
 typedef uint64_t WindowHandle;
 using Microsoft::WRL::ComPtr;

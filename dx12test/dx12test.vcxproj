@@ -62,7 +62,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\;$(SolutionDir)..\src\;$(SolutionDir)..\extern\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\;$(SolutionDir)..\src\;$(SolutionDir)..\extern\;$(SolutionDir)..\extern\boost\libs\core\include;$(SolutionDir)..\extern\boost\libs\pool\include;$(SolutionDir)..\extern\boost\libs\lockfree\include;$(SolutionDir)..\extern\boost\libs\container\include;$(SolutionDir)..\extern\boost\libs\config\include;$(SolutionDir)..\extern\boost\libs\integer\include;$(SolutionDir)..\extern\boost\libs\type_traits\include;$(SolutionDir)..\extern\boost\libs\assert\include;$(SolutionDir)..\extern\boost\libs\static_assert\include;$(SolutionDir)..\extern\boost\libs\tuple\include;$(SolutionDir)..\extern\boost\libs\mpl\include;$(SolutionDir)..\extern\boost\libs\preprocessor\include;$(SolutionDir)..\extern\boost\libs\array\include;$(SolutionDir)..\extern\boost\libs\throw_exception\include;$(SolutionDir)..\extern\boost\libs\align\include;$(SolutionDir)..\extern\boost\libs\parameter\include;$(SolutionDir)..\extern\boost\libs\mp11\include;$(SolutionDir)..\extern\boost\libs\utility\include;$(SolutionDir)..\extern\boost\libs\predef\include;$(SolutionDir)..\extern\boost\libs\move\include;$(SolutionDir)..\extern\boost\libs\intrusive\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
@@ -87,7 +87,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\;$(SolutionDir)..\src\;$(SolutionDir)..\extern\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\;$(SolutionDir)..\src\;$(SolutionDir)..\extern\;$(SolutionDir)..\extern\boost\libs\core\include;$(SolutionDir)..\extern\boost\libs\pool\include;$(SolutionDir)..\extern\boost\libs\lockfree\include;$(SolutionDir)..\extern\boost\libs\container\include;$(SolutionDir)..\extern\boost\libs\config\include;$(SolutionDir)..\extern\boost\libs\integer\include;$(SolutionDir)..\extern\boost\libs\type_traits\include;$(SolutionDir)..\extern\boost\libs\assert\include;$(SolutionDir)..\extern\boost\libs\static_assert\include;$(SolutionDir)..\extern\boost\libs\tuple\include;$(SolutionDir)..\extern\boost\libs\mpl\include;$(SolutionDir)..\extern\boost\libs\preprocessor\include;$(SolutionDir)..\extern\boost\libs\array\include;$(SolutionDir)..\extern\boost\libs\throw_exception\include;$(SolutionDir)..\extern\boost\libs\align\include;$(SolutionDir)..\extern\boost\libs\parameter\include;$(SolutionDir)..\extern\boost\libs\mp11\include;$(SolutionDir)..\extern\boost\libs\utility\include;$(SolutionDir)..\extern\boost\libs\predef\include;$(SolutionDir)..\extern\boost\libs\move\include;$(SolutionDir)..\extern\boost\libs\intrusive\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
