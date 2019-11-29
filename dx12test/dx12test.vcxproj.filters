@@ -114,9 +114,6 @@
     <ClInclude Include="..\src\graphic\gfxmanager.h">
       <Filter>graphic</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxutils.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\graphic\guimanager.h">
       <Filter>graphic</Filter>
     </ClInclude>

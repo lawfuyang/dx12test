@@ -7,3 +7,6 @@
 [submodule "extern/DirectXMath"]
 	path = extern/DirectXMath
 	url = https://github.com/microsoft/DirectXMath.git
+[submodule "extern/boost"]
+	path = extern/boost
+	url = https://github.com/boostorg/boost.git
