@@ -4,3 +4,6 @@
 [submodule "extern/cpp-taskflow"]
 	path = extern/cpp-taskflow
 	url = https://github.com/cpp-taskflow/cpp-taskflow.git
+[submodule "extern/DirectXMath"]
+	path = extern/DirectXMath
+	url = https://github.com/microsoft/DirectXMath.git
