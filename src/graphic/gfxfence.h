@@ -10,17 +10,15 @@ public:
         ::CloseHandle(m_FenceEvent);
     }
 
-    ID3D12Fence* Dev() const { return m_Fence.Get(); }
+    ID3D12Fence1* Dev() const { return m_Fence.Get(); }
 
     void Initialize(D3D12_FENCE_FLAGS);
-
-    ::HANDLE GetFenceEvent() const { return m_FenceEvent; }
-
-    uint64_t GetFenceValue() const { return m_FenceValue; }
-    void IncrementFenceValue() { ++m_FenceValue; }
+    void IncrementAndSignal(ID3D12CommandQueue* cmdQueue);
+    bool IsSignaledByGPU() const;
+    void WaitForSignalFromGPU() const;
 
 private:
-    ComPtr<ID3D12Fence> m_Fence;
+    ComPtr<ID3D12Fence1> m_Fence;
 
     uint64_t m_FenceValue = 0;
     ::HANDLE m_FenceEvent = nullptr;

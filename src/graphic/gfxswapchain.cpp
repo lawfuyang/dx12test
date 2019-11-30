@@ -56,7 +56,7 @@ void GfxSwapChain::Initialize(uint32_t width, uint32_t height, DXGI_FORMAT forma
         ComPtr<ID3D12Resource> backBufferResource;
         DX12_CALL(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&backBufferResource)));
         m_RenderTargets[i].Initialize(backBufferResource.Get());
-        SetDebugName(m_RenderTargets[i].GetHazardTrackedResource().Dev(), StringFormat("Back Buffer RTV %d", i));
+        SetD3DDebugName(m_RenderTargets[i].GetHazardTrackedResource().Dev(), StringFormat("Back Buffer RTV %d", i));
     }
 }
 

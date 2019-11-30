@@ -15,13 +15,13 @@ const char* GetD3DFeatureLevelName(D3D_FEATURE_LEVEL FeatureLevel);
 const char* GetD3DShaderModelName(D3D_SHADER_MODEL shaderModel);
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-const std::string GetD3D12ResourceName(ID3D12Resource* resource);
+const std::string GetD3DDebugName(ID3D12Object* resource);
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-void SetDebugName(ID3D12Object* object, const std::string& name);
+void SetD3DDebugName(ID3D12Object* object, const std::string& name);
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-void SetDebugParent(ID3D12Object* object, const void* parentPointer);
+void SetD3DDebugParent(ID3D12Object* object, const void* parentPointer);
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-void* GetD3D12ResourceParent(ID3D12Object* resource);
+void* GetD3DResourceParent(ID3D12Object* resource);

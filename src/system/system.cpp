@@ -41,8 +41,6 @@ void System::Initialize()
     // uncomment to profile engine init phase
     //const ProfilerInstance profilerInstance{ true };
 
-    bbeDebug("Initializing");
-
     InitializeGraphic();
 }
 
@@ -80,24 +78,21 @@ void System::Update()
 FrameRateController::FrameRateController()
 {
     m_FrameEndTime = std::chrono::high_resolution_clock::now() + std::chrono::microseconds{ 1000000 / System::FPS_LIMIT };
-
-    ::LARGE_INTEGER liTime;
-    liTime.QuadPart = -(std::chrono::nanoseconds(10000000 / System::FPS_LIMIT).count() - 10000); // wait 1 ms less due to timer inaccuracy
-    ::SetWaitableTimer(ms_TimerHandle, &liTime, 0, 0, 0, FALSE);
+    m_200FPSFrameEndTime = std::chrono::high_resolution_clock::now() + std::chrono::microseconds{ 1000000 / 200 };
 }
 
 FrameRateController::~FrameRateController()
 {
-    float realFrameTimeMs = (float)m_StopWatch.ElapsedUS() / 1000;
-    float fps = 1000.0f / realFrameTimeMs;
+    const float realFrameTimeMs = (float)m_StopWatch.ElapsedUS() / 1000;
+    const float fps = 1000.0f / realFrameTimeMs;
 
     bbeProfile("Idle");
 
-    //::WaitForSingleObject(ms_TimerHandle, INFINITE); // This is unreliable as fuck
+    while (std::chrono::high_resolution_clock::now() < m_200FPSFrameEndTime) { std::this_thread::yield(); } // busy wait until hard cap of 200 fps
     while (std::chrono::high_resolution_clock::now() < m_FrameEndTime) { std::this_thread::yield(); } // busy wait until exactly fps limit
 
-    float cappedFrameTimeMs = (float)m_StopWatch.ElapsedUS() / 1000;
-    float cappedFPS = 1000.0f / cappedFrameTimeMs;
+    const float cappedFrameTimeMs = (float)m_StopWatch.ElapsedUS() / 1000;
+    const float cappedFPS = 1000.0f / cappedFrameTimeMs;
 
     System::ms_RealFrameTimeMs   = realFrameTimeMs;
     System::ms_FPS               = fps;

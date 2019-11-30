@@ -39,29 +39,29 @@ const char* GetD3DShaderModelName(D3D_SHADER_MODEL shaderModel)
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-const std::string GetD3D12ResourceName(ID3D12Resource* resource)
+const std::string GetD3DDebugName(ID3D12Object* object)
 {
     UINT size = MAX_PATH;
     char name[MAX_PATH] = {};
-    DX12_CALL(resource->GetPrivateData(WKPDID_D3DDebugObjectName, &size, &name));
+    DX12_CALL(object->GetPrivateData(WKPDID_D3DDebugObjectName, &size, &name));
     return name;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-void SetDebugName(ID3D12Object* object, const std::string& name)
+void SetD3DDebugName(ID3D12Object* object, const std::string& name)
 {
     object->SetName(utf8_decode(name).c_str());
     object->SetPrivateData(WKPDID_D3DDebugObjectName, (UINT)name.size(), name.c_str());
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-void SetDebugParent(ID3D12Object* object, const void* parentPointer)
+void SetD3DDebugParent(ID3D12Object* object, const void* parentPointer)
 {
     object->SetPrivateData(GUID_ParentPointer, sizeof(parentPointer), parentPointer);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-void* GetD3D12ResourceParent(ID3D12Object* resource)
+void* GetD3DResourceParent(ID3D12Object* resource)
 {
     UINT size = sizeof(void*);
     void* parentPointer = nullptr;

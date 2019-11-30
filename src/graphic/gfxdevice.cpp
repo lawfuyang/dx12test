@@ -188,22 +188,8 @@ void GfxDevice::WaitForPreviousFrame()
 {
     bbeProfileFunction();
 
-    // increment device fence value to signify end of frame numbmer
-    m_GfxFence.IncrementFenceValue();
-
-    // Increment & signal the fence value for direct queue to signify end of cmdQueue execution
-    DX12_CALL(m_CommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT)->Signal(m_GfxFence.Dev(), m_GfxFence.GetFenceValue()));
-
-    if (m_GfxFence.Dev()->GetCompletedValue() < m_GfxFence.GetFenceValue())
-    {
-        DX12_CALL(m_GfxFence.Dev()->SetEventOnCompletion(m_GfxFence.GetFenceValue(), m_GfxFence.GetFenceEvent()));
-
-        // Dumping profiling blocks may long, so we must wait until the previous frame is finished, else GfxCommandList will try to Reset while executing
-        if (SystemProfiler::IsDumpingBlocks())
-        {
-            WaitForSingleObject(m_GfxFence.GetFenceEvent(), INFINITE);
-        }
-    }
+    m_GfxFence.IncrementAndSignal(m_CommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT));
+    m_GfxFence.WaitForSignalFromGPU();
 }
 
 GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType)

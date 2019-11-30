@@ -90,7 +90,7 @@ public:
 
 private:
     StopWatch m_StopWatch;
-    inline static ::HANDLE ms_TimerHandle = ::CreateWaitableTimer(0, TRUE, "FrameRateController Timer");
 
     std::chrono::high_resolution_clock::time_point m_FrameEndTime;
+    std::chrono::high_resolution_clock::time_point m_200FPSFrameEndTime;
 };

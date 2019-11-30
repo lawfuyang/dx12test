@@ -34,7 +34,7 @@ void SystemProfiler::DisableProfilingAndDumpToFile()
 ProfilerInstance::ProfilerInstance(bool dumpOnExitScope)
     : m_DumpOnExitScope(dumpOnExitScope)
 {
-    if (dumpOnExitScope || Keyboard::WasKeyPressed(Keyboard::KEY_P))
+    if (dumpOnExitScope || Keyboard::IsKeyPressed(Keyboard::KEY_P))
     {
         SystemProfiler::EnableProfiling();
     }

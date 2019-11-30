@@ -7,7 +7,7 @@ class GfxRenderTargetView;
 class GfxContext
 {
 public:
-    void ClearRenderTargetView(GfxRenderTargetView& rtv, const float(&clearColor)[4]) const; // TODO: Convert to use math lib's vec4
+    void ClearRenderTargetView(GfxRenderTargetView& rtv, XMFLOAT4 clearColor) const;
 
     GfxDevice* GetDevice() const { return m_Device; }
     GfxCommandList* GetCommandList() const { return m_CommandList; }

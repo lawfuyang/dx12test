@@ -53,4 +53,4 @@ private:
     bool m_IsLocked = false;
 };
 
-#define bbeAutoLock(lock) lock.Lock(); bbeOnExitScope {lock.Unlock();}
+#define bbeAutoLock(lock) lock.Lock(); bbeOnExitScope([&](){lock.Unlock();});

@@ -2,46 +2,24 @@
 
 namespace UtilsPrivate
 {
-    template<typename FunctionType>
-    class ScopeGuard
+    template <typename Lambda>
+    class ExitScopeCaller
     {
+        static_assert(std::is_invocable_v<Lambda>);
+
     public:
-        explicit ScopeGuard(const FunctionType& fn)
-            : m_Function(fn) {}
+        explicit ExitScopeCaller(Lambda&& l)
+            : m_Lambda(std::forward<Lambda>(l))
+        {}
 
-        explicit ScopeGuard(FunctionType&& fn)
-            : m_Function(std::move(fn)) {}
-
-        void Execute() { m_Function(); }
-
-        ~ScopeGuard() {}
+        ~ExitScopeCaller()
+        {
+            m_Lambda();
+        }
 
     private:
-        FunctionType m_Function;
+        Lambda&& m_Lambda;
     };
-
-    template<typename FunctionType>
-    class ExitScopeGuard : public ScopeGuard<FunctionType>
-    {
-        typedef ScopeGuard<FunctionType> BaseType;
-
-    public:
-        explicit ExitScopeGuard(const FunctionType& fn)
-            : BaseType(fn) {}
-
-        explicit ExitScopeGuard(FunctionType&& fn)
-            : BaseType(fn) {}
-
-        ~ExitScopeGuard() { BaseType::Execute(); }
-    };
-
-    enum class ScopeGuardOnExit {};
-
-    template<typename ExitFunction>
-    ExitScopeGuard<typename std::decay<ExitFunction>::type> operator+(ScopeGuardOnExit, ExitFunction&& fn)
-    {
-        return ExitScopeGuard<typename std::decay<ExitFunction>::type>(std::forward<ExitFunction>(fn));
-    }
 
     template<class T>
     class MemberAutoUnset
@@ -128,9 +106,7 @@ namespace UtilsPrivate
 #define bbeJOIN( Arg1, Arg2 )               bbeDO_JOIN( Arg1, Arg2 )
 #define bbeUniqueVariable(basename)         bbeJOIN(basename, __COUNTER__)
 
-#define bbeOnExitScope                         \
-    auto bbeUniqueVariable(AutoOnExitVar)      \
-    = UtilsPrivate::ScopeGuardOnExit() + [&]()
+#define bbeOnExitScope(lambda) UtilsPrivate::ExitScopeCaller bbeUniqueVariable(AutoOnExitVar){ lambda };
 
 #define BBE_SCOPED_UNSET(type, var, val) UtilsPrivate::MemberAutoUnset<type> bbeUniqueVariable(autoUnset){var, val};
 

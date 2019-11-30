@@ -1,5 +1,6 @@
 #include "graphic/gfxmanager.h"
 
+#include "graphic/dx12utils.h"
 #include "graphic/gfxadapter.h"
 #include "graphic/gfxcontext.h"
 #include "graphic/gfxdevice.h"
@@ -7,6 +8,8 @@
 #include "graphic/gfxrootsignature.h"
 
 #include "graphic/renderpasses/gfxtestrenderpass.h"
+
+constexpr bool g_FlushPerFrame = true;
 
 namespace GfxManagerSingletons
 {
@@ -38,6 +41,8 @@ void GfxManager::ShutDown()
     bbeProfileFunction();
 
     m_GUIManager->ShutDown();
+
+    // we must complete the previous GPU frame before exiting the app
     m_GfxDevice->WaitForPreviousFrame();
 }
 
@@ -54,6 +59,8 @@ void GfxManager::ScheduleGraphicTasks(tf::Taskflow& tf)
             for (const std::unique_ptr<GfxRenderPass>& renderPass : GfxManagerSingletons::gs_RenderPasses)
             {
                 GfxContext& context = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
+                SetD3DDebugName(context.GetCommandList()->Dev(), renderPass->GetName());
+
                 tf::Task newRenderTask = sf.emplace([&]()
                     {
                         renderPass->Render(context);
@@ -82,5 +89,9 @@ void GfxManager::EndFrame()
 
     m_GfxDevice->EndFrame();
     m_SwapChain->Present();
-    m_GfxDevice->WaitForPreviousFrame();
+
+    if constexpr (g_FlushPerFrame)
+    {
+        m_GfxDevice->WaitForPreviousFrame();
+    }
 }

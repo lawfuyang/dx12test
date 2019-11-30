@@ -3,7 +3,7 @@
 #include "graphic/gfxcommandlist.h"
 #include "graphic/gfxtexturesandbuffers.h"
 
-void GfxContext::ClearRenderTargetView(GfxRenderTargetView& rtv, const float(&clearColor)[4]) const
+void GfxContext::ClearRenderTargetView(GfxRenderTargetView& rtv, XMFLOAT4 clearColor) const
 {
     const UINT numBarriers = 1;
 
@@ -12,5 +12,6 @@ void GfxContext::ClearRenderTargetView(GfxRenderTargetView& rtv, const float(&cl
     const UINT numRects = 0;
     const D3D12_RECT* pRects = nullptr;
 
-    m_CommandList->Dev()->ClearRenderTargetView(rtv.GetCPUDescHandle(), clearColor, numRects, pRects);
+    const FLOAT colorInFloat[] = { clearColor.x, clearColor.y, clearColor.z, clearColor.w };
+    m_CommandList->Dev()->ClearRenderTargetView(rtv.GetCPUDescHandle(), colorInFloat, numRects, pRects);
 }
