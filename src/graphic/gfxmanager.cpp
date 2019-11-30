@@ -9,8 +9,6 @@
 
 #include "graphic/renderpasses/gfxtestrenderpass.h"
 
-constexpr bool g_FlushPerFrame = true;
-
 namespace GfxManagerSingletons
 {
     static GfxDevice    gs_GfxDevice;
@@ -90,8 +88,6 @@ void GfxManager::EndFrame()
     m_GfxDevice->EndFrame();
     m_SwapChain->Present();
 
-    if constexpr (g_FlushPerFrame)
-    {
-        m_GfxDevice->WaitForPreviousFrame();
-    }
+    // TODO: refactor this. use fences to sync
+    m_GfxDevice->WaitForPreviousFrame();
 }
