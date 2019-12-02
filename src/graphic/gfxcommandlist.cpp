@@ -103,6 +103,9 @@ GfxCommandList* GfxCommandListsManager::Allocate(D3D12_COMMAND_LIST_TYPE cmdList
 {
     bbeProfileFunction();
 
+    // TODO: Need to investigate why at high frame rates (>60 fps), it's not allocating proper free cmd lists
+    //       It's always calling "BeginRecording" on recording cmd lists
+
     CommandListPool& pool = GetPoolFromType(cmdListType);
     GfxCommandList* newCmdList = nullptr;
     bbeOnExitScope([&]()

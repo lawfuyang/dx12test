@@ -18,12 +18,14 @@ public:
     void BeginFrame();
     void EndFrame();
 
-    GfxDevice& GetGfxDevice() { return *m_GfxDevice; }
-    GfxSwapChain& GetSwapChain() { return *m_SwapChain; }
-    GUIManager& GetGUIManager() { return *m_GUIManager; }
+    GfxDevice&               GetGfxDevice()            { return *m_GfxDevice; }
+    GfxSwapChain&            GetSwapChain()            { return *m_SwapChain; }
+    GUIManager&              GetGUIManager()           { return *m_GUIManager; }
+    GfxRootSignatureManager& GetRootSignatureManager() { return *m_RootSignatureManager; }
 
 private:
-    GfxDevice* m_GfxDevice = nullptr;
-    GfxSwapChain* m_SwapChain = nullptr;
-    GUIManager* m_GUIManager = nullptr;
+    GfxDevice*               m_GfxDevice            = nullptr;
+    GfxSwapChain*            m_SwapChain            = nullptr;
+    GUIManager*              m_GUIManager           = nullptr;
+    GfxRootSignatureManager* m_RootSignatureManager = nullptr;
 };

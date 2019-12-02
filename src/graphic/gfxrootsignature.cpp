@@ -4,23 +4,23 @@
 #include "graphic/dx12utils.h"
 #include "graphic/gfxdevice.h"
 
-static constexpr D3D12_STATIC_SAMPLER_DESC CreateStaticSampler(D3D12_FILTER Filter, D3D12_TEXTURE_ADDRESS_MODE AddressMode, uint32_t ShaderRegister)
+static constexpr D3D12_STATIC_SAMPLER_DESC CreateStaticSampler(D3D12_FILTER filter, D3D12_TEXTURE_ADDRESS_MODE addressMode, uint32_t shaderRegister)
 {
-    const uint32_t StaticSamplerSpaceIndex = 99;
+    const uint32_t StaticSamplerSpaceIndex = 99; //  just shove it in space 99, so that it doesnt over lap with other non-static sampler registers
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};
-    sampler.Filter = Filter;
-    sampler.AddressU = AddressMode;
-    sampler.AddressV = AddressMode;
-    sampler.AddressW = AddressMode;
-    sampler.MipLODBias = 0;
-    sampler.MaxAnisotropy = 0;
-    sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-    sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-    sampler.MinLOD = 0.0f;
-    sampler.MaxLOD = D3D12_FLOAT32_MAX;
-    sampler.ShaderRegister = ShaderRegister;
-    sampler.RegisterSpace = StaticSamplerSpaceIndex;
+    sampler.Filter           = filter;
+    sampler.AddressU         = addressMode;
+    sampler.AddressV         = addressMode;
+    sampler.AddressW         = addressMode;
+    sampler.MipLODBias       = 0;
+    sampler.MaxAnisotropy    = filter == D3D12_FILTER_ANISOTROPIC ? 16 : 0;
+    sampler.BorderColor      = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+    sampler.ComparisonFunc   = D3D12_COMPARISON_FUNC_ALWAYS;
+    sampler.MinLOD           = 0.0f;
+    sampler.MaxLOD           = D3D12_FLOAT32_MAX;
+    sampler.ShaderRegister   = shaderRegister;
+    sampler.RegisterSpace    = StaticSamplerSpaceIndex;
     sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
     return sampler;
@@ -28,9 +28,9 @@ static constexpr D3D12_STATIC_SAMPLER_DESC CreateStaticSampler(D3D12_FILTER Filt
 static constexpr D3D12_STATIC_SAMPLER_DESC gs_PointClampSamplerDesc       = CreateStaticSampler(D3D12_FILTER_MIN_MAG_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 0);
 static constexpr D3D12_STATIC_SAMPLER_DESC gs_PointWrapSamplerDesc        = CreateStaticSampler(D3D12_FILTER_MIN_MAG_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 1);
 static constexpr D3D12_STATIC_SAMPLER_DESC gs_TrilinearClampSamplerDesc   = CreateStaticSampler(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 2);
-static constexpr D3D12_STATIC_SAMPLER_DESC gs_TrilinearWrapSamplerDesc    = CreateStaticSampler(D3D12_FILTER_MIN_MAG_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 3);
+static constexpr D3D12_STATIC_SAMPLER_DESC gs_TrilinearWrapSamplerDesc    = CreateStaticSampler(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 3);
 static constexpr D3D12_STATIC_SAMPLER_DESC gs_AnisotropicClampSamplerDesc = CreateStaticSampler(D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 4);
-static constexpr D3D12_STATIC_SAMPLER_DESC gs_AnisotropicWrapSamplerDesc  = CreateStaticSampler(D3D12_FILTER_MIN_MAG_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 5);
+static constexpr D3D12_STATIC_SAMPLER_DESC gs_AnisotropicWrapSamplerDesc  = CreateStaticSampler(D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 5);
 
 static constexpr D3D12_STATIC_SAMPLER_DESC gs_StaticSamplers[] =
 {
@@ -42,7 +42,24 @@ static constexpr D3D12_STATIC_SAMPLER_DESC gs_StaticSamplers[] =
     gs_AnisotropicWrapSamplerDesc,
 };
 
-void GfxRootSignature::Initialize()
+void GfxRootSignature::AddSRV()
+{
+    // root sig contains only one srv
+    D3D12_DESCRIPTOR_RANGE1 newRange;
+    newRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    newRange.NumDescriptors = 1;
+    newRange.BaseShaderRegister = m_ShaderRegisters[D3D12_DESCRIPTOR_RANGE_TYPE_SRV]++;
+    newRange.RegisterSpace = 0; // TODO: implement different spaces if needed
+    newRange.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC; // Always static. Change to volatile if needed
+    newRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+    CD3DX12_ROOT_PARAMETER1 rootParameter;
+    rootParameter.InitAsDescriptorTable(1, &newRange, D3D12_SHADER_VISIBILITY_ALL);
+
+    m_RootParams.push_back(rootParameter);
+}
+
+void GfxRootSignature::Compile()
 {
     bbeProfileFunction();
 
@@ -53,28 +70,27 @@ void GfxRootSignature::Initialize()
 
     assert(highestRootSigVer == D3D_ROOT_SIGNATURE_VERSION_1_1);
 
-    // root sig contains only one srv
-    D3D12_DESCRIPTOR_RANGE1 ranges[1];
-    ranges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-    ranges[0].NumDescriptors = 1;
-    ranges[0].BaseShaderRegister = 0;
-    ranges[0].RegisterSpace = 0;
-    ranges[0].Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC;
-    ranges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-    CD3DX12_ROOT_PARAMETER1 rootParameters[1];
-    rootParameters[0].InitAsDescriptorTable(_countof(ranges), &ranges[0], D3D12_SHADER_VISIBILITY_ALL);
-
     D3D12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
     rootSignatureDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
-    rootSignatureDesc.Desc_1_1.NumParameters = _countof(rootParameters);
-    rootSignatureDesc.Desc_1_1.pParameters = rootParameters;
+    rootSignatureDesc.Desc_1_1.NumParameters = m_RootParams.size();
+    rootSignatureDesc.Desc_1_1.pParameters = m_RootParams.data();
     rootSignatureDesc.Desc_1_1.NumStaticSamplers = _countof(gs_StaticSamplers);
-    rootSignatureDesc.Desc_1_1.pStaticSamplers = &gs_StaticSamplers[0];
-    rootSignatureDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+    rootSignatureDesc.Desc_1_1.pStaticSamplers = gs_StaticSamplers;
+    rootSignatureDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT; // change to D3D12_ROOT_SIGNATURE_FLAG_NONE for compute shaders etc
 
     ComPtr<ID3DBlob> signature;
     ComPtr<ID3DBlob> error;
     DX12_CALL(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, highestRootSigVer, &signature, &error));
     DX12_CALL(gfxDevice.Dev()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature)));
+
+    // clear all root params. we no longer need them.
+    m_RootParams.resize(0);
+}
+
+void GfxRootSignatureManager::Initialize()
+{
+    bbeProfileFunction();
+
+    g_DefaultGraphicsRootSignature.AddSRV();
+    g_DefaultGraphicsRootSignature.Compile();
 }

@@ -11,9 +11,10 @@
 
 namespace GfxManagerSingletons
 {
-    static GfxDevice    gs_GfxDevice;
-    static GfxSwapChain gs_SwapChain;
-    static GUIManager   gs_GUIManager;
+    static GfxDevice               gs_GfxDevice;
+    static GfxSwapChain            gs_SwapChain;
+    static GUIManager              gs_GUIManager;
+    static GfxRootSignatureManager gs_RootSignatureManager;
 
     static boost::container::small_vector<std::unique_ptr<GfxRenderPass>, 16> gs_RenderPasses;
 }
@@ -22,14 +23,21 @@ void GfxManager::Initialize()
 {
     bbeProfileFunction();
 
-    m_GfxDevice = &GfxManagerSingletons::gs_GfxDevice;
-    m_SwapChain = &GfxManagerSingletons::gs_SwapChain;
-    m_GUIManager = &GfxManagerSingletons::gs_GUIManager;
+    m_GfxDevice            = &GfxManagerSingletons::gs_GfxDevice;
+    m_SwapChain            = &GfxManagerSingletons::gs_SwapChain;
+    m_GUIManager           = &GfxManagerSingletons::gs_GUIManager;
+    m_RootSignatureManager = &GfxManagerSingletons::gs_RootSignatureManager;
 
     GfxAdapter::GetInstance().Initialize();
     m_GfxDevice->Initialize();
-    m_SwapChain->Initialize(System::APP_WINDOW_WIDTH, System::APP_WINDOW_HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM);
-    m_GUIManager->Initialize();
+
+    tf::Taskflow tf;
+
+    tf.emplace([&]() { m_SwapChain->Initialize(System::APP_WINDOW_WIDTH, System::APP_WINDOW_HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM); });
+    tf.emplace([&]() { m_GUIManager->Initialize(); });
+    tf.emplace([&]() { m_RootSignatureManager->Initialize(); });
+
+    System::GetInstance().GetTasksExecutor().run(tf).wait();
 
     GfxManagerSingletons::gs_RenderPasses.push_back(std::make_unique<GfxTestRenderPass>());
 }
