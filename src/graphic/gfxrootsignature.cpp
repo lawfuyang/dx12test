@@ -25,15 +25,21 @@ static constexpr D3D12_STATIC_SAMPLER_DESC CreateStaticSampler(D3D12_FILTER Filt
 
     return sampler;
 }
-static constexpr D3D12_STATIC_SAMPLER_DESC gs_PointSamplerDesc       = CreateStaticSampler(D3D12_FILTER_MIN_MAG_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 0);
-static constexpr D3D12_STATIC_SAMPLER_DESC gs_TrilinearSamplerDesc   = CreateStaticSampler(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 1);
-static constexpr D3D12_STATIC_SAMPLER_DESC gs_AnisotropicSamplerDesc = CreateStaticSampler(D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 2);
+static constexpr D3D12_STATIC_SAMPLER_DESC gs_PointClampSamplerDesc       = CreateStaticSampler(D3D12_FILTER_MIN_MAG_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 0);
+static constexpr D3D12_STATIC_SAMPLER_DESC gs_PointWrapSamplerDesc        = CreateStaticSampler(D3D12_FILTER_MIN_MAG_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 1);
+static constexpr D3D12_STATIC_SAMPLER_DESC gs_TrilinearClampSamplerDesc   = CreateStaticSampler(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 2);
+static constexpr D3D12_STATIC_SAMPLER_DESC gs_TrilinearWrapSamplerDesc    = CreateStaticSampler(D3D12_FILTER_MIN_MAG_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 3);
+static constexpr D3D12_STATIC_SAMPLER_DESC gs_AnisotropicClampSamplerDesc = CreateStaticSampler(D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 4);
+static constexpr D3D12_STATIC_SAMPLER_DESC gs_AnisotropicWrapSamplerDesc  = CreateStaticSampler(D3D12_FILTER_MIN_MAG_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 5);
 
 static constexpr D3D12_STATIC_SAMPLER_DESC gs_StaticSamplers[] =
 {
-    gs_PointSamplerDesc,
-    gs_TrilinearSamplerDesc,
-    gs_AnisotropicSamplerDesc,
+    gs_PointClampSamplerDesc,
+    gs_PointWrapSamplerDesc,
+    gs_TrilinearClampSamplerDesc,
+    gs_TrilinearWrapSamplerDesc,
+    gs_AnisotropicClampSamplerDesc,
+    gs_AnisotropicWrapSamplerDesc,
 };
 
 void GfxRootSignature::Initialize()
