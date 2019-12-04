@@ -61,9 +61,6 @@
     <ClCompile Include="..\src\system\locks.cpp">
       <Filter>system</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxpipelinestate.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\graphic\gfxcontext.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
@@ -77,6 +74,12 @@
       <Filter>graphic</Filter>
     </ClCompile>
     <ClCompile Include="..\src\graphic\gfxrootsignature.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxpipelinestateobject.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxshaders.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
   </ItemGroup>
@@ -159,9 +162,6 @@
     <ClInclude Include="..\src\system\locks.h">
       <Filter>system</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxpipelinestate.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\graphic\gfxcontext.h">
       <Filter>graphic</Filter>
     </ClInclude>
@@ -178,6 +178,12 @@
       <Filter>graphic</Filter>
     </ClInclude>
     <ClInclude Include="..\src\graphic\gfxdescriptorheap.hpp">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxpipelinestateobject.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxshaders.h">
       <Filter>graphic</Filter>
     </ClInclude>
   </ItemGroup>

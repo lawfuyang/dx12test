@@ -1,5 +1,6 @@
 #include "graphic/gfxdevice.h"
 
+#include "graphic/gfxmanager.h"
 #include "graphic/dx12utils.h"
 #include "graphic/gfxadapter.h"
 #include "graphic/gfxcontext.h"
@@ -199,6 +200,7 @@ GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType)
 
     m_AllContexts.push_back(GfxContext{});
     GfxContext& newContext = m_AllContexts.back();
+    newContext.m_GfxManager = &GfxManager::GetInstance();
     newContext.m_Device = this;
     newContext.m_CommandList = m_CommandListsManager.Allocate(cmdListType);
 

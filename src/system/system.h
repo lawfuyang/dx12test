@@ -32,6 +32,7 @@
 #include "boost/lockfree/stack.hpp"
 #include "boost/lockfree/queue.hpp"
 #include "boost/container/small_vector.hpp"
+#include "boost/container_hash/hash.hpp"
 
 typedef uint64_t WindowHandle;
 using Microsoft::WRL::ComPtr;

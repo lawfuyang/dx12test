@@ -40,7 +40,7 @@ bool GfxFence::IsSignaledByGPU() const
 
 void GfxFence::WaitForSignalFromGPU() const
 {
-    if (m_Fence->GetCompletedValue() <  m_FenceValue)
+    if (!IsSignaledByGPU())
     {
         DX12_CALL(m_Fence->SetEventOnCompletion(m_FenceValue, m_FenceEvent));
         WaitForSingleObject(m_FenceEvent, INFINITE);

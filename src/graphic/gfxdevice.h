@@ -2,9 +2,10 @@
 
 #include "graphic/gfxcommandlist.h"
 #include "graphic/gfxfence.h"
-#include "graphic/gfxpipelinestate.h"
+#include "graphic/gfxpipelinestateobject.h"
 #include "graphic/gfxswapchain.h"
 #include "graphic/gfxdescriptorheap.h"
+#include "graphic/gfxpipelinestateobject.h"
 
 class GfxDevice
 {
@@ -27,9 +28,10 @@ private:
     void ConfigureDebugLayer();
     void CheckFeaturesSupports();
 
-    GfxCommandListsManager m_CommandListsManager;
+    GfxCommandListsManager   m_CommandListsManager;
     GfxDescriptorHeapManager m_DescriptorHeapManager;
-    GfxFence m_GfxFence;
+    GfxFence                 m_GfxFence;
+    GfxPSOManager            m_PSOManager;
 
     std::vector<GfxContext> m_AllContexts;
 
