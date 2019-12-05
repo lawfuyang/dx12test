@@ -1,5 +1,12 @@
 #pragma once
 
+#include <cinttypes>
+#include <string>
+#include <utility>
+#include <ctime>
+#include <mutex>
+#include <vector>
+
 namespace UtilsPrivate
 {
     template <typename Lambda>
@@ -152,3 +159,13 @@ const std::string utf8_encode(const std::wstring& wstr);
 const std::wstring utf8_decode(const std::string& str);
 
 const std::string GetLastErrorAsString();
+
+const std::string GetApplicationDirectory();
+
+const std::string GetDirectoryFromPath(const std::string& fullPath);
+
+void SplitPath(const std::string& fullPath, std::string& dir, std::string& fileName);
+
+void GetFilesInDirectory(std::vector<std::string>& out, const std::string& directory);
+
+const std::string GetFileNameFromPath(const std::string& fullPath);

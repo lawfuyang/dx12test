@@ -53,3 +53,75 @@ const std::string GetLastErrorAsString()
 
     return std::string{ messageBuffer };
 }
+
+const std::string GetApplicationDirectory()
+{
+    static std::once_flag s_OnceFlag;
+    static std::string appDir;
+
+    std::call_once(s_OnceFlag, [&]()
+        {
+            CHAR fileName[1024] = {};
+            ::GetModuleFileNameA(NULL, fileName, sizeof(fileName));
+            appDir = GetDirectoryFromPath(fileName);
+        });
+
+    return appDir;
+}
+
+const std::string GetDirectoryFromPath(const std::string& fullPath)
+{
+    if (fullPath.empty())
+    {
+        return fullPath;
+    }
+
+    std::string ret, empty;
+    SplitPath(fullPath, ret, empty);
+    return ret;
+}
+
+void SplitPath(const std::string& fullPath, std::string& dir, std::string& fileName)
+{
+    const std::size_t found = fullPath.find_last_of("/\\");
+    dir = fullPath.substr(0, found + 1);
+    fileName = fullPath.substr(found + 1);
+}
+
+void GetFilesInDirectory(std::vector<std::string>& out, const std::string& directory)
+{
+    ::HANDLE dir;
+    ::WIN32_FIND_DATA file_data;
+
+    if ((dir = ::FindFirstFile((directory + "\\*").c_str(), &file_data)) == INVALID_HANDLE_VALUE)
+        return; /* No files found */
+
+    do
+    {
+        const std::string file_name = file_data.cFileName;
+        const std::string full_file_name = directory + "\\" + file_name;
+        const bool is_directory = (file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+
+        if (file_name[0] == '.')
+            continue;
+
+        //if (is_directory)
+        //  continue;
+
+        out.push_back(full_file_name);
+    } while (FindNextFile(dir, &file_data));
+
+    FindClose(dir);
+}
+
+const std::string GetFileNameFromPath(const std::string& fullPath)
+{
+    if (fullPath.empty())
+    {
+        return fullPath;
+    }
+
+    std::string ret, empty;
+    SplitPath(fullPath, empty, ret);
+    return ret;
+}

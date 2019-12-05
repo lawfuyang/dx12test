@@ -1,3 +1,6 @@
+// BBEShader:VS_TestTriangle EntryPoint:VSMain
+// BBEShader:PS_TestTriangle EntryPoint:PSMain
+
 #include "common.hlsl"
 
 Texture2D g_Texture : register(t0);
