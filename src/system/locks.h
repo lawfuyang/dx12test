@@ -1,5 +1,9 @@
 #pragma once
 
+#include <atomic>
+
+#include "system/profiler.h"
+
 class SpinLock
 {
 public:

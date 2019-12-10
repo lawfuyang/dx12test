@@ -1,5 +1,6 @@
-// BBEShader:VS_TestTriangle EntryPoint:VSMain
-// BBEShader:PS_TestTriangle EntryPoint:PSMain
+// ShaderDeclaration:VS_TestTriangle EntryPoint:VSMain
+// ShaderDeclaration:PS_TestTriangle EntryPoint:PSMain
+// EndShaderDeclaration
 
 #include "common.hlsl"
 
@@ -19,7 +20,7 @@ struct VS_OUT
 
 VS_OUT VSMain(VS_IN input)
 {
-    PSInput result;
+    VS_OUT result;
 
     result.m_Position = input.m_Position;
     result.m_TexCoord = input.m_TexCoord;

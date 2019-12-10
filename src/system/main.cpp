@@ -148,7 +148,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
     BBE_UNUSED_PARAM(nCmdShow);
 
     // first, Init the logger
-    Logger::GetInstance().Initialize();
+    Logger::GetInstance().Initialize("../bin/Output.txt");
 
     EngineWindowThread::Initialize();
 

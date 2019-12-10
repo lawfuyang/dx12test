@@ -3,6 +3,9 @@
 #define BUILD_WITH_EASY_PROFILER
 #include "extern/easy/profiler.h"
 
+#include "system/stopwatch.h"
+#include "system/utils.h"
+
 class SystemProfiler
 {
 public:

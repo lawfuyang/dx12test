@@ -22,7 +22,7 @@ public:
         Warning,
     };
 
-    void Initialize();
+    void Initialize(const char* outputDir);
     void Shutdown();
 
     template <LogCategory Category, typename... Args>

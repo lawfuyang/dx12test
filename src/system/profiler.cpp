@@ -1,5 +1,8 @@
 #include "system/profiler.h"
 
+#include "system/logger.h"
+#include "system/keyboard.h"
+
 void SystemProfiler::EnableProfiling()
 {
     if (!::profiler::isEnabled())

@@ -1,5 +1,8 @@
 #include "graphic/dx12utils.h"
 
+#include "system/utils.h"
+#include "system/logger.h"
+
 // {4AA579AB-315B-4D6B-BE23-17FFD8402316}
 static const GUID GUID_ParentPointer = { 0x4aa579ab, 0x315b, 0x4d6b,{ 0xbe, 0x23, 0x17, 0xff, 0xd8, 0x40, 0x23, 0x16 } };
 
@@ -22,6 +25,7 @@ const char* GetD3DFeatureLevelName(D3D_FEATURE_LEVEL FeatureLevel)
     }
 }
 
+//------------------------------------------------------------------------------------------------------------------------------------------------------
 const char* GetD3DShaderModelName(D3D_SHADER_MODEL shaderModel)
 {
     switch (shaderModel)

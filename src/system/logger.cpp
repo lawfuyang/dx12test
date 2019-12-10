@@ -1,9 +1,9 @@
 #include "system/logger.h"
 
-void Logger::Initialize()
+void Logger::Initialize(const char* outputDir)
 {
     ::CreateDirectoryA("../bin", NULL);
-    fopen_s(&m_File, "../bin/output.txt", "w");
+    fopen_s(&m_File, outputDir, "w");
 }
 
 void Logger::Shutdown()

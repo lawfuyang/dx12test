@@ -155,8 +155,7 @@ void GfxDevice::CheckFeaturesSupports()
         D3D_SHADER_MODEL_6_3,
         D3D_SHADER_MODEL_6_2,
         D3D_SHADER_MODEL_6_1,
-        D3D_SHADER_MODEL_6_0,
-        D3D_SHADER_MODEL_5_1
+        D3D_SHADER_MODEL_6_0
         
     };
     for (D3D12_FEATURE_DATA_SHADER_MODEL shaderModel : shaderModels)
@@ -168,6 +167,7 @@ void GfxDevice::CheckFeaturesSupports()
             break;
         }
     }
+    assert(m_D3DHighestShaderModel.HighestShaderModel != D3D_SHADER_MODEL_5_1);
 
     DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &m_D3D12Options, sizeof(m_D3D12Options)));
     DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS1, &m_D3D12Options1, sizeof(m_D3D12Options1)));
