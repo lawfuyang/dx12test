@@ -95,12 +95,13 @@ struct ShaderCompileJob
     void StartJob()
     {
         std::string commandLine = m_ShaderFilePath;
+        commandLine += " -nologo ";
         commandLine += " -E " + m_EntryPoint;
         commandLine += " -T " + GetTargetProfileString();
         commandLine += " -Fo " + g_CompiledHeadersOutputDir + m_ShaderName + ".bin";
 
         // debugging stuff
-        commandLine += " -Zi -Qembed_debug ";
+        //commandLine += " -Zi -Qembed_debug -Fd " + g_CompiledHeadersOutputDir + m_ShaderName + ".pdb";
 
         DXCProcessWrapper compilerProcess{ commandLine };
     }
