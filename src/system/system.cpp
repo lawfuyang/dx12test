@@ -8,7 +8,7 @@ void System::ProcessWindowMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM
         m_Exit = true;
     }
 
-    GfxManager::GetInstance().GetGUIManager().HandleWindowsInput(hWnd, message, wParam, lParam);
+    GUIManager::GetInstance().HandleWindowsInput(hWnd, message, wParam, lParam);
 }
 
 void System::Loop()
@@ -39,7 +39,7 @@ void System::Initialize()
     SystemProfiler::InitializeMainThread();
 
     // uncomment to profile engine init phase
-    //const ProfilerInstance profilerInstance{ true };
+    //const ProfilerInstance profilerInstance{ true }; bbeProfileFunction();
 
     InitializeGraphic();
 }
@@ -47,7 +47,7 @@ void System::Initialize()
 void System::Shutdown()
 {
     // uncomment to profile engine shutdown phase
-    //const ProfilerInstance profilerInstance{ true };
+    //const ProfilerInstance profilerInstance{ true }; bbeProfileFunction();
 
     ShutdownGraphic();
 }

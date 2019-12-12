@@ -82,6 +82,9 @@
     <ClCompile Include="..\src\graphic\gfxshaders.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxshadermanager.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -184,6 +187,9 @@
       <Filter>graphic</Filter>
     </ClInclude>
     <ClInclude Include="..\src\graphic\gfxshaders.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxshadermanager.h">
       <Filter>graphic</Filter>
     </ClInclude>
   </ItemGroup>

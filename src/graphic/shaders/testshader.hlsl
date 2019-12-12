@@ -30,5 +30,5 @@ VS_OUT VSMain(VS_IN input)
 
 float4 PSMain(VS_OUT input) : SV_TARGET
 {
-    return g_Texture.Sample(gs_AnisotropicClampSampler, input.m_TexCoord);
+    return g_Texture.Sample(g_AnisotropicClampSampler, input.m_TexCoord);
 }

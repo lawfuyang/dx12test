@@ -8,12 +8,12 @@ protected:
     ComPtr<ID3DBlob> m_ShaderBlob;
 };
 
-class GfxVertexShader
+class GfxVertexShader : public GfxShader
 {
 
 };
 
-class GfxPixelShader
+class GfxPixelShader : public GfxShader
 {
 
 };

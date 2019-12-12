@@ -21,5 +21,7 @@ static GfxRootSignature g_DefaultGraphicsRootSignature;
 class GfxRootSignatureManager
 {
 public:
+    DeclareSingletonFunctions(GfxRootSignatureManager);
+
     void Initialize();
 };

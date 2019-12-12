@@ -6,6 +6,7 @@
 #include "graphic/gfxdevice.h"
 #include "graphic/guimanager.h"
 #include "graphic/gfxrootsignature.h"
+#include "graphic/gfxshadermanager.h"
 
 #include "graphic/renderpasses/gfxtestrenderpass.h"
 
@@ -13,8 +14,6 @@ namespace GfxManagerSingletons
 {
     static GfxDevice               gs_GfxDevice;
     static GfxSwapChain            gs_SwapChain;
-    static GUIManager              gs_GUIManager;
-    static GfxRootSignatureManager gs_RootSignatureManager;
 
     static boost::container::small_vector<std::unique_ptr<GfxRenderPass>, 16> gs_RenderPasses;
 }
@@ -25,8 +24,6 @@ void GfxManager::Initialize()
 
     m_GfxDevice            = &GfxManagerSingletons::gs_GfxDevice;
     m_SwapChain            = &GfxManagerSingletons::gs_SwapChain;
-    m_GUIManager           = &GfxManagerSingletons::gs_GUIManager;
-    m_RootSignatureManager = &GfxManagerSingletons::gs_RootSignatureManager;
 
     GfxAdapter::GetInstance().Initialize();
     m_GfxDevice->Initialize();
@@ -34,8 +31,9 @@ void GfxManager::Initialize()
     tf::Taskflow tf;
 
     tf.emplace([&]() { m_SwapChain->Initialize(System::APP_WINDOW_WIDTH, System::APP_WINDOW_HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM); });
-    tf.emplace([&]() { m_GUIManager->Initialize(); });
-    tf.emplace([&]() { m_RootSignatureManager->Initialize(); });
+    tf.emplace([&]() { GUIManager::GetInstance().Initialize(); });
+    tf.emplace([&]() { GfxRootSignatureManager::GetInstance().Initialize(); });
+    tf.emplace([&]() { GfxShaderManager::GetInstance().Initialize(); });
 
     System::GetInstance().GetTasksExecutor().run(tf).wait();
 
@@ -46,7 +44,7 @@ void GfxManager::ShutDown()
 {
     bbeProfileFunction();
 
-    m_GUIManager->ShutDown();
+    GUIManager::GetInstance().ShutDown();
 
     // we must complete the previous GPU frame before exiting the app
     m_GfxDevice->WaitForPreviousFrame();

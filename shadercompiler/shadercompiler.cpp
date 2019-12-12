@@ -1,3 +1,4 @@
+#include <cinttypes>
 #include <vector>
 #include <cassert>
 #include <fstream>
@@ -8,6 +9,8 @@
 typedef uint64_t WindowHandle;
 using Microsoft::WRL::ComPtr;
 
+#include "extern/cpp-taskflow/taskflow/taskflow.hpp"
+
 #include "system/utils.h"
 #include "system/profiler.h"
 #include "system/logger.h"
@@ -17,23 +20,57 @@ using Microsoft::WRL::ComPtr;
 struct ShaderCompileJob;
 
 std::string g_AppDir;
+std::string g_SettingsFileDir;
 std::string g_ShadersDir;
 std::string g_DXCDir;
 std::string g_CompiledHeadersOutputDir;
-std::string g_AutogenFileOutputDir;
+std::string g_ShadersEnumsAutoGenDir;
 
 std::vector<std::string>      g_AllShaderFiles;
-std::vector<ShaderCompileJob> g_AllShaderCompilerJobs;
+std::vector<ShaderCompileJob> g_AllShaderCompileJobs;
 
 D3D_SHADER_MODEL g_HighestShaderModel = D3D_SHADER_MODEL_5_1;
 
 enum class ShaderType { VS, PS, GS, HS, DS, CS };
+
 constexpr const char* g_ShaderTypeStrings[] = { "VS", "PS", "GS", "HS", "DS", "CS" };
 constexpr const char* g_TargetProfileVersionStrings[] = { "_6_0", "_6_1", "_6_2", "_6_3", "_6_4", "_6_5" };
 
 constexpr char g_ShaderDeclarationStr[]    = "ShaderDeclaration:";
 constexpr char g_EntryPointStr[]           = "EntryPoint:";
 constexpr char g_EndShaderDeclarationStr[] = "EndShaderDeclaration";
+
+tf::Executor g_TasksExecutor;
+
+template <bool IsReadMode>
+struct CFileWrapper
+{
+    CFileWrapper(const std::string& fileName)
+    {
+        m_File = fopen(fileName.c_str(), IsReadMode ? "r" : "w");
+    }
+
+    ~CFileWrapper()
+    {
+        if (m_File)
+        {
+            fclose(m_File);
+            m_File = nullptr;
+        }
+    }
+
+    operator bool() const
+    {
+        return m_File;
+    }
+
+    operator FILE*() const
+    {
+        return m_File;
+    }
+
+    FILE* m_File = nullptr;
+};
 
 struct DXCProcessWrapper
 {
@@ -43,6 +80,8 @@ struct DXCProcessWrapper
 
         std::string commandLine = g_DXCDir.c_str();
         commandLine += " " + inputCommandLine;
+
+        bbeInfo(commandLine.c_str());
 
         if (::CreateProcess(nullptr,    // No module name (use command line).
             (LPSTR)commandLine.c_str(), // Command line.
@@ -95,10 +134,11 @@ struct ShaderCompileJob
     void StartJob()
     {
         std::string commandLine = m_ShaderFilePath;
-        commandLine += " -nologo ";
+        commandLine += " -nologo";
         commandLine += " -E " + m_EntryPoint;
         commandLine += " -T " + GetTargetProfileString();
-        commandLine += " -Fo " + g_CompiledHeadersOutputDir + m_ShaderName + ".bin";
+        commandLine += " -Fh " + g_CompiledHeadersOutputDir + m_ShaderName + ".h";
+        commandLine += " -Vn " + m_ShaderName + "_ObjCode";
 
         // debugging stuff
         //commandLine += " -Zi -Qembed_debug -Fd " + g_CompiledHeadersOutputDir + m_ShaderName + ".pdb";
@@ -112,9 +152,30 @@ struct ShaderCompileJob
     std::string m_ShaderName;
 };
 
+static bool ReadShaderModelFromFile()
+{
+    const bool IsReadMode = true;
+    CFileWrapper<IsReadMode> settingsFile{ g_SettingsFileDir.c_str() };
+    if (!settingsFile)
+        return false;
+
+    char highestShaderModelStr[MAX_PATH] = {};
+    for (int i = 0; i < 2; ++i)
+    {
+        fscanf(settingsFile, "%s", highestShaderModelStr);
+    }
+    g_HighestShaderModel = (D3D_SHADER_MODEL)std::atoi(highestShaderModelStr);
+    assert(g_HighestShaderModel >= D3D_SHADER_MODEL_6_0);
+
+    return true;
+}
+
 static void GetD3D12ShaderModels()
 {
     bbeProfileFunction();
+
+    if (ReadShaderModelFromFile())
+        return;
 
     ComPtr<IDXGIFactory7> DXGIFactory;
     {
@@ -175,38 +236,26 @@ static void GetD3D12ShaderModels()
                 break;
             }
         }
-        assert(g_HighestShaderModel != D3D_SHADER_MODEL_5_1);
+        assert(g_HighestShaderModel >= D3D_SHADER_MODEL_6_0);
+
+        const bool IsReadMode = false;
+        CFileWrapper<IsReadMode> shaderModelFile{ g_SettingsFileDir.c_str() };
+        assert(shaderModelFile);
+        fprintf(shaderModelFile, "HighestShaderModel: %i\n", (int)g_HighestShaderModel);
 
         break;
     }
 }
 
-int main()
+static void PopulateJobs()
 {
-    Logger::GetInstance().Initialize("../bin/ShaderCompilerOutput.txt");
+    bbeProfileFunction();
 
-    // uncomment to profile entire ShaderCompiler
-    // const ProfilerInstance profilerInstance{ true }; bbeProfile("main");
-
-    g_AppDir                   = GetApplicationDirectory();
-    g_CompiledHeadersOutputDir = g_AppDir + "\\tmp\\ShaderCompilerOutput\\";
-    g_ShadersDir               = g_AppDir + "..\\src\\graphic\\shaders";
-    g_AutogenFileOutputDir     = g_ShadersDir + "\\shadersautogen.h";
-    g_DXCDir                   = g_AppDir + "..\\tools\\dxc\\dxc.exe";
-    
+    tf::Taskflow tf;
+    tf.parallel_for(g_AllShaderFiles.begin(), g_AllShaderFiles.end(), [&](const std::string& fullPath)
     {
-        bbeProfile("Get All shader files");
-        GetFilesInDirectory(g_AllShaderFiles, g_ShadersDir);
-    }
-
-    GetD3D12ShaderModels();
-    
-    // TODO: parallelize this
-    for (const std::string& fullPath : g_AllShaderFiles)
-    {
-        bbeProfile("Parsing file");
-
-        printf("Found shader file: %s\n", fullPath.c_str());
+        bbeProfile("Parsing file"); 
+        bbeInfo("Found shader file: %s", GetFileNameFromPath(fullPath).c_str());
 
         std::ifstream inputStream{ fullPath };
         assert(inputStream);
@@ -251,18 +300,82 @@ int main()
 
             if (newJobFound)
             {
-                printf("Found shader entry: %s\n", newJob.m_ShaderName.c_str());
-                g_AllShaderCompilerJobs.push_back(std::move(newJob));
+                bbeInfo("Found shader entry: %s", newJob.m_ShaderName.c_str());
+                g_AllShaderCompileJobs.push_back(std::move(newJob));
             }
         }
-    }
-    printf("\n");
+    });
+    
+    g_TasksExecutor.run(tf).wait();
 
-    // TODO: parallelize this
-    for (ShaderCompileJob& shaderJob : g_AllShaderCompilerJobs)
+    std::sort(g_AllShaderCompileJobs.begin(), g_AllShaderCompileJobs.end(), [](const ShaderCompileJob& lhs, const ShaderCompileJob& rhs)
+        {
+            return lhs.m_ShaderName < rhs.m_ShaderName;
+        });
+}
+
+static void RunAllJobs()
+{
+    bbeProfileFunction();
+
+    tf::Taskflow tf;
+    tf.parallel_for(g_AllShaderCompileJobs.begin(), g_AllShaderCompileJobs.end(), [&](ShaderCompileJob& shaderJob)
+        {
+            bbeProfile("Run ShaderCompileJob");
+
+            shaderJob.StartJob();
+        });
+
+    g_TasksExecutor.run(tf).wait();
+}
+
+static void PrintGeneratedEnumFile()
+{
+    bbeProfileFunction();
+
+    const bool IsReadMode = false;
+    CFileWrapper<IsReadMode> generatedEnumFile{ g_ShadersEnumsAutoGenDir };
+    assert(generatedEnumFile);
+
+    fprintf(generatedEnumFile, "#pragma once\n\n");
+    fprintf(generatedEnumFile, "enum class AllShaders\n");
+    fprintf(generatedEnumFile, "{\n");
+    for (int i = 0; i < g_AllShaderCompileJobs.size(); ++i)
     {
-        shaderJob.StartJob();
+        fprintf(generatedEnumFile, "    %s,\n", g_AllShaderCompileJobs[i].m_ShaderName.c_str());
     }
+    fprintf(generatedEnumFile, "};\n");
+    fprintf(generatedEnumFile, "const uint32_t g_NumShaders = %" PRIu64 ";\n", g_AllShaderCompileJobs.size());
+}
+
+static void RunShaderCompiler()
+{
+    // uncomment to profile entire ShaderCompiler
+    //const ProfilerInstance profilerInstance{ true }; bbeProfileFunction();
+    
+    GetFilesInDirectory(g_AllShaderFiles, g_ShadersDir);
+
+    GetD3D12ShaderModels();
+
+    PopulateJobs();
+
+    RunAllJobs();
+
+    PrintGeneratedEnumFile();
+}
+
+int main()
+{
+    Logger::GetInstance().Initialize("../bin/ShaderCompilerOutput.txt");
+
+    g_AppDir                   = GetApplicationDirectory();
+    g_SettingsFileDir          = g_AppDir + "..\\tools\\dxc\\settings.ini";
+    g_CompiledHeadersOutputDir = g_AppDir + "tmp\\ShaderCompilerOutput\\";
+    g_ShadersDir               = g_AppDir + "..\\src\\graphic\\shaders";
+    g_ShadersEnumsAutoGenDir   = g_CompiledHeadersOutputDir + "shadersenumsautogen.h";
+    g_DXCDir                   = g_AppDir + "..\\tools\\dxc\\dxc.exe";
+    
+    RunShaderCompiler();
 
     system("pause");
     return 0;

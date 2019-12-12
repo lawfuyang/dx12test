@@ -118,6 +118,7 @@
     <ClCompile Include="..\src\graphic\gfxmanager.cpp" />
     <ClCompile Include="..\src\graphic\gfxpipelinestateobject.cpp" />
     <ClCompile Include="..\src\graphic\gfxrootsignature.cpp" />
+    <ClCompile Include="..\src\graphic\gfxshadermanager.cpp" />
     <ClCompile Include="..\src\graphic\gfxshaders.cpp" />
     <ClCompile Include="..\src\graphic\gfxswapchain.cpp" />
     <ClCompile Include="..\src\graphic\gfxtexturesandbuffers.cpp" />
@@ -152,6 +153,7 @@
     <ClInclude Include="..\src\graphic\gfxmanager.h" />
     <ClInclude Include="..\src\graphic\gfxpipelinestateobject.h" />
     <ClInclude Include="..\src\graphic\gfxrootsignature.h" />
+    <ClInclude Include="..\src\graphic\gfxshadermanager.h" />
     <ClInclude Include="..\src\graphic\gfxshaders.h" />
     <ClInclude Include="..\src\graphic\gfxswapchain.h" />
     <ClInclude Include="..\src\graphic\gfxtexturesandbuffers.h" />
