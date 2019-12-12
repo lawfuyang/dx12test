@@ -74,7 +74,7 @@ struct CFileWrapper
 
 struct DXCProcessWrapper
 {
-    DXCProcessWrapper(const std::string& inputCommandLine)
+    explicit DXCProcessWrapper(const std::string& inputCommandLine)
     {
         m_StartupInfo.cb = sizeof(::STARTUPINFO);
 
