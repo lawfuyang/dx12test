@@ -19,10 +19,10 @@ using Microsoft::WRL::ComPtr;
 struct ShaderCompileJob;
 
 std::string g_AppDir;
+std::string g_ShadersTmpDir;
 std::string g_SettingsFileDir;
 std::string g_ShadersDir;
 std::string g_DXCDir;
-std::string g_CompiledHeadersOutputDir;
 std::string g_ShadersEnumsAutoGenDir;
 
 std::vector<std::string>      g_AllShaderFiles;
@@ -131,11 +131,11 @@ struct ShaderCompileJob
         commandLine += " -nologo";
         commandLine += " -E " + m_EntryPoint;
         commandLine += " -T " + GetTargetProfileString();
-        commandLine += " -Fh " + g_CompiledHeadersOutputDir + m_ShaderName + ".h";
+        commandLine += " -Fh " + g_ShadersTmpDir + m_ShaderName + ".h";
         commandLine += " -Vn " + m_ShaderName + "_ObjCode";
 
         // debugging stuff
-        //commandLine += " -Zi -Qembed_debug -Fd " + g_CompiledHeadersOutputDir + m_ShaderName + ".pdb";
+        //commandLine += " -Zi -Qembed_debug -Fd " + g_ShadersTmpDir + m_ShaderName + ".pdb";
 
         DXCProcessWrapper compilerProcess{ commandLine };
     }
@@ -365,10 +365,10 @@ int main()
     Logger::GetInstance().Initialize("../bin/ShaderCompilerOutput.txt");
 
     g_AppDir                   = GetApplicationDirectory();
-    g_SettingsFileDir          = g_AppDir + "..\\tools\\dxc\\settings.ini";
-    g_CompiledHeadersOutputDir = g_AppDir + "..\\tmp\\shaders\\";
+    g_ShadersTmpDir            = g_AppDir + "..\\tmp\\shaders\\";
+    g_SettingsFileDir          = g_ShadersTmpDir + "shadercompilersettings.ini";
     g_ShadersDir               = g_AppDir + "..\\src\\graphic\\shaders";
-    g_ShadersEnumsAutoGenDir   = g_CompiledHeadersOutputDir + "shadersenumsautogen.h";
+    g_ShadersEnumsAutoGenDir   = g_ShadersTmpDir + "shadersenumsautogen.h";
     g_DXCDir                   = g_AppDir + "..\\tools\\dxc\\dxc.exe";
     
     RunShaderCompiler();
