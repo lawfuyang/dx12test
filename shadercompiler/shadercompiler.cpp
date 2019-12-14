@@ -35,9 +35,9 @@ enum class ShaderType { VS, PS, GS, HS, DS, CS };
 const char* g_ShaderTypeStrings[] = { "VS", "PS", "GS", "HS", "DS", "CS" };
 const char* g_TargetProfileVersionStrings[] = { "_6_0", "_6_1", "_6_2", "_6_3", "_6_4", "_6_5" };
 
-const char* g_ShaderDeclarationStr    = "ShaderDeclaration:";
-const char* g_EntryPointStr           = "EntryPoint:";
-const char* g_EndShaderDeclarationStr = "EndShaderDeclaration";
+const std::string g_ShaderDeclarationStr    = "ShaderDeclaration:";
+const std::string g_EntryPointStr           = "EntryPoint:";
+const std::string g_EndShaderDeclarationStr = "EndShaderDeclaration";
 
 tf::Executor g_TasksExecutor;
 
@@ -57,7 +57,8 @@ struct CFileWrapper
         }
     }
 
-    CFileWrapper(const CFileWrapper&) = default;
+    CFileWrapper(const CFileWrapper&) = delete;
+    CFileWrapper& operator=(const CFileWrapper&) = delete;
 
     operator bool() const { return m_File; }
     operator FILE* () const { return m_File; }
@@ -262,16 +263,16 @@ static void PopulateJobs()
             char* token = std::strtok(line, " \n");
             while (token)
             {
-                if (strcmp(token, g_EndShaderDeclarationStr) == 0)
+                if (strcmp(token, g_EndShaderDeclarationStr.c_str()) == 0)
                 {
                     endOfShaderDeclarations = true;
                     break;
                 }
 
-                if (std::strncmp(token, g_ShaderDeclarationStr, std::strlen(g_ShaderDeclarationStr)) == 0)
+                if (std::strncmp(token, g_ShaderDeclarationStr.c_str(), g_ShaderDeclarationStr.size()) == 0)
                 {
                     assert(newJob.m_ShaderName.size() == 0);
-                    newJob.m_ShaderName = token + std::strlen(g_ShaderDeclarationStr);
+                    newJob.m_ShaderName = token + g_ShaderDeclarationStr.size();
                     newJob.m_ShaderFilePath = fullPath;
 
                     for (int i = 0; i < _countof(g_ShaderTypeStrings); ++i)
@@ -284,10 +285,10 @@ static void PopulateJobs()
                     }
                 }
 
-                if (std::strncmp(token, g_EntryPointStr, std::strlen(g_EntryPointStr)) == 0)
+                if (std::strncmp(token, g_EntryPointStr.c_str(), g_EntryPointStr.size()) == 0)
                 {
                     assert(newJob.m_ShaderName.size() > 0);
-                    newJob.m_EntryPoint = token + std::strlen(g_EntryPointStr);
+                    newJob.m_EntryPoint = token + g_EntryPointStr.size();
                 }
 
                 token = strtok(NULL, " \n");
