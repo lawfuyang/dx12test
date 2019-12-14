@@ -1,6 +1,6 @@
 #pragma once
 
-#include "bin/tmp/ShaderCompilerOutput/shadersenumsautogen.h"
+#include "tmp/shaders/shadersenumsautogen.h"
 
 class GfxShaderManager
 {

@@ -1,8 +1,7 @@
 #include <cinttypes>
 #include <vector>
 #include <cassert>
-#include <fstream>
-#include <sstream>
+#include <cstdio>
 #include <array>
 #include <wrl.h>
 
@@ -33,21 +32,20 @@ D3D_SHADER_MODEL g_HighestShaderModel = D3D_SHADER_MODEL_5_1;
 
 enum class ShaderType { VS, PS, GS, HS, DS, CS };
 
-constexpr const char* g_ShaderTypeStrings[] = { "VS", "PS", "GS", "HS", "DS", "CS" };
-constexpr const char* g_TargetProfileVersionStrings[] = { "_6_0", "_6_1", "_6_2", "_6_3", "_6_4", "_6_5" };
+const char* g_ShaderTypeStrings[] = { "VS", "PS", "GS", "HS", "DS", "CS" };
+const char* g_TargetProfileVersionStrings[] = { "_6_0", "_6_1", "_6_2", "_6_3", "_6_4", "_6_5" };
 
-constexpr char g_ShaderDeclarationStr[]    = "ShaderDeclaration:";
-constexpr char g_EntryPointStr[]           = "EntryPoint:";
-constexpr char g_EndShaderDeclarationStr[] = "EndShaderDeclaration";
+const char* g_ShaderDeclarationStr    = "ShaderDeclaration:";
+const char* g_EntryPointStr           = "EntryPoint:";
+const char* g_EndShaderDeclarationStr = "EndShaderDeclaration";
 
 tf::Executor g_TasksExecutor;
 
-template <bool IsReadMode>
 struct CFileWrapper
 {
-    CFileWrapper(const std::string& fileName)
+    CFileWrapper(const std::string& fileName, bool isReadMode)
     {
-        m_File = fopen(fileName.c_str(), IsReadMode ? "r" : "w");
+        m_File = fopen(fileName.c_str(), isReadMode ? "r" : "w");
     }
 
     ~CFileWrapper()
@@ -59,15 +57,10 @@ struct CFileWrapper
         }
     }
 
-    operator bool() const
-    {
-        return m_File;
-    }
+    CFileWrapper(const CFileWrapper&) = default;
 
-    operator FILE*() const
-    {
-        return m_File;
-    }
+    operator bool() const { return m_File; }
+    operator FILE* () const { return m_File; }
 
     FILE* m_File = nullptr;
 };
@@ -155,14 +148,14 @@ struct ShaderCompileJob
 static bool ReadShaderModelFromFile()
 {
     const bool IsReadMode = true;
-    CFileWrapper<IsReadMode> settingsFile{ g_SettingsFileDir.c_str() };
+    CFileWrapper settingsFile{ g_SettingsFileDir.c_str(), IsReadMode };
     if (!settingsFile)
         return false;
 
     char highestShaderModelStr[MAX_PATH] = {};
     for (int i = 0; i < 2; ++i)
     {
-        fscanf(settingsFile, "%s", highestShaderModelStr);
+        fscanf_s(settingsFile, "%s", highestShaderModelStr, (unsigned int)sizeof(highestShaderModelStr));
     }
     g_HighestShaderModel = (D3D_SHADER_MODEL)std::atoi(highestShaderModelStr);
     assert(g_HighestShaderModel >= D3D_SHADER_MODEL_6_0);
@@ -239,7 +232,7 @@ static void GetD3D12ShaderModels()
         assert(g_HighestShaderModel >= D3D_SHADER_MODEL_6_0);
 
         const bool IsReadMode = false;
-        CFileWrapper<IsReadMode> shaderModelFile{ g_SettingsFileDir.c_str() };
+        CFileWrapper shaderModelFile{ g_SettingsFileDir.c_str(), IsReadMode };
         assert(shaderModelFile);
         fprintf(shaderModelFile, "HighestShaderModel: %i\n", (int)g_HighestShaderModel);
 
@@ -257,28 +250,28 @@ static void PopulateJobs()
         bbeProfile("Parsing file"); 
         bbeInfo("Found shader file: %s", GetFileNameFromPath(fullPath).c_str());
 
-        std::ifstream inputStream{ fullPath };
-        assert(inputStream);
+        const bool IsReadMode = true;
+        CFileWrapper shaderFile{ fullPath, IsReadMode };
+        assert(shaderFile);
 
-        ShaderCompileJob newJob;
-
-        std::string line;
-        while (std::getline(inputStream, line))
+        char line[MAX_PATH] = {};
+        bool endOfShaderDeclarations = false;
+        while (fgets(line, sizeof(line), shaderFile) && endOfShaderDeclarations == false)
         {
-            if (line.find(g_EndShaderDeclarationStr) != std::string::npos)
-                break;
-
-            std::stringstream inputStringStream{ line };
-
-            bool newJobFound = false;
-            std::string token;
-            while (inputStringStream >> token)
+            ShaderCompileJob newJob;
+            char* token = std::strtok(line, " \n");
+            while (token)
             {
-                if (token.find(g_ShaderDeclarationStr) != std::string::npos)
+                if (strcmp(token, g_EndShaderDeclarationStr) == 0)
                 {
-                    assert(newJobFound == false);
-                    newJobFound = true;
-                    newJob.m_ShaderName = std::string{ token.begin() + sizeof(g_ShaderDeclarationStr) - 1, token.end() }; // minus 1 because of colon
+                    endOfShaderDeclarations = true;
+                    break;
+                }
+
+                if (std::strncmp(token, g_ShaderDeclarationStr, std::strlen(g_ShaderDeclarationStr)) == 0)
+                {
+                    assert(newJob.m_ShaderName.size() == 0);
+                    newJob.m_ShaderName = token + std::strlen(g_ShaderDeclarationStr);
                     newJob.m_ShaderFilePath = fullPath;
 
                     for (int i = 0; i < _countof(g_ShaderTypeStrings); ++i)
@@ -291,14 +284,16 @@ static void PopulateJobs()
                     }
                 }
 
-                if (token.find(g_EntryPointStr) != std::string::npos)
+                if (std::strncmp(token, g_EntryPointStr, std::strlen(g_EntryPointStr)) == 0)
                 {
-                    assert(newJobFound);
-                    newJob.m_EntryPoint = std::string{ token.begin() + sizeof(g_EntryPointStr) - 1, token.end() }; // minus 1 because of colon
+                    assert(newJob.m_ShaderName.size() > 0);
+                    newJob.m_EntryPoint = token + std::strlen(g_EntryPointStr);
                 }
+
+                token = strtok(NULL, " \n");
             }
 
-            if (newJobFound)
+            if (newJob.m_ShaderName.size() > 0)
             {
                 bbeInfo("Found shader entry: %s", newJob.m_ShaderName.c_str());
                 g_AllShaderCompileJobs.push_back(std::move(newJob));
@@ -334,7 +329,7 @@ static void PrintGeneratedEnumFile()
     bbeProfileFunction();
 
     const bool IsReadMode = false;
-    CFileWrapper<IsReadMode> generatedEnumFile{ g_ShadersEnumsAutoGenDir };
+    CFileWrapper generatedEnumFile{ g_ShadersEnumsAutoGenDir, IsReadMode };
     assert(generatedEnumFile);
 
     fprintf(generatedEnumFile, "#pragma once\n\n");
@@ -370,7 +365,7 @@ int main()
 
     g_AppDir                   = GetApplicationDirectory();
     g_SettingsFileDir          = g_AppDir + "..\\tools\\dxc\\settings.ini";
-    g_CompiledHeadersOutputDir = g_AppDir + "tmp\\ShaderCompilerOutput\\";
+    g_CompiledHeadersOutputDir = g_AppDir + "..\\tmp\\shaders\\";
     g_ShadersDir               = g_AppDir + "..\\src\\graphic\\shaders";
     g_ShadersEnumsAutoGenDir   = g_CompiledHeadersOutputDir + "shadersenumsautogen.h";
     g_DXCDir                   = g_AppDir + "..\\tools\\dxc\\dxc.exe";
