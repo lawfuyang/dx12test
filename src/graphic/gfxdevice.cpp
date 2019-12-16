@@ -156,7 +156,6 @@ void GfxDevice::CheckFeaturesSupports()
         D3D_SHADER_MODEL_6_2,
         D3D_SHADER_MODEL_6_1,
         D3D_SHADER_MODEL_6_0
-        
     };
     for (D3D12_FEATURE_DATA_SHADER_MODEL shaderModel : shaderModels)
     {

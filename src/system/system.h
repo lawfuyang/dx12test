@@ -43,7 +43,6 @@ class System
     DeclareSingletonFunctions(System);
 
 public:
-
     static inline const std::string APP_NAME = "DX12 Test";
     static const uint32_t APP_WINDOW_WIDTH   = 1600;
     static const uint32_t APP_WINDOW_HEIGHT  = 900;

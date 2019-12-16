@@ -17,7 +17,6 @@ void GUIManager::ShutDown()
 
 void GUIManager::HandleWindowsInput(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-
 }
 
 void GUIManager::BeginFrame()

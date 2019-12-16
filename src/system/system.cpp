@@ -36,8 +36,6 @@ void System::Loop()
 
 void System::Initialize()
 {
-    SystemProfiler::InitializeMainThread();
-
     // uncomment to profile engine init phase
     //const ProfilerInstance profilerInstance{ true }; bbeProfileFunction();
 
