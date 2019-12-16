@@ -12,10 +12,9 @@
 
 namespace GfxManagerSingletons
 {
-    static GfxDevice               gs_GfxDevice;
-    static GfxSwapChain            gs_SwapChain;
-
-    static boost::container::small_vector<std::unique_ptr<GfxRenderPass>, 16> gs_RenderPasses;
+    static GfxDevice gs_GfxDevice;
+    static GfxSwapChain gs_SwapChain;
+    static std::vector<std::unique_ptr<GfxRenderPass>> gs_RenderPasses;
 }
 
 void GfxManager::Initialize()
@@ -33,10 +32,12 @@ void GfxManager::Initialize()
     tf.emplace([&]() { m_SwapChain->Initialize(System::APP_WINDOW_WIDTH, System::APP_WINDOW_HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM); });
     tf.emplace([&]() { GUIManager::GetInstance().Initialize(); });
     tf.emplace([&]() { GfxRootSignatureManager::GetInstance().Initialize(); });
+    tf.emplace([&]() { GfxPSOManager::GetInstance().Initialize(); });
     tf.emplace([&]() { GfxShaderManager::GetInstance().Initialize(); });
 
     System::GetInstance().GetTasksExecutor().run(tf).wait();
 
+    GfxManagerSingletons::gs_RenderPasses.reserve(4);
     GfxManagerSingletons::gs_RenderPasses.push_back(std::make_unique<GfxTestRenderPass>());
 }
 
@@ -48,6 +49,9 @@ void GfxManager::ShutDown()
 
     // we must complete the previous GPU frame before exiting the app
     m_GfxDevice->WaitForPreviousFrame();
+
+    const bool DeleteCacheFile = false;
+    GfxPSOManager::GetInstance().ShutDown(DeleteCacheFile);
 }
 
 void GfxManager::ScheduleGraphicTasks(tf::Taskflow& tf)
@@ -57,7 +61,7 @@ void GfxManager::ScheduleGraphicTasks(tf::Taskflow& tf)
     GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
 
     tf::Task beginFrameTask = tf.emplace([&]() { BeginFrame(); });
-    
+
     tf::Task allRenderTasks = tf.emplace([&](tf::Subflow& sf)
         {
             for (const std::unique_ptr<GfxRenderPass>& renderPass : GfxManagerSingletons::gs_RenderPasses)

@@ -162,6 +162,8 @@ const std::string GetLastErrorAsString();
 
 const std::string GetApplicationDirectory();
 
+const std::string GetTempDirectory();
+
 const std::string GetDirectoryFromPath(const std::string& fullPath);
 
 void SplitPath(const std::string& fullPath, std::string& dir, std::string& fileName);
@@ -169,3 +171,20 @@ void SplitPath(const std::string& fullPath, std::string& dir, std::string& fileN
 void GetFilesInDirectory(std::vector<std::string>& out, const std::string& directory);
 
 const std::string GetFileNameFromPath(const std::string& fullPath);
+
+struct WindowsHandleWrapper
+{
+    WindowsHandleWrapper(::HANDLE hdl = nullptr)
+        : m_Handle(hdl)
+    {}
+
+    ~WindowsHandleWrapper()
+    {
+        ::FindClose(m_Handle);
+        ::CloseHandle(m_Handle);
+    }
+
+    operator ::HANDLE() const { return m_Handle; }
+
+    ::HANDLE m_Handle = nullptr;
+};

@@ -87,21 +87,21 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\;$(SolutionDir)..\src\;$(SolutionDir)..\extern\;$(SolutionDir)..\extern\boost\libs\core\include;$(SolutionDir)..\extern\boost\libs\pool\include;$(SolutionDir)..\extern\boost\libs\lockfree\include;$(SolutionDir)..\extern\boost\libs\container\include;$(SolutionDir)..\extern\boost\libs\config\include;$(SolutionDir)..\extern\boost\libs\integer\include;$(SolutionDir)..\extern\boost\libs\type_traits\include;$(SolutionDir)..\extern\boost\libs\assert\include;$(SolutionDir)..\extern\boost\libs\static_assert\include;$(SolutionDir)..\extern\boost\libs\tuple\include;$(SolutionDir)..\extern\boost\libs\mpl\include;$(SolutionDir)..\extern\boost\libs\preprocessor\include;$(SolutionDir)..\extern\boost\libs\array\include;$(SolutionDir)..\extern\boost\libs\throw_exception\include;$(SolutionDir)..\extern\boost\libs\align\include;$(SolutionDir)..\extern\boost\libs\parameter\include;$(SolutionDir)..\extern\boost\libs\mp11\include;$(SolutionDir)..\extern\boost\libs\utility\include;$(SolutionDir)..\extern\boost\libs\predef\include;$(SolutionDir)..\extern\boost\libs\move\include;$(SolutionDir)..\extern\boost\libs\intrusive\include;$(SolutionDir)..\extern\boost\libs\container_hash\include;$(SolutionDir)..\extern\boost\libs\detail\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\;$(SolutionDir)..\src\;$(SolutionDir)..\extern\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ForcedIncludeFiles>system/system.h;windows.h;d3d12.h;D3d12SDKLayers.h;dxgi1_6.h;d3d12/d3dx12.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ForcedIncludeFiles>system/system.h;windows.h;d3d12.h;d3dcompiler.h;D3d12SDKLayers.h;dxgi1_6.h;d3d12/d3dx12.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <DisableSpecificWarnings>4267;</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\extern\easy\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;easy_profiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>d3d12.lib;d3dcompiler.lib;dxgi.lib;dxguid.lib;$(SolutionDir)..\extern\easy\bin\easy_profiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -119,7 +119,6 @@
     <ClCompile Include="..\src\graphic\gfxpipelinestateobject.cpp" />
     <ClCompile Include="..\src\graphic\gfxrootsignature.cpp" />
     <ClCompile Include="..\src\graphic\gfxshadermanager.cpp" />
-    <ClCompile Include="..\src\graphic\gfxshaders.cpp" />
     <ClCompile Include="..\src\graphic\gfxswapchain.cpp" />
     <ClCompile Include="..\src\graphic\gfxtexturesandbuffers.cpp" />
     <ClCompile Include="..\src\graphic\guimanager.cpp" />
@@ -129,6 +128,7 @@
     <ClCompile Include="..\src\system\locks.cpp" />
     <ClCompile Include="..\src\system\logger.cpp" />
     <ClCompile Include="..\src\system\main.cpp" />
+    <ClCompile Include="..\src\system\memorymappedfile.cpp" />
     <ClCompile Include="..\src\system\mouse.cpp" />
     <ClCompile Include="..\src\system\profiler.cpp" />
     <ClCompile Include="..\src\system\system.cpp" />
@@ -154,17 +154,16 @@
     <ClInclude Include="..\src\graphic\gfxpipelinestateobject.h" />
     <ClInclude Include="..\src\graphic\gfxrootsignature.h" />
     <ClInclude Include="..\src\graphic\gfxshadermanager.h" />
-    <ClInclude Include="..\src\graphic\gfxshaders.h" />
     <ClInclude Include="..\src\graphic\gfxswapchain.h" />
     <ClInclude Include="..\src\graphic\gfxtexturesandbuffers.h" />
     <ClInclude Include="..\src\graphic\guimanager.h" />
     <ClInclude Include="..\src\graphic\renderpasses\gfxrenderpass.h" />
     <ClInclude Include="..\src\graphic\renderpasses\gfxtestrenderpass.h" />
-    <ClInclude Include="..\src\system\freelistpool.h" />
     <ClInclude Include="..\src\system\keyboard.h" />
     <ClInclude Include="..\src\system\locks.h" />
     <ClInclude Include="..\src\system\logger.h" />
     <ClInclude Include="..\src\system\math.h" />
+    <ClInclude Include="..\src\system\memorymappedfile.h" />
     <ClInclude Include="..\src\system\mouse.h" />
     <ClInclude Include="..\src\system\profiler.h" />
     <ClInclude Include="..\src\system\stopwatch.h" />

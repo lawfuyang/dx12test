@@ -2,6 +2,7 @@
 
 #include "graphic/gfxcommandlist.h"
 #include "graphic/gfxtexturesandbuffers.h"
+#include "graphic/gfxrootsignature.h"
 
 void GfxContext::ClearRenderTargetView(GfxRenderTargetView& rtv, XMFLOAT4 clearColor) const
 {

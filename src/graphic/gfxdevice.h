@@ -31,7 +31,6 @@ private:
     GfxCommandListsManager   m_CommandListsManager;
     GfxDescriptorHeapManager m_DescriptorHeapManager;
     GfxFence                 m_GfxFence;
-    GfxPSOManager            m_PSOManager;
 
     std::vector<GfxContext> m_AllContexts;
 

@@ -85,6 +85,8 @@ void GfxRootSignature::Compile()
 
     // clear all root params. we no longer need them.
     m_RootParams.resize(0);
+
+    ++ms_RootSigID;
 }
 
 void GfxRootSignatureManager::Initialize()

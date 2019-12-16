@@ -79,11 +79,11 @@
     <ClCompile Include="..\src\graphic\gfxpipelinestateobject.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxshaders.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\graphic\gfxshadermanager.cpp">
       <Filter>graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\system\memorymappedfile.cpp">
+      <Filter>system</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -159,9 +159,6 @@
     <ClInclude Include="..\src\graphic\gfxtexturesandbuffers.h">
       <Filter>graphic</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\system\freelistpool.h">
-      <Filter>system</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\system\locks.h">
       <Filter>system</Filter>
     </ClInclude>
@@ -186,11 +183,11 @@
     <ClInclude Include="..\src\graphic\gfxpipelinestateobject.h">
       <Filter>graphic</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxshaders.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\graphic\gfxshadermanager.h">
       <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\system\memorymappedfile.h">
+      <Filter>system</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

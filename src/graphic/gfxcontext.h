@@ -5,6 +5,7 @@ class GfxDevice;
 class GfxCommandList;
 class GfxRenderTargetView;
 class GfxPSOManager;
+class GfxRootSignature;
 
 class GfxContext
 {
@@ -22,7 +23,7 @@ private:
     GfxCommandList* m_CommandList = nullptr;
     GfxPSOManager*  m_PSOManager  = nullptr;
 
-    D3D12_GRAPHICS_PIPELINE_STATE_DESC m_GraphicPSODesc = {};
+    GfxRootSignature* m_RootSig = nullptr;
 
     friend class GfxDevice;
 };

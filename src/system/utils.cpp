@@ -57,16 +57,22 @@ const std::string GetLastErrorAsString()
 const std::string GetApplicationDirectory()
 {
     static std::once_flag s_OnceFlag;
-    static std::string appDir;
+    static std::string s_AppDir;
 
     std::call_once(s_OnceFlag, [&]()
         {
             CHAR fileName[1024] = {};
             ::GetModuleFileNameA(NULL, fileName, sizeof(fileName));
-            appDir = GetDirectoryFromPath(fileName);
+            s_AppDir = GetDirectoryFromPath(fileName);
         });
 
-    return appDir;
+    return s_AppDir;
+}
+
+const std::string GetTempDirectory()
+{
+    static std::string s_TmpDir = GetApplicationDirectory() + "..\\tmp\\";
+    return s_TmpDir;
 }
 
 const std::string GetDirectoryFromPath(const std::string& fullPath)

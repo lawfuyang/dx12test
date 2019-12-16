@@ -12,6 +12,7 @@
 #include <array>
 #include <numeric>
 #include <mutex>
+#include <functional>
 #include <wrl.h>
 
 // uncomment to disable all asserts
@@ -32,6 +33,7 @@
 #include "extern/boost/lockfree/stack.hpp"
 #include "extern/boost/lockfree/queue.hpp"
 #include "extern/boost/pool/object_pool.hpp"
+#include "extern/boost/container_hash/hash.hpp"
 
 typedef uint64_t WindowHandle;
 using Microsoft::WRL::ComPtr;

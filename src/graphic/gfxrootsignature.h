@@ -8,8 +8,10 @@ public:
     void AddSRV();
     void Compile();
 
+    uint32_t GetID() const { return ms_RootSigID; }
+
 private:
-    inline static uint32_t s_RegisterSpace = UINT32_MAX;
+    inline static std::atomic<uint32_t> ms_RootSigID = 0;
 
     ComPtr<ID3D12RootSignature> m_RootSignature;
 
