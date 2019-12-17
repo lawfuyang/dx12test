@@ -37,6 +37,7 @@ void GfxDevice::Initialize()
     {
         bbeProfile("D3D12CreateDevice");
 
+        // Just take the first device that supports DX12
         if (SUCCEEDED(D3D12CreateDevice(GfxAdapter::GetInstance().GetAllAdapters()[0].Get(), level, IID_PPV_ARGS(&m_D3DDevice))))
         {
             bbeInfo("Created ID3D12Device. D3D_FEATURE_LEVEL: %s", GetD3DFeatureLevelName(level));
@@ -49,9 +50,6 @@ void GfxDevice::Initialize()
     {
         ConfigureDebugLayer();
     }
-
-    m_CommandListsManager.Initialize();
-    m_DescriptorHeapManager.Initalize();
 
     m_GfxFence.Initialize(D3D12_FENCE_FLAG_NONE);
 

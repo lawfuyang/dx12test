@@ -21,19 +21,26 @@ void GfxManager::Initialize()
 {
     bbeProfileFunction();
 
-    m_GfxDevice            = &GfxManagerSingletons::gs_GfxDevice;
-    m_SwapChain            = &GfxManagerSingletons::gs_SwapChain;
-
-    GfxAdapter::GetInstance().Initialize();
-    m_GfxDevice->Initialize();
+    m_GfxDevice = &GfxManagerSingletons::gs_GfxDevice;
+    m_SwapChain = &GfxManagerSingletons::gs_SwapChain;
 
     tf::Taskflow tf;
 
-    tf.emplace([&]() { m_SwapChain->Initialize(System::APP_WINDOW_WIDTH, System::APP_WINDOW_HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM); });
-    tf.emplace([&]() { GUIManager::GetInstance().Initialize(); });
-    tf.emplace([&]() { GfxRootSignatureManager::GetInstance().Initialize(); });
-    tf.emplace([&]() { GfxPSOManager::GetInstance().Initialize(); });
-    tf.emplace([&]() { GfxShaderManager::GetInstance().Initialize(); });
+    tf::Task adapterInitTask         = tf.emplace([&]() { GfxAdapter::GetInstance().Initialize(); });
+    tf::Task deviceInitTask          = tf.emplace([&]() { m_GfxDevice->Initialize(); });
+    tf::Task cmdListInitTask         = tf.emplace([&]() { m_GfxDevice->GetCommandListsManager().Initialize(); });
+    tf::Task descHeapManagerInitTask = tf.emplace([&]() { m_GfxDevice->GetDescriptorHeapManager().Initialize(); });
+    tf::Task swapChainInitTask       = tf.emplace([&]() { m_SwapChain->Initialize(System::APP_WINDOW_WIDTH, System::APP_WINDOW_HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM); });
+    tf::Task GUIManagerInitTask      = tf.emplace([&]() { GUIManager::GetInstance().Initialize(); });
+    tf::Task rootSigManagerInitTask  = tf.emplace([&]() { GfxRootSignatureManager::GetInstance().Initialize(); });
+    tf::Task PSOManagerInitTask      = tf.emplace([&]() { GfxPSOManager::GetInstance().Initialize(); });
+    tf::Task ShaderManagerInitTask   = tf.emplace([&]() { GfxShaderManager::GetInstance().Initialize(); });
+
+    deviceInitTask.succeed(adapterInitTask);
+    deviceInitTask.precede({ cmdListInitTask, descHeapManagerInitTask });
+    swapChainInitTask.succeed({ deviceInitTask, cmdListInitTask, descHeapManagerInitTask });
+    rootSigManagerInitTask.succeed(deviceInitTask);
+    PSOManagerInitTask.succeed(deviceInitTask);
 
     System::GetInstance().GetTasksExecutor().run(tf).wait();
 
@@ -50,7 +57,7 @@ void GfxManager::ShutDown()
     // we must complete the previous GPU frame before exiting the app
     m_GfxDevice->WaitForPreviousFrame();
 
-    const bool DeleteCacheFile = false;
+    const bool DeleteCacheFile = true; // TODO: find out why the fuck ID3D12Device1::CreatePipelineLibrary is crashing when there's an existing cache file
     GfxPSOManager::GetInstance().ShutDown(DeleteCacheFile);
 }
 
@@ -62,25 +69,18 @@ void GfxManager::ScheduleGraphicTasks(tf::Taskflow& tf)
 
     tf::Task beginFrameTask = tf.emplace([&]() { BeginFrame(); });
 
-    tf::Task allRenderTasks = tf.emplace([&](tf::Subflow& sf)
-        {
-            for (const std::unique_ptr<GfxRenderPass>& renderPass : GfxManagerSingletons::gs_RenderPasses)
-            {
-                GfxContext& context = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
-                SetD3DDebugName(context.GetCommandList()->Dev(), renderPass->GetName());
-
-                tf::Task newRenderTask = sf.emplace([&]()
-                    {
-                        renderPass->Render(context);
-                    });
-                newRenderTask.name(renderPass->GetName());
-            }
-        }
-    );
-    allRenderTasks.succeed(beginFrameTask);
+    std::vector<tf::Task> renderPassesTasks;
+    renderPassesTasks.reserve(4);
+    for (const std::unique_ptr<GfxRenderPass>& renderPass : GfxManagerSingletons::gs_RenderPasses)
+    {
+        GfxContext& context = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
+        SetD3DDebugName(context.GetCommandList()->Dev(), renderPass->GetName());
+        renderPassesTasks.push_back(tf.emplace([&]() { renderPass->Render(context); }));
+    }
+    beginFrameTask.precede(renderPassesTasks);
 
     tf::Task endFrameTask = tf.emplace([&]() { EndFrame(); });
-    endFrameTask.succeed(allRenderTasks);
+    endFrameTask.succeed(renderPassesTasks);
 }
 
 void GfxManager::BeginFrame()

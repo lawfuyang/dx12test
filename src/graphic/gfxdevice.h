@@ -10,7 +10,7 @@
 class GfxDevice
 {
 public:
-    ID3D12Device* Dev() const { return m_D3DDevice.Get(); }
+    ID3D12Device6* Dev() const { return m_D3DDevice.Get(); }
 
     void Initialize();
     void CheckStatus();

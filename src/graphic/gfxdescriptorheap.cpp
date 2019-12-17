@@ -79,7 +79,7 @@ void GfxDescriptorShaderVisibleHeapPage::Allocate(D3D12_DESCRIPTOR_HEAP_TYPE hea
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-void GfxDescriptorHeapManager::Initalize()
+void GfxDescriptorHeapManager::Initialize()
 {
     bbeProfileFunction();
 

@@ -9,7 +9,6 @@ class SpinLock
 public:
     void Lock()
     {
-        bbeProfileFunction();
         while (!TryLock()) {}
     }
 
@@ -57,4 +56,27 @@ private:
     bool m_IsLocked = false;
 };
 
-#define bbeAutoLock(lock) lock.Lock(); bbeOnExitScope([&](){lock.Unlock();});
+template <typename LockType>
+struct ProfiledScopedLock
+{
+    ProfiledScopedLock(LockType& lck, const char* fileAndLine)
+        : m_Lock(lck)
+    {
+        char fileAndLineBuffer[MAX_PATH] = {};
+        sprintf(fileAndLineBuffer, "Lock: %s", fileAndLine);
+        bbeProfileBlockBegin(fileAndLineBuffer);
+
+        m_Lock.Lock();
+    }
+
+    ~ProfiledScopedLock()
+    {
+        m_Lock.Unlock();
+
+        bbeProfileBlockEnd();
+    }
+
+    LockType& m_Lock;
+};
+
+#define bbeAutoLock(lock) const ProfiledScopedLock<decltype(lock)> bbeUniqueVariable(scopedLock){ lock, bbeFILEandLINE };

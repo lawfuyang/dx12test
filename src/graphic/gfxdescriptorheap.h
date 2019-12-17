@@ -109,7 +109,7 @@ using GfxNullDescriptorHeapPool     = GfxDescriptorHeapPool<GfxDescriptorHeapFla
 class GfxDescriptorHeapManager
 {
 public:
-    void Initalize();
+    void Initialize();
 
     GfxDescriptorHeapHandle Allocate(D3D12_DESCRIPTOR_HEAP_TYPE heapType, GfxDescriptorHeapFlags heapFlags);
 

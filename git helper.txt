@@ -1,6 +1,9 @@
-git submodule update --init --recursive
 git submodule foreach git pull origin master
+git submodule update --init --recursive
 git pull origin master
+
+# add submodule and define the master branch as the one you want to track
+git submodule add -b master [URL to Git repo]
 
 To remove a submodule you need to:
  - Delete the relevant section from the .gitmodules file.
