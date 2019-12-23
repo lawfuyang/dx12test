@@ -22,6 +22,8 @@ public:
     GfxSwapChain& GetSwapChain() { return *m_SwapChain; }
 
 private:
+    void TransitionBackBufferForPresent();
+
     GfxDevice*    m_GfxDevice = nullptr;
     GfxSwapChain* m_SwapChain = nullptr;
 };

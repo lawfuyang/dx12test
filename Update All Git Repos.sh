@@ -16,7 +16,8 @@ for i in $(find . -name ".git" | cut -c 3-); do
     cd ..;
 
     # finally pull
-    git pull origin master;
+    git submodule foreach "(git checkout master; git pull)";
+	git pull;
 
     # lets get back to the CUR_DIR
     cd $CUR_DIR

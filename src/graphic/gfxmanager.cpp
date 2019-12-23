@@ -69,18 +69,21 @@ void GfxManager::ScheduleGraphicTasks(tf::Taskflow& tf)
 
     tf::Task beginFrameTask = tf.emplace([&]() { BeginFrame(); });
 
-    std::vector<tf::Task> renderPassesTasks;
-    renderPassesTasks.reserve(4);
+    std::vector<tf::Task> allRenderTasks;
+    allRenderTasks.reserve(4);
     for (const std::unique_ptr<GfxRenderPass>& renderPass : GfxManagerSingletons::gs_RenderPasses)
     {
         GfxContext& context = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
         SetD3DDebugName(context.GetCommandList()->Dev(), renderPass->GetName());
-        renderPassesTasks.push_back(tf.emplace([&]() { renderPass->Render(context); }));
+        allRenderTasks.push_back(tf.emplace([&]() { renderPass->Render(context); }));
     }
-    beginFrameTask.precede(renderPassesTasks);
+    beginFrameTask.precede(allRenderTasks);
+
+    tf::Task transitionBackBufferTask = tf.emplace([&]() { TransitionBackBufferForPresent(); });
+    transitionBackBufferTask.succeed(allRenderTasks);
 
     tf::Task endFrameTask = tf.emplace([&]() { EndFrame(); });
-    endFrameTask.succeed(renderPassesTasks);
+    endFrameTask.succeed(transitionBackBufferTask);
 }
 
 void GfxManager::BeginFrame()
@@ -100,4 +103,15 @@ void GfxManager::EndFrame()
 
     // TODO: refactor this. use fences to sync
     m_GfxDevice->WaitForPreviousFrame();
+}
+
+void GfxManager::TransitionBackBufferForPresent()
+{
+    bbeProfileFunction();
+
+    GfxContext& context = m_GfxDevice->GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    SetD3DDebugName(context.GetCommandList()->Dev(), "TransitionBackBufferForPresent");
+
+    context.ClearRenderTargetView(m_SwapChain->GetCurrentBackBuffer(), XMFLOAT4{ 0.0f, 0.2f, 0.4f, 1.0f });
+    m_SwapChain->TransitionBackBufferForPresent(context);
 }
