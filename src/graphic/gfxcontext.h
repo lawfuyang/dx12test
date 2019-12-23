@@ -1,5 +1,7 @@
 #pragma once
 
+#include "graphic/gfxpipelinestateobject.h"
+
 class GfxManager;
 class GfxDevice;
 class GfxCommandList;
@@ -23,7 +25,7 @@ private:
     GfxCommandList* m_CommandList = nullptr;
     GfxPSOManager*  m_PSOManager  = nullptr;
 
-    GfxRootSignature* m_RootSig = nullptr;
+    GfxPipelineStateObject m_PSO;
 
     friend class GfxDevice;
 };

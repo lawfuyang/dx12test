@@ -3,6 +3,7 @@
 #include "graphic/dx12utils.h"
 #include "graphic/gfxmanager.h"
 #include "graphic/gfxdevice.h"
+#include "graphic/gfxrootsignature.h"
 
 void GfxPSOManager::Initialize()
 {
@@ -87,4 +88,10 @@ void GfxPSOManager::ShutDown(bool deleteCacheFile)
 ID3D12PipelineState* GfxPSOManager::GetPSO()
 {
     return nullptr;
+}
+
+void GfxPipelineStateObject::SetRootSignature(const GfxRootSignature* rootSig)
+{
+    assert(rootSig);
+    m_RootSig = rootSig->Dev();
 }

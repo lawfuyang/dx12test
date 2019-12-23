@@ -6,6 +6,7 @@
 #include "graphic/gfxcontext.h"
 #include "graphic/gfxdescriptorheap.h"
 #include "graphic/gfxrootsignature.h"
+#include "graphic/gfxpipelinestateobject.h"
 
 const bool            g_EnableGfxDebugLayer                     = true;
 static constexpr bool gs_BreakOnWarnings                        = g_EnableGfxDebugLayer && true;
@@ -202,7 +203,7 @@ GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType)
     newContext.m_CommandList = m_CommandListsManager.Allocate(cmdListType);
 
     // Set default gfx root sig
-    newContext.m_CommandList->Dev()->SetGraphicsRootSignature(g_DefaultGraphicsRootSignature.Dev());
+    newContext.m_PSO.SetRootSignature(&g_DefaultGraphicsRootSignature);
 
     return newContext;
 }

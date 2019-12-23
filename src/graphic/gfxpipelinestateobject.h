@@ -2,26 +2,7 @@
 
 #include "system/memorymappedfile.h"
 
-struct GfxGraphicsPSOStream
-{
-    CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT          m_InputLayout;
-    CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY    m_PrimitiveTopologyType;
-    CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE        m_RootSig;
-    CD3DX12_PIPELINE_STATE_STREAM_VS                    m_VS;
-    CD3DX12_PIPELINE_STATE_STREAM_PS                    m_PS;
-    CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER            m_RasterizerState;
-    CD3DX12_PIPELINE_STATE_STREAM_BLEND_DESC            m_BlendState;
-    CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL1        m_DepthStencilState;
-    CD3DX12_PIPELINE_STATE_STREAM_SAMPLE_MASK           m_StencilMask;
-    CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS m_RenderTargets;
-    CD3DX12_PIPELINE_STATE_STREAM_SAMPLE_DESC           m_SampleDescriptors;
-};
-
-struct GfxComputePSOStream
-{
-    CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE m_RootSig;
-    CD3DX12_PIPELINE_STATE_STREAM_CS             m_CS;
-};
+class GfxRootSignature;
 
 class GfxVertexInputLayout
 {
@@ -32,6 +13,26 @@ public:
 
 private:
     std::vector<D3D12_INPUT_ELEMENT_DESC> m_InputElementDescs;
+};
+
+class GfxPipelineStateObject
+{
+public:
+    void SetRootSignature(const GfxRootSignature* rootSig);
+
+private:
+    CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE        m_RootSig;
+    CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT          m_InputLayout;
+    CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY    m_PrimitiveTopologyType;
+    CD3DX12_PIPELINE_STATE_STREAM_VS                    m_VS;
+    CD3DX12_PIPELINE_STATE_STREAM_PS                    m_PS;
+    CD3DX12_PIPELINE_STATE_STREAM_CS                    m_CS;
+    CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER            m_RasterizerState;
+    CD3DX12_PIPELINE_STATE_STREAM_BLEND_DESC            m_BlendState;
+    CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL1        m_DepthStencilState;
+    CD3DX12_PIPELINE_STATE_STREAM_SAMPLE_MASK           m_StencilMask;
+    CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS m_RenderTargets;
+    CD3DX12_PIPELINE_STATE_STREAM_SAMPLE_DESC           m_SampleDescriptors;
 };
 
 class GfxPSOManager
