@@ -76,7 +76,7 @@ private:
 
         if (FAILED(RegisterClass(&wc)))
         {
-            bbeError("ApplicationWin : Failed to create window: %s", GetLastErrorAsString().c_str());
+            g_Log.error("ApplicationWin : Failed to create window: {}", GetLastErrorAsString().c_str());
             assert(false);
         }
 
@@ -104,7 +104,7 @@ private:
 
         if (g_EngineWindowHandle == 0)
         {
-            bbeError("ApplicationWin : Failed to create window: %s", GetLastErrorAsString().c_str());
+            g_Log.error("ApplicationWin : Failed to create window: {}", GetLastErrorAsString().c_str());
             assert(false);
         }
 
@@ -117,7 +117,7 @@ private:
         {
             if (bRet == -1)
             {
-                bbeError(false, "Can't get new message: %s", GetLastErrorAsString().c_str());
+                g_Log.error("Can't get new message: {}", GetLastErrorAsString().c_str());
                 _exit(0);
             }
             else
@@ -148,7 +148,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
     BBE_UNUSED_PARAM(nCmdShow);
 
     // first, Init the logger
-    Logger::GetInstance().Initialize("../bin/Output.txt");
+    Logger::GetInstance().Initialize("../bin/output.txt");
 
     EngineWindowThread::Initialize();
 
@@ -157,6 +157,4 @@ int APIENTRY WinMain(HINSTANCE hInstance,
     System::GetInstance().Shutdown();
 
     EngineWindowThread::Shutdown();
-
-    Logger::GetInstance().Shutdown();
 }

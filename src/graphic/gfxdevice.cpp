@@ -41,7 +41,7 @@ void GfxDevice::Initialize()
         // Just take the first device that supports DX12
         if (SUCCEEDED(D3D12CreateDevice(GfxAdapter::GetInstance().GetAllAdapters()[0].Get(), level, IID_PPV_ARGS(&m_D3DDevice))))
         {
-            bbeInfo("Created ID3D12Device. D3D_FEATURE_LEVEL: %s", GetD3DFeatureLevelName(level));
+            g_Log.info("Created ID3D12Device. D3D_FEATURE_LEVEL: {}", GetD3DFeatureLevelName(level));
             break;
         }
     }
@@ -160,7 +160,7 @@ void GfxDevice::CheckFeaturesSupports()
     {
         if (SUCCEEDED(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel))))
         {
-            bbeInfo("D3D12_FEATURE_SHADER_MODEL support: %s", GetD3DShaderModelName(shaderModel.HighestShaderModel));
+            g_Log.info("D3D12_FEATURE_SHADER_MODEL support: {}", GetD3DShaderModelName(shaderModel.HighestShaderModel));
             m_D3DHighestShaderModel.HighestShaderModel = shaderModel.HighestShaderModel;
             break;
         }

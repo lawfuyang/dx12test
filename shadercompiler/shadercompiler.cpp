@@ -76,7 +76,7 @@ struct DXCProcessWrapper
         std::string commandLine = g_DXCDir.c_str();
         commandLine += " " + inputCommandLine;
 
-        bbeInfo(commandLine.c_str());
+        g_Log.info(commandLine);
 
         if (::CreateProcess(nullptr,    // No module name (use command line).
             (LPSTR)commandLine.c_str(), // Command line.
@@ -210,7 +210,7 @@ static void GetD3D12ShaderModels()
 
             if (SUCCEEDED(D3D12CreateDevice(hardwareAdapter.Get(), level, IID_PPV_ARGS(&D3DDevice))))
             {
-                bbeInfo("Created ID3D12Device. D3D_FEATURE_LEVEL: %s", GetD3DFeatureLevelName(level));
+                g_Log.info("Created ID3D12Device. D3D_FEATURE_LEVEL: %s", GetD3DFeatureLevelName(level));
                 break;
             }
         }
@@ -231,7 +231,7 @@ static void GetD3D12ShaderModels()
         {
             if (SUCCEEDED(D3DDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel))))
             {
-                bbeInfo("D3D12_FEATURE_SHADER_MODEL support: %s", GetD3DShaderModelName(shaderModel.HighestShaderModel));
+                g_Log.info("D3D12_FEATURE_SHADER_MODEL support: %s", GetD3DShaderModelName(shaderModel.HighestShaderModel));
                 g_HighestShaderModel = shaderModel.HighestShaderModel;
                 break;
             }
@@ -258,7 +258,7 @@ static void GetD3D12ShaderModelsAndPopulateJobs()
     tf.parallel_for(g_AllShaderFiles.begin(), g_AllShaderFiles.end(), [&](const std::string& fullPath)
     {
         bbeProfile("Parsing file"); 
-        bbeInfo("Found shader file: %s", GetFileNameFromPath(fullPath).c_str());
+        g_Log.info("Found shader file: %s", GetFileNameFromPath(fullPath).c_str());
 
         const bool IsReadMode = true;
         CFileWrapper shaderFile{ fullPath, IsReadMode };
@@ -305,7 +305,7 @@ static void GetD3D12ShaderModelsAndPopulateJobs()
 
             if (newJob.m_ShaderName.size() > 0)
             {
-                bbeInfo("Found shader entry: %s", newJob.m_ShaderName.c_str());
+                g_Log.info("Found shader entry: %s", newJob.m_ShaderName.c_str());
                 g_AllShaderCompileJobs.push_back(std::move(newJob));
             }
         }
@@ -407,7 +407,8 @@ static void RunShaderCompiler()
 
 int main()
 {
-    Logger::GetInstance().Initialize("../bin/ShaderCompilerOutput.txt");
+    // first, Init the logger
+    Logger::GetInstance().Initialize("../bin/shadercompiler_output.txt");
 
     g_AppDir                   = GetApplicationDirectory();
     g_ShadersTmpDir            = g_AppDir + "..\\tmp\\shaders\\";

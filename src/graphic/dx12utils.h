@@ -4,12 +4,12 @@
 #include <cassert>
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-#define DX12_CALL(call)                                                                           \
-    {                                                                                             \
-        HRESULT result = call;                                                                    \
-        bbeError(!FAILED(result), "DX12 Error: return code 0x%X, call: %s", result, #call);       \
-        bbeWarning(SUCCEEDED(result), "DX12 Warning: return code 0x%X, call: %s", result, #call); \
-        assert(!FAILED(result));                                                                  \
+#define DX12_CALL(call)                                                                               \
+    {                                                                                                 \
+        HRESULT result = call;                                                                        \
+        if (FAILED(result)) g_Log.error("DX12 Error: return code 0x%X, call: {}", result, #call);     \
+        if (!SUCCEEDED(result)) g_Log.warn("DX12 Warning: return code 0x%X, call: {}", result, #call);\
+        assert(!FAILED(result));                                                                      \
     }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------

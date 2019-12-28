@@ -25,7 +25,7 @@ void GfxAdapter::Initialize()
             continue;
         }
 
-        bbeInfo(StringFormat("Graphic Adapter found: %s", utf8_encode(desc.Description).c_str()).c_str());
+        g_Log.info("Graphic Adapter found: {}", utf8_encode(desc.Description).c_str());
         m_AllAdapters.push_back(hardwareAdapter);
     }
 

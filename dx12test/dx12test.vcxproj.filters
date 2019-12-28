@@ -4,9 +4,6 @@
     <ClCompile Include="..\src\system\keyboard.cpp">
       <Filter>system</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\system\logger.cpp">
-      <Filter>system</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\system\main.cpp">
       <Filter>system</Filter>
     </ClCompile>
@@ -88,9 +85,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
-      <Filter>system</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\system\logger.h">
       <Filter>system</Filter>
     </ClInclude>
     <ClInclude Include="..\src\system\math.h">
@@ -187,6 +181,9 @@
       <Filter>graphic</Filter>
     </ClInclude>
     <ClInclude Include="..\src\system\memorymappedfile.h">
+      <Filter>system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\system\logger.h">
       <Filter>system</Filter>
     </ClInclude>
   </ItemGroup>

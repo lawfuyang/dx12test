@@ -1,63 +1,25 @@
 #pragma once
 
+#include "spdlog/spdlog.h"
+
 #include "system/utils.h"
-
-#define bbeInfo(str, ...) bbeLogInternal(Info, str, __VA_ARGS__)
-#define bbeDebug(str, ...) bbeLogInternal(Debug, str, __VA_ARGS__)
-#define bbeLogInternal(Category, str, ...) Logger::GetInstance().Log<Logger::LogCategory::Category>(str, __FUNCTION__, __VA_ARGS__);
-
-#define bbeError(condition, str, ...)   if (!(condition)) bbeLogInternal(Error, str, __VA_ARGS__)
-#define bbeWarning(condition, str, ...) if (!(condition)) bbeLogInternal(Warning, str, __VA_ARGS__)
 
 class Logger
 {
     DeclareSingletonFunctions(Logger);
 
 public:
-    enum LogCategory
+    void Initialize(const char* path)
     {
-        Info,
-        Debug,
-        Error,
-        Warning,
-    };
-
-    void Initialize(const char* outputDir);
-    void Shutdown();
-
-    template <LogCategory Category, typename... Args>
-    void Log(const char* format, const char* functionSrc, Args&&... args);
-
-    template <LogCategory c>
-    static constexpr const char* GetCategoryStr()
-    {
-        switch (c)
-        {
-        case Info: return "Info"; break;
-        case Debug: return "Debug"; break;
-        case Warning: return "Warning"; break;
-        case Error: return "Error"; break;
-        default: return "Unknown Log Category";
-        }
+        m_Logger = spdlog::basic_logger_mt("file_logger", path, true);
+        m_Logger->flush_on(spdlog::level::level_enum::warn);
+        spdlog::set_pattern("[%H:%M:%S] [%^%L%$] %v");
     }
 
+    spdlog::logger& GetLoggerInternal() { return *m_Logger; }
+
 private:
-    FILE* m_File = nullptr;
+    std::shared_ptr<spdlog::logger> m_Logger;
 };
 
-template <Logger::LogCategory Category, typename... Args>
-inline void Logger::Log(const char* format, const char* functionSrc, Args&& ... args)
-{
-    const std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    const char* timeNow = std::ctime(&now) + 11; // +11 to remove Day & Month
-
-    const std::string formattedStr = StringFormat(format, std::forward<Args>(args)...);
-
-    // %.8s to remove \n from timeNow
-    const std::string prefix = StringFormat("[%.8s] %s[%s]: ", timeNow, GetCategoryStr<Category>(), functionSrc);
-    const std::string finalStr = prefix + formattedStr + "\n";
-
-    ::OutputDebugStringA(finalStr.c_str());
-    fprintf(m_File, finalStr.c_str());
-    fflush(m_File);
-}
+#define g_Log Logger::GetInstance().GetLoggerInternal()

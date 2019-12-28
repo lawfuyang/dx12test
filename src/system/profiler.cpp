@@ -9,7 +9,7 @@ void SystemProfiler::EnableProfiling()
     {
         EASY_PROFILER_ENABLE;
 
-        bbeInfo("Profiling enabled, capturing frame(s) data...");
+        g_Log.info("Profiling enabled, capturing frame(s) data...");
     }
 }
 
@@ -17,17 +17,17 @@ void SystemProfiler::DisableProfilingAndDumpToFile()
 {
     if (!::profiler::isEnabled())
     {
-        bbeError(false, "ms_FramesProfiled must be true!");
+        g_Log.error("ms_FramesProfiled must be true!");
         return;
     }
 
     BBE_SCOPED_UNSET(bool, ms_DumpingBlocks, true);
 
     const std::string dumpFilePath = StringFormat("..\\bin\\%s.prof", GetTimeStamp().c_str());
-    bbeInfo("Dumping profile capture %s", dumpFilePath.c_str());
+    g_Log.info("Dumping profile capture {}", dumpFilePath.c_str());
 
     const uint32_t numBlocksDumped = ::profiler::dumpBlocksToFile(dumpFilePath.c_str());
-    bbeError(numBlocksDumped > 0, "Error dumping profile blocks!");
+    if (numBlocksDumped == 0) g_Log.error("Error dumping profile blocks!");
 
     EASY_PROFILER_DISABLE;
     ms_FramesProfiled = 0;
