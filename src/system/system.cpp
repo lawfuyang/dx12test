@@ -13,7 +13,7 @@ void System::ProcessWindowMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 
 void System::Loop()
 {
-    bbeDebug("Entering main loop");
+    g_Log.debug("Entering main loop");
 
     do
     {
@@ -31,7 +31,7 @@ void System::Loop()
         ++ms_SystemFrameNumber;
     } while (!m_Exit);
 
-    bbeDebug("Exiting main loop");
+    g_Log.debug("Exiting main loop");
 }
 
 void System::Initialize()
