@@ -23,6 +23,11 @@ void System::Loop()
         const ProfilerInstance profilerInstance;
         const FrameRateController frcInstance;
 
+        if (Keyboard::IsKeyPressed(Keyboard::KEY_P))
+        {
+            SystemProfiler::EnableProfiling();
+        }
+
         Update();
 
         // make sure I/O ticks happen last

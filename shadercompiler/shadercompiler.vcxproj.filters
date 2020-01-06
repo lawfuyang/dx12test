@@ -27,9 +27,6 @@
     <ClCompile Include="..\src\system\locks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\system\keyboard.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\graphic\dx12utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -45,9 +42,6 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\system\locks.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\system\keyboard.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\system\logger.h">

@@ -1,7 +1,6 @@
 #include "system/profiler.h"
 
 #include "system/logger.h"
-#include "system/keyboard.h"
 
 void SystemProfiler::EnableProfiling()
 {
@@ -37,7 +36,7 @@ void SystemProfiler::DisableProfilingAndDumpToFile()
 ProfilerInstance::ProfilerInstance(bool dumpOnExitScope)
     : m_DumpOnExitScope(dumpOnExitScope)
 {
-    if (dumpOnExitScope || Keyboard::IsKeyPressed(Keyboard::KEY_P))
+    if (dumpOnExitScope)
     {
         SystemProfiler::EnableProfiling();
     }

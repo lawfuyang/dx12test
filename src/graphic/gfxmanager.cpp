@@ -7,6 +7,7 @@
 #include "graphic/guimanager.h"
 #include "graphic/gfxrootsignature.h"
 #include "graphic/gfxshadermanager.h"
+#include "graphic/gfxvertexformat.h"
 
 #include "graphic/renderpasses/gfxtestrenderpass.h"
 
@@ -26,15 +27,16 @@ void GfxManager::Initialize()
 
     tf::Taskflow tf;
 
-    tf::Task adapterInitTask         = tf.emplace([&]() { GfxAdapter::GetInstance().Initialize(); });
-    tf::Task deviceInitTask          = tf.emplace([&]() { m_GfxDevice->Initialize(); });
-    tf::Task cmdListInitTask         = tf.emplace([&]() { m_GfxDevice->GetCommandListsManager().Initialize(); });
-    tf::Task descHeapManagerInitTask = tf.emplace([&]() { m_GfxDevice->GetDescriptorHeapManager().Initialize(); });
-    tf::Task swapChainInitTask       = tf.emplace([&]() { m_SwapChain->Initialize(System::APP_WINDOW_WIDTH, System::APP_WINDOW_HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM); });
-    tf::Task GUIManagerInitTask      = tf.emplace([&]() { GUIManager::GetInstance().Initialize(); });
-    tf::Task rootSigManagerInitTask  = tf.emplace([&]() { GfxRootSignatureManager::GetInstance().Initialize(); });
-    tf::Task PSOManagerInitTask      = tf.emplace([&]() { GfxPSOManager::GetInstance().Initialize(); });
-    tf::Task ShaderManagerInitTask   = tf.emplace([&]() { GfxShaderManager::GetInstance().Initialize(); });
+    tf::Task adapterInitTask           = tf.emplace([&]() { GfxAdapter::GetInstance().Initialize(); });
+    tf::Task deviceInitTask            = tf.emplace([&]() { m_GfxDevice->Initialize(); });
+    tf::Task cmdListInitTask           = tf.emplace([&]() { m_GfxDevice->GetCommandListsManager().Initialize(); });
+    tf::Task descHeapManagerInitTask   = tf.emplace([&]() { m_GfxDevice->GetDescriptorHeapManager().Initialize(); });
+    tf::Task swapChainInitTask         = tf.emplace([&]() { m_SwapChain->Initialize(System::APP_WINDOW_WIDTH, System::APP_WINDOW_HEIGHT, DXGI_FORMAT_R8G8B8A8_UNORM); });
+    tf::Task GUIManagerInitTask        = tf.emplace([&]() { GUIManager::GetInstance().Initialize(); });
+    tf::Task rootSigManagerInitTask    = tf.emplace([&]() { GfxRootSignatureManager::GetInstance().Initialize(); });
+    tf::Task PSOManagerInitTask        = tf.emplace([&]() { GfxPSOManager::GetInstance().Initialize(); });
+    tf::Task ShaderManagerInitTask     = tf.emplace([&]() { GfxShaderManager::GetInstance().Initialize(); });
+    tf::Task VertexInputLayoutInitTask = tf.emplace([&]() { GfxVertexInputLayoutManager::GetInstance().Initialize(); });
 
     deviceInitTask.succeed(adapterInitTask);
     deviceInitTask.precede({ cmdListInitTask, descHeapManagerInitTask });
@@ -74,7 +76,7 @@ void GfxManager::ScheduleGraphicTasks(tf::Taskflow& tf)
     for (const std::unique_ptr<GfxRenderPass>& renderPass : GfxManagerSingletons::gs_RenderPasses)
     {
         GfxContext& context = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
-        SetD3DDebugName(context.GetCommandList()->Dev(), renderPass->GetName());
+        SetD3DDebugName(context.GetCommandList().Dev(), renderPass->GetName());
         allRenderTasks.push_back(tf.emplace([&]() { renderPass->Render(context); }));
     }
     beginFrameTask.precede(allRenderTasks);
@@ -110,7 +112,7 @@ void GfxManager::TransitionBackBufferForPresent()
     bbeProfileFunction();
 
     GfxContext& context = m_GfxDevice->GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
-    SetD3DDebugName(context.GetCommandList()->Dev(), "TransitionBackBufferForPresent");
+    SetD3DDebugName(context.GetCommandList().Dev(), "TransitionBackBufferForPresent");
 
     context.ClearRenderTargetView(m_SwapChain->GetCurrentBackBuffer(), XMFLOAT4{ 0.0f, 0.2f, 0.4f, 1.0f });
     m_SwapChain->TransitionBackBufferForPresent(context);

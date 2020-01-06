@@ -4,6 +4,8 @@
 #include "graphic/gfxmanager.h"
 #include "graphic/gfxdevice.h"
 #include "graphic/gfxrootsignature.h"
+#include "graphic/gfxvertexformat.h"
+#include "graphic/gfxshadermanager.h"
 
 void GfxPSOManager::Initialize()
 {
@@ -94,4 +96,30 @@ void GfxPipelineStateObject::SetRootSignature(const GfxRootSignature* rootSig)
 {
     assert(rootSig);
     m_RootSig = rootSig->Dev();
+}
+
+template<typename ShaderStreamType>
+void GfxPipelineStateObject::SetShaderCommon(GfxShader* shader, ShaderStreamType& shaderStream)
+{
+    assert(shader);
+
+    ID3D10Blob* blob = shader->GetBlob();
+    assert(blob);
+
+    shaderStream = D3D12_SHADER_BYTECODE{ blob->GetBufferPointer(), blob->GetBufferSize() };
+}
+
+void GfxPipelineStateObject::SetVertexShader(GfxShader* shader)
+{
+    SetShaderCommon(shader, m_VS);
+}
+
+void GfxPipelineStateObject::SetPixelShader(GfxShader* shader)
+{
+    SetShaderCommon(shader, m_PS);
+}
+
+void GfxPipelineStateObject::SetComputeShader(GfxShader* shader)
+{
+    SetShaderCommon(shader, m_CS);
 }

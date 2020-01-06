@@ -82,6 +82,9 @@
     <ClCompile Include="..\src\system\memorymappedfile.cpp">
       <Filter>system</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxvertexformat.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -185,6 +188,9 @@
     </ClInclude>
     <ClInclude Include="..\src\system\logger.h">
       <Filter>system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxvertexformat.h">
+      <Filter>graphic</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

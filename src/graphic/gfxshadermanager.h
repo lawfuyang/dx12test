@@ -19,6 +19,8 @@ public:
     DeclareSingletonFunctions(GfxShaderManager);
 
     void Initialize();
+    
+    GfxShader& GetShader(AllShaders shaderName) { return m_AllShaders[static_cast<uint32_t>(shaderName)]; }
 
 private:
     std::array<GfxShader, g_NumShaders> m_AllShaders;

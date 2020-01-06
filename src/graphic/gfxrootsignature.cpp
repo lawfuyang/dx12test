@@ -93,6 +93,6 @@ void GfxRootSignatureManager::Initialize()
 {
     bbeProfileFunction();
 
-    g_DefaultGraphicsRootSignature.AddSRV();
-    g_DefaultGraphicsRootSignature.Compile();
+    gs_DefaultGraphicsRootSignature.AddSRV();
+    gs_DefaultGraphicsRootSignature.Compile();
 }

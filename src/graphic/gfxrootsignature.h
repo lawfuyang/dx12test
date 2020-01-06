@@ -18,7 +18,7 @@ private:
     uint32_t m_ShaderRegisters[D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER + 1] = {};
     std::vector<CD3DX12_ROOT_PARAMETER1> m_RootParams;
 };
-static GfxRootSignature g_DefaultGraphicsRootSignature;
+static GfxRootSignature gs_DefaultGraphicsRootSignature;
 
 class GfxRootSignatureManager
 {

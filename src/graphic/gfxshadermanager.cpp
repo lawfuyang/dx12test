@@ -19,8 +19,8 @@ void GfxShaderManager::Initialize()
     // TOOD: Parallelize if needed
     for (const auto& shaderNameByteCodePair : gs_AllShadersByteCode)
     {
-        const AllShadersNames shaderName = shaderNameByteCodePair.first;
-        const uint32_t shaderIdx = (uint32_t)shaderName;
+        const AllShaders shaderName = shaderNameByteCodePair.first;
+        const uint32_t shaderIdx = static_cast<uint32_t>(shaderName);
 
         m_AllShaders[shaderIdx].Initialize(shaderNameByteCodePair.second, sizeof(shaderNameByteCodePair.second));
     }

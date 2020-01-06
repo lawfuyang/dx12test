@@ -231,7 +231,7 @@ static void GetD3D12ShaderModels()
         {
             if (SUCCEEDED(D3DDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel))))
             {
-                g_Log.info("D3D12_FEATURE_SHADER_MODEL support: %s", GetD3DShaderModelName(shaderModel.HighestShaderModel));
+                g_Log.info("D3D12_FEATURE_SHADER_MODEL support: {}", GetD3DShaderModelName(shaderModel.HighestShaderModel));
                 g_HighestShaderModel = shaderModel.HighestShaderModel;
                 break;
             }
@@ -258,7 +258,7 @@ static void GetD3D12ShaderModelsAndPopulateJobs()
     tf.parallel_for(g_AllShaderFiles.begin(), g_AllShaderFiles.end(), [&](const std::string& fullPath)
     {
         bbeProfile("Parsing file"); 
-        g_Log.info("Found shader file: %s", GetFileNameFromPath(fullPath).c_str());
+        g_Log.info("Found shader file: {}", GetFileNameFromPath(fullPath).c_str());
 
         const bool IsReadMode = true;
         CFileWrapper shaderFile{ fullPath, IsReadMode };
@@ -305,7 +305,7 @@ static void GetD3D12ShaderModelsAndPopulateJobs()
 
             if (newJob.m_ShaderName.size() > 0)
             {
-                g_Log.info("Found shader entry: %s", newJob.m_ShaderName.c_str());
+                g_Log.info("Found shader entry: {}", newJob.m_ShaderName.c_str());
                 g_AllShaderCompileJobs.push_back(std::move(newJob));
             }
         }
@@ -343,7 +343,7 @@ static void PrintGeneratedEnumFile()
     assert(file);
 
     fprintf(file, "#pragma once\n\n");
-    fprintf(file, "enum class AllShadersNames\n");
+    fprintf(file, "enum class AllShaders\n");
     fprintf(file, "{\n");
     for (int i = 0; i < g_AllShaderCompileJobs.size(); ++i)
     {
@@ -370,11 +370,11 @@ static void PrintGeneratedByteCodeHeadersFile()
         fprintf(file, "#include \"%s\"\n", shaderJob.m_ShaderObjCodeFileDir.c_str());
     }
 
-    fprintf(file, "\nstatic constexpr std::pair<AllShadersNames, const unsigned char*> gs_AllShadersByteCode[] = \n");
+    fprintf(file, "\nstatic constexpr std::pair<AllShaders, const unsigned char*> gs_AllShadersByteCode[] = \n");
     fprintf(file, "{\n");
     for (ShaderCompileJob& shaderJob : g_AllShaderCompileJobs)
     {
-        fprintf(file, "    std::make_pair(AllShadersNames::%s, %s),\n", shaderJob.m_ShaderName.c_str(), shaderJob.m_ShaderObjCodeVarName.c_str());
+        fprintf(file, "    std::make_pair(AllShaders::%s, %s),\n", shaderJob.m_ShaderName.c_str(), shaderJob.m_ShaderObjCodeVarName.c_str());
     }
     fprintf(file, "};\n");
 

@@ -3,24 +3,21 @@
 #include "system/memorymappedfile.h"
 
 class GfxRootSignature;
-
-class GfxVertexInputLayout
-{
-public:
-    const std::vector<D3D12_INPUT_ELEMENT_DESC>& GetDescs() const { return m_InputElementDescs; }
-
-    void AddElement(const D3D12_INPUT_ELEMENT_DESC& elem) { m_InputElementDescs.push_back(elem); }
-
-private:
-    std::vector<D3D12_INPUT_ELEMENT_DESC> m_InputElementDescs;
-};
+class GfxShader;
 
 class GfxPipelineStateObject
 {
 public:
     void SetRootSignature(const GfxRootSignature* rootSig);
+    void SetVertexInputLayout(const D3D12_INPUT_LAYOUT_DESC inputLayout) { m_InputLayout = inputLayout; }
+    void SetVertexShader(GfxShader*);
+    void SetPixelShader(GfxShader*);
+    void SetComputeShader(GfxShader*);
 
 private:
+    template <typename ShaderStreamType>
+    void SetShaderCommon(GfxShader*, ShaderStreamType&);
+
     CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE        m_RootSig;
     CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT          m_InputLayout;
     CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY    m_PrimitiveTopologyType;
