@@ -7,5 +7,9 @@ public:
 
     void Initialize();
 };
-static D3D12_INPUT_LAYOUT_DESC gs_Position3f_TexCoord2f;
-static D3D12_INPUT_LAYOUT_DESC gs_Position3f_Normal3f_Texcoord2f;
+
+namespace GfxDefaultVertexFormats
+{
+    static D3D12_INPUT_LAYOUT_DESC Position3f_TexCoord2f;
+    static D3D12_INPUT_LAYOUT_DESC Position3f_Normal3f_Texcoord2f;
+}

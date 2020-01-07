@@ -44,8 +44,8 @@ void MemoryMappedFile::Init(const std::wstring& filename, UINT fileSize)
 
     if (m_file == INVALID_HANDLE_VALUE)
     {
-        std::cerr << (L"m_file is invalid. Error %ld.\n", GetLastError());
-        std::cerr << (L"Target file is %s\n", filename.c_str());
+        g_Log.error("m_file is invalid. Error {}.", GetLastError());
+        g_Log.error("Target file is {}", utf8_encode(filename));
         return;
     }
 
@@ -53,7 +53,7 @@ void MemoryMappedFile::Init(const std::wstring& filename, UINT fileSize)
     BOOL flag = GetFileSizeEx(m_file, &realFileSize);
     if (!flag)
     {
-        std::cerr << (L"\nError %ld occurred in GetFileSizeEx!", GetLastError());
+        g_Log.error("\nError {} occurred in GetFileSizeEx!", GetLastError());
         assert(false);
         return;
     }
@@ -75,7 +75,7 @@ void MemoryMappedFile::Init(const std::wstring& filename, UINT fileSize)
 
     if (m_mapFile == nullptr)
     {
-        std::cerr << (L"m_mapFile is NULL: last error: %d\n", GetLastError());
+        g_Log.error("m_mapFile is NULL: last error: %d\n", GetLastError());
         assert(false);
         return;
     }
@@ -84,7 +84,7 @@ void MemoryMappedFile::Init(const std::wstring& filename, UINT fileSize)
 
     if (m_mapAddress == nullptr)
     {
-        std::cerr << (L"m_mapAddress is NULL: last error: %d\n", GetLastError());
+        g_Log.error("m_mapAddress is NULL: last error: %d\n", GetLastError());
         assert(false);
         return;
     }
@@ -97,7 +97,7 @@ void MemoryMappedFile::Destroy(bool deleteFile)
         BOOL flag = UnmapViewOfFile(m_mapAddress);
         if (!flag)
         {
-            std::cerr << (L"\nError %ld occurred unmapping the view!", GetLastError());
+            g_Log.error("\nError %ld occurred unmapping the view!", GetLastError());
             assert(false);
         }
 
@@ -106,14 +106,14 @@ void MemoryMappedFile::Destroy(bool deleteFile)
         flag = CloseHandle(m_mapFile);    // Close the file mapping object.
         if (!flag)
         {
-            std::cerr << (L"\nError %ld occurred closing the mapping object!", GetLastError());
+            g_Log.error("\nError %ld occurred closing the mapping object!", GetLastError());
             assert(false);
         }
 
         flag = CloseHandle(m_file);        // Close the file itself.
         if (!flag)
         {
-            std::cerr << (L"\nError %ld occurred closing the file!", GetLastError());
+            g_Log.error("\nError %ld occurred closing the file!", GetLastError());
             assert(false);
         }
     }
@@ -140,7 +140,7 @@ void MemoryMappedFile::GrowMapping(UINT size)
     BOOL flag = FlushViewOfFile(m_mapAddress, 0);
     if (!flag)
     {
-        std::cerr << (L"\nError %ld occurred flushing the mapping object!", GetLastError());
+        g_Log.error("\nError %ld occurred flushing the mapping object!", GetLastError());
         assert(false);
     }
 

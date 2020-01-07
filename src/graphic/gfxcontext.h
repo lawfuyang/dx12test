@@ -32,7 +32,6 @@ private:
     GfxShaderManager* m_ShaderManager   = nullptr;
 
     GfxPipelineStateObject m_PSO;
-    D3D12_INPUT_LAYOUT_DESC m_VertexInputLayout;
 
     friend class GfxDevice;
 };

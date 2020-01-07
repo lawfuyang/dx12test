@@ -87,7 +87,7 @@ void GfxPSOManager::ShutDown(bool deleteCacheFile)
     m_PipelineLibrary.Reset();
 }
 
-ID3D12PipelineState* GfxPSOManager::GetPSO()
+ID3D12PipelineState* GfxPSOManager::GetPSO(const GfxPipelineStateObject& pso)
 {
     return nullptr;
 }
@@ -99,27 +99,35 @@ void GfxPipelineStateObject::SetRootSignature(const GfxRootSignature* rootSig)
 }
 
 template<typename ShaderStreamType>
-void GfxPipelineStateObject::SetShaderCommon(GfxShader* shader, ShaderStreamType& shaderStream)
+void GfxPipelineStateObject::SetShaderCommon(GfxShader& shader, ShaderStreamType& shaderStream)
 {
-    assert(shader);
-
-    ID3D10Blob* blob = shader->GetBlob();
+    ID3D10Blob* blob = shader.GetBlob();
     assert(blob);
 
-    shaderStream = D3D12_SHADER_BYTECODE{ blob->GetBufferPointer(), blob->GetBufferSize() };
+    shaderStream = CD3DX12_SHADER_BYTECODE{ blob };
 }
 
-void GfxPipelineStateObject::SetVertexShader(GfxShader* shader)
+void GfxPipelineStateObject::SetVertexShader(GfxShader& shader)
 {
     SetShaderCommon(shader, m_VS);
 }
 
-void GfxPipelineStateObject::SetPixelShader(GfxShader* shader)
+void GfxPipelineStateObject::SetPixelShader(GfxShader& shader)
 {
     SetShaderCommon(shader, m_PS);
 }
 
-void GfxPipelineStateObject::SetComputeShader(GfxShader* shader)
+void GfxPipelineStateObject::SetComputeShader(GfxShader& shader)
 {
     SetShaderCommon(shader, m_CS);
+}
+
+void GfxPipelineStateObject::SetRenderTargetFormat(uint32_t idx, DXGI_FORMAT format)
+{
+    D3D12_RT_FORMAT_ARRAY& arr = static_cast<D3D12_RT_FORMAT_ARRAY&>(m_RenderTargets);
+
+    assert(idx < _countof(arr.RTFormats));
+    
+    arr.NumRenderTargets = std::max(arr.NumRenderTargets, idx);
+    arr.RTFormats[idx] = format;
 }
