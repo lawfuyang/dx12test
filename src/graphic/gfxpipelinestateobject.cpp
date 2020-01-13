@@ -87,7 +87,6 @@ void GfxPSOManager::ShutDown(bool deleteCacheFile)
     m_PipelineLibrary.Reset();
 }
 
-BBE_OPTIMIZE_OFF;
 ID3D12PipelineState* GfxPSOManager::GetPSO(const GfxPipelineStateObject& pso)
 {
     bbeProfileFunction();
@@ -132,8 +131,9 @@ ID3D12PipelineState* GfxPSOManager::GetPSO(const GfxPipelineStateObject& pso)
 
             // TODO: Check if this is thread safe, handle it if not
             DX12_CALL(m_PipelineLibrary->StorePipeline(psoHashName.c_str(), psoToReturn));
-        }
+
             break;
+        }
 
         case E_OUTOFMEMORY:
             assert(false);
@@ -147,7 +147,6 @@ ID3D12PipelineState* GfxPSOManager::GetPSO(const GfxPipelineStateObject& pso)
     assert(psoToReturn);
     return psoToReturn;
 }
-BBE_OPTIMIZE_ON;
 
 void GfxPipelineStateObject::SetRenderTargetFormat(uint32_t idx, DXGI_FORMAT format)
 {
