@@ -35,12 +35,12 @@ void GfxManager::Initialize()
     tf::Task GUIManagerInitTask        = tf.emplace([&]() { GUIManager::GetInstance().Initialize(); });
     tf::Task rootSigManagerInitTask    = tf.emplace([&]() { GfxRootSignatureManager::GetInstance().Initialize(); });
     tf::Task PSOManagerInitTask        = tf.emplace([&]() { GfxPSOManager::GetInstance().Initialize(); });
-    tf::Task ShaderManagerInitTask     = tf.emplace([&]() { GfxShaderManager::GetInstance().Initialize(); });
-    tf::Task VertexInputLayoutInitTask = tf.emplace([&]() { GfxVertexInputLayoutManager::GetInstance().Initialize(); });
+    tf::Task shaderManagerInitTask     = tf.emplace([&]() { GfxShaderManager::GetInstance().Initialize(); });
+    tf::Task vertexInputLayoutInitTask = tf.emplace([&]() { GfxVertexInputLayoutManager::GetInstance().Initialize(); });
 
     deviceInitTask.succeed(adapterInitTask);
-    deviceInitTask.precede({ cmdListInitTask, descHeapManagerInitTask });
-    swapChainInitTask.succeed({ deviceInitTask, cmdListInitTask, descHeapManagerInitTask });
+    deviceInitTask.precede(cmdListInitTask, descHeapManagerInitTask);
+    swapChainInitTask.succeed(deviceInitTask, cmdListInitTask, descHeapManagerInitTask);
     rootSigManagerInitTask.succeed(deviceInitTask);
     PSOManagerInitTask.succeed(deviceInitTask);
 
@@ -70,19 +70,18 @@ void GfxManager::ScheduleGraphicTasks(tf::Taskflow& tf)
     GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
 
     tf::Task beginFrameTask = tf.emplace([&]() { BeginFrame(); });
+    tf::Task transitionBackBufferTask = tf.emplace([&]() { TransitionBackBufferForPresent(); });
 
-    std::vector<tf::Task> allRenderTasks;
-    allRenderTasks.reserve(4);
     for (const std::unique_ptr<GfxRenderPass>& renderPass : GfxManagerSingletons::gs_RenderPasses)
     {
         GfxContext& context = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
         SetD3DDebugName(context.GetCommandList().Dev(), renderPass->GetName());
-        allRenderTasks.push_back(tf.emplace([&]() { renderPass->Render(context); }));
-    }
-    beginFrameTask.precede(allRenderTasks);
 
-    tf::Task transitionBackBufferTask = tf.emplace([&]() { TransitionBackBufferForPresent(); });
-    transitionBackBufferTask.succeed(allRenderTasks);
+        tf::Task newRenderTask = tf.emplace([&]() { renderPass->Render(context); });
+
+        beginFrameTask.precede(newRenderTask);
+        transitionBackBufferTask.succeed(newRenderTask);
+    }
 
     tf::Task endFrameTask = tf.emplace([&]() { EndFrame(); });
     endFrameTask.succeed(transitionBackBufferTask);

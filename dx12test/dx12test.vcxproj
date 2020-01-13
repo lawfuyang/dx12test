@@ -68,7 +68,7 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ForcedIncludeFiles>system/system.h;windows.h;d3d12.h;D3d12SDKLayers.h;dxgi1_6.h;d3d12/d3dx12.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ForcedIncludeFiles>system/system.h;windows.h;d3d12/d3dx12.h;D3d12SDKLayers.h;dxgi1_6.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <DisableSpecificWarnings>4267;</DisableSpecificWarnings>
     </ClCompile>
     <Link>
@@ -152,6 +152,7 @@
     <ClInclude Include="..\src\graphic\gfxfence.h" />
     <ClInclude Include="..\src\graphic\gfxmanager.h" />
     <ClInclude Include="..\src\graphic\gfxpipelinestateobject.h" />
+    <ClInclude Include="..\src\graphic\gfxpipelinestateobject.hpp" />
     <ClInclude Include="..\src\graphic\gfxrootsignature.h" />
     <ClInclude Include="..\src\graphic\gfxshadermanager.h" />
     <ClInclude Include="..\src\graphic\gfxswapchain.h" />

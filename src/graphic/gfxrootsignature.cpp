@@ -53,6 +53,13 @@ void GfxRootSignature::AddSRV()
     newRange.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC; // Always static. Change to volatile if needed
     newRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
+    boost::hash_combine(m_Hash, newRange.RangeType);
+    boost::hash_combine(m_Hash, newRange.NumDescriptors);
+    boost::hash_combine(m_Hash, newRange.BaseShaderRegister);
+    boost::hash_combine(m_Hash, newRange.RegisterSpace);
+    boost::hash_combine(m_Hash, newRange.Flags);
+    boost::hash_combine(m_Hash, newRange.OffsetInDescriptorsFromTableStart);
+
     CD3DX12_ROOT_PARAMETER1 rootParameter;
     rootParameter.InitAsDescriptorTable(1, &newRange, D3D12_SHADER_VISIBILITY_ALL);
 
@@ -78,6 +85,9 @@ void GfxRootSignature::Compile()
     rootSignatureDesc.Desc_1_1.pStaticSamplers = gs_StaticSamplers;
     rootSignatureDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT; // change to D3D12_ROOT_SIGNATURE_FLAG_NONE for compute shaders etc
 
+    boost::hash_combine(m_Hash, rootSignatureDesc.Version);
+    boost::hash_combine(m_Hash, rootSignatureDesc.Desc_1_1.Flags);
+
     ComPtr<ID3DBlob> signature;
     ComPtr<ID3DBlob> error;
     DX12_CALL(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, highestRootSigVer, &signature, &error));
@@ -93,6 +103,6 @@ void GfxRootSignatureManager::Initialize()
 {
     bbeProfileFunction();
 
-    gs_DefaultGraphicsRootSignature.AddSRV();
-    gs_DefaultGraphicsRootSignature.Compile();
+    DefaultRootSignatures::DefaultGraphicsRootSignature.AddSRV();
+    DefaultRootSignatures::DefaultGraphicsRootSignature.Compile();
 }

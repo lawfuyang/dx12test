@@ -128,6 +128,19 @@ void GfxDevice::ConfigureDebugLayer()
 
     debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, gs_BreakOnErrors);
     debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, gs_BreakOnWarnings);
+
+    D3D12_MESSAGE_ID warningsToIgnore[] =
+    {
+        //These ID3D12PipelineLibrary errors are handled in code, no need to break on these warnings in debug layer
+        D3D12_MESSAGE_ID_LOADPIPELINE_NAMENOTFOUND,
+        D3D12_MESSAGE_ID_CREATEPIPELINELIBRARY_DRIVERVERSIONMISMATCH,
+        D3D12_MESSAGE_ID_CREATEPIPELINELIBRARY_ADAPTERVERSIONMISMATCH,
+        D3D12_MESSAGE_ID_CREATEPIPELINELIBRARY_UNSUPPORTED,
+    };
+    D3D12_INFO_QUEUE_FILTER ignoreWarningsFilter = {};
+    ignoreWarningsFilter.DenyList.NumIDs = _countof(warningsToIgnore);
+    ignoreWarningsFilter.DenyList.pIDList = warningsToIgnore;
+    debugInfoQueue->AddStorageFilterEntries(&ignoreWarningsFilter);
 }
 
 void GfxDevice::CheckFeaturesSupports()
@@ -207,7 +220,7 @@ GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType)
     newContext.m_ShaderManager = &GfxShaderManager::GetInstance();
 
     // Set default gfx root sig
-    newContext.m_PSO.SetRootSignature(&gs_DefaultGraphicsRootSignature);
+    newContext.m_PSO.SetRootSignature(&DefaultRootSignatures::DefaultGraphicsRootSignature);
 
     return newContext;
 }

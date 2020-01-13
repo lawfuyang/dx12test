@@ -17,3 +17,17 @@ void GfxContext::ClearRenderTargetView(GfxRenderTargetView& rtv, XMFLOAT4 clearC
     const FLOAT colorInFloat[] = { clearColor.x, clearColor.y, clearColor.z, clearColor.w };
     m_CommandList->Dev()->ClearRenderTargetView(rtv.GetCPUDescHandle(), colorInFloat, numRects, pRects);
 }
+
+void GfxContext::CompileAndSetPipelineState()
+{
+    assert(m_PSOManager);
+    assert(m_CommandList);
+
+    assert(m_PSO.m_VS || m_PSO.m_CS); // Must have either VS or CS
+    assert((m_PSO.m_PS && m_PSO.m_CS) == false); // Cannot have both PS & CS active
+
+    ID3D12PipelineState* compiledPSO = m_PSOManager->GetPSO(m_PSO);
+    assert(compiledPSO);
+
+    m_CommandList->Dev()->SetPipelineState(compiledPSO);
+}

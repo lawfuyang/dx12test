@@ -16,13 +16,14 @@ class GfxContext
 public:
     void ClearRenderTargetView(GfxRenderTargetView& rtv, XMFLOAT4 clearColor) const;
 
-    GfxManager&       GetGfxManager()    { return *m_GfxManager; }
-    GfxDevice&        GetDevice()        { return *m_Device; }
-    GfxCommandList&   GetCommandList()   { return *m_CommandList; }
-    GfxPSOManager&    GetPSOManager()    { return *m_PSOManager; }
-    GfxShaderManager& GetShaderManager() { return *m_ShaderManager; }
+    GfxManager&             GetGfxManager()    { return *m_GfxManager; }
+    GfxDevice&              GetDevice()        { return *m_Device; }
+    GfxCommandList&         GetCommandList()   { return *m_CommandList; }
+    GfxPSOManager&          GetPSOManager()    { return *m_PSOManager; }
+    GfxShaderManager&       GetShaderManager() { return *m_ShaderManager; }
+    GfxPipelineStateObject& GetPSO()           { return m_PSO; }
 
-    GfxPipelineStateObject& GetPSO() { return m_PSO; }
+    void CompileAndSetPipelineState();
 
 private:
     GfxManager*       m_GfxManager      = nullptr;

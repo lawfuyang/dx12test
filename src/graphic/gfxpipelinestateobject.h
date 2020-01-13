@@ -2,50 +2,53 @@
 
 #include "system/memorymappedfile.h"
 
+#include "graphic/gfxrootsignature.h"
+#include "graphic/gfxshadermanager.h"
+
 class GfxRootSignature;
 class GfxShader;
 
 class GfxPipelineStateObject
 {
 public:
-    void SetRootSignature(const GfxRootSignature*);
+    void SetRootSignature(GfxRootSignature* rootSig) { m_RootSig = rootSig; }
     void SetVertexInputLayout(const D3D12_INPUT_LAYOUT_DESC inputLayout) { m_InputLayout = inputLayout; }
-    void SetVertexShader(GfxShader&);
-    void SetPixelShader(GfxShader&);
-    void SetComputeShader(GfxShader&);
-    void SetDepthEnable(bool b) { static_cast<CD3DX12_DEPTH_STENCIL_DESC1&>(m_DepthStencilState).DepthEnable = b; }
-    void SetStencilEnable(bool b) { static_cast<CD3DX12_DEPTH_STENCIL_DESC1&>(m_DepthStencilState).StencilEnable = b; }
-    void SetFillMode(D3D12_FILL_MODE fillMode) { static_cast<CD3DX12_RASTERIZER_DESC&>(m_RasterizerState).FillMode = fillMode; }
-    void SetCullMode(D3D12_CULL_MODE cullMode) { static_cast<CD3DX12_RASTERIZER_DESC&>(m_RasterizerState).CullMode = cullMode; }
-    void SetFrontCounterClockwise(bool b) { static_cast<CD3DX12_RASTERIZER_DESC&>(m_RasterizerState).FrontCounterClockwise = b; }
-    void SetDepthBias(uint32_t depthBias) { static_cast<CD3DX12_RASTERIZER_DESC&>(m_RasterizerState).DepthBias = depthBias; }
-    void SetDepthBiasClamp(float depthBiasClamp) { static_cast<CD3DX12_RASTERIZER_DESC&>(m_RasterizerState).DepthBiasClamp = depthBiasClamp; }
-    void SetSlopeScaledDepthBias(float slopeScaledDepthBias) { static_cast<CD3DX12_RASTERIZER_DESC&>(m_RasterizerState).SlopeScaledDepthBias = slopeScaledDepthBias; }
-    void SetDepthClipEnable(bool depthClipEnable) { static_cast<CD3DX12_RASTERIZER_DESC&>(m_RasterizerState).DepthClipEnable = depthClipEnable; }
-    void SetMultisampleEnable(bool multisampleEnable) { static_cast<CD3DX12_RASTERIZER_DESC&>(m_RasterizerState).MultisampleEnable = multisampleEnable; }
-    void SetAntialiasedLineEnable(bool antialiasedLineEnable) { static_cast<CD3DX12_RASTERIZER_DESC&>(m_RasterizerState).AntialiasedLineEnable = antialiasedLineEnable; }
-    void SetForcedSampleCount(uint32_t forcedSampleCount) { static_cast<CD3DX12_RASTERIZER_DESC&>(m_RasterizerState).ForcedSampleCount = forcedSampleCount; }
-    void SetConservativeRaster(D3D12_CONSERVATIVE_RASTERIZATION_MODE conservativeRaster) { static_cast<CD3DX12_RASTERIZER_DESC&>(m_RasterizerState).ConservativeRaster = conservativeRaster; }
+    void SetVertexShader(GfxShader& shader) { m_VS = &shader; }
+    void SetPixelShader(GfxShader& shader) { m_PS = &shader; }
+    void SetComputeShader(GfxShader& shader) { m_CS = &shader; }
+    void SetDepthEnable(bool b) { m_DepthStencilStates.DepthEnable = b; }
+    void SetStencilEnable(bool b) { m_DepthStencilStates.StencilEnable = b; }
+    void SetFillMode(D3D12_FILL_MODE fillMode) { m_RasterizerStates.FillMode = fillMode; }
+    void SetCullMode(D3D12_CULL_MODE cullMode) { m_RasterizerStates.CullMode = cullMode; }
+    void SetFrontCounterClockwise(bool b) { m_RasterizerStates.FrontCounterClockwise = b; }
+    void SetDepthBias(uint32_t depthBias) { m_RasterizerStates.DepthBias = depthBias; }
+    void SetDepthBiasClamp(float depthBiasClamp) { m_RasterizerStates.DepthBiasClamp = depthBiasClamp; }
+    void SetSlopeScaledDepthBias(float slopeScaledDepthBias) { m_RasterizerStates.SlopeScaledDepthBias = slopeScaledDepthBias; }
+    void SetDepthClipEnable(bool depthClipEnable) { m_RasterizerStates.DepthClipEnable = depthClipEnable; }
+    void SetMultisampleEnable(bool multisampleEnable) { m_RasterizerStates.MultisampleEnable = multisampleEnable; }
+    void SetAntialiasedLineEnable(bool antialiasedLineEnable) { m_RasterizerStates.AntialiasedLineEnable = antialiasedLineEnable; }
+    void SetForcedSampleCount(uint32_t forcedSampleCount) { m_RasterizerStates.ForcedSampleCount = forcedSampleCount; }
+    void SetConservativeRaster(D3D12_CONSERVATIVE_RASTERIZATION_MODE conservativeRaster) { m_RasterizerStates.ConservativeRaster = conservativeRaster; }
     void SetPrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType) { m_PrimitiveTopologyType = topologyType; }
     void SetRenderTargetFormat(uint32_t idx, DXGI_FORMAT format);
 
 private:
-    template <typename ShaderStreamType>
-    void SetShaderCommon(GfxShader&, ShaderStreamType&);
+    GfxRootSignature*             m_RootSig = nullptr;
+    D3D12_INPUT_LAYOUT_DESC       m_InputLayout = {};
+    D3D12_PRIMITIVE_TOPOLOGY_TYPE m_PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    GfxShader*                    m_VS = nullptr;
+    GfxShader*                    m_PS = nullptr;
+    GfxShader*                    m_CS = nullptr;
+    CD3DX12_BLEND_DESC            m_BlendStates{ CD3DX12_DEFAULT{} };
+    CD3DX12_DEPTH_STENCIL_DESC1   m_DepthStencilStates{ CD3DX12_DEFAULT{} };
+    DXGI_FORMAT                   m_DepthStencilFormat = DXGI_FORMAT_D32_FLOAT;
+    CD3DX12_RASTERIZER_DESC       m_RasterizerStates{ CD3DX12_DEFAULT{} };
+    D3D12_RT_FORMAT_ARRAY         m_RenderTargets = {};
+    DXGI_SAMPLE_DESC              m_SampleDescriptors = DefaultSampleDesc{};
 
-    CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE        m_RootSig;
-    CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT          m_InputLayout;
-    CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY    m_PrimitiveTopologyType;
-    CD3DX12_PIPELINE_STATE_STREAM_VS                    m_VS;
-    CD3DX12_PIPELINE_STATE_STREAM_PS                    m_PS;
-    CD3DX12_PIPELINE_STATE_STREAM_CS                    m_CS;
-    CD3DX12_PIPELINE_STATE_STREAM_BLEND_DESC            m_BlendState;
-    CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL1        m_DepthStencilState;
-    CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT  m_DepthStencilFormat;
-    CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER            m_RasterizerState;
-    CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS m_RenderTargets;
-    CD3DX12_PIPELINE_STATE_STREAM_SAMPLE_DESC           m_SampleDescriptors;
-    CD3DX12_PIPELINE_STATE_STREAM_SAMPLE_MASK           m_StencilMask;
+    friend class GfxContext;
+    friend class GfxPSOManager;
+    friend struct std::hash<GfxPipelineStateObject>;
 };
 
 class GfxPSOManager
@@ -63,3 +66,5 @@ private:
 
     MemoryMappedFile m_MemoryMappedCacheFile;
 };
+
+#include "graphic/gfxpipelinestateobject.hpp"

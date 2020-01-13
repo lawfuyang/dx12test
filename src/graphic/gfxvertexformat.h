@@ -8,8 +8,8 @@ public:
     void Initialize();
 };
 
-namespace GfxDefaultVertexFormats
+struct GfxDefaultVertexFormats
 {
-    static D3D12_INPUT_LAYOUT_DESC Position3f_TexCoord2f;
-    static D3D12_INPUT_LAYOUT_DESC Position3f_Normal3f_Texcoord2f;
-}
+    inline static D3D12_INPUT_LAYOUT_DESC Position3f_TexCoord2f = {};
+    inline static D3D12_INPUT_LAYOUT_DESC Position3f_Normal3f_Texcoord2f = {};
+};

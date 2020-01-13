@@ -87,47 +87,72 @@ void GfxPSOManager::ShutDown(bool deleteCacheFile)
     m_PipelineLibrary.Reset();
 }
 
+BBE_OPTIMIZE_OFF;
 ID3D12PipelineState* GfxPSOManager::GetPSO(const GfxPipelineStateObject& pso)
 {
-    return nullptr;
-}
+    bbeProfileFunction();
 
-void GfxPipelineStateObject::SetRootSignature(const GfxRootSignature* rootSig)
-{
-    assert(rootSig);
-    m_RootSig = rootSig->Dev();
-}
+    const std::size_t psoHash = std::hash<GfxPipelineStateObject>{}(pso);
+    const std::wstring psoHashName = std::to_wstring(psoHash);
 
-template<typename ShaderStreamType>
-void GfxPipelineStateObject::SetShaderCommon(GfxShader& shader, ShaderStreamType& shaderStream)
-{
-    ID3D10Blob* blob = shader.GetBlob();
-    assert(blob);
+    ID3D12PipelineState* psoToReturn = nullptr;
 
-    shaderStream = CD3DX12_SHADER_BYTECODE{ blob };
-}
+    if (pso.m_VS)
+    {
+        // Describe and create the graphics pipeline state object (PSO).
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 
-void GfxPipelineStateObject::SetVertexShader(GfxShader& shader)
-{
-    SetShaderCommon(shader, m_VS);
-}
+        ::HRESULT hr = m_PipelineLibrary->LoadGraphicsPipeline(psoHashName.c_str(), &psoDesc, IID_PPV_ARGS(&psoToReturn));
+        switch (hr)
+        {
+        case E_INVALIDARG:
+        {
+            // A PSO with the specified name doesn’t exist, or the input desc doesn’t match the data in the library.
+            // Describe & create the PSO and then store it in the library for next time.
+            psoDesc.InputLayout = { pso.m_InputLayout.pInputElementDescs, pso.m_InputLayout.NumElements };
+            psoDesc.pRootSignature = pso.m_RootSig->Dev();
+            psoDesc.VS = CD3DX12_SHADER_BYTECODE(pso.m_VS->GetBlob());
+            psoDesc.PS = CD3DX12_SHADER_BYTECODE(pso.m_PS->GetBlob());
+            psoDesc.RasterizerState = pso.m_RasterizerStates;
+            psoDesc.BlendState = pso.m_BlendStates;
+            psoDesc.DepthStencilState = pso.m_DepthStencilStates;
+            psoDesc.SampleMask = UINT_MAX;
+            psoDesc.PrimitiveTopologyType = pso.m_PrimitiveTopologyType;
 
-void GfxPipelineStateObject::SetPixelShader(GfxShader& shader)
-{
-    SetShaderCommon(shader, m_PS);
-}
+            psoDesc.NumRenderTargets = pso.m_RenderTargets.NumRenderTargets;
+            for (uint32_t i = 0; i < pso.m_RenderTargets.NumRenderTargets; ++i)
+            {
+                psoDesc.RTVFormats[i] = pso.m_RenderTargets.RTFormats[i];
+            }
 
-void GfxPipelineStateObject::SetComputeShader(GfxShader& shader)
-{
-    SetShaderCommon(shader, m_CS);
+            psoDesc.SampleDesc.Count = pso.m_SampleDescriptors.Count;
+
+            GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
+            DX12_CALL(gfxDevice.Dev()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&psoToReturn)));
+
+            // TODO: Check if this is thread safe, handle it if not
+            DX12_CALL(m_PipelineLibrary->StorePipeline(psoHashName.c_str(), psoToReturn));
+        }
+            break;
+
+        case E_OUTOFMEMORY:
+            assert(false);
+            break;
+
+        default:
+            assert(false);
+        }
+    }
+
+    assert(psoToReturn);
+    return psoToReturn;
 }
+BBE_OPTIMIZE_ON;
 
 void GfxPipelineStateObject::SetRenderTargetFormat(uint32_t idx, DXGI_FORMAT format)
 {
-    D3D12_RT_FORMAT_ARRAY& arr = static_cast<D3D12_RT_FORMAT_ARRAY&>(m_RenderTargets);
-
-    assert(idx < _countof(arr.RTFormats));
+    assert(idx < _countof(m_RenderTargets.RTFormats));
     
-    arr.NumRenderTargets = std::max(arr.NumRenderTargets, idx);
-    arr.RTFormats[idx] = format;
+    m_RenderTargets.NumRenderTargets = std::max(m_RenderTargets.NumRenderTargets, idx + 1);
+    m_RenderTargets.RTFormats[idx] = format;
 }
