@@ -3,6 +3,7 @@
 #include "system/memorymappedfile.h"
 
 #include "graphic/gfxrootsignature.h"
+#include "graphic/gfxvertexformat.h"
 #include "graphic/gfxshadermanager.h"
 
 class GfxRootSignature;
@@ -12,7 +13,7 @@ class GfxPipelineStateObject
 {
 public:
     void SetRootSignature(GfxRootSignature* rootSig) { m_RootSig = rootSig; }
-    void SetVertexInputLayout(const D3D12_INPUT_LAYOUT_DESC inputLayout) { m_InputLayout = inputLayout; }
+    void SetVertexInputLayout(GfxVertexFormat& inputLayout) { m_VertexFormat = &inputLayout; }
     void SetVertexShader(GfxShader& shader) { m_VS = &shader; }
     void SetPixelShader(GfxShader& shader) { m_PS = &shader; }
     void SetComputeShader(GfxShader& shader) { m_CS = &shader; }
@@ -34,7 +35,7 @@ public:
 
 private:
     GfxRootSignature*             m_RootSig = nullptr;
-    D3D12_INPUT_LAYOUT_DESC       m_InputLayout = {};
+    GfxVertexFormat*              m_VertexFormat = nullptr;
     D3D12_PRIMITIVE_TOPOLOGY_TYPE m_PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     GfxShader*                    m_VS = nullptr;
     GfxShader*                    m_PS = nullptr;
@@ -57,12 +58,14 @@ public:
     DeclareSingletonFunctions(GfxPSOManager);
 
     void Initialize();
-    void ShutDown(bool deleteCacheFile);
+    void ShutDown();
 
     ID3D12PipelineState* GetPSO(const GfxPipelineStateObject&);
 
 private:
     ComPtr<ID3D12PipelineLibrary> m_PipelineLibrary;
+
+    std::vector<ComPtr<ID3D12PipelineState>> m_CachedPSOs;
 
     MemoryMappedFile m_MemoryMappedCacheFile;
 };

@@ -12,7 +12,7 @@ public:
     void Initialize(const char* path)
     {
         m_Logger = spdlog::basic_logger_mt("file_logger", path, true);
-        m_Logger->flush_on(spdlog::level::level_enum::warn);
+        m_Logger->flush_on(spdlog::level::level_enum::trace);
         spdlog::set_pattern("[%H:%M:%S] [%^%L%$] %v");
     }
 

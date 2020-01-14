@@ -46,7 +46,7 @@ void GfxManager::Initialize()
 
     System::GetInstance().GetTasksExecutor().run(tf).wait();
 
-    GfxManagerSingletons::gs_RenderPasses.reserve(4);
+    GfxManagerSingletons::gs_RenderPasses.reserve(4); //  keep adding this number to optim
     GfxManagerSingletons::gs_RenderPasses.push_back(std::make_unique<GfxTestRenderPass>());
 }
 
@@ -59,8 +59,7 @@ void GfxManager::ShutDown()
     // we must complete the previous GPU frame before exiting the app
     m_GfxDevice->WaitForPreviousFrame();
 
-    const bool DeleteCacheFile = true; // TODO: find out why the fuck ID3D12Device1::CreatePipelineLibrary is crashing when there's an existing cache file
-    GfxPSOManager::GetInstance().ShutDown(DeleteCacheFile);
+    GfxPSOManager::GetInstance().ShutDown();
 }
 
 void GfxManager::ScheduleGraphicTasks(tf::Taskflow& tf)

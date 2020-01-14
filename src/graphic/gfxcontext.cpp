@@ -22,9 +22,15 @@ void GfxContext::CompileAndSetPipelineState()
 {
     assert(m_PSOManager);
     assert(m_CommandList);
-
+    assert(m_PSO.m_RootSig);
     assert(m_PSO.m_VS || m_PSO.m_CS); // Must have either VS or CS
-    assert((m_PSO.m_PS && m_PSO.m_CS) == false); // Cannot have both PS & CS active
+    assert((m_PSO.m_VS && m_PSO.m_CS) == false); // Cannot have both VS & CS stages active simultaneously
+  
+    if (m_PSO.m_VS)
+    {
+        assert(m_PSO.m_VertexFormat);
+        assert(m_PSO.m_RenderTargets.NumRenderTargets > 0);
+    }
 
     ID3D12PipelineState* compiledPSO = m_PSOManager->GetPSO(m_PSO);
     assert(compiledPSO);
