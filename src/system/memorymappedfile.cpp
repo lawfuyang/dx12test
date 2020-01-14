@@ -48,6 +48,7 @@ void MemoryMappedFile::Init(const std::wstring& filename, UINT fileSize)
         if (*reinterpret_cast<uint32_t*>(first4Bytes) == 0)
         {
             g_Log.error("m_file is an invalid cache file.");
+            DeleteFileW(m_filename.c_str());
             found = false;
         }
     }

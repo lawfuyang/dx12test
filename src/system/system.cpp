@@ -20,7 +20,7 @@ void System::Loop()
         bbeProfile("Frame");
 
         // ProfilerInstance must be before FrameRateController
-        const ProfilerInstance profilerInstance;
+        const ProfilerInstance profilerInstance{ /*ms_SystemFrameNumber == 0*/ };
         const FrameRateController frcInstance;
 
         if (Keyboard::IsKeyPressed(Keyboard::KEY_P))

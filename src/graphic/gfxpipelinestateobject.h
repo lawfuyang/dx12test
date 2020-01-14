@@ -65,8 +65,6 @@ public:
 private:
     ComPtr<ID3D12PipelineLibrary> m_PipelineLibrary;
 
-    std::vector<ComPtr<ID3D12PipelineState>> m_CachedPSOs;
-
     MemoryMappedFile m_MemoryMappedCacheFile;
 };
 
