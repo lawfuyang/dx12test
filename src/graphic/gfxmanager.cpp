@@ -54,10 +54,19 @@ void GfxManager::ShutDown()
 
     GUIManager::GetInstance().ShutDown();
 
+    // get swapchain out of full screen before exiting
+    BOOL fs = false;
+    DX12_CALL(m_SwapChain->Dev()->GetFullscreenState(&fs, NULL));
+    if (fs)
+        m_SwapChain->Dev()->SetFullscreenState(false, NULL);
+
     // we must complete the previous GPU frame before exiting the app
     m_GfxDevice->WaitForPreviousFrame();
 
     GfxPSOManager::GetInstance().ShutDown();
+
+    m_GfxDevice->ShutDown();
+    m_SwapChain->ShutDown();
 }
 
 void GfxManager::ScheduleGraphicTasks(tf::Taskflow& tf)

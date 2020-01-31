@@ -9,9 +9,12 @@ class GfxSwapChain
 public:
     static const uint32_t ms_NumFrames = 2;
 
+    IDXGISwapChain4* Dev() const { return m_SwapChain.Get(); }
+
     GfxRenderTargetView& GetCurrentBackBuffer() { return m_RenderTargets[m_FrameIndex]; }
 
     void Initialize();
+    void ShutDown();
     void TransitionBackBufferForPresent(GfxContext&);
     void Present();
 

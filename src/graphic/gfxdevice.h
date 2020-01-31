@@ -7,12 +7,18 @@
 #include "graphic/gfxdescriptorheap.h"
 #include "graphic/gfxpipelinestateobject.h"
 
+namespace D3D12MA
+{
+    class Allocator;
+};
+
 class GfxDevice
 {
 public:
     ID3D12Device6* Dev() const { return m_D3DDevice.Get(); }
 
     void Initialize();
+    void ShutDown();
     void CheckStatus();
     void EndFrame();
     void WaitForPreviousFrame();
@@ -20,6 +26,7 @@ public:
     GfxContext& GenerateNewContext(D3D12_COMMAND_LIST_TYPE);
     GfxCommandListsManager& GetCommandListsManager() { return m_CommandListsManager; }
     GfxDescriptorHeapManager& GetDescriptorHeapManager() { return m_DescriptorHeapManager; }
+    D3D12MA::Allocator* GetD3D12MemoryAllocator() { return m_D3D12MemoryAllocator; }
 
     D3D_ROOT_SIGNATURE_VERSION GetHighSupportedRootSignature() const { return m_RootSigSupport.HighestVersion; }
 
@@ -27,6 +34,7 @@ private:
     static void EnableDebugLayer();
     void ConfigureDebugLayer();
     void CheckFeaturesSupports();
+    void InitD3D12Allocator();
 
     GfxCommandListsManager   m_CommandListsManager;
     GfxDescriptorHeapManager m_DescriptorHeapManager;
@@ -35,6 +43,8 @@ private:
     std::vector<GfxContext> m_AllContexts;
 
     ComPtr<ID3D12Device6> m_D3DDevice;
+
+    D3D12MA::Allocator* m_D3D12MemoryAllocator = nullptr;
 
     bool m_TearingSupported = false;
     D3D12_FEATURE_DATA_D3D12_OPTIONS               m_D3D12Options                  = {};

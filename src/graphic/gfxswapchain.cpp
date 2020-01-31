@@ -60,6 +60,12 @@ void GfxSwapChain::Initialize()
     }
 }
 
+void GfxSwapChain::ShutDown()
+{
+    assert(m_SwapChain);
+    m_SwapChain.Reset();
+}
+
 void GfxSwapChain::TransitionBackBufferForPresent(GfxContext& context)
 {
     bbeProfileFunction();

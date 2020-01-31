@@ -105,6 +105,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\extern\D3D12MemoryAllocator\src\D3D12MemAlloc.cpp" />
     <ClCompile Include="..\extern\imgui\imgui.cpp" />
     <ClCompile Include="..\extern\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\extern\imgui\imgui_widgets.cpp" />
@@ -135,6 +136,7 @@
     <ClCompile Include="..\src\system\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\extern\D3D12MemoryAllocator\src\D3D12MemAlloc.h" />
     <ClInclude Include="..\extern\imgui\imconfig.h" />
     <ClInclude Include="..\extern\imgui\imgui.h" />
     <ClInclude Include="..\extern\imgui\imgui_internal.h" />

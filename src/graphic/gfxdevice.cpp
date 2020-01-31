@@ -1,5 +1,7 @@
 #include "graphic/gfxdevice.h"
 
+#include "extern/D3D12MemoryAllocator/src/D3D12MemAlloc.h"
+
 #include "graphic/gfxmanager.h"
 #include "graphic/dx12utils.h"
 #include "graphic/gfxadapter.h"
@@ -13,7 +15,7 @@ const bool            g_EnableGfxDebugLayer                     = true;
 static constexpr bool gs_BreakOnWarnings                        = g_EnableGfxDebugLayer && true;
 static constexpr bool gs_BreakOnErrors                          = g_EnableGfxDebugLayer && true;
 static constexpr bool gs_LogVerbose                             = g_EnableGfxDebugLayer && true;
-static constexpr bool gs_EnableGPUValidation                    = g_EnableGfxDebugLayer && false; // TODO: Re-enable when crash from 441.66 is fixed
+static constexpr bool gs_EnableGPUValidation                    = g_EnableGfxDebugLayer && false; // TODO: investigate _com_error
 static constexpr bool gs_SynchronizedCommandQueueValidation     = g_EnableGfxDebugLayer && true;
 static constexpr bool gs_DisableStateTracking                   = g_EnableGfxDebugLayer && false;
 static constexpr bool gs_EnableConservativeResorceStateTracking = g_EnableGfxDebugLayer && true;
@@ -57,7 +59,18 @@ void GfxDevice::Initialize()
 
     CheckFeaturesSupports();
 
+    InitD3D12Allocator();
+
     m_AllContexts.reserve(16);
+}
+
+void GfxDevice::ShutDown()
+{
+    assert(m_D3D12MemoryAllocator);
+    m_D3D12MemoryAllocator->Release();
+
+    assert(m_D3DDevice);
+    m_D3DDevice.Reset();
 }
 
 void GfxDevice::CheckStatus()
@@ -188,6 +201,31 @@ void GfxDevice::CheckFeaturesSupports()
     DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS4, &m_D3D12Options4, sizeof(m_D3D12Options4)));
     DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS4, &m_D3D12Options5, sizeof(m_D3D12Options4)));
     DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_GPU_VIRTUAL_ADDRESS_SUPPORT, &m_D3D12GPUVirtualAddressSupport, sizeof(m_D3D12GPUVirtualAddressSupport)));
+}
+
+void GfxDevice::InitD3D12Allocator()
+{
+    bbeProfileFunction();
+
+    D3D12MA::ALLOCATOR_DESC desc = {};
+    desc.Flags = D3D12MA::ALLOCATOR_FLAG_NONE;
+    desc.pDevice = m_D3DDevice.Get();
+    desc.pAdapter = GfxAdapter::GetInstance().GetAllAdapters()[0].Get(); // Just get first adapter
+
+    DX12_CALL(D3D12MA::CreateAllocator(&desc, &m_D3D12MemoryAllocator));
+    assert(m_D3D12MemoryAllocator);
+
+    switch (m_D3D12MemoryAllocator->GetD3D12Options().ResourceHeapTier)
+    {
+    case D3D12_RESOURCE_HEAP_TIER_1:
+        g_Log.info("D3D12_RESOURCE_HEAP_TIER = D3D12_RESOURCE_HEAP_TIER_1");
+        break;
+    case D3D12_RESOURCE_HEAP_TIER_2:
+        g_Log.info("D3D12_RESOURCE_HEAP_TIER = D3D12_RESOURCE_HEAP_TIER_2");
+        break;
+    default:
+        assert(0);
+    }
 }
 
 void GfxDevice::EndFrame()

@@ -85,6 +85,9 @@
     <ClCompile Include="..\src\graphic\gfxvertexformat.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
+    <ClCompile Include="..\extern\D3D12MemoryAllocator\src\D3D12MemAlloc.cpp">
+      <Filter>extern\d3d12memalloc</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -195,6 +198,9 @@
     <ClInclude Include="..\src\graphic\gfxpipelinestateobject.hpp">
       <Filter>graphic</Filter>
     </ClInclude>
+    <ClInclude Include="..\extern\D3D12MemoryAllocator\src\D3D12MemAlloc.h">
+      <Filter>extern\d3d12memalloc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="system">
@@ -214,6 +220,9 @@
     </Filter>
     <Filter Include="graphic\renderpasses">
       <UniqueIdentifier>{406acab7-fe2d-4363-aa67-ad3dc6e25050}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="extern\d3d12memalloc">
+      <UniqueIdentifier>{aac21eff-8d1a-40a9-b5a9-a35ed9aafe13}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
