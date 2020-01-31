@@ -44,8 +44,8 @@ void GfxManager::Initialize(tf::Taskflow& tf)
     deviceInitTask.succeed(adapterInitTask);
     deviceInitTask.precede(cmdListInitTask, descHeapManagerInitTask);
     deviceInitTask.precede(rootSigManagerInitTask, PSOManagerInitTask);
-    swapChainInitTask.succeed(deviceInitTask);
-    renderPassesInitTask.succeed(swapChainInitTask, rootSigManagerInitTask, PSOManagerInitTask);
+    swapChainInitTask.succeed(deviceInitTask, cmdListInitTask, descHeapManagerInitTask);
+    renderPassesInitTask.succeed(deviceInitTask, swapChainInitTask, rootSigManagerInitTask, PSOManagerInitTask);
 }
 
 void GfxManager::ShutDown()
