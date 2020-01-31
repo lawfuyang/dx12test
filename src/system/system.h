@@ -63,8 +63,6 @@ public:
     tf::Executor& GetTasksExecutor() { return m_Executor; }
 
 private:
-    void Update();
-
     bool m_Exit             = false;
     uint64_t m_LastUpdateMS = 0;
 

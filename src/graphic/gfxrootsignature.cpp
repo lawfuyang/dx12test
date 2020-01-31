@@ -103,6 +103,7 @@ void GfxRootSignatureManager::Initialize()
 {
     bbeProfileFunction();
 
+    assert(DefaultRootSignatures::DefaultGraphicsRootSignature.m_Hash == 0);
     DefaultRootSignatures::DefaultGraphicsRootSignature.AddSRV();
     DefaultRootSignatures::DefaultGraphicsRootSignature.Compile();
 }

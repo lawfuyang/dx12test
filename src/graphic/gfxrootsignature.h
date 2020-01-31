@@ -21,6 +21,8 @@ private:
     std::vector<CD3DX12_ROOT_PARAMETER1> m_RootParams;
 
     std::size_t m_Hash = 0;
+
+    friend class GfxRootSignatureManager;
 };
 
 struct DefaultRootSignatures

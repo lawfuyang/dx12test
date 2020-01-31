@@ -8,7 +8,7 @@
 
 extern ::HWND g_EngineWindowHandle;
 
-void GfxSwapChain::Initialize(uint32_t width, uint32_t height, DXGI_FORMAT format)
+void GfxSwapChain::Initialize()
 {
     bbeProfileFunction();
 
@@ -18,9 +18,9 @@ void GfxSwapChain::Initialize(uint32_t width, uint32_t height, DXGI_FORMAT forma
 
     // Describe and create the swap chain.
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-    swapChainDesc.Width = width;
-    swapChainDesc.Height = height;
-    swapChainDesc.Format = format;
+    swapChainDesc.Width = System::APP_WINDOW_WIDTH;
+    swapChainDesc.Height = System::APP_WINDOW_HEIGHT;
+    swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     swapChainDesc.Stereo = false; // set to true for VR
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapChainDesc.BufferCount = ms_NumFrames;

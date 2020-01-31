@@ -13,7 +13,7 @@ void System::ProcessWindowMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 
 void System::Loop()
 {
-    g_Log.debug("Entering main loop");
+    g_Log.info("Entering main loop");
 
     do
     {
@@ -28,7 +28,11 @@ void System::Loop()
             SystemProfiler::EnableProfiling();
         }
 
-        Update();
+        tf::Taskflow tf;
+
+        GfxManager::GetInstance().ScheduleGraphicTasks(tf);
+
+        m_Executor.run(tf).wait();
 
         // make sure I/O ticks happen last
         g_Keyboard.Tick();
@@ -36,7 +40,7 @@ void System::Loop()
         ++ms_SystemFrameNumber;
     } while (!m_Exit);
 
-    g_Log.debug("Exiting main loop");
+    g_Log.info("Exiting main loop");
 }
 
 void System::Initialize()
@@ -58,17 +62,6 @@ void System::Shutdown()
     //const ProfilerInstance profilerInstance{ true }; bbeProfileFunction();
 
     GfxManager::GetInstance().ShutDown();
-}
-
-void System::Update()
-{
-    bbeProfileFunction();
-
-    tf::Taskflow tf;
-
-    GfxManager::GetInstance().ScheduleGraphicTasks(tf);
-
-    m_Executor.run(tf).wait();
 }
 
 FrameRateController::FrameRateController()
