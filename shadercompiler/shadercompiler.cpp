@@ -413,6 +413,7 @@ static void PrintGeneratedByteCodeHeadersFile()
     generatedString += "    ShaderPermutation m_ShaderPermutation = (ShaderPermutation)0xDEADBEEF;\n";
     generatedString += "    const unsigned char* m_ByteCodeArray = nullptr;\n";
     generatedString += "    uint32_t m_ByteCodeSize = 0;\n";
+    generatedString += "    std::size_t m_Hash = 0;\n";
     generatedString += "};\n";
 
     generatedString += "\n";
@@ -425,7 +426,8 @@ static void PrintGeneratedByteCodeHeadersFile()
         generatedString += "    {\n";
         generatedString += StringFormat("        ShaderPermutation::%s,\n", shaderJob.m_ShaderName.c_str());
         generatedString += StringFormat("        %s,\n", shaderJob.m_ShaderObjCodeVarName.c_str());
-        generatedString += StringFormat("        _countof(%s)\n", shaderJob.m_ShaderObjCodeVarName.c_str());
+        generatedString += StringFormat("        _countof(%s),\n", shaderJob.m_ShaderObjCodeVarName.c_str());
+        generatedString += StringFormat("        %" PRIu64 "\n", GetFileContentsHash(shaderJob.m_ShaderObjCodeFileDir));
         generatedString += "    },\n";
         generatedString += "\n";
     }
