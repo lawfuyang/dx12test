@@ -68,6 +68,7 @@ void GfxDevice::ShutDown()
 {
     assert(m_D3D12MemoryAllocator);
     m_D3D12MemoryAllocator->Release();
+    m_D3D12MemoryAllocator = nullptr;
 
     assert(m_D3DDevice);
     m_D3DDevice.Reset();
