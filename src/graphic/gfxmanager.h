@@ -10,7 +10,7 @@ class GfxManager
     DeclareSingletonFunctions(GfxManager);
 
 public:
-    void Initialize();
+    void Initialize(tf::Taskflow&);
     void ShutDown();
 
     void ScheduleGraphicTasks(tf::Taskflow&);

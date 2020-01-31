@@ -1,13 +1,13 @@
 #pragma once
 
-#include <cinttypes>
+#include <inttypes.h>
 #include <atomic>
 #include <chrono>
-#include <cstdio>
+#include <stdio.h>
 #include <string>
 #include <thread>
 #include <vector>
-#include <ctime>
+#include <time.h>
 #include <algorithm>
 #include <array>
 #include <numeric>
@@ -17,7 +17,7 @@
 
 // uncomment to disable all asserts
 // #define NDEBUG
-#include <cassert>
+#include <assert.h>
 
 #include "system/utils.h"
 #include "system/math.h"
@@ -63,8 +63,6 @@ public:
     tf::Executor& GetTasksExecutor() { return m_Executor; }
 
 private:
-    void InitializeGraphic();
-    void ShutdownGraphic();
     void Update();
 
     bool m_Exit             = false;

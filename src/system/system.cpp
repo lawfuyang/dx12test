@@ -44,7 +44,12 @@ void System::Initialize()
     // uncomment to profile engine init phase
     //const ProfilerInstance profilerInstance{ true }; bbeProfileFunction();
 
-    InitializeGraphic();
+    tf::Taskflow tf;
+
+    GfxManager::GetInstance().Initialize(tf);
+    // TODO: init other System/Engine/Physics systems here in parallel
+
+    m_Executor.run(tf).wait();
 }
 
 void System::Shutdown()
@@ -52,18 +57,6 @@ void System::Shutdown()
     // uncomment to profile engine shutdown phase
     //const ProfilerInstance profilerInstance{ true }; bbeProfileFunction();
 
-    ShutdownGraphic();
-}
-
-void System::InitializeGraphic()
-{
-    bbeProfileFunction();
-
-    GfxManager::GetInstance().Initialize();
-}
-
-void System::ShutdownGraphic()
-{
     GfxManager::GetInstance().ShutDown();
 }
 
