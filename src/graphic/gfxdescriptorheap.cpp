@@ -5,6 +5,15 @@
 #include "graphic/gfxdevice.h"
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
+void GfxDescriptorHeap::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags)
+{
+    GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
+
+    m_DescHeapHandle = gfxDevice.GetDescriptorHeapManager().Allocate(heapType, heapFlags == D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE ? GfxDescriptorHeapFlags::ShaderVisible : GfxDescriptorHeapFlags::Static);
+    assert(m_DescHeapHandle.m_ManagerPoolIdx != 0xDEADBEEF);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------
 void GfxDescriptorHeapPageCommon::InitializeCommon(D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS flags)
 {
     bbeProfileFunction();

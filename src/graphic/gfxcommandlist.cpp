@@ -85,14 +85,18 @@ void GfxCommandListsManager::Initialize()
     {
         tf.emplace([&]()
             {
+                static SpinLock s_CmdListsPoolLock;
+
                 GfxCommandList* newCmdList = nullptr;
                 {
-                    bbeAutoLock(pool.m_PoolLock);
+                    bbeAutoLock(s_CmdListsPoolLock);
                     newCmdList = pool.m_CommandListsPool.construct();
                 }
-                assert(newCmdList);
 
                 newCmdList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT);
+
+                SpinLock s_FreeCmdListsInitialPopulateLock;
+                bbeAutoLock(s_FreeCmdListsInitialPopulateLock);
                 pool.m_FreeCommandLists.push(newCmdList);
             });
     }
@@ -115,15 +119,14 @@ GfxCommandList* GfxCommandListsManager::Allocate(D3D12_COMMAND_LIST_TYPE cmdList
         pool.m_ActiveCommandLists.push(newCmdList);
     });
 
-    if (pool.m_FreeCommandLists.pop(newCmdList))
+    if (pool.m_FreeCommandLists.size())
     {
+        newCmdList = pool.m_FreeCommandLists.front();
+        pool.m_FreeCommandLists.pop();
         return newCmdList;
     }
 
-    {
-        bbeAutoLock(pool.m_PoolLock);
-        newCmdList = pool.m_CommandListsPool.construct();
-    }
+    newCmdList = pool.m_CommandListsPool.construct();
     newCmdList->Initialize(cmdListType);
 
     return newCmdList;
@@ -140,15 +143,18 @@ void GfxCommandListsManager::ExecuteAllActiveCommandLists()
 
     for (CommandListPool* pool : allPools)
     {
-        pool->m_ActiveCommandLists.consume_all([&](GfxCommandList* cmdListToConsume)
-            {
-                cmdListToConsume->EndRecording();
+        while (pool->m_ActiveCommandLists.size())
+        {
+            GfxCommandList* cmdListToConsume = pool->m_ActiveCommandLists.front();
+            pool->m_ActiveCommandLists.pop();
 
-                ID3D12CommandList* ppCommandLists[] = { cmdListToConsume->Dev() };
-                pool->m_CommandQueue->ExecuteCommandLists(1, ppCommandLists);
+            cmdListToConsume->EndRecording();
 
-                pool->m_FreeCommandLists.push(cmdListToConsume);
-            });
+            ID3D12CommandList* ppCommandLists[] = { cmdListToConsume->Dev() };
+            pool->m_CommandQueue->ExecuteCommandLists(1, ppCommandLists);
+
+            pool->m_FreeCommandLists.push(cmdListToConsume);
+        }
     }
 }
 

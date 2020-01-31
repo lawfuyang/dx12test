@@ -22,6 +22,19 @@ struct GfxDescriptorHeapHandle
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
+class GfxDescriptorHeap
+{
+public:
+    void Initialize(D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags);
+
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescHandle() const { return m_DescHeapHandle.m_CPUHandle; }
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescHandle() const { return m_DescHeapHandle.m_GPUHandle; }
+
+private:
+    GfxDescriptorHeapHandle m_DescHeapHandle;
+};
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------
 class GfxDescriptorHeapPageCommon
 {
 public:

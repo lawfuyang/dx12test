@@ -18,6 +18,10 @@ public:
     void BeginFrame();
     void EndFrame();
 
+    void AddGraphicCommand(const std::function<void()>& newCmd) { m_GfxCommands.push(newCmd); }
+
+    void DumpGfxMemory();
+
     GfxDevice&    GetGfxDevice() { return *m_GfxDevice; }
     GfxSwapChain& GetSwapChain() { return *m_SwapChain; }
 
@@ -26,4 +30,6 @@ private:
 
     GfxDevice*    m_GfxDevice = nullptr;
     GfxSwapChain* m_SwapChain = nullptr;
+
+    boost::lockfree::stack<std::function<void()>> m_GfxCommands{128};
 };

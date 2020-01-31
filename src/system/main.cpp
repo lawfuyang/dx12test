@@ -12,6 +12,8 @@ public:
 
     static void Shutdown()
     {
+        bbeProfileFunction();
+
         if (g_EngineWindowHandle)
             DestroyWindow(g_EngineWindowHandle);
         g_EngineWindowHandle = 0;

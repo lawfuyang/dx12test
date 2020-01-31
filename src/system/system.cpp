@@ -28,6 +28,11 @@ void System::Loop()
             SystemProfiler::EnableProfiling();
         }
 
+        if (Keyboard::IsKeyPressed(Keyboard::KEY_J))
+        {
+            GfxManager::GetInstance().DumpGfxMemory();
+        }
+
         tf::Taskflow tf;
 
         GfxManager::GetInstance().ScheduleGraphicTasks(tf);

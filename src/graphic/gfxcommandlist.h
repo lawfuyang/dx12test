@@ -35,11 +35,9 @@ private:
     {
         ComPtr<ID3D12CommandQueue> m_CommandQueue;
 
-        boost::object_pool<GfxCommandList>      m_CommandListsPool;
-        boost::lockfree::queue<GfxCommandList*> m_FreeCommandLists{ 32 };
-        boost::lockfree::queue<GfxCommandList*> m_ActiveCommandLists{ 32 };
-
-        SpinLock m_PoolLock;
+        boost::object_pool<GfxCommandList> m_CommandListsPool;
+        std::queue<GfxCommandList*>        m_FreeCommandLists;
+        std::queue<GfxCommandList*>        m_ActiveCommandLists;
     };
     CommandListPool& GetPoolFromType(D3D12_COMMAND_LIST_TYPE);
 

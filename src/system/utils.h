@@ -188,3 +188,28 @@ struct WindowsHandleWrapper
 
     ::HANDLE m_Handle = nullptr;
 };
+
+struct CFileWrapper
+{
+    CFileWrapper(const std::string& fileName, bool isReadMode)
+    {
+        m_File = fopen(fileName.c_str(), isReadMode ? "r" : "w");
+    }
+
+    ~CFileWrapper()
+    {
+        if (m_File)
+        {
+            fclose(m_File);
+            m_File = nullptr;
+        }
+    }
+
+    CFileWrapper(const CFileWrapper&) = delete;
+    CFileWrapper& operator=(const CFileWrapper&) = delete;
+
+    operator bool() const { return m_File; }
+    operator FILE* () const { return m_File; }
+
+    FILE* m_File = nullptr;
+};

@@ -55,23 +55,16 @@ void GfxSwapChain::Initialize()
     {
         ComPtr<ID3D12Resource> backBufferResource;
         DX12_CALL(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&backBufferResource)));
-        m_RenderTargets[i].Initialize(backBufferResource.Get());
-        SetD3DDebugName(m_RenderTargets[i].GetHazardTrackedResource().Dev(), StringFormat("Back Buffer RTV %d", i));
+        m_RenderTargets[i].Initialize(backBufferResource.Get(), DXGI_FORMAT_R8G8B8A8_UNORM);
+        m_RenderTargets[i].GetD3D12Resource()->SetName(utf8_decode(StringFormat("Back Buffer RTV %d", i)).c_str());
     }
-}
-
-void GfxSwapChain::ShutDown()
-{
-    assert(m_SwapChain);
-    m_SwapChain.Reset();
 }
 
 void GfxSwapChain::TransitionBackBufferForPresent(GfxContext& context)
 {
     bbeProfileFunction();
 
-    GfxHazardTrackedResource& resource = m_RenderTargets[m_FrameIndex].GetHazardTrackedResource();
-    resource.Transition(context.GetCommandList(), D3D12_RESOURCE_STATE_PRESENT);
+    m_RenderTargets[m_FrameIndex].Transition(context.GetCommandList(), D3D12_RESOURCE_STATE_PRESENT);
 }
 
 void GfxSwapChain::Present()

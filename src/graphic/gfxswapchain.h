@@ -14,7 +14,6 @@ public:
     GfxRenderTargetView& GetCurrentBackBuffer() { return m_RenderTargets[m_FrameIndex]; }
 
     void Initialize();
-    void ShutDown();
     void TransitionBackBufferForPresent(GfxContext&);
     void Present();
 

@@ -2,49 +2,55 @@
 
 #include "graphic/gfxdescriptorheap.h"
 
+namespace D3D12MA
+{
+    class Allocation;
+};
+
 class GfxCommandList;
+class GfxContext;
 
 class GfxHazardTrackedResource
 {
 public:
-    ID3D12Resource* Dev() const { return m_Resource.Get(); }
+    virtual ~GfxHazardTrackedResource() {}
 
-    void Set(ID3D12Resource* resource) { m_Resource = resource; }
+    ID3D12Resource* GetD3D12Resource() const { return m_Resource.Get(); }
+
     void Transition(GfxCommandList&, D3D12_RESOURCE_STATES newState);
 
+    void SetCurrentState(D3D12_RESOURCE_STATES newState) { m_CurrentResourceState = newState; }
     D3D12_RESOURCE_STATES GetCurrentState() const { return m_CurrentResourceState; }
 
-private:
+protected:
     D3D12_RESOURCE_STATES m_CurrentResourceState = D3D12_RESOURCE_STATE_COMMON;
     ComPtr<ID3D12Resource> m_Resource;
 };
 
-class GfxResourceView
+class GfxRenderTargetView : public GfxHazardTrackedResource
 {
 public:
-    virtual ~GfxResourceView() {}
+    void Initialize(ID3D12Resource*, DXGI_FORMAT);
 
-    D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescHandle() const { return m_DescHeapHandle.m_CPUHandle; }
-    D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescHandle() const { return m_DescHeapHandle.m_GPUHandle; }
+    GfxDescriptorHeap& GetDescriptorHeap() { return m_GfxDescriptorHeap; }
 
-    GfxHazardTrackedResource& GetHazardTrackedResource() { return m_HazardTrackedResource; }
+    DXGI_FORMAT GetFormat() const { return m_Format; }
 
-protected:
-    void InitializeCommon(ID3D12Resource*, D3D12_DESCRIPTOR_HEAP_TYPE, D3D12_DESCRIPTOR_HEAP_FLAGS);
-
-    GfxDescriptorHeapHandle m_DescHeapHandle;
-
-    GfxHazardTrackedResource m_HazardTrackedResource;
+private:
+    GfxDescriptorHeap m_GfxDescriptorHeap;
+    DXGI_FORMAT m_Format = DXGI_FORMAT_UNKNOWN;
 };
 
-class GfxRenderTargetView : public GfxResourceView
+class GfxVertexBuffer : public GfxHazardTrackedResource
 {
 public:
-    void Initialize(ID3D12Resource*);
-};
+    ~GfxVertexBuffer();
 
-class GfxShaderResourceView : public GfxResourceView
-{
-public:
-    void Initialize(ID3D12Resource*);
+    void Initialize(GfxContext& context, const void* vertexData, uint32_t numVertices, uint32_t vertexSize);
+
+    D3D12_VERTEX_BUFFER_VIEW& GetBufferView() { return m_VertexBufferView; }
+
+private:
+    D3D12MA::Allocation* m_D3D12MABufferAllocation = nullptr;
+    D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView = {};
 };

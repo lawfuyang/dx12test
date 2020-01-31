@@ -2,6 +2,10 @@
 
 #include "graphic/gfxpipelinestateobject.h"
 #include "graphic/gfxvertexformat.h"
+#include "graphic/gfxswapchain.h"
+#include "graphic/gfxmanager.h"
+#include "graphic/gfxdevice.h"
+#include "graphic/gfxshadermanager.h"
 
 class GfxManager;
 class GfxDevice;
@@ -15,6 +19,7 @@ class GfxContext
 {
 public:
     void ClearRenderTargetView(GfxRenderTargetView& rtv, XMFLOAT4 clearColor) const;
+    void SetRenderTarget(uint32_t idx, GfxRenderTargetView& rtv);
 
     GfxManager&             GetGfxManager()    { return *m_GfxManager; }
     GfxDevice&              GetDevice()        { return *m_Device; }
@@ -26,11 +31,15 @@ public:
     void CompileAndSetPipelineState();
 
 private:
-    GfxManager*       m_GfxManager      = nullptr;
-    GfxDevice*        m_Device          = nullptr;
-    GfxCommandList*   m_CommandList     = nullptr;
-    GfxPSOManager*    m_PSOManager      = nullptr;
-    GfxShaderManager* m_ShaderManager   = nullptr;
+    CD3DX12_VIEWPORT  m_Viewport{ 0.0f, 0.0f, System::APP_WINDOW_WIDTH, System::APP_WINDOW_HEIGHT };
+    CD3DX12_RECT      m_ScissorRect{ 0, 0, static_cast<LONG>(System::APP_WINDOW_WIDTH), static_cast<LONG>(System::APP_WINDOW_HEIGHT) };
+
+    GfxManager*          m_GfxManager    = nullptr;
+    GfxDevice*           m_Device        = nullptr;
+    GfxCommandList*      m_CommandList   = nullptr;
+    GfxPSOManager*       m_PSOManager    = nullptr;
+    GfxShaderManager*    m_ShaderManager = nullptr;
+    GfxRenderTargetView* m_RTVs[8]       = {};
 
     GfxPipelineStateObject m_PSO;
 

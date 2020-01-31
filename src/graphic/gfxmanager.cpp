@@ -1,5 +1,7 @@
 #include "graphic/gfxmanager.h"
 
+#include "extern/D3D12MemoryAllocator/src/D3D12MemAlloc.h"
+
 #include "graphic/dx12utils.h"
 #include "graphic/gfxadapter.h"
 #include "graphic/gfxcontext.h"
@@ -15,7 +17,8 @@ namespace GfxManagerSingletons
 {
     static GfxDevice gs_GfxDevice;
     static GfxSwapChain gs_SwapChain;
-    static std::vector<std::unique_ptr<GfxRenderPass>> gs_RenderPasses;
+
+    static GfxRenderPass* gs_TestRenderPass = nullptr;
 }
 
 void GfxManager::Initialize(tf::Taskflow& tf)
@@ -38,12 +41,19 @@ void GfxManager::Initialize(tf::Taskflow& tf)
 
     tf::Task renderPassesInitTask = tf.emplace([&]()
         {
-            GfxManagerSingletons::gs_RenderPasses.push_back(std::make_unique<GfxTestRenderPass>());
+            bbeProfile("Render Passes Construction");
+
+            GfxContext& initContext = m_GfxDevice->GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
+
+            GfxManagerSingletons::gs_TestRenderPass = new GfxTestRenderPass(initContext);
+
+            // execute all cmd lists and wait for everything to complete 
+            m_GfxDevice->EndFrame();
+            m_GfxDevice->WaitForPreviousFrame();
         });
 
     deviceInitTask.succeed(adapterInitTask);
-    deviceInitTask.precede(cmdListInitTask, descHeapManagerInitTask);
-    deviceInitTask.precede(rootSigManagerInitTask, PSOManagerInitTask);
+    deviceInitTask.precede(cmdListInitTask, descHeapManagerInitTask, rootSigManagerInitTask, PSOManagerInitTask);
     swapChainInitTask.succeed(deviceInitTask, cmdListInitTask, descHeapManagerInitTask);
     renderPassesInitTask.succeed(deviceInitTask, swapChainInitTask, rootSigManagerInitTask, PSOManagerInitTask);
 }
@@ -65,8 +75,9 @@ void GfxManager::ShutDown()
 
     GfxPSOManager::GetInstance().ShutDown();
 
+    delete(GfxManagerSingletons::gs_TestRenderPass);
+
     m_GfxDevice->ShutDown();
-    m_SwapChain->ShutDown();
 }
 
 void GfxManager::ScheduleGraphicTasks(tf::Taskflow& tf)
@@ -75,21 +86,27 @@ void GfxManager::ScheduleGraphicTasks(tf::Taskflow& tf)
 
     GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
 
-    tf::Task beginFrameTask = tf.emplace([&]() { BeginFrame(); });
-    tf::Task transitionBackBufferTask = tf.emplace([&]() { TransitionBackBufferForPresent(); });
-
-    auto [S, T] = tf.parallel_for(GfxManagerSingletons::gs_RenderPasses.begin(), GfxManagerSingletons::gs_RenderPasses.end(), [&](const std::unique_ptr<GfxRenderPass>& renderPass)
+    // consume all gfx commmands multi-threaded
+    std::vector<std::function<void()>> gfxCommandsToConsume;
+    m_GfxCommands.consume_all([&](const std::function<void()>& cmd) { gfxCommandsToConsume.push_back(cmd); });
+    tf::Task gfxCommandsConsumptionTasks = tf.emplace([gfxCommandsToConsume](tf::Subflow subFlow)
         {
-            GfxContext& context = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
-            SetD3DDebugName(context.GetCommandList().Dev(), renderPass->GetName());
-
-            renderPass->Render(context);
+            subFlow.parallel_for(gfxCommandsToConsume.begin(), gfxCommandsToConsume.end(), [](const std::function<void()>& cmd) { bbeProfile("GfxCommand_MT"); cmd(); });
         });
 
-    beginFrameTask.precede(S);
-    transitionBackBufferTask.succeed(T);
-
+    tf::Task beginFrameTask = tf.emplace([&]() { BeginFrame(); });
+    tf::Task transitionBackBufferTask = tf.emplace([&]() { TransitionBackBufferForPresent(); });
     tf::Task endFrameTask = tf.emplace([&]() { EndFrame(); });
+
+    // TODO: Implement proper automatic dynamic scheduling for render passes
+    tf::Task renderPassesRenderTasks = tf.emplace([&]()
+        {
+            GfxManagerSingletons::gs_TestRenderPass->Render(gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT));
+        });
+
+    gfxCommandsConsumptionTasks.precede(beginFrameTask);
+    beginFrameTask.precede(renderPassesRenderTasks);
+    transitionBackBufferTask.succeed(renderPassesRenderTasks);
     endFrameTask.succeed(transitionBackBufferTask);
 }
 
@@ -110,6 +127,22 @@ void GfxManager::EndFrame()
 
     // TODO: refactor this. use fences to sync
     m_GfxDevice->WaitForPreviousFrame();
+}
+
+void GfxManager::DumpGfxMemory()
+{
+    WCHAR* statsString = NULL;
+
+    D3D12MA::Allocator* allocator = m_GfxDevice->GetD3D12MemoryAllocator();
+
+    allocator->BuildStatsString(&statsString, allocator->GetD3D12Options().ResourceHeapTier == D3D12_RESOURCE_HEAP_TIER_2);
+
+    const std::string dumpFilePath = StringFormat("..\\bin\\GfxMemoryDump_%s.json", GetTimeStamp().c_str());
+    const bool IsReadMode = false;
+    CFileWrapper outFile{ dumpFilePath, IsReadMode };
+    fprintf(outFile, "%ls", statsString);
+
+    m_GfxDevice->GetD3D12MemoryAllocator()->FreeStatsString(statsString);
 }
 
 void GfxManager::TransitionBackBufferForPresent()

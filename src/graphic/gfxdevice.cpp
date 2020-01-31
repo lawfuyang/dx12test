@@ -66,12 +66,11 @@ void GfxDevice::Initialize()
 
 void GfxDevice::ShutDown()
 {
+    bbeProfileFunction();
+
     assert(m_D3D12MemoryAllocator);
     m_D3D12MemoryAllocator->Release();
     m_D3D12MemoryAllocator = nullptr;
-
-    assert(m_D3DDevice);
-    m_D3DDevice.Reset();
 }
 
 void GfxDevice::CheckStatus()
@@ -116,7 +115,7 @@ void GfxDevice::ConfigureDebugLayer()
     ComPtr<ID3D12DebugDevice1> debugDevice1;
     if (SUCCEEDED(Dev()->QueryInterface(IID_PPV_ARGS(&debugDevice1))))
     {
-        if (gs_EnableConservativeResorceStateTracking)
+        if constexpr (gs_EnableConservativeResorceStateTracking)
         {
             const D3D12_DEBUG_FEATURE debugFeatures
             {
@@ -125,7 +124,7 @@ void GfxDevice::ConfigureDebugLayer()
             debugDevice1->SetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_FEATURE_FLAGS, &debugFeatures, sizeof(debugFeatures));
         }
 
-        if (gs_EnableGPUValidation)
+        if constexpr (gs_EnableGPUValidation)
         {
             const D3D12_DEBUG_DEVICE_GPU_BASED_VALIDATION_SETTINGS gpuValidationSettings
             {
