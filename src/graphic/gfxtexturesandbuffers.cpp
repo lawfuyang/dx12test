@@ -68,17 +68,14 @@ void GfxVertexBuffer::Initialize(GfxContext& context, const void* vertexData, ui
     vertexBufferAllocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
     CD3DX12_RESOURCE_DESC vertexBufferResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(vertexSize);
 
-    ID3D12Resource* vertexBufferPtr = nullptr;
     DX12_CALL(d3d12MemoryAllocator->CreateResource(
         &vertexBufferAllocDesc,
         &vertexBufferResourceDesc,      // resource description for a buffer
         D3D12_RESOURCE_STATE_COPY_DEST, // we will start this heap in the copy destination state since we will copy data from the upload heap to this heap
         nullptr,                        // optimized clear value must be null for this type of resource. used for render targets and depth/stencil buffers
         &m_D3D12MABufferAllocation,
-        IID_PPV_ARGS(&vertexBufferPtr)));
+        IID_PPV_ARGS(&m_Resource)));
     SetCurrentState(D3D12_RESOURCE_STATE_COPY_DEST);
-
-    m_Resource = vertexBufferPtr;
     m_Resource->SetName(L"Vertex Buffer Resource Heap");
 
     // Upload heaps are used to upload data to the GPU. CPU can write to it, GPU can read from it
@@ -123,7 +120,7 @@ void GfxVertexBuffer::Initialize(GfxContext& context, const void* vertexData, ui
     Transition(cmdList, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
     // release the upload heap in the beginning of the next gfx frame, when the upload should be complete
-    GfxManager::GetInstance().AddGraphicCommand([&, vBufferUploadHeap, vBufferUploadHeapAllocation]()
+    GfxManager::GetInstance().AddGraphicCommand([vBufferUploadHeap, vBufferUploadHeapAllocation]()
         {
             vBufferUploadHeapAllocation->Release();
             vBufferUploadHeap->Release();

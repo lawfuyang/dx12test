@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <cassert>
+#include <assert.h>
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 #define DX12_CALL(call)                                                                               \
@@ -29,3 +29,6 @@ void SetD3DDebugParent(ID3D12Object* object, const void* parentPointer);
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 void* GetD3DResourceParent(ID3D12Object* resource);
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------
+D3D12_PRIMITIVE_TOPOLOGY_TYPE GetD3D12PrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY primitiveTopology);

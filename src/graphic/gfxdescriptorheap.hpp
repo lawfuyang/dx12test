@@ -44,7 +44,7 @@ inline GfxDescriptorHeapHandle GfxDescriptorHeapPool<HeapFlags>::Allocate(D3D12_
 template<GfxDescriptorHeapFlags HeapFlags>
 inline void GfxDescriptorHeapPool<HeapFlags>::AllocatePage(D3D12_DESCRIPTOR_HEAP_TYPE heapType)
 {
-    // TODO: make this thread safe
+    const MultithreadDetector mtDetect;
 
     GfxDescriptorHeapPageType* newPage = m_PagePool.construct();
     assert(newPage);

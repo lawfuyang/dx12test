@@ -5,6 +5,8 @@
 GfxTestRenderPass::GfxTestRenderPass(GfxContext& initContext)
     : GfxRenderPass("GfxTestRenderPass")
 {
+    initContext.GetCommandList().Dev()->SetName(L"GfxTestRenderPass::GfxTestRenderPass");
+
     struct Vertex
     {
         XMFLOAT3 m_Position = {};
@@ -26,7 +28,9 @@ void GfxTestRenderPass::Render(GfxContext& context)
 {
     bbeProfileFunction();
 
-    context.GetCommandList().Dev()->SetName(L"GfxTestRenderPass");
+    context.GetCommandList().Dev()->SetName(L"GfxTestRenderPass::Render");
+
+    context.ClearRenderTargetView(context.GetGfxManager().GetSwapChain().GetCurrentBackBuffer(), XMFLOAT4{ 0.0f, 0.2f, 0.4f, 1.0f });
 
     GfxShaderManager& shaderManager = context.GetShaderManager();
 
@@ -37,7 +41,8 @@ void GfxTestRenderPass::Render(GfxContext& context)
     pso.SetPixelShader(shaderManager.GetShader(ShaderPermutation::PS_TestTriangle));
     pso.SetVertexInputLayout(GfxDefaultVertexFormats::Position3f_TexCoord2f);
 
+    context.SetVertexBuffer(m_TriangleVBuffer);
     context.SetRenderTarget(0, context.GetGfxManager().GetSwapChain().GetCurrentBackBuffer());
 
-    context.CompileAndSetPipelineState();
+    //context.DrawInstanced(3, 1, 0, 0);
 }

@@ -1,11 +1,12 @@
 #pragma once
 
-#include <cinttypes>
+#include <inttypes.h>
 #include <string>
 #include <utility>
-#include <ctime>
+#include <time.h>
 #include <mutex>
 #include <vector>
+#include <atomic>
 
 namespace UtilsPrivate
 {
@@ -191,19 +192,8 @@ struct WindowsHandleWrapper
 
 struct CFileWrapper
 {
-    CFileWrapper(const std::string& fileName, bool isReadMode)
-    {
-        m_File = fopen(fileName.c_str(), isReadMode ? "r" : "w");
-    }
-
-    ~CFileWrapper()
-    {
-        if (m_File)
-        {
-            fclose(m_File);
-            m_File = nullptr;
-        }
-    }
+    CFileWrapper(const std::string& fileName, bool isReadMode);
+    ~CFileWrapper();
 
     CFileWrapper(const CFileWrapper&) = delete;
     CFileWrapper& operator=(const CFileWrapper&) = delete;
@@ -212,4 +202,14 @@ struct CFileWrapper
     operator FILE* () const { return m_File; }
 
     FILE* m_File = nullptr;
+};
+
+struct MultithreadDetector
+{
+public:
+    MultithreadDetector();
+    ~MultithreadDetector();
+
+private:
+    inline static std::atomic<std::thread::id> ms_CurrentID = {};
 };

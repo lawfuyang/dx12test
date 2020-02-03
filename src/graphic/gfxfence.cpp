@@ -4,7 +4,7 @@
 #include "graphic/dx12utils.h"
 #include "graphic/gfxdevice.h"
 
-void GfxFence::Initialize(D3D12_FENCE_FLAGS fenceFlags)
+void GfxFence::Initialize()
 {
     bbeProfileFunction();
 
@@ -13,7 +13,8 @@ void GfxFence::Initialize(D3D12_FENCE_FLAGS fenceFlags)
     const UINT64 initialValue = 0;
 
     // Create ID3D12Fence object
-    DX12_CALL(gfxDevice.Dev()->CreateFence(initialValue, fenceFlags, IID_PPV_ARGS(&m_Fence)));
+    // TODO: Support other fence flags?
+    DX12_CALL(gfxDevice.Dev()->CreateFence(initialValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)));
 
     // Create an event handle for CPU synchronization
     m_FenceEvent = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);

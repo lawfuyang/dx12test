@@ -152,6 +152,5 @@ void GfxManager::TransitionBackBufferForPresent()
     GfxContext& context = m_GfxDevice->GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
     SetD3DDebugName(context.GetCommandList().Dev(), "TransitionBackBufferForPresent");
 
-    context.ClearRenderTargetView(m_SwapChain->GetCurrentBackBuffer(), XMFLOAT4{ 0.0f, 0.2f, 0.4f, 1.0f });
     m_SwapChain->TransitionBackBufferForPresent(context);
 }

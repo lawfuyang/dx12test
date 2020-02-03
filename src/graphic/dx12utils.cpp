@@ -72,3 +72,36 @@ void* GetD3DResourceParent(ID3D12Object* resource)
     resource->GetPrivateData(GUID_ParentPointer, &size, &parentPointer);
     return parentPointer;
 }
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------
+D3D12_PRIMITIVE_TOPOLOGY_TYPE GetD3D12PrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY primitiveTopology)
+{
+    switch (primitiveTopology)
+    {
+    case D3D_PRIMITIVE_TOPOLOGY_POINTLIST:
+        return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+        break;
+    case D3D_PRIMITIVE_TOPOLOGY_LINELIST:
+    case D3D_PRIMITIVE_TOPOLOGY_LINESTRIP:
+        return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+        break;
+    case D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST:
+    case D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP:
+        return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        break;
+    case D3D_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST:
+    case D3D_PRIMITIVE_TOPOLOGY_2_CONTROL_POINT_PATCHLIST:
+    case D3D_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST:
+    case D3D_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST:
+        return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
+        break;
+#ifdef POP_PLATFORM_SUPPORTS_RECT_PRIMITIVE
+    case D3D_PRIMITIVE_TOPOLOGY_RECTLIST:
+        return D3D12XBOX_PRIMITIVE_TOPOLOGY_TYPE_RECT;
+        break;
+#endif
+    default:
+        return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+        break;
+    }
+}

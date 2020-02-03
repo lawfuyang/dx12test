@@ -55,7 +55,7 @@ void GfxDevice::Initialize()
         ConfigureDebugLayer();
     }
 
-    m_GfxFence.Initialize(D3D12_FENCE_FLAG_NONE);
+    m_GfxFence.Initialize();
 
     CheckFeaturesSupports();
 
@@ -246,6 +246,8 @@ void GfxDevice::WaitForPreviousFrame()
 
 GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType)
 {
+    const MultithreadDetector mtDetect;
+
     bbeProfileFunction();
 
     m_AllContexts.push_back(GfxContext{});

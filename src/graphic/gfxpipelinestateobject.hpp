@@ -17,7 +17,7 @@ namespace std
                 boost::hash_combine(finalHash, s.m_VertexFormat->GetHash());
 
                 // Primitive Topology
-                boost::hash_combine(finalHash, s.m_PrimitiveTopologyType);
+                boost::hash_combine(finalHash, s.m_PrimitiveTopology);
 
                 // VS/PS Shaders
                 boost::hash_combine(finalHash, s.m_VS->GetHash());

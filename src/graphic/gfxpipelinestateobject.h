@@ -30,22 +30,22 @@ public:
     void SetAntialiasedLineEnable(bool antialiasedLineEnable) { m_RasterizerStates.AntialiasedLineEnable = antialiasedLineEnable; }
     void SetForcedSampleCount(uint32_t forcedSampleCount) { m_RasterizerStates.ForcedSampleCount = forcedSampleCount; }
     void SetConservativeRaster(D3D12_CONSERVATIVE_RASTERIZATION_MODE conservativeRaster) { m_RasterizerStates.ConservativeRaster = conservativeRaster; }
-    void SetPrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType) { m_PrimitiveTopologyType = topologyType; }
+    void SetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY topology) { m_PrimitiveTopology = topology; }
     void SetRenderTargetFormat(uint32_t idx, DXGI_FORMAT format);
 
 private:
-    GfxRootSignature*             m_RootSig = nullptr;
-    GfxVertexFormat*              m_VertexFormat = nullptr;
-    D3D12_PRIMITIVE_TOPOLOGY_TYPE m_PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-    GfxShader*                    m_VS = nullptr;
-    GfxShader*                    m_PS = nullptr;
-    GfxShader*                    m_CS = nullptr;
-    CD3DX12_BLEND_DESC            m_BlendStates{ CD3DX12_DEFAULT{} };
-    CD3DX12_DEPTH_STENCIL_DESC1   m_DepthStencilStates{ CD3DX12_DEFAULT{} };
-    DXGI_FORMAT                   m_DepthStencilFormat = DXGI_FORMAT_D32_FLOAT;
-    CD3DX12_RASTERIZER_DESC       m_RasterizerStates{ CD3DX12_DEFAULT{} };
-    D3D12_RT_FORMAT_ARRAY         m_RenderTargets = {};
-    DXGI_SAMPLE_DESC              m_SampleDescriptors = DefaultSampleDesc{};
+    GfxRootSignature*           m_RootSig = nullptr;
+    GfxVertexFormat*            m_VertexFormat = nullptr;
+    D3D12_PRIMITIVE_TOPOLOGY    m_PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    GfxShader*                  m_VS = nullptr;
+    GfxShader*                  m_PS = nullptr;
+    GfxShader*                  m_CS = nullptr;
+    CD3DX12_BLEND_DESC          m_BlendStates{ CD3DX12_DEFAULT{} };
+    CD3DX12_DEPTH_STENCIL_DESC1 m_DepthStencilStates{ CD3DX12_DEFAULT{} };
+    DXGI_FORMAT                 m_DepthStencilFormat = DXGI_FORMAT_D32_FLOAT;
+    CD3DX12_RASTERIZER_DESC     m_RasterizerStates{ CD3DX12_DEFAULT{} };
+    D3D12_RT_FORMAT_ARRAY       m_RenderTargets = {};
+    DXGI_SAMPLE_DESC            m_SampleDescriptors = DefaultSampleDesc{};
 
     friend class GfxContext;
     friend class GfxPSOManager;
@@ -60,9 +60,12 @@ public:
     void Initialize();
     void ShutDown();
 
-    ID3D12PipelineState* GetPSO(const GfxPipelineStateObject&);
+    ID3D12PipelineState* GetPSOForDraw(const GfxPipelineStateObject&);
+    ID3D12PipelineState* GetPSOForDispatch(const GfxPipelineStateObject&);
 
 private:
+    void SavePSOToPipelineLibrary(ID3D12PipelineState* pso, const std::wstring& psoHashStr);
+
     ComPtr<ID3D12PipelineLibrary> m_PipelineLibrary;
 
     MemoryMappedFile m_MemoryMappedCacheFile;

@@ -57,7 +57,7 @@ protected:
     std::array<D3D12_CPU_DESCRIPTOR_HANDLE, NbDescHandles> m_CPUDescriptorHandles;
 
     boost::lockfree::stack<uint32_t, boost::lockfree::capacity<NbDescHandles>> m_FreeHandlesIdx;
-    std::array<bool, NbDescHandles> m_ActiveHandlesIdx; // TODO: make this thread safe
+    std::array<bool, NbDescHandles> m_ActiveHandlesIdx;
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------

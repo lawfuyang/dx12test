@@ -12,7 +12,7 @@ public:
 
     ID3D12Fence1* Dev() const { return m_Fence.Get(); }
 
-    void Initialize(D3D12_FENCE_FLAGS);
+    void Initialize();
     void IncrementAndSignal(ID3D12CommandQueue* cmdQueue);
     bool IsSignaledByGPU() const;
     void WaitForSignalFromGPU() const;

@@ -1,5 +1,7 @@
 #include "system/utils.h"
 
+#include <assert.h>
+
 void BreakIntoDebugger()
 {
     if (!::IsDebuggerPresent())
@@ -130,4 +132,35 @@ const std::string GetFileNameFromPath(const std::string& fullPath)
     std::string ret, empty;
     SplitPath(fullPath, empty, ret);
     return ret;
+}
+
+CFileWrapper::CFileWrapper(const std::string& fileName, bool isReadMode)
+{
+    m_File = fopen(fileName.c_str(), isReadMode ? "r" : "w");
+}
+
+CFileWrapper::~CFileWrapper()
+{
+    if (m_File)
+    {
+        fclose(m_File);
+        m_File = nullptr;
+    }
+}
+
+MultithreadDetector::MultithreadDetector()
+{
+    const std::thread::id newID = std::this_thread::get_id();
+
+    if (ms_CurrentID != std::thread::id{} && newID != ms_CurrentID)
+    {
+        assert(false); // Multi-thread detected!
+    }
+
+    ms_CurrentID = newID;
+}
+
+MultithreadDetector::~MultithreadDetector()
+{
+    ms_CurrentID = std::thread::id{};
 }

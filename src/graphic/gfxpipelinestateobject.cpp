@@ -82,84 +82,93 @@ void GfxPSOManager::ShutDown()
     m_PipelineLibrary.Reset();
 }
 
-ID3D12PipelineState* GfxPSOManager::GetPSO(const GfxPipelineStateObject& pso)
+ID3D12PipelineState* GfxPSOManager::GetPSOForDraw(const GfxPipelineStateObject& pso)
 {
     bbeProfileFunction();
 
     assert(m_PipelineLibrary);
 
     const std::size_t psoHash = std::hash<GfxPipelineStateObject>{}(pso);
-    const std::wstring psoHashName = std::to_wstring(psoHash);
-    const std::string psoHashNameStr = utf8_encode(psoHashName);
+    const std::wstring psoHashStr = std::to_wstring(psoHash);
 
     GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
 
+    // Describe and create the Graphics PSO
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+    psoDesc.pRootSignature = pso.m_RootSig->Dev();
+    psoDesc.InputLayout = { pso.m_VertexFormat->Dev().pInputElementDescs, pso.m_VertexFormat->Dev().NumElements };
+    psoDesc.VS = CD3DX12_SHADER_BYTECODE{ pso.m_VS->GetBlob() };
+    psoDesc.PS = CD3DX12_SHADER_BYTECODE{ pso.m_PS->GetBlob() };
+    psoDesc.RasterizerState = pso.m_RasterizerStates;
+    psoDesc.BlendState = pso.m_BlendStates;
+    psoDesc.DepthStencilState = pso.m_DepthStencilStates;
+    psoDesc.SampleMask = DefaultSampleMask{};
+    psoDesc.PrimitiveTopologyType = GetD3D12PrimitiveTopologyType(pso.m_PrimitiveTopology);
+    psoDesc.NumRenderTargets = pso.m_RenderTargets.NumRenderTargets;
+    for (uint32_t i = 0; i < pso.m_RenderTargets.NumRenderTargets; ++i)
+    {
+        psoDesc.RTVFormats[i] = pso.m_RenderTargets.RTFormats[i];
+    }
+    psoDesc.SampleDesc.Count = pso.m_SampleDescriptors.Count;
+
     ID3D12PipelineState* psoToReturn = nullptr;
-
-    bool isNewPSO = false;
-    if (pso.m_VS)
+    if (const ::HRESULT hr = m_PipelineLibrary->LoadGraphicsPipeline(psoHashStr.c_str(), &psoDesc, IID_PPV_ARGS(&psoToReturn));
+        hr == E_INVALIDARG)
     {
-        // Describe and create the Graphics PSO
-        D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-        psoDesc.pRootSignature = pso.m_RootSig->Dev();
-        psoDesc.InputLayout = { pso.m_VertexFormat->Dev().pInputElementDescs, pso.m_VertexFormat->Dev().NumElements };
-        psoDesc.VS = CD3DX12_SHADER_BYTECODE{ pso.m_VS->GetBlob() };
-        psoDesc.PS = CD3DX12_SHADER_BYTECODE{ pso.m_PS->GetBlob() };
-        psoDesc.RasterizerState = pso.m_RasterizerStates;
-        psoDesc.BlendState = pso.m_BlendStates;
-        psoDesc.DepthStencilState = pso.m_DepthStencilStates;
-        psoDesc.SampleMask = DefaultSampleMask{};
-        psoDesc.PrimitiveTopologyType = pso.m_PrimitiveTopologyType;
-        psoDesc.NumRenderTargets = pso.m_RenderTargets.NumRenderTargets;
-        for (uint32_t i = 0; i < pso.m_RenderTargets.NumRenderTargets; ++i)
-        {
-            psoDesc.RTVFormats[i] = pso.m_RenderTargets.RTFormats[i];
-        }
-        psoDesc.SampleDesc.Count = pso.m_SampleDescriptors.Count;
+        bbeProfile("ID3D12PipelineLibrary::CreateGraphicsPipelineState");
 
-        if (const ::HRESULT hr = m_PipelineLibrary->LoadGraphicsPipeline(psoHashName.c_str(), &psoDesc, IID_PPV_ARGS(&psoToReturn)); 
-            hr == E_INVALIDARG)
-        {
-            bbeProfile("ID3D12PipelineLibrary::CreateGraphicsPipelineState");
+        g_Log.info("Graphics PSO '{}' not found! Creating new PSO.", utf8_encode(psoHashStr));
 
-            g_Log.info("Graphics PSO '{}' not found! Creating new PSO.", psoHashNameStr);
-
-            // A PSO with the specified name doesn’t exist, or the input desc doesn’t match the data in the library. Store it in the library for next time.
-            DX12_CALL(gfxDevice.Dev()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&psoToReturn)));
-            isNewPSO = true;
-        }
+        // A PSO with the specified name doesn’t exist, or the input desc doesn’t match the data in the library. Store it in the library for next time.
+        DX12_CALL(gfxDevice.Dev()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&psoToReturn)));
+        SavePSOToPipelineLibrary(psoToReturn, psoHashStr);
     }
-    else if (pso.m_CS)
-    {
-        // Describe and create the Compute PSO
-        D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc = {};
-        psoDesc.pRootSignature = pso.m_RootSig->Dev();
-        psoDesc.CS = CD3DX12_SHADER_BYTECODE{ pso.m_CS->GetBlob() };
 
-        if (const ::HRESULT hr = m_PipelineLibrary->LoadComputePipeline(psoHashName.c_str(), &psoDesc, IID_PPV_ARGS(&psoToReturn)); 
-            hr == E_INVALIDARG)
-        {
-            bbeProfile("ID3D12PipelineLibrary::CreateComputePipelineState");
-
-            g_Log.info("Compute PSO '{}' not found! Creating new PSO.", psoHashNameStr);
-
-            // A PSO with the specified name doesn’t exist, or the input desc doesn’t match the data in the library. Store it in the library for next time.
-            DX12_CALL(gfxDevice.Dev()->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&psoToReturn)));
-            isNewPSO = true;
-        }
-    }
     assert(psoToReturn);
+    return psoToReturn;
+}
 
-    // TODO: Check if this is thread safe, handle it if not
-    if (isNewPSO)
+ID3D12PipelineState* GfxPSOManager::GetPSOForDispatch(const GfxPipelineStateObject& pso)
+{
+    bbeProfileFunction();
+
+    assert(m_PipelineLibrary);
+
+    const std::size_t psoHash = std::hash<GfxPipelineStateObject>{}(pso);
+    const std::wstring psoHashStr = std::to_wstring(psoHash);
+
+    GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
+
+    // Describe and create the Compute PSO
+    D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc = {};
+    psoDesc.pRootSignature = pso.m_RootSig->Dev();
+    psoDesc.CS = CD3DX12_SHADER_BYTECODE{ pso.m_CS->GetBlob() };
+
+    ID3D12PipelineState* psoToReturn = nullptr;
+    if (const ::HRESULT hr = m_PipelineLibrary->LoadComputePipeline(psoHashStr.c_str(), &psoDesc, IID_PPV_ARGS(&psoToReturn));
+        hr == E_INVALIDARG)
     {
-        bbeProfile("ID3D12PipelineLibrary::StorePipeline");
+        bbeProfile("ID3D12PipelineLibrary::CreateComputePipelineState");
 
-        g_Log.info("Storing new PSO '{}' into PipelineLibrary", psoHashNameStr);
-        DX12_CALL(m_PipelineLibrary->StorePipeline(psoHashName.c_str(), psoToReturn));
+        g_Log.info("Compute PSO '{}' not found! Creating new PSO.", utf8_encode(psoHashStr));
+
+        // A PSO with the specified name doesn’t exist, or the input desc doesn’t match the data in the library. Store it in the library for next time.
+        DX12_CALL(gfxDevice.Dev()->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&psoToReturn)));
+        SavePSOToPipelineLibrary(psoToReturn, psoHashStr);
     }
 
+    assert(psoToReturn);
     return psoToReturn;
+}
+
+void GfxPSOManager::SavePSOToPipelineLibrary(ID3D12PipelineState* pso, const std::wstring& psoHashStr)
+{
+    bbeProfileFunction();
+
+    const MultithreadDetector mtDetect;
+
+    g_Log.info("Storing new PSO '{}' into PipelineLibrary", utf8_encode(psoHashStr));
+    DX12_CALL(m_PipelineLibrary->StorePipeline(psoHashStr.c_str(), pso));
 }
 
 void GfxPipelineStateObject::SetRenderTargetFormat(uint32_t idx, DXGI_FORMAT format)
