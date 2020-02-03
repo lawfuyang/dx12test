@@ -246,7 +246,7 @@ void GfxDevice::WaitForPreviousFrame()
 
 GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType)
 {
-    const MultithreadDetector mtDetect;
+    bbeMultiThreadDetector();
 
     bbeProfileFunction();
 

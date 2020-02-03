@@ -163,9 +163,9 @@ ID3D12PipelineState* GfxPSOManager::GetPSOForDispatch(const GfxPipelineStateObje
 
 void GfxPSOManager::SavePSOToPipelineLibrary(ID3D12PipelineState* pso, const std::wstring& psoHashStr)
 {
-    bbeProfileFunction();
+    bbeMultiThreadDetector();
 
-    const MultithreadDetector mtDetect;
+    bbeProfileFunction();
 
     g_Log.info("Storing new PSO '{}' into PipelineLibrary", utf8_encode(psoHashStr));
     DX12_CALL(m_PipelineLibrary->StorePipeline(psoHashStr.c_str(), pso));

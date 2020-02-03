@@ -148,19 +148,17 @@ CFileWrapper::~CFileWrapper()
     }
 }
 
-MultithreadDetector::MultithreadDetector()
+void MultithreadDetector::Enter(std::thread::id newID)
 {
-    const std::thread::id newID = std::this_thread::get_id();
-
-    if (ms_CurrentID != std::thread::id{} && newID != ms_CurrentID)
+    if (m_CurrentID != std::thread::id{} && newID != m_CurrentID)
     {
         assert(false); // Multi-thread detected!
     }
 
-    ms_CurrentID = newID;
+    m_CurrentID = newID;
 }
 
-MultithreadDetector::~MultithreadDetector()
+void MultithreadDetector::Exit()
 {
-    ms_CurrentID = std::thread::id{};
+    m_CurrentID = std::thread::id{};
 }

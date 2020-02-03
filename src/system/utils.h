@@ -10,25 +10,6 @@
 
 namespace UtilsPrivate
 {
-    template <typename Lambda>
-    class ExitScopeCaller
-    {
-        static_assert(std::is_invocable_v<Lambda>);
-
-    public:
-        explicit ExitScopeCaller(Lambda&& l)
-            : m_Lambda(std::forward<Lambda>(l))
-        {}
-
-        ~ExitScopeCaller()
-        {
-            m_Lambda();
-        }
-
-    private:
-        Lambda&& m_Lambda;
-    };
-
     template<class T>
     class MemberAutoUnset
     {
@@ -114,7 +95,26 @@ namespace UtilsPrivate
 #define bbeJOIN( Arg1, Arg2 )               bbeDO_JOIN( Arg1, Arg2 )
 #define bbeUniqueVariable(basename)         bbeJOIN(basename, __COUNTER__)
 
-#define bbeOnExitScope(lambda) UtilsPrivate::ExitScopeCaller bbeUniqueVariable(AutoOnExitVar){ lambda };
+template <typename EnterLambda, typename ExitLamda>
+class AutoScopeCaller
+{
+public:
+    explicit AutoScopeCaller(EnterLambda&& enter, ExitLamda&& exit)
+        : m_ExitLambda(std::forward<ExitLamda>(exit))
+    {
+        enter();
+    }
+
+    ~AutoScopeCaller()
+    {
+        m_ExitLambda();
+    }
+
+private:
+    ExitLamda&& m_ExitLambda;
+};
+
+#define bbeOnExitScope(lambda) const AutoScopeCaller bbeUniqueVariable(AutoOnExitVar){ [](){}, lambda };
 
 #define BBE_SCOPED_UNSET(type, var, val) UtilsPrivate::MemberAutoUnset<type> bbeUniqueVariable(autoUnset){var, val};
 
@@ -204,12 +204,17 @@ struct CFileWrapper
     FILE* m_File = nullptr;
 };
 
-struct MultithreadDetector
+class MultithreadDetector
 {
 public:
-    MultithreadDetector();
-    ~MultithreadDetector();
+    void Enter(std::thread::id newID);
+    void Exit();
 
 private:
-    inline static std::atomic<std::thread::id> ms_CurrentID = {};
+    std::atomic<std::thread::id> m_CurrentID = {};
 };
+
+#define bbeMultiThreadDetector() \
+    static MultithreadDetector __s_MTDetector__; \
+    const AutoScopeCaller bbeUniqueVariable(mtDetectorScoped){ [&](){ __s_MTDetector__.Enter(std::this_thread::get_id()); }, [&](){ __s_MTDetector__.Exit(); } }; 
+

@@ -62,6 +62,9 @@ void GfxManager::ShutDown()
 {
     bbeProfileFunction();
 
+    // we must complete the previous GPU frame before exiting the app
+    m_GfxDevice->WaitForPreviousFrame();
+
     GUIManager::GetInstance().ShutDown();
 
     // get swapchain out of full screen before exiting
@@ -69,9 +72,6 @@ void GfxManager::ShutDown()
     DX12_CALL(m_SwapChain->Dev()->GetFullscreenState(&fs, NULL));
     if (fs)
         m_SwapChain->Dev()->SetFullscreenState(false, NULL);
-
-    // we must complete the previous GPU frame before exiting the app
-    m_GfxDevice->WaitForPreviousFrame();
 
     GfxPSOManager::GetInstance().ShutDown();
 

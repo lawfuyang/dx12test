@@ -35,24 +35,6 @@ void MemoryMappedFile::Init(const std::wstring& filename, UINT fileSize)
         FindClose(handle);
     }
 
-    const std::string fileNameStr = utf8_encode(filename);
-    if (found)
-    {
-        FILE* file = std::fopen(fileNameStr.c_str(), "r");
-        assert(file);
-
-        std::byte first4Bytes[4] = {};
-        std::fscanf(file, "%c%c%c%c", &first4Bytes[0], &first4Bytes[1], &first4Bytes[2], &first4Bytes[3]);
-        std::fclose(file);
-
-        if (*reinterpret_cast<uint32_t*>(first4Bytes) == 0)
-        {
-            g_Log.error("m_file is an invalid cache file.");
-            DeleteFileW(m_filename.c_str());
-            found = false;
-        }
-    }
-
     m_file = CreateFile2(
         filename.c_str(),
         GENERIC_READ | GENERIC_WRITE,
@@ -63,7 +45,7 @@ void MemoryMappedFile::Init(const std::wstring& filename, UINT fileSize)
     if (m_file == INVALID_HANDLE_VALUE)
     {
         g_Log.error("m_file is invalid. Error {}.", GetLastError());
-        g_Log.error("Target file is {}", fileNameStr);
+        g_Log.error("Target file is {}", utf8_encode(filename));
         return;
     }
 
