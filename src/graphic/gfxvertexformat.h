@@ -23,6 +23,7 @@ private:
 
 struct GfxDefaultVertexFormats
 {
+    inline static GfxVertexFormat Position3f_Color4f;
     inline static GfxVertexFormat Position3f_TexCoord2f;
     inline static GfxVertexFormat Position3f_Normal3f_Texcoord2f;
 };

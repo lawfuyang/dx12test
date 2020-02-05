@@ -9,14 +9,15 @@
 #include "graphic/gfxpipelinestateobject.h"
 #include "graphic/gfxshadermanager.h"
 
-const bool            g_EnableGfxDebugLayer                      = true;
-static constexpr bool gs_BreakOnWarnings                         = g_EnableGfxDebugLayer && true;
-static constexpr bool gs_BreakOnErrors                           = g_EnableGfxDebugLayer && true;
-static constexpr bool gs_LogVerbose                              = g_EnableGfxDebugLayer && true;
-static constexpr bool gs_EnableGPUValidation                     = g_EnableGfxDebugLayer && false; // TODO: investigate _com_error
-static constexpr bool gs_SynchronizedCommandQueueValidation      = g_EnableGfxDebugLayer && true;
-static constexpr bool gs_DisableStateTracking                    = g_EnableGfxDebugLayer && false;
-static constexpr bool gs_EnableConservativeResourceStateTracking = g_EnableGfxDebugLayer && true;
+const bool g_EnableGfxDebugLayer                     = true;
+const bool g_AlwaysCommitedMemory                    = false;
+const bool g_BreakOnWarnings                         = g_EnableGfxDebugLayer && true;
+const bool g_BreakOnErrors                           = g_EnableGfxDebugLayer && true;
+const bool g_LogVerbose                              = g_EnableGfxDebugLayer && true;
+const bool g_EnableGPUValidation                     = g_EnableGfxDebugLayer && false; // TODO: investigate _com_error
+const bool g_SynchronizedCommandQueueValidation      = g_EnableGfxDebugLayer && true;
+const bool g_DisableStateTracking                    = g_EnableGfxDebugLayer && false;
+const bool g_EnableConservativeResourceStateTracking = g_EnableGfxDebugLayer && true;
 
 static void EnableD3D12DebugLayer()
 {
@@ -31,17 +32,17 @@ static void EnableD3D12DebugLayer()
         ComPtr<ID3D12Debug1> debugController1;
         if (SUCCEEDED(debugController->QueryInterface(IID_PPV_ARGS(&debugController1))))
         {
-            g_Log.info("    GPU Based Validation: {}", gs_EnableGPUValidation);
-            g_Log.info("    Synchronized Command Queue Validation: {}", gs_SynchronizedCommandQueueValidation);
-            debugController1->SetEnableGPUBasedValidation(gs_EnableGPUValidation);
-            debugController1->SetEnableSynchronizedCommandQueueValidation(gs_SynchronizedCommandQueueValidation);
+            g_Log.info("    GPU Based Validation: {}", g_EnableGPUValidation);
+            g_Log.info("    Synchronized Command Queue Validation: {}", g_SynchronizedCommandQueueValidation);
+            debugController1->SetEnableGPUBasedValidation(g_EnableGPUValidation);
+            debugController1->SetEnableSynchronizedCommandQueueValidation(g_SynchronizedCommandQueueValidation);
         }
 
         ComPtr<ID3D12Debug2> debugController2;
         if (SUCCEEDED(debugController->QueryInterface(IID_PPV_ARGS(&debugController2))))
         {
-            g_Log.info("    Disable State Tracking: {}", gs_DisableStateTracking);
-            debugController2->SetGPUBasedValidationFlags(gs_DisableStateTracking ? D3D12_GPU_BASED_VALIDATION_FLAGS_DISABLE_STATE_TRACKING : D3D12_GPU_BASED_VALIDATION_FLAGS_NONE);
+            g_Log.info("    Disable State Tracking: {}", g_DisableStateTracking);
+            debugController2->SetGPUBasedValidationFlags(g_DisableStateTracking ? D3D12_GPU_BASED_VALIDATION_FLAGS_DISABLE_STATE_TRACKING : D3D12_GPU_BASED_VALIDATION_FLAGS_NONE);
         }
     }
 }
@@ -121,8 +122,8 @@ void GfxDevice::ConfigureDebugLayer()
     if (SUCCEEDED(Dev()->QueryInterface(IID_PPV_ARGS(&debugDevice1))))
     {
         g_Log.info("Configuring D3D12 Debug Layer...");
-        g_Log.info("    Enable Conservative Resource State Tracking: {}", gs_EnableConservativeResourceStateTracking);
-        if constexpr (gs_EnableConservativeResourceStateTracking)
+        g_Log.info("    Enable Conservative Resource State Tracking: {}", g_EnableConservativeResourceStateTracking);
+        if constexpr (g_EnableConservativeResourceStateTracking)
         {
             const D3D12_DEBUG_FEATURE debugFeatures
             {
@@ -131,7 +132,7 @@ void GfxDevice::ConfigureDebugLayer()
             debugDevice1->SetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_FEATURE_FLAGS, &debugFeatures, sizeof(debugFeatures));
         }
 
-        if constexpr (gs_EnableGPUValidation)
+        if constexpr (g_EnableGPUValidation)
         {
             const D3D12_DEBUG_DEVICE_GPU_BASED_VALIDATION_SETTINGS gpuValidationSettings
             {
@@ -146,8 +147,8 @@ void GfxDevice::ConfigureDebugLayer()
     ComPtr<ID3D12InfoQueue> debugInfoQueue;
     DX12_CALL(Dev()->QueryInterface(__uuidof(ID3D12InfoQueue), (LPVOID*)&debugInfoQueue));
 
-    debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, gs_BreakOnErrors);
-    debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, gs_BreakOnWarnings);
+    debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, g_BreakOnErrors);
+    debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, g_BreakOnWarnings);
 
     D3D12_MESSAGE_ID warningsToIgnore[] =
     {
@@ -217,7 +218,7 @@ void GfxDevice::InitD3D12Allocator()
     g_Log.info("Initializing D3D12 Memory Allocator");
 
     D3D12MA::ALLOCATOR_DESC desc = {};
-    desc.Flags = D3D12MA::ALLOCATOR_FLAG_NONE;
+    desc.Flags = g_AlwaysCommitedMemory ? D3D12MA::ALLOCATOR_FLAG_ALWAYS_COMMITTED : D3D12MA::ALLOCATOR_FLAG_NONE;
     desc.pDevice = m_D3DDevice.Get();
     desc.pAdapter = GfxAdapter::GetInstance().GetAllAdapters()[0].Get(); // Just get first adapter
 

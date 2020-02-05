@@ -51,9 +51,12 @@ public:
 
     D3D12MA::Allocation* Initialize(GfxContext& context, const void* vertexData, uint32_t numVertices, uint32_t vertexSize);
 
-    D3D12_VERTEX_BUFFER_VIEW& GetBufferView() { return m_VertexBufferView; }
+    uint32_t GetSizeInBytes() const { return m_SizeInBytes; }
+    uint32_t GetStrideInBytes() const { return m_StrideInBytes; }
 
 private:
     D3D12MA::Allocation* m_D3D12MABufferAllocation = nullptr;
-    D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView = {};
+
+    uint32_t m_SizeInBytes   = 0;
+    uint32_t m_StrideInBytes = 0;
 };
