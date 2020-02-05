@@ -78,7 +78,7 @@ void GfxPSOManager::ShutDown()
         }
     }
 
-    const bool ForceDeleteCacheFile = true; // Investigate weird gfx init crashes when GfxPSOManager loads from file.
+    const bool ForceDeleteCacheFile = true; // TODO: Set to false when the triangle gets drawn
     m_MemoryMappedCacheFile.Destroy(ForceDeleteCacheFile);
     m_PipelineLibrary.Reset();
 }
