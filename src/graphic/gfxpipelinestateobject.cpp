@@ -23,13 +23,15 @@ void GfxPSOManager::Initialize()
     const HRESULT hr = gfxDevice.Dev()->CreatePipelineLibrary(m_MemoryMappedCacheFile.GetData(), m_MemoryMappedCacheFile.GetSize(), IID_PPV_ARGS(&m_PipelineLibrary));
     switch (hr)
     {
-    case DXGI_ERROR_UNSUPPORTED: // The driver doesn't support Pipeline libraries. WDDM2.1 drivers must support it.
+    case DXGI_ERROR_UNSUPPORTED:
+        g_Log.critical("The driver doesn't support Pipeline libraries. WDDM2.1 drivers must support it");
         assert(false);
 
     case E_INVALIDARG: // The provided Library is corrupted or unrecognized.
-    case D3D12_ERROR_ADAPTER_NOT_FOUND: // The provided Library contains data for different hardware (Don't really need to clear the cache, could have a cache per adapter).
-    case D3D12_ERROR_DRIVER_VERSION_MISMATCH: // The provided Library contains data from an old driver or runtime. We need to re-create it.
-        g_Log.warn("Either GPU or Display Driver has changed... PSO cache is now invalid");
+    case D3D12_ERROR_ADAPTER_NOT_FOUND:
+        g_Log.info("The provided Library contains data for different hardware (Don't really need to clear the cache, could have a cache per adapter)");
+    case D3D12_ERROR_DRIVER_VERSION_MISMATCH:
+        g_Log.info("The provided Library contains data from an old driver or runtime. We need to re-create it");
         m_MemoryMappedCacheFile.Destroy(true);
         m_MemoryMappedCacheFile.Init(cacheDir);
         DX12_CALL(gfxDevice.Dev()->CreatePipelineLibrary(m_MemoryMappedCacheFile.GetData(), m_MemoryMappedCacheFile.GetSize(), IID_PPV_ARGS(&m_PipelineLibrary)));
@@ -37,6 +39,8 @@ void GfxPSOManager::Initialize()
 
     assert(m_PipelineLibrary);
     SetD3DDebugName(m_PipelineLibrary.Get(), "GfxPSOManager ID3D12PipelineLibrary");
+
+    g_Log.info("GfxPSOManager Initialized");
 }
 
 void GfxPSOManager::ShutDown()
@@ -48,8 +52,10 @@ void GfxPSOManager::ShutDown()
     // Important: An ID3D12PipelineLibrary object becomes undefined when the underlying memory, that was used to initalize it, changes.
     assert(m_PipelineLibrary->GetSerializedSize() <= UINT_MAX);    // Code below casts to UINT.
     const UINT librarySize = static_cast<UINT>(m_PipelineLibrary->GetSerializedSize());
-    if (librarySize > 0)
+    if (m_NewPSOs > 0 && librarySize > 0)
     {
+        g_Log.info("Saving '{}' new PSOs into PipelineLibrary", m_NewPSOs);
+
         // Grow the file if needed.
         const size_t neededSize = sizeof(UINT) + librarySize;
         if (neededSize > m_MemoryMappedCacheFile.GetCurrentFileSize())
@@ -77,8 +83,12 @@ void GfxPSOManager::ShutDown()
             m_MemoryMappedCacheFile.SetSize(librarySize);
         }
     }
+    else
+    {
+        g_Log.info("No PSOs required to be saved to cache file");
+    }
 
-    const bool ForceDeleteCacheFile = true; // TODO: Set to false when the triangle gets drawn
+    const bool ForceDeleteCacheFile = false;
     m_MemoryMappedCacheFile.Destroy(ForceDeleteCacheFile);
     m_PipelineLibrary.Reset();
 }
@@ -165,11 +175,12 @@ ID3D12PipelineState* GfxPSOManager::GetComputePSO(const GfxPipelineStateObject& 
 void GfxPSOManager::SavePSOToPipelineLibrary(ID3D12PipelineState* pso, const std::wstring& psoHashStr)
 {
     bbeMultiThreadDetector();
-
     bbeProfileFunction();
 
     g_Log.info("Storing new PSO '{}' into PipelineLibrary", utf8_encode(psoHashStr));
     DX12_CALL(m_PipelineLibrary->StorePipeline(psoHashStr.c_str(), pso));
+
+    ++m_NewPSOs;
 }
 
 void GfxPipelineStateObject::SetRenderTargetFormat(uint32_t idx, DXGI_FORMAT format)

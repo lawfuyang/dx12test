@@ -69,6 +69,8 @@ private:
     ComPtr<ID3D12PipelineLibrary> m_PipelineLibrary;
 
     MemoryMappedFile m_MemoryMappedCacheFile;
+
+    uint32_t m_NewPSOs = 0;
 };
 
 #include "graphic/gfxpipelinestateobject.hpp"

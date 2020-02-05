@@ -58,6 +58,7 @@ void GfxCommandList::EndRecording()
 void GfxCommandListsManager::Initialize()
 {
     bbeProfileFunction();
+    g_Log.info("Initializing GfxCommandListsManager");
 
     GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
 
