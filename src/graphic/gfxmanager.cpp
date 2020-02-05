@@ -55,15 +55,12 @@ void GfxManager::Initialize(tf::Taskflow& tf)
     deviceInitTask.succeed(adapterInitTask);
     deviceInitTask.precede(cmdListInitTask, descHeapManagerInitTask, rootSigManagerInitTask, PSOManagerInitTask);
     swapChainInitTask.succeed(deviceInitTask, cmdListInitTask, descHeapManagerInitTask);
-    renderPassesInitTask.succeed(deviceInitTask, swapChainInitTask, rootSigManagerInitTask, PSOManagerInitTask);
+    renderPassesInitTask.succeed(swapChainInitTask, rootSigManagerInitTask, PSOManagerInitTask);
 }
 
 void GfxManager::ShutDown()
 {
     bbeProfileFunction();
-
-    // we must complete the previous GPU frame before exiting the app
-    m_GfxDevice->WaitForPreviousFrame();
 
     GUIManager::GetInstance().ShutDown();
 
@@ -77,6 +74,8 @@ void GfxManager::ShutDown()
 
     delete(GfxManagerSingletons::gs_TestRenderPass);
 
+    // we must complete the previous GPU frame before exiting the app
+    m_GfxDevice->WaitForPreviousFrame();
     m_GfxDevice->ShutDown();
 }
 

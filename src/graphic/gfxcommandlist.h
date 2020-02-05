@@ -24,6 +24,7 @@ class GfxCommandListsManager
 {
 public:
     void Initialize();
+    void ShutDown();
 
     GfxCommandList* Allocate(D3D12_COMMAND_LIST_TYPE);
     void ExecuteAllActiveCommandLists();

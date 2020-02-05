@@ -85,17 +85,18 @@ void GfxCommandListsManager::Initialize()
     {
         tf.emplace([&]()
             {
-                static SpinLock s_CmdListsPoolLock;
+                static AdaptiveLock s_CmdListsPoolLock;
 
                 GfxCommandList* newCmdList = nullptr;
                 {
                     bbeAutoLock(s_CmdListsPoolLock);
                     newCmdList = pool.m_CommandListsPool.construct();
+                    assert(newCmdList);
                 }
 
                 newCmdList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-                SpinLock s_FreeCmdListsInitialPopulateLock;
+                static AdaptiveLock s_FreeCmdListsInitialPopulateLock;
                 bbeAutoLock(s_FreeCmdListsInitialPopulateLock);
                 pool.m_FreeCommandLists.push(newCmdList);
             });
@@ -103,8 +104,23 @@ void GfxCommandListsManager::Initialize()
     System::GetInstance().GetTasksExecutor().run(tf).wait();
 }
 
+void GfxCommandListsManager::ShutDown()
+{
+    bbeProfileFunction();
+
+    assert(m_DirectPool.m_ActiveCommandLists.empty() == true);
+
+    while (m_DirectPool.m_FreeCommandLists.size())
+    {
+        GfxCommandList* cmdList = m_DirectPool.m_FreeCommandLists.front();
+        m_DirectPool.m_FreeCommandLists.pop();
+        m_DirectPool.m_CommandListsPool.free(cmdList);
+    }
+}
+
 GfxCommandList* GfxCommandListsManager::Allocate(D3D12_COMMAND_LIST_TYPE cmdListType)
 {
+    bbeMultiThreadDetector();
     bbeProfileFunction();
 
     // TODO: Need to investigate why at high frame rates (>60 fps), it's not allocating proper free cmd lists
@@ -138,6 +154,7 @@ GfxCommandList* GfxCommandListsManager::Allocate(D3D12_COMMAND_LIST_TYPE cmdList
 
 void GfxCommandListsManager::ExecuteAllActiveCommandLists()
 {
+    bbeMultiThreadDetector();
     bbeProfileFunction();
 
     CommandListPool* const allPools[] =

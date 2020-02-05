@@ -1,7 +1,5 @@
 #include "graphic/gfxdevice.h"
 
-#include "extern/D3D12MemoryAllocator/src/D3D12MemAlloc.h"
-
 #include "graphic/gfxmanager.h"
 #include "graphic/dx12utils.h"
 #include "graphic/gfxadapter.h"
@@ -20,13 +18,37 @@ static constexpr bool gs_SynchronizedCommandQueueValidation     = g_EnableGfxDeb
 static constexpr bool gs_DisableStateTracking                   = g_EnableGfxDebugLayer && false;
 static constexpr bool gs_EnableConservativeResorceStateTracking = g_EnableGfxDebugLayer && true;
 
+static void EnableD3D12DebugLayer()
+{
+    bbeProfileFunction();
+
+    ComPtr<ID3D12Debug> debugController;
+    if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
+    {
+        debugController->EnableDebugLayer();
+
+        ComPtr<ID3D12Debug1> debugController1;
+        if (SUCCEEDED(debugController->QueryInterface(IID_PPV_ARGS(&debugController1))))
+        {
+            debugController1->SetEnableGPUBasedValidation(gs_EnableGPUValidation);
+            debugController1->SetEnableSynchronizedCommandQueueValidation(gs_SynchronizedCommandQueueValidation);
+        }
+
+        ComPtr<ID3D12Debug2> debugController2;
+        if (SUCCEEDED(debugController->QueryInterface(IID_PPV_ARGS(&debugController2))))
+        {
+            debugController2->SetGPUBasedValidationFlags(gs_DisableStateTracking ? D3D12_GPU_BASED_VALIDATION_FLAGS_DISABLE_STATE_TRACKING : D3D12_GPU_BASED_VALIDATION_FLAGS_NONE);
+        }
+    }
+}
+
 void GfxDevice::Initialize()
 {
     bbeProfileFunction();
 
     if constexpr (g_EnableGfxDebugLayer)
     {
-        EnableDebugLayer();
+        EnableD3D12DebugLayer();
     }
 
     constexpr D3D_FEATURE_LEVEL featureLevels[] =
@@ -62,6 +84,8 @@ void GfxDevice::Initialize()
     InitD3D12Allocator();
 
     m_AllContexts.reserve(16);
+
+    ::Sleep(100);
 }
 
 void GfxDevice::ShutDown()
@@ -82,30 +106,6 @@ void GfxDevice::CheckStatus()
     assert(result != DXGI_ERROR_DEVICE_RESET);
     assert(result != DXGI_ERROR_DRIVER_INTERNAL_ERROR);
     assert(result != DXGI_ERROR_INVALID_CALL);
-}
-
-void GfxDevice::EnableDebugLayer()
-{
-    bbeProfileFunction();
-
-    ComPtr<ID3D12Debug> debugController;
-    if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
-    {
-        debugController->EnableDebugLayer();
-
-        ComPtr<ID3D12Debug1> debugController1;
-        if (SUCCEEDED(debugController->QueryInterface(IID_PPV_ARGS(&debugController1))))
-        {
-            debugController1->SetEnableGPUBasedValidation(gs_EnableGPUValidation);
-            debugController1->SetEnableSynchronizedCommandQueueValidation(gs_SynchronizedCommandQueueValidation);
-        }
-
-        ComPtr<ID3D12Debug2> debugController2;
-        if (SUCCEEDED(debugController->QueryInterface(IID_PPV_ARGS(&debugController2))))
-        {
-            debugController2->SetGPUBasedValidationFlags(gs_DisableStateTracking ? D3D12_GPU_BASED_VALIDATION_FLAGS_DISABLE_STATE_TRACKING : D3D12_GPU_BASED_VALIDATION_FLAGS_NONE);
-        }
-    }
 }
 
 void GfxDevice::ConfigureDebugLayer()
@@ -247,7 +247,6 @@ void GfxDevice::WaitForPreviousFrame()
 GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType)
 {
     bbeMultiThreadDetector();
-
     bbeProfileFunction();
 
     m_AllContexts.push_back(GfxContext{});

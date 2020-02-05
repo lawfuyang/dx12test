@@ -1,6 +1,7 @@
 #pragma once
 
 #include "graphic/gfxcommandlist.h"
+#include "graphic/gfxcontext.h"
 #include "graphic/gfxfence.h"
 #include "graphic/gfxpipelinestateobject.h"
 #include "graphic/gfxswapchain.h"
@@ -31,7 +32,6 @@ public:
     D3D_ROOT_SIGNATURE_VERSION GetHighSupportedRootSignature() const { return m_RootSigSupport.HighestVersion; }
 
 private:
-    static void EnableDebugLayer();
     void ConfigureDebugLayer();
     void CheckFeaturesSupports();
     void InitD3D12Allocator();

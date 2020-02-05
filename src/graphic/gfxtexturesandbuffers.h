@@ -1,6 +1,9 @@
 #pragma once
 
+#include "extern/D3D12MemoryAllocator/src/D3D12MemAlloc.h"
+
 #include "graphic/gfxdescriptorheap.h"
+#include "graphic/dx12utils.h"
 
 namespace D3D12MA
 {
@@ -46,7 +49,7 @@ class GfxVertexBuffer : public GfxHazardTrackedResource
 public:
     ~GfxVertexBuffer();
 
-    void Initialize(GfxContext& context, const void* vertexData, uint32_t numVertices, uint32_t vertexSize);
+    D3D12MA::Allocation* Initialize(GfxContext& context, const void* vertexData, uint32_t numVertices, uint32_t vertexSize);
 
     D3D12_VERTEX_BUFFER_VIEW& GetBufferView() { return m_VertexBufferView; }
 

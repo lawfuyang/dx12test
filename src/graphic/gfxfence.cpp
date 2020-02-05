@@ -36,6 +36,7 @@ bool GfxFence::IsSignaledByGPU() const
         assert(false);
     }
 
+    assert(completedValue <= m_FenceValue);
     return completedValue == m_FenceValue;
 }
 

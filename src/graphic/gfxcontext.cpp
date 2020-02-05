@@ -34,7 +34,7 @@ void GfxContext::CompileAndSetPipelineStateCommon()
     assert(m_PSO.m_RootSig);
 }
 
-void GfxContext::CompileAndSetPipelineStateForDraw()
+void GfxContext::CompileAndSetGraphicsPipelineState()
 {
     CompileAndSetPipelineStateCommon();
 
@@ -51,7 +51,7 @@ void GfxContext::CompileAndSetPipelineStateForDraw()
     }
 
     // PSO
-    ID3D12PipelineState* compiledPSO = m_PSOManager->GetPSOForDraw(m_PSO);
+    ID3D12PipelineState* compiledPSO = m_PSOManager->GetGraphicsPSO(m_PSO);
     assert(compiledPSO);
     m_CommandList->Dev()->SetPipelineState(compiledPSO);
 
@@ -72,7 +72,7 @@ void GfxContext::CompileAndSetPipelineStateForDraw()
     m_CommandList->Dev()->OMSetRenderTargets(m_PSO.m_RenderTargets.NumRenderTargets, rtvHandles, FALSE, nullptr); // TODO: Add support for DepthStencil RTV
 }
 
-void GfxContext::CompileAndSetPipelineStateForDispatch()
+void GfxContext::CompileAndSetComputePipelineState()
 {
     bbeProfileFunction();
 
@@ -81,11 +81,11 @@ void GfxContext::CompileAndSetPipelineStateForDispatch()
     assert(m_PSO.m_CS);
 }
 
-void GfxContext::DrawInstanced(uint32_t VertexCountPerInstance, uint32_t InstanceCount, uint32_t StartVertexLocation, uint32_t StartInstanceLocation)
+void GfxContext::DrawInstanced(uint32_t vertexCountPerInstance, uint32_t instanceCount, uint32_t startVertexLocation, uint32_t startInstanceLocation)
 {
     bbeProfileFunction();
 
-    CompileAndSetPipelineStateForDraw();
+    CompileAndSetGraphicsPipelineState();
 
-    m_CommandList->Dev()->DrawInstanced(3, 1, 0, 0);
+    m_CommandList->Dev()->DrawInstanced(vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
 }

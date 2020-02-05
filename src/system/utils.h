@@ -99,10 +99,10 @@ template <typename EnterLambda, typename ExitLamda>
 class AutoScopeCaller
 {
 public:
-    explicit AutoScopeCaller(EnterLambda&& enter, ExitLamda&& exit)
-        : m_ExitLambda(std::forward<ExitLamda>(exit))
+    AutoScopeCaller(EnterLambda&& enterLambda, ExitLamda&& exitLambda)
+        : m_ExitLambda(std::forward<ExitLamda>(exitLambda))
     {
-        enter();
+        enterLambda();
     }
 
     ~AutoScopeCaller()
@@ -215,6 +215,6 @@ private:
 };
 
 #define bbeMultiThreadDetector() \
-    static MultithreadDetector __s_MTDetector__; \
-    const AutoScopeCaller bbeUniqueVariable(mtDetectorScoped){ [&](){ __s_MTDetector__.Enter(std::this_thread::get_id()); }, [&](){ __s_MTDetector__.Exit(); } }; 
+    static MultithreadDetector __s_bbe_MTDetector__; \
+    const AutoScopeCaller bbeUniqueVariable(mtDetectorScoped){ [&](){ __s_bbe_MTDetector__.Enter(std::this_thread::get_id()); }, [&](){ __s_bbe_MTDetector__.Exit(); } }; 
 

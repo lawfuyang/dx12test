@@ -34,8 +34,8 @@ public:
 
 private:
     void CompileAndSetPipelineStateCommon();
-    void CompileAndSetPipelineStateForDraw();
-    void CompileAndSetPipelineStateForDispatch();
+    void CompileAndSetGraphicsPipelineState();
+    void CompileAndSetComputePipelineState();
 
     CD3DX12_VIEWPORT  m_Viewport{ 0.0f, 0.0f, System::APP_WINDOW_WIDTH, System::APP_WINDOW_HEIGHT };
     CD3DX12_RECT      m_ScissorRect{ 0, 0, static_cast<LONG>(System::APP_WINDOW_WIDTH), static_cast<LONG>(System::APP_WINDOW_HEIGHT) };

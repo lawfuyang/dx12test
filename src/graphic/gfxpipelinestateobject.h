@@ -60,8 +60,8 @@ public:
     void Initialize();
     void ShutDown();
 
-    ID3D12PipelineState* GetPSOForDraw(const GfxPipelineStateObject&);
-    ID3D12PipelineState* GetPSOForDispatch(const GfxPipelineStateObject&);
+    ID3D12PipelineState* GetGraphicsPSO(const GfxPipelineStateObject&);
+    ID3D12PipelineState* GetComputePSO(const GfxPipelineStateObject&);
 
 private:
     void SavePSOToPipelineLibrary(ID3D12PipelineState* pso, const std::wstring& psoHashStr);

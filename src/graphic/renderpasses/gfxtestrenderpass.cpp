@@ -21,7 +21,10 @@ GfxTestRenderPass::GfxTestRenderPass(GfxContext& initContext)
         { { -0.25f, -0.25f, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }
     };
 
-    m_TriangleVBuffer.Initialize(initContext, reinterpret_cast<const void*>(triangleVertices), _countof(triangleVertices), sizeof(Vertex));
+    D3D12MA::Allocation* alloc = m_TriangleVBuffer.Initialize(initContext, reinterpret_cast<const void*>(triangleVertices), _countof(triangleVertices), sizeof(Vertex));
+    assert(alloc);
+
+    alloc->SetName(L"GfxTestRenderPass test triangle vertices");
 }
 
 void GfxTestRenderPass::Render(GfxContext& context)

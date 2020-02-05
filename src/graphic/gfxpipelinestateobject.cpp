@@ -78,11 +78,12 @@ void GfxPSOManager::ShutDown()
         }
     }
 
-    m_MemoryMappedCacheFile.Destroy(false);
+    const bool ForceDeleteCacheFile = true; // Investigate weird gfx init crashes when GfxPSOManager loads from file.
+    m_MemoryMappedCacheFile.Destroy(ForceDeleteCacheFile);
     m_PipelineLibrary.Reset();
 }
 
-ID3D12PipelineState* GfxPSOManager::GetPSOForDraw(const GfxPipelineStateObject& pso)
+ID3D12PipelineState* GfxPSOManager::GetGraphicsPSO(const GfxPipelineStateObject& pso)
 {
     bbeProfileFunction();
 
@@ -128,7 +129,7 @@ ID3D12PipelineState* GfxPSOManager::GetPSOForDraw(const GfxPipelineStateObject& 
     return psoToReturn;
 }
 
-ID3D12PipelineState* GfxPSOManager::GetPSOForDispatch(const GfxPipelineStateObject& pso)
+ID3D12PipelineState* GfxPSOManager::GetComputePSO(const GfxPipelineStateObject& pso)
 {
     bbeProfileFunction();
 

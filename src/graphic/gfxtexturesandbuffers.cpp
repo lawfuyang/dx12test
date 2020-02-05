@@ -1,7 +1,5 @@
 #include "graphic/gfxtexturesandbuffers.h"
 
-#include "extern/D3D12MemoryAllocator/src/D3D12MemAlloc.h"
-
 #include "graphic/gfxmanager.h"
 #include "graphic/gfxdevice.h"
 #include "graphic/gfxcontext.h"
@@ -50,12 +48,14 @@ GfxVertexBuffer::~GfxVertexBuffer()
 
     if (m_D3D12MABufferAllocation)
     {
+        g_Log.info("Destroying D3D12MA::Allocation {}", utf8_encode(m_D3D12MABufferAllocation->GetName()));
+
         m_D3D12MABufferAllocation->Release();
         m_D3D12MABufferAllocation = nullptr;
     }
 }
 
-void GfxVertexBuffer::Initialize(GfxContext& context, const void* vertexData, uint32_t numVertices, uint32_t vertexSize)
+D3D12MA::Allocation* GfxVertexBuffer::Initialize(GfxContext& context, const void* vertexData, uint32_t numVertices, uint32_t vertexSize)
 {
     bbeProfileFunction();
 
@@ -125,4 +125,6 @@ void GfxVertexBuffer::Initialize(GfxContext& context, const void* vertexData, ui
             vBufferUploadHeapAllocation->Release();
             vBufferUploadHeap->Release();
         });
+
+    return m_D3D12MABufferAllocation;
 }
