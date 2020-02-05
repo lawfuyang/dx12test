@@ -59,9 +59,6 @@ D3D12MA::Allocation* GfxVertexBuffer::Initialize(GfxContext& context, const void
 {
     bbeProfileFunction();
 
-    m_StrideInBytes = vertexSize;
-    m_SizeInBytes = vertexSize * numVertices;
-
     GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
     D3D12MA::Allocator* d3d12MemoryAllocator = gfxDevice.GetD3D12MemoryAllocator();
 
@@ -69,7 +66,7 @@ D3D12MA::Allocation* GfxVertexBuffer::Initialize(GfxContext& context, const void
     // To get data into this heap, we will have to upload the data using an upload heap
     D3D12MA::ALLOCATION_DESC vertexBufferAllocDesc = {};
     vertexBufferAllocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
-    CD3DX12_RESOURCE_DESC vertexBufferResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes);
+    CD3DX12_RESOURCE_DESC vertexBufferResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(vertexSize);
 
     DX12_CALL(d3d12MemoryAllocator->CreateResource(
         &vertexBufferAllocDesc,
@@ -85,7 +82,7 @@ D3D12MA::Allocation* GfxVertexBuffer::Initialize(GfxContext& context, const void
     // We will upload the vertex buffer using this heap to the default heap
     D3D12MA::ALLOCATION_DESC vBufferUploadAllocDesc = {};
     vBufferUploadAllocDesc.HeapType = D3D12_HEAP_TYPE_UPLOAD;
-    CD3DX12_RESOURCE_DESC vertexBufferUploadResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes);
+    CD3DX12_RESOURCE_DESC vertexBufferUploadResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(vertexSize);
 
     ID3D12Resource* vBufferUploadHeap = nullptr;
     D3D12MA::Allocation* vBufferUploadHeapAllocation = nullptr;
@@ -97,6 +94,11 @@ D3D12MA::Allocation* GfxVertexBuffer::Initialize(GfxContext& context, const void
         &vBufferUploadHeapAllocation,
         IID_PPV_ARGS(&vBufferUploadHeap)));
     vBufferUploadHeap->SetName(L"Vertex Buffer Upload Resource Heap");
+
+    // create a vertex buffer view for the triangle. We get the GPU memory address to the vertex pointer using the GetGPUVirtualAddress() method
+    m_VertexBufferView.BufferLocation = m_Resource->GetGPUVirtualAddress();
+    m_VertexBufferView.StrideInBytes = vertexSize;
+    m_VertexBufferView.SizeInBytes = vertexSize * numVertices;
 
     // store vertex buffer in upload heap
     D3D12_SUBRESOURCE_DATA vertexSubresourceData = {};
@@ -111,7 +113,7 @@ D3D12MA::Allocation* GfxVertexBuffer::Initialize(GfxContext& context, const void
     const UINT64 IntermediateOffset = 0;
     const UINT FirstSubresource = 0;
     const UINT NumSubresources = 1;
-    const UINT64 r = UpdateSubresources<NumSubresources>(cmdList.Dev(), m_Resource.Get(), vBufferUploadHeap, IntermediateOffset, FirstSubresource, NumSubresources, &vertexSubresourceData);
+    const UINT64 r = UpdateSubresources(cmdList.Dev(), m_Resource.Get(), vBufferUploadHeap, IntermediateOffset, FirstSubresource, NumSubresources, &vertexSubresourceData);
     assert(r);
 
     // transition the vertex buffer data from copy destination state to vertex buffer state

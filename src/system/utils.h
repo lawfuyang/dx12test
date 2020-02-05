@@ -1,7 +1,5 @@
 #pragma once
 
-#include "extern/boost/container_hash/hash.hpp"
-
 #include <inttypes.h>
 #include <string>
 #include <utility>
@@ -220,13 +218,3 @@ private:
     static MultithreadDetector __s_bbe_MTDetector__; \
     const AutoScopeCaller bbeUniqueVariable(mtDetectorScoped){ [&](){ __s_bbe_MTDetector__.Enter(std::this_thread::get_id()); }, [&](){ __s_bbe_MTDetector__.Exit(); } }; 
 
-// generic hasher func that uses Boost lib to hash the entire type
-// NOTE: Make sure every variable in type is of a POD type!
-template <typename T>
-static std::size_t GenericTypeHash(const T& s)
-{
-    std::size_t hash = 0;
-    const std::byte* rawMem = reinterpret_cast<const std::byte*>(&s);
-    boost::hash_range(hash, rawMem, rawMem + sizeof(T));
-    return hash;
-}

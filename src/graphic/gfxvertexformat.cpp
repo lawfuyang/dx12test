@@ -22,12 +22,6 @@ void GfxVertexInputLayoutManager::Initialize()
 {
     bbeProfileFunction();
 
-    static const D3D12_INPUT_ELEMENT_DESC s_Position3f_Color4f_Desc[] =
-    {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-    };
-
     static const D3D12_INPUT_ELEMENT_DESC s_Position3f_TexCoord2f_Desc[] =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -41,7 +35,6 @@ void GfxVertexInputLayoutManager::Initialize()
         { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
     };
 
-    GfxDefaultVertexFormats::Position3f_Color4f.Initialize(s_Position3f_Color4f_Desc, _countof(s_Position3f_Color4f_Desc));
     GfxDefaultVertexFormats::Position3f_TexCoord2f.Initialize(s_Position3f_TexCoord2f_Desc, _countof(s_Position3f_TexCoord2f_Desc));
     GfxDefaultVertexFormats::Position3f_Normal3f_Texcoord2f.Initialize(s_Position3f_Normal3f_TexCoord2f_Desc, _countof(s_Position3f_Normal3f_TexCoord2f_Desc));
 }

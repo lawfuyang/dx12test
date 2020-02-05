@@ -39,14 +39,13 @@ void GfxTestRenderPass::Render(GfxContext& context)
 
     GfxPipelineStateObject& pso = context.GetPSO();
     pso.SetDepthEnable(false);
-    pso.SetDepthClipEnable(false);
     pso.SetStencilEnable(false);
     pso.SetVertexShader(shaderManager.GetShader(ShaderPermutation::VS_TestTriangle));
     pso.SetPixelShader(shaderManager.GetShader(ShaderPermutation::PS_TestTriangle));
-    pso.SetVertexInputLayout(GfxDefaultVertexFormats::Position3f_Color4f);
+    pso.SetVertexInputLayout(GfxDefaultVertexFormats::Position3f_TexCoord2f);
 
     context.SetVertexBuffer(m_TriangleVBuffer);
     context.SetRenderTarget(0, context.GetGfxManager().GetSwapChain().GetCurrentBackBuffer());
 
-    context.DrawInstanced(3, 1, 0, 0);
+    //context.DrawInstanced(3, 1, 0, 0);
 }

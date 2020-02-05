@@ -27,14 +27,22 @@ void GfxContext::SetRenderTarget(uint32_t idx, GfxRenderTargetView& rtv)
     m_RTVs[idx] = &rtv;
 }
 
-void GfxContext::CompileAndSetGraphicsPipelineState()
+void GfxContext::CompileAndSetPipelineStateCommon()
 {
     assert(m_PSOManager);
     assert(m_CommandList);
+    assert(m_PSO.m_RootSig);
+}
+
+void GfxContext::CompileAndSetGraphicsPipelineState()
+{
+    CompileAndSetPipelineStateCommon();
+
+    assert(m_PSO.m_VS);
+    assert(m_PSO.m_VertexFormat);
     assert(m_VertexBuffer);
-    assert(m_VertexBuffer->GetD3D12Resource());
-    assert(m_VertexBuffer->GetStrideInBytes() > 0);
-    assert(m_VertexBuffer->GetSizeInBytes() > 0);
+    assert(m_VertexBuffer->GetBufferView().BufferLocation != 0);
+    assert(m_PSO.m_RenderTargets.NumRenderTargets > 0);
 
     for (uint32_t i = 0; i < m_PSO.m_RenderTargets.NumRenderTargets; ++i)
     {
@@ -43,7 +51,9 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
     }
 
     // PSO
-    m_CommandList->Dev()->SetPipelineState(m_PSOManager->GetGraphicsPSO(m_PSO));
+    ID3D12PipelineState* compiledPSO = m_PSOManager->GetGraphicsPSO(m_PSO);
+    assert(compiledPSO);
+    m_CommandList->Dev()->SetPipelineState(compiledPSO);
 
     // Rasterizer
     m_CommandList->Dev()->RSSetViewports(1, &m_Viewport);
@@ -51,12 +61,7 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
 
     // Input Assembler
     m_CommandList->Dev()->IASetPrimitiveTopology(m_PSO.m_PrimitiveTopology);
-
-    D3D12_VERTEX_BUFFER_VIEW vBufferView;
-    vBufferView.BufferLocation = m_VertexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
-    vBufferView.StrideInBytes  = m_VertexBuffer->GetStrideInBytes();
-    vBufferView.SizeInBytes    = m_VertexBuffer->GetSizeInBytes();
-    m_CommandList->Dev()->IASetVertexBuffers(0, 1, &vBufferView);
+    m_CommandList->Dev()->IASetVertexBuffers(0, 1, &m_VertexBuffer->GetBufferView());
 
     // Output Merger
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[_countof(D3D12_RT_FORMAT_ARRAY::RTFormats)] = {};
@@ -65,16 +70,15 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
         rtvHandles[i] = m_RTVs[i]->GetDescriptorHeap().GetCPUDescHandle();
     }
     m_CommandList->Dev()->OMSetRenderTargets(m_PSO.m_RenderTargets.NumRenderTargets, rtvHandles, FALSE, nullptr); // TODO: Add support for DepthStencil RTV
-
-    m_CommandList->Dev()->SetGraphicsRootSignature(m_PSO.m_RootSig->Dev());
 }
 
 void GfxContext::CompileAndSetComputePipelineState()
 {
     bbeProfileFunction();
 
-    assert(m_PSOManager);
-    assert(m_CommandList);
+    CompileAndSetPipelineStateCommon();
+
+    assert(m_PSO.m_CS);
 }
 
 void GfxContext::DrawInstanced(uint32_t vertexCountPerInstance, uint32_t instanceCount, uint32_t startVertexLocation, uint32_t startInstanceLocation)
