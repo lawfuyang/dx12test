@@ -33,7 +33,6 @@ public:
     void DrawInstanced(uint32_t VertexCountPerInstance, uint32_t InstanceCount, uint32_t StartVertexLocation, uint32_t StartInstanceLocation);
 
 private:
-    void CompileAndSetPipelineStateCommon();
     void CompileAndSetGraphicsPipelineState();
     void CompileAndSetComputePipelineState();
 

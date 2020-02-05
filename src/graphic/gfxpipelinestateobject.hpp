@@ -25,27 +25,22 @@ namespace std
                     boost::hash_combine(finalHash, s.m_PS->GetHash());
 
                 // Blend States
-                const std::byte* blendStatesRawMem = reinterpret_cast<const std::byte*>(&s.m_BlendStates);
-                boost::hash_range(finalHash, blendStatesRawMem, blendStatesRawMem + sizeof(D3D12_BLEND_DESC));
+                boost::hash_combine(finalHash, GenericTypeHash(s.m_BlendStates));
 
                 // Depth Stencil State
-                const std::byte* depthStencilStatesRawMem = reinterpret_cast<const std::byte*>(&s.m_DepthStencilStates);
-                boost::hash_range(finalHash, depthStencilStatesRawMem, depthStencilStatesRawMem + sizeof(D3D12_DEPTH_STENCIL_DESC1));
+                boost::hash_combine(finalHash, GenericTypeHash(s.m_DepthStencilStates));
 
                 // Depth Stencil Format
                 boost::hash_combine(finalHash, s.m_DepthStencilFormat);
 
                 // Rasterizer States
-                const std::byte* resterizerStatesRawMem = reinterpret_cast<const std::byte*>(&s.m_RasterizerStates);
-                boost::hash_range(finalHash, resterizerStatesRawMem, resterizerStatesRawMem + sizeof(D3D12_RASTERIZER_DESC));
+                boost::hash_combine(finalHash, GenericTypeHash(s.m_RasterizerStates));
 
                 // Render Targets
-                const std::byte* renderTargetsRawMem = reinterpret_cast<const std::byte*>(&s.m_RenderTargets);
-                boost::hash_range(finalHash, renderTargetsRawMem, renderTargetsRawMem + sizeof(D3D12_RT_FORMAT_ARRAY));
+                boost::hash_combine(finalHash, GenericTypeHash(s.m_RenderTargets));
 
                 // Sample Desccriptors
-                const std::byte* sampleDescRawMem = reinterpret_cast<const std::byte*>(&s.m_SampleDescriptors);
-                boost::hash_range(finalHash, sampleDescRawMem, sampleDescRawMem + sizeof(DXGI_SAMPLE_DESC));
+                boost::hash_combine(finalHash, GenericTypeHash(s.m_SampleDescriptors));
             }
             else if (s.m_CS)
             {
