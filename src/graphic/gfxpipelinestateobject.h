@@ -2,6 +2,7 @@
 
 #include "system/memorymappedfile.h"
 
+#include "graphic/dx12utils.h"
 #include "graphic/gfxrootsignature.h"
 #include "graphic/gfxvertexformat.h"
 #include "graphic/gfxshadermanager.h"

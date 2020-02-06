@@ -80,7 +80,7 @@ void GfxCommandListsManager::Initialize()
         {
             bbeProfile("CreateCommandQueue");
             DX12_CALL(gfxDevice.Dev()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&pool.m_CommandQueue)));
-        });
+        }).name("CreateCommandQueue");
 
     for (uint32_t i = 0; i < 32; ++i)
     {
@@ -100,7 +100,7 @@ void GfxCommandListsManager::Initialize()
                 static AdaptiveLock s_FreeCmdListsInitialPopulateLock;
                 bbeAutoLock(s_FreeCmdListsInitialPopulateLock);
                 pool.m_FreeCommandLists.push(newCmdList);
-            });
+            }).name(StringFormat("New CmdList[%u]", i));
     }
     System::GetInstance().GetTasksExecutor().run(tf).wait();
 }

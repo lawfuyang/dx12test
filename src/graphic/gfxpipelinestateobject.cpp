@@ -100,8 +100,6 @@ ID3D12PipelineState* GfxPSOManager::GetGraphicsPSO(const GfxPipelineStateObject&
     assert(m_PipelineLibrary);
     assert(pso.m_RootSig);
     assert(pso.m_VertexFormat);
-    assert(pso.m_VertexFormat->Dev().NumElements > 0);
-    assert(pso.m_VertexFormat->Dev().pInputElementDescs);
     assert(pso.m_VS);
     assert(pso.m_VS->GetBlob());
     assert(pso.m_PS ? pso.m_PS->GetBlob() != nullptr : true);
