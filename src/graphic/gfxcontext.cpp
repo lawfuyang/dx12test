@@ -61,7 +61,18 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
         vBufferView.BufferLocation = m_VertexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
         vBufferView.StrideInBytes = m_VertexBuffer->GetStrideInBytes();
         vBufferView.SizeInBytes = m_VertexBuffer->GetSizeInBytes();
+
         m_CommandList->Dev()->IASetVertexBuffers(0, 1, &vBufferView);
+
+        if (m_IndexBuffer)
+        {
+            D3D12_INDEX_BUFFER_VIEW indexBufferView;
+            indexBufferView.BufferLocation = m_IndexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
+            indexBufferView.Format = m_IndexBuffer->GetFormat();
+            indexBufferView.SizeInBytes = m_IndexBuffer->GetSizeInBytes();
+
+            m_CommandList->Dev()->IASetIndexBuffer(&indexBufferView);
+        }
     }
 
     // Output Merger
@@ -92,4 +103,17 @@ void GfxContext::DrawInstanced(uint32_t vertexCountPerInstance, uint32_t instanc
     CompileAndSetGraphicsPipelineState();
 
     m_CommandList->Dev()->DrawInstanced(vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
+}
+
+void GfxContext::DrawIndexedInstanced(uint32_t instanceCount, uint32_t startIndexLocation, uint32_t baseVertexLocation, uint32_t startInstanceLocation)
+{
+    bbeProfileFunction();
+
+    assert(m_IndexBuffer);
+
+    CompileAndSetGraphicsPipelineState();
+
+    const uint32_t indexCountPerInstance = m_IndexBuffer->GetSizeInBytes() / (m_IndexBuffer->GetFormat() == DXGI_FORMAT_R16_UINT ? 2 : 4);
+
+    m_CommandList->Dev()->DrawIndexedInstanced(indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
 }

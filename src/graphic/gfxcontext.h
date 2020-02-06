@@ -15,6 +15,7 @@ class GfxPSOManager;
 class GfxRootSignature;
 class GfxShaderManager;
 class GfxVertexBuffer;
+class GfxIndexBuffer;
 
 class GfxContext
 {
@@ -22,6 +23,7 @@ public:
     void ClearRenderTargetView(GfxRenderTargetView& rtv, XMFLOAT4 clearColor) const;
     void SetRenderTarget(uint32_t idx, GfxRenderTargetView& rtv);
     void SetVertexBuffer(GfxVertexBuffer& vBuffer) { m_VertexBuffer = &vBuffer; }
+    void SetIndexBuffer(GfxIndexBuffer& iBuffer) { m_IndexBuffer = &iBuffer; }
 
     GfxManager&             GetGfxManager()    { return *m_GfxManager; }
     GfxDevice&              GetDevice()        { return *m_Device; }
@@ -31,6 +33,7 @@ public:
     GfxPipelineStateObject& GetPSO()           { return m_PSO; }
 
     void DrawInstanced(uint32_t VertexCountPerInstance, uint32_t InstanceCount, uint32_t StartVertexLocation, uint32_t StartInstanceLocation);
+    void DrawIndexedInstanced(uint32_t InstanceCount, uint32_t StartIndexLocation, uint32_t BaseVertexLocation, uint32_t StartInstanceLocation);
 
 private:
     void CompileAndSetGraphicsPipelineState();
@@ -45,6 +48,7 @@ private:
     GfxPSOManager*       m_PSOManager                                       = nullptr;
     GfxShaderManager*    m_ShaderManager                                    = nullptr;
     GfxVertexBuffer*     m_VertexBuffer                                     = nullptr;
+    GfxIndexBuffer*      m_IndexBuffer                                      = nullptr;
     GfxRenderTargetView* m_RTVs[_countof(D3D12_RT_FORMAT_ARRAY::RTFormats)] = {};
 
     GfxPipelineStateObject m_PSO;

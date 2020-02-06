@@ -137,16 +137,17 @@ GfxCommandList* GfxCommandListsManager::Allocate(D3D12_COMMAND_LIST_TYPE cmdList
         assert(newCmdList);
         pool.m_FreeCommandLists.pop();
     }
-
-    // then 
-    if (!newCmdList)
+    else
     {
+        // if no free list, create a new one
         newCmdList = pool.m_CommandListsPool.construct();
         assert(newCmdList);
         newCmdList->Initialize(cmdListType);
     }
-
+    
+    // We should have a legit cmd list at this point
     assert(newCmdList);
+
     newCmdList->BeginRecording();
     pool.m_ActiveCommandLists.push(newCmdList);
 

@@ -44,19 +44,42 @@ private:
     DXGI_FORMAT m_Format = DXGI_FORMAT_UNKNOWN;
 };
 
-class GfxVertexBuffer : public GfxHazardTrackedResource
+class GfxBufferCommon
 {
 public:
-    ~GfxVertexBuffer();
-
-    D3D12MA::Allocation* Initialize(GfxContext& context, const void* vertexData, uint32_t numVertices, uint32_t vertexSize);
+    virtual ~GfxBufferCommon();
 
     uint32_t GetSizeInBytes() const { return m_SizeInBytes; }
+
+protected:
+    void CreateDefaultHeap(GfxContext& context, const CD3DX12_RESOURCE_DESC& resourceDesc, ComPtr<ID3D12Resource>& resource);
+    ID3D12Resource* CreateUploadHeapForDataInit(GfxContext& context, const CD3DX12_RESOURCE_DESC& resourceDesc);
+    void UploadInitData(GfxContext& context, const void* dataSrc, uint32_t rowPitch, uint32_t slicePitch, ID3D12Resource* dest, ID3D12Resource* src);
+
+    D3D12MA::Allocation* m_D3D12MABufferAllocation = nullptr;
+    uint32_t             m_SizeInBytes = 0;
+};
+
+class GfxVertexBuffer : public GfxHazardTrackedResource,
+                        public GfxBufferCommon
+{
+public:
+    D3D12MA::Allocation* Initialize(GfxContext& context, const void* vList, uint32_t numVertices, uint32_t vertexSize);
+
     uint32_t GetStrideInBytes() const { return m_StrideInBytes; }
 
 private:
-    D3D12MA::Allocation* m_D3D12MABufferAllocation = nullptr;
-
-    uint32_t m_SizeInBytes   = 0;
     uint32_t m_StrideInBytes = 0;
+};
+
+class GfxIndexBuffer : public GfxHazardTrackedResource,
+                       public GfxBufferCommon
+{
+public:
+    D3D12MA::Allocation* Initialize(GfxContext& context, const void* iList, uint32_t numIndices, uint32_t indexSize);
+
+    DXGI_FORMAT GetFormat() const { return m_Format; }
+
+private:
+    DXGI_FORMAT m_Format = DXGI_FORMAT_R16_UINT;
 };
