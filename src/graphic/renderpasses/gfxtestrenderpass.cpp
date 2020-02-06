@@ -14,16 +14,14 @@ GfxTestRenderPass::GfxTestRenderPass(GfxContext& initContext)
     };
 
     // Define the geometry for a triangle.
-    const Vertex triangleVertices[] =
+    static const Vertex triangleVertices[] =
     {
         { { 0.0f, 0.25f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
         { { 0.25f, -0.25f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },
         { { -0.25f, -0.25f, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }
     };
 
-    D3D12MA::Allocation* alloc = m_TriangleVBuffer.Initialize(initContext, reinterpret_cast<const void*>(triangleVertices), _countof(triangleVertices), sizeof(Vertex));
-    assert(alloc);
-
+    D3D12MA::Allocation* alloc = m_TriangleVBuffer.Initialize(initContext, triangleVertices, _countof(triangleVertices), sizeof(Vertex));
     alloc->SetName(L"GfxTestRenderPass test triangle vertices");
 }
 

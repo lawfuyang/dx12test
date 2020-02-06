@@ -31,10 +31,13 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
 {
     assert(m_PSOManager);
     assert(m_CommandList);
-    assert(m_VertexBuffer);
-    assert(m_VertexBuffer->GetD3D12Resource());
-    assert(m_VertexBuffer->GetStrideInBytes() > 0);
-    assert(m_VertexBuffer->GetSizeInBytes() > 0);
+    if (m_VertexBuffer)
+    {
+        assert(m_PSO.m_VertexFormat);
+        assert(m_VertexBuffer->GetD3D12Resource());
+        assert(m_VertexBuffer->GetStrideInBytes() > 0);
+        assert(m_VertexBuffer->GetSizeInBytes() > 0);
+    }
 
     for (uint32_t i = 0; i < m_PSO.m_RenderTargets.NumRenderTargets; ++i)
     {
@@ -52,17 +55,22 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
     // Input Assembler
     m_CommandList->Dev()->IASetPrimitiveTopology(m_PSO.m_PrimitiveTopology);
 
-    D3D12_VERTEX_BUFFER_VIEW vBufferView;
-    vBufferView.BufferLocation = m_VertexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
-    vBufferView.StrideInBytes  = m_VertexBuffer->GetStrideInBytes();
-    vBufferView.SizeInBytes    = m_VertexBuffer->GetSizeInBytes();
-    m_CommandList->Dev()->IASetVertexBuffers(0, 1, &vBufferView);
+    if (m_VertexBuffer)
+    {
+        D3D12_VERTEX_BUFFER_VIEW vBufferView;
+        vBufferView.BufferLocation = m_VertexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
+        vBufferView.StrideInBytes = m_VertexBuffer->GetStrideInBytes();
+        vBufferView.SizeInBytes = m_VertexBuffer->GetSizeInBytes();
+        m_CommandList->Dev()->IASetVertexBuffers(0, 1, &vBufferView);
+    }
 
     // Output Merger
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[_countof(D3D12_RT_FORMAT_ARRAY::RTFormats)] = {};
     for (uint32_t i = 0; i < m_PSO.m_RenderTargets.NumRenderTargets; ++i)
     {
         rtvHandles[i] = m_RTVs[i]->GetDescriptorHeap().GetCPUDescHandle();
+
+        m_RTVs[i]->Transition(*m_CommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
     }
     m_CommandList->Dev()->OMSetRenderTargets(m_PSO.m_RenderTargets.NumRenderTargets, rtvHandles, FALSE, nullptr); // TODO: Add support for DepthStencil RTV
 

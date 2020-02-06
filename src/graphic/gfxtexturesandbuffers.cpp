@@ -100,9 +100,9 @@ D3D12MA::Allocation* GfxVertexBuffer::Initialize(GfxContext& context, const void
 
     // store vertex buffer in upload heap
     D3D12_SUBRESOURCE_DATA vertexSubresourceData = {};
-    vertexSubresourceData.pData = reinterpret_cast<const void*>(vertexData); // pointer to our vertex array
-    vertexSubresourceData.RowPitch = vertexSize;                             // size of all our triangle vertex data
-    vertexSubresourceData.SlicePitch = vertexSize;                           // also the size of our triangle vertex data
+    vertexSubresourceData.pData = vertexData;         // pointer to our vertex array
+    vertexSubresourceData.RowPitch = m_SizeInBytes;   // size of all our triangle vertex data
+    vertexSubresourceData.SlicePitch = m_SizeInBytes; // also the size of our triangle vertex data
 
     GfxCommandList& cmdList = context.GetCommandList();
 
@@ -124,5 +124,6 @@ D3D12MA::Allocation* GfxVertexBuffer::Initialize(GfxContext& context, const void
             vBufferUploadHeap->Release();
         });
 
+    assert(m_D3D12MABufferAllocation);
     return m_D3D12MABufferAllocation;
 }
