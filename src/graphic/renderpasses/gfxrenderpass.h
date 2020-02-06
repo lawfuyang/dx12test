@@ -9,7 +9,7 @@ public:
         : m_Name(name)
     {}
 
-    virtual ~GfxRenderPass() { g_Log.info("Destroying Render Pass: '{}'", m_Name); }
+    virtual ~GfxRenderPass() { g_Log.info("Destroyed Render Pass: '{}'", m_Name); }
 
     virtual void Render(GfxContext&) = 0;
 

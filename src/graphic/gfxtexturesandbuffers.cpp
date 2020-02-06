@@ -48,7 +48,7 @@ GfxBufferCommon::~GfxBufferCommon()
 
     if (m_D3D12MABufferAllocation)
     {
-        g_Log.info("Destroying D3D12MA::Allocation {}", utf8_encode(m_D3D12MABufferAllocation->GetName()));
+        g_Log.info("Destroying D3D12MA::Allocation '{}'", utf8_encode(m_D3D12MABufferAllocation->GetName()));
 
         m_D3D12MABufferAllocation->Release();
         m_D3D12MABufferAllocation = nullptr;
