@@ -18,7 +18,7 @@ void GfxVertexFormat::Initialize(const D3D12_INPUT_ELEMENT_DESC* desc, uint32_t 
     }
 }
 
-void GfxVertexInputLayoutManager::Initialize()
+void GfxDefaultVertexFormats::Initialize()
 {
     bbeProfileFunction();
 

@@ -28,16 +28,16 @@ void GfxManager::Initialize(tf::Taskflow& tf)
     m_GfxDevice = &GfxManagerSingletons::gs_GfxDevice;
     m_SwapChain = &GfxManagerSingletons::gs_SwapChain;
 
-    tf::Task adapterInitTask           = tf.emplace([&]() { GfxAdapter::GetInstance().Initialize(); });
-    tf::Task deviceInitTask            = tf.emplace([&]() { m_GfxDevice->Initialize(); });
-    tf::Task cmdListInitTask           = tf.emplace([&]() { m_GfxDevice->GetCommandListsManager().Initialize(); });
-    tf::Task descHeapManagerInitTask   = tf.emplace([&]() { m_GfxDevice->GetDescriptorHeapManager().Initialize(); });
-    tf::Task swapChainInitTask         = tf.emplace([&]() { m_SwapChain->Initialize(); });
-    tf::Task GUIManagerInitTask        = tf.emplace([&]() { GUIManager::GetInstance().Initialize(); });
-    tf::Task rootSigManagerInitTask    = tf.emplace([&]() { GfxRootSignatureManager::GetInstance().Initialize(); });
-    tf::Task PSOManagerInitTask        = tf.emplace([&]() { GfxPSOManager::GetInstance().Initialize(); });
-    tf::Task shaderManagerInitTask     = tf.emplace([&]() { GfxShaderManager::GetInstance().Initialize(); });
-    tf::Task vertexInputLayoutInitTask = tf.emplace([&]() { GfxVertexInputLayoutManager::GetInstance().Initialize(); });
+    tf::Task adapterInitTask         = tf.emplace([&]() { GfxAdapter::GetInstance().Initialize(); });
+    tf::Task deviceInitTask          = tf.emplace([&]() { m_GfxDevice->Initialize(); });
+    tf::Task cmdListInitTask         = tf.emplace([&]() { m_GfxDevice->GetCommandListsManager().Initialize(); });
+    tf::Task descHeapManagerInitTask = tf.emplace([&]() { m_GfxDevice->GetDescriptorHeapManager().Initialize(); });
+    tf::Task swapChainInitTask       = tf.emplace([&]() { m_SwapChain->Initialize(); });
+    tf::Task GUIManagerInitTask      = tf.emplace([&]() { GUIManager::GetInstance().Initialize(); });
+    tf::Task rootSigManagerInitTask  = tf.emplace([&]() { GfxRootSignatureManager::GetInstance().Initialize(); });
+    tf::Task PSOManagerInitTask      = tf.emplace([&]() { GfxPSOManager::GetInstance().Initialize(); });
+    tf::Task shaderManagerInitTask   = tf.emplace([&]() { GfxShaderManager::GetInstance().Initialize(); });
+    tf::Task vertexFormatsInitTask   = tf.emplace([&]() { GfxDefaultVertexFormats::Initialize(); });
 
     tf::Task renderPassesInitTask = tf.emplace([&]()
         {

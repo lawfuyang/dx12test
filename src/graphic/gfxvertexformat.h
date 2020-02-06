@@ -1,13 +1,5 @@
 #pragma once
 
-class GfxVertexInputLayoutManager
-{
-public:
-    DeclareSingletonFunctions(GfxVertexInputLayoutManager);
-
-    void Initialize();
-};
-
 class GfxVertexFormat
 {
 public:
@@ -24,6 +16,8 @@ private:
 
 struct GfxDefaultVertexFormats
 {
+    static void Initialize();
+
     inline static GfxVertexFormat Null;
     inline static GfxVertexFormat Position3f_Color4f;
     inline static GfxVertexFormat Position3f_TexCoord2f;
