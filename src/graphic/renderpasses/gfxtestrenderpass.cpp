@@ -10,15 +10,15 @@ GfxTestRenderPass::GfxTestRenderPass(GfxContext& initContext)
     struct Vertex
     {
         XMFLOAT3 m_Position = {};
-        XMFLOAT4 m_Color = {};
+        uint32_t m_Color = {};
     };
 
     // Define the geometry for a triangle.
     static const Vertex triangleVertices[] =
     {
-        { { 0.0f, 0.25f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
-        { { 0.25f, -0.25f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },
-        { { -0.25f, -0.25f, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }
+        { { 0.0f, 0.25f, 0.0f }, { 0xFF0000FF } },
+        { { 0.25f, -0.25f, 0.0f }, { 0xFF00FF00 } },
+        { { -0.25f, -0.25f, 0.0f }, { 0xFFFF0000 } }
     };
 
     D3D12MA::Allocation* alloc = m_TriangleVBuffer.Initialize(initContext, triangleVertices, _countof(triangleVertices), sizeof(Vertex));
