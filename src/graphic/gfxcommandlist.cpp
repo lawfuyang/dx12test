@@ -102,7 +102,7 @@ void GfxCommandListsManager::Initialize()
                 pool.m_FreeCommandLists.push(newCmdList);
             }).name(StringFormat("New CmdList[%u]", i));
     }
-    System::GetInstance().GetTasksExecutor().run(tf).wait();
+    g_TasksExecutor.run(tf).wait();
 }
 
 void GfxCommandListsManager::ShutDown()

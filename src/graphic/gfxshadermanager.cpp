@@ -34,5 +34,5 @@ void GfxShaderManager::Initialize()
             m_AllShaders[shaderIdx].Initialize(data);
         });
 
-    System::GetInstance().GetTasksExecutor().run(tf).wait();
+    g_TasksExecutor.run(tf).wait();
 }

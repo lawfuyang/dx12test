@@ -88,8 +88,8 @@ void GfxPSOManager::ShutDown()
         g_Log.info("No PSOs required to be saved to cache file");
     }
 
-    const bool ForceDeleteCacheFile = false;
-    m_MemoryMappedCacheFile.Destroy(ForceDeleteCacheFile);
+    const bool forceDeleteCacheFile = g_CommandLineOptions.m_PIXCapture;
+    m_MemoryMappedCacheFile.Destroy(forceDeleteCacheFile);
     m_PipelineLibrary.Reset();
 }
 

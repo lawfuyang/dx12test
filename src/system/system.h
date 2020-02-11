@@ -78,6 +78,8 @@ private:
 
     friend class FrameRateController;
 };
+#define g_System        System::GetInstance()
+#define g_TasksExecutor g_System.GetTasksExecutor()
 
 class FrameRateController
 {
@@ -91,3 +93,13 @@ private:
     std::chrono::high_resolution_clock::time_point m_FrameEndTime;
     std::chrono::high_resolution_clock::time_point m_200FPSFrameEndTime;
 };
+
+struct CommandLineOptions
+{
+    DeclareSingletonFunctions(CommandLineOptions);
+
+    void ParseCmdLine(char*);
+
+    bool m_PIXCapture = false;
+};
+#define g_CommandLineOptions CommandLineOptions::GetInstance()

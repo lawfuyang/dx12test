@@ -1,5 +1,6 @@
 #include "graphic/gfxmanager.h"
 #include "graphic/guimanager.h"
+#include "system.h"
 
 void System::ProcessWindowMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -92,4 +93,41 @@ FrameRateController::~FrameRateController()
     System::ms_FPS               = fps;
     System::ms_CappedFrameTimeMs = cappedFrameTimeMs;
     System::ms_CappedFPS         = cappedFPS;
+}
+
+namespace CommandLineOptionsCBs
+{
+    static void PIXCapture()
+    {
+        g_CommandLineOptions.m_PIXCapture = true;
+    }
+}
+
+#define CommandLineCB(argStr, func) { std::hash<std::string_view>{}(argStr), func }
+static const std::unordered_map<std::size_t, void(*)()> g_CommandLineOptionsCBs =
+{
+    CommandLineCB("pixcapture", CommandLineOptionsCBs::PIXCapture)
+};
+#undef CommandLineCB
+
+void CommandLineOptions::ParseCmdLine(char* cmdLine)
+{
+    g_Log.info("cmd line args: {}", cmdLine);
+
+    const char* delimiters = " ";
+    char* token = std::strtok(cmdLine, delimiters);
+    while (token)
+    {
+        const std::size_t tokenHash = std::hash<std::string>{}(token);
+        try
+        {
+            g_CommandLineOptionsCBs.at(tokenHash)();
+        }
+        catch (const std::exception & ex)
+        {
+            g_Log.error("CommandLineOptions error for '{}': {}", token, ex.what());
+        }
+
+        token = std::strtok(nullptr, delimiters);
+    }
 }

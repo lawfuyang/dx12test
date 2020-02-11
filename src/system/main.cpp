@@ -62,7 +62,7 @@ private:
             break;
         }
 
-        System::GetInstance().ProcessWindowMessage(hWnd, message, wParam, lParam);
+        g_System.ProcessWindowMessage(hWnd, message, wParam, lParam);
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
 
@@ -146,17 +146,18 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 {
     BBE_UNUSED_PARAM(hInstance);
     BBE_UNUSED_PARAM(hPrevInstance);
-    BBE_UNUSED_PARAM(lpCmdLine);
     BBE_UNUSED_PARAM(nCmdShow);
 
     // first, Init the logger
     Logger::GetInstance().Initialize("../bin/output.txt");
 
+    g_CommandLineOptions.ParseCmdLine(lpCmdLine);
+
     EngineWindowThread::Initialize();
 
-    System::GetInstance().Initialize();
-    System::GetInstance().Loop();
-    System::GetInstance().Shutdown();
+    g_System.Initialize();
+    g_System.Loop();
+    g_System.Shutdown();
 
     EngineWindowThread::Shutdown();
 }
