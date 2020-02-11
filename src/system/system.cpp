@@ -42,6 +42,8 @@ void System::Loop()
         g_Keyboard.Tick();
         g_Mouse.Tick(ms_RealFrameTimeMs);
         ++ms_SystemFrameNumber;
+
+        g_Profiler.Flip();
     } while (!m_Exit);
 
     g_Log.info("Exiting main loop");
