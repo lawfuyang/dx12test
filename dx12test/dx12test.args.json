@@ -1,0 +1,10 @@
+{
+  "FileVersion": 2,
+  "Id": "9e787ae2-dbf1-4408-8ceb-6bbef1d8c43f",
+  "Items": [
+    {
+      "Id": "6de53c5a-3f4f-43c3-aee6-088583035347",
+      "Command": "profileinit"
+    }
+  ]
+}

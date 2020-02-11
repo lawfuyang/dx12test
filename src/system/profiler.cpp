@@ -14,22 +14,46 @@ void SystemProfiler::Initialize()
     MicroProfileSetForceMetaCounters(true);
 }
 
+void SystemProfiler::InitializeGPUProfiler(void* pDevice, void* pCommandQueue)
+{
+    MicroProfileGpuInitD3D12(pDevice, 1, (void**)&pCommandQueue);
+    MicroProfileSetCurrentNodeD3D12(0);
+}
+
 void SystemProfiler::ShutDown()
 {
     g_Log.info("Shutting down profiler");
 
+    MicroProfileGpuShutdown();
     MicroProfileShutdown();
 }
 
-void SystemProfiler::Flip()
+void SystemProfiler::OnFlip()
 {
     MicroProfileFlip(nullptr);
 }
 
-void SystemProfiler::DumpProfilerBlocks()
+void SystemProfiler::DumpProfilerBlocks(bool condition, bool immediately, bool ignoreCD)
 {
-    const std::string dumpFilePath = StringFormat("..\\bin\\%s.csv", GetTimeStamp().c_str());
-    g_Log.info("Dumping profile capture {}", dumpFilePath.c_str());
+    if (!condition)
+        return;
 
-    MicroProfileDumpFile(nullptr, dumpFilePath.c_str(), 0.0f, 0.0f);
+    static StopWatch s_StopWatch;
+
+    if (ignoreCD || s_StopWatch.ElapsedMS() > 1000)
+    {
+        const std::string dumpFilePath = StringFormat("..\\bin\\Profiler_Results_%s.html", GetTimeStamp().c_str());
+        g_Log.info("Dumping profile capture {}", dumpFilePath.c_str());
+
+        if (immediately)
+        {
+            MicroProfileDumpFileImmediately(dumpFilePath.c_str(), nullptr, nullptr);
+        }
+        else
+        {
+            MicroProfileDumpFile(dumpFilePath.c_str(), nullptr, 0.0f, 0.0f);
+        }
+
+        s_StopWatch.Restart();
+    }
 }

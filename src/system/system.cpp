@@ -20,49 +20,63 @@ void System::Loop()
     {
         bbeProfile("Frame");
 
-        const FrameRateController frcInstance;
-
-        if (Keyboard::IsKeyPressed(Keyboard::KEY_P))
+        // limited FPS scope
         {
-            g_Profiler.DumpProfilerBlocks();
+            const FrameRateController frcInstance;
+
+            RunKeyboardCommands();
+
+            tf::Taskflow tf;
+            GfxManager::GetInstance().ScheduleGraphicTasks(tf);
+            m_Executor.run(tf).wait();
+
+            // make sure I/O ticks happen last
+            g_Keyboard.Tick();
+            g_Mouse.Tick(ms_RealFrameTimeMs);
+            ++ms_SystemFrameNumber;
         }
 
-        if (Keyboard::IsKeyPressed(Keyboard::KEY_J))
-        {
-            GfxManager::GetInstance().DumpGfxMemory();
-        }
-
-        tf::Taskflow tf;
-
-        GfxManager::GetInstance().ScheduleGraphicTasks(tf);
-
-        m_Executor.run(tf).wait();
-
-        // make sure I/O ticks happen last
-        g_Keyboard.Tick();
-        g_Mouse.Tick(ms_RealFrameTimeMs);
-        ++ms_SystemFrameNumber;
-
-        g_Profiler.Flip();
+        g_Profiler.OnFlip();
     } while (!m_Exit);
 
     g_Log.info("Exiting main loop");
 }
 
+void System::RunKeyboardCommands()
+{
+    g_Profiler.DumpProfilerBlocks(Keyboard::IsKeyPressed(Keyboard::KEY_P));
+
+    if (Keyboard::IsKeyPressed(Keyboard::KEY_J))
+    {
+        GfxManager::GetInstance().DumpGfxMemory();
+    }
+}
+
 void System::Initialize()
 {
+    g_Profiler.Initialize();
+
+    bbeConditionalProfile(g_CommandLineOptions.m_ProfileInit, "System::Initialize");
+
     tf::Taskflow tf;
 
     GfxManager::GetInstance().Initialize(tf);
     // TODO: init other System/Engine/Physics systems here in parallel
 
     m_Executor.run(tf).wait();
+
+    g_Profiler.DumpProfilerBlocks(g_CommandLineOptions.m_ProfileInit, true, true);
 }
 
 void System::Shutdown()
 {
-    GfxManager::GetInstance().ShutDown();
+    {
+        bbeConditionalProfile(g_CommandLineOptions.m_ProfileShutdown, "System::Shutdown");
 
+        GfxManager::GetInstance().ShutDown();
+    }
+
+    g_Profiler.DumpProfilerBlocks(g_CommandLineOptions.m_ProfileShutdown, true, true);
     g_Profiler.ShutDown();
 }
 

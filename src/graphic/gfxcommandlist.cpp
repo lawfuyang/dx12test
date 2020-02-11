@@ -62,9 +62,9 @@ void GfxCommandListsManager::Initialize()
 
     GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
 
-    CommandListPool& pool = GetPoolFromType(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    CommandListPool& directPool = m_DirectPool;
 
-    assert(pool.m_CommandQueue.Get() == nullptr);
+    assert(directPool.m_CommandQueue.Get() == nullptr);
 
     // Describe and create the command queue.
     D3D12_COMMAND_QUEUE_DESC queueDesc = {};
@@ -79,7 +79,7 @@ void GfxCommandListsManager::Initialize()
     tf.emplace([&]()
         {
             bbeProfile("CreateCommandQueue");
-            DX12_CALL(gfxDevice.Dev()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&pool.m_CommandQueue)));
+            DX12_CALL(gfxDevice.Dev()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&directPool.m_CommandQueue)));
         }).name("CreateCommandQueue");
 
     for (uint32_t i = 0; i < 32; ++i)
@@ -88,21 +88,22 @@ void GfxCommandListsManager::Initialize()
             {
                 static AdaptiveLock s_CmdListsPoolLock;
 
-                GfxCommandList* newCmdList = nullptr;
+                GfxCommandList* newCmdList = [&]()
                 {
                     bbeAutoLock(s_CmdListsPoolLock);
-                    newCmdList = pool.m_CommandListsPool.construct();
-                    assert(newCmdList);
-                }
-
+                    return directPool.m_CommandListsPool.construct();
+                }();
+                assert(newCmdList);
                 newCmdList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
                 static AdaptiveLock s_FreeCmdListsInitialPopulateLock;
                 bbeAutoLock(s_FreeCmdListsInitialPopulateLock);
-                pool.m_FreeCommandLists.push(newCmdList);
+                directPool.m_FreeCommandLists.push(newCmdList);
             }).name(StringFormat("New CmdList[%u]", i));
     }
     g_TasksExecutor.run(tf).wait();
+
+    g_Profiler.InitializeGPUProfiler(gfxDevice.Dev(), directPool.m_CommandQueue.Get());
 }
 
 void GfxCommandListsManager::ShutDown()
