@@ -88,6 +88,9 @@
     <ClCompile Include="..\extern\D3D12MemoryAllocator\src\D3D12MemAlloc.cpp">
       <Filter>extern\d3d12memalloc</Filter>
     </ClCompile>
+    <ClCompile Include="..\extern\microprofile\microprofile.cpp">
+      <Filter>extern\microprofile</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -201,6 +204,9 @@
     <ClInclude Include="..\extern\D3D12MemoryAllocator\src\D3D12MemAlloc.h">
       <Filter>extern\d3d12memalloc</Filter>
     </ClInclude>
+    <ClInclude Include="..\extern\microprofile\microprofile.h">
+      <Filter>extern\microprofile</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="system">
@@ -223,6 +229,9 @@
     </Filter>
     <Filter Include="extern\d3d12memalloc">
       <UniqueIdentifier>{aac21eff-8d1a-40a9-b5a9-a35ed9aafe13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="extern\microprofile">
+      <UniqueIdentifier>{d4597559-9270-4817-85c4-19684bd42d6d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

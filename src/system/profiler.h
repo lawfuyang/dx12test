@@ -1,47 +1,30 @@
 #pragma once
 
-#define BUILD_WITH_EASY_PROFILER
-#include "extern/easy/profiler.h"
+#define MICROPROFILE_ENABLED 1
+#define MICROPROFILE_MAX_FRAME_HISTORY 60
+#define MICROPROFILE_GPU_TIMERS_D3D12 1
+#include "extern/microprofile/microprofile.h"
 
-#include "system/stopwatch.h"
 #include "system/utils.h"
 
 class SystemProfiler
 {
 public:
-    static void EnableProfiling();
-    static void DisableProfilingAndDumpToFile();
+    DeclareSingletonFunctions(SystemProfiler);
 
-    static bool IsDumpingBlocks() { return ms_DumpingBlocks; }
-
-private:
-    inline static uint32_t ms_FramesProfiled = 0;
-    inline static float    ms_MsProfiled     = 0.0f;
-    inline static bool     ms_DumpingBlocks  = false;
-
-    friend class ProfilerInstance;
+    void Initialize();
+    void ShutDown();
+    void Flip();
+    void DumpProfilerBlocks();
 };
+#define g_Profiler SystemProfiler::GetInstance()
 
-class ProfilerInstance
-{
-public:
-    ProfilerInstance(bool dumpOnExitScope = false);
-    ~ProfilerInstance();
+//#define bbeProfile(str)           EASY_BLOCK(str, (profiler::color_t)(GetCompileTimeCRC32(str) | 0XFF000000))
+//#define bbeProfileFunction()      EASY_BLOCK(EASY_FUNC_NAME, (profiler::color_t)(GetCompileTimeCRC32(EASY_FUNC_NAME) | 0XFF000000))
+//#define bbeProfileBlockBegin(str) EASY_NONSCOPED_BLOCK(str, profiler::colors::Red);
+//#define bbeProfileBlockEnd()      EASY_END_BLOCK;
 
-private:
-    bool m_DumpOnExitScope = false;
-
-    StopWatch m_StopWatch;
-};
-
-#if 0
-#define bbeProfile(str)           EASY_BLOCK(str, (profiler::color_t)(GetCompileTimeCRC32(str) | 0XFF000000))
-#define bbeProfileFunction()      EASY_BLOCK(EASY_FUNC_NAME, (profiler::color_t)(GetCompileTimeCRC32(EASY_FUNC_NAME) | 0XFF000000))
-#define bbeProfileBlockBegin(str) EASY_NONSCOPED_BLOCK(str, profiler::colors::Red);
-#define bbeProfileBlockEnd()      EASY_END_BLOCK;
-#endif
-
-#define bbeProfile(str)           ((void)0);
-#define bbeProfileFunction()      ((void)0);
-#define bbeProfileBlockBegin(str) ((void)0);
-#define bbeProfileBlockEnd()      ((void)0);
+#define bbeProfile(str)           MICROPROFILE_SCOPEI("CPU", str, (GetCompileTimeCRC32(str) | 0XFF000000))
+#define bbeProfileFunction()      MICROPROFILE_SCOPEI("CPU", __FUNCTION__, (GetCompileTimeCRC32(__FUNCTION__) | 0XFF000000))
+#define bbeProfileBlockBegin(str) ((void)0)
+#define bbeProfileBlockEnd()      ((void)0)

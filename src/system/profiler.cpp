@@ -1,59 +1,35 @@
 #include "system/profiler.h"
 
+#pragma comment(lib, "ws2_32.lib")
+
 #include "system/logger.h"
 
-void SystemProfiler::EnableProfiling()
+void SystemProfiler::Initialize()
 {
-    if (!::profiler::isEnabled())
-    {
-        EASY_PROFILER_ENABLE;
+    g_Log.info("Initializing profiler");
 
-        g_Log.info("Profiling enabled, capturing frame(s) data...");
-    }
+    //turn on profiling
+    MicroProfileOnThreadCreate("Main");
+    MicroProfileSetEnableAllGroups(true);
+    MicroProfileSetForceMetaCounters(true);
 }
 
-void SystemProfiler::DisableProfilingAndDumpToFile()
+void SystemProfiler::ShutDown()
 {
-    if (!::profiler::isEnabled())
-    {
-        g_Log.error("ms_FramesProfiled must be true!");
-        return;
-    }
+    g_Log.info("Shutting down profiler");
 
-    BBE_SCOPED_UNSET(bool, ms_DumpingBlocks, true);
+    MicroProfileShutdown();
+}
 
-    const std::string dumpFilePath = StringFormat("..\\bin\\%s.prof", GetTimeStamp().c_str());
+void SystemProfiler::Flip()
+{
+    MicroProfileFlip(nullptr);
+}
+
+void SystemProfiler::DumpProfilerBlocks()
+{
+    const std::string dumpFilePath = StringFormat("..\\bin\\%s.csv", GetTimeStamp().c_str());
     g_Log.info("Dumping profile capture {}", dumpFilePath.c_str());
 
-    const uint32_t numBlocksDumped = ::profiler::dumpBlocksToFile(dumpFilePath.c_str());
-    if (numBlocksDumped == 0) g_Log.error("Error dumping profile blocks!");
-
-    EASY_PROFILER_DISABLE;
-    ms_FramesProfiled = 0;
-    ms_MsProfiled = 0.0f;
-}
-
-ProfilerInstance::ProfilerInstance(bool dumpOnExitScope)
-    : m_DumpOnExitScope(dumpOnExitScope)
-{
-    if (dumpOnExitScope)
-    {
-        SystemProfiler::EnableProfiling();
-    }
-}
-
-ProfilerInstance::~ProfilerInstance()
-{
-    static const uint32_t s_MAX_FRAMES = 50;
-    static const float s_MAX_MS = 1000.0f;
-
-    if (::profiler::isEnabled())
-    {
-        if (m_DumpOnExitScope || 
-            SystemProfiler::ms_FramesProfiled++ >= s_MAX_FRAMES || 
-            (SystemProfiler::ms_MsProfiled += m_StopWatch.ElapsedMS()) >= s_MAX_MS)
-        {
-            SystemProfiler::DisableProfilingAndDumpToFile();
-        }
-    }
+    MicroProfileDumpFile(nullptr, dumpFilePath.c_str(), 0.0f, 0.0f);
 }

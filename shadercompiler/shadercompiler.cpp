@@ -11,7 +11,6 @@ using Microsoft::WRL::ComPtr;
 #include "extern/cpp-taskflow/taskflow/taskflow.hpp"
 
 #include "system/logger.h"
-#include "system/profiler.h"
 #include "system/utils.h"
 
 #include "graphic/dx12utils.h"
@@ -147,16 +146,11 @@ static bool ReadShaderModelFromFile()
 
 static void GetD3D12ShaderModels()
 {
-    bbeProfileFunction();
-
     if (ReadShaderModelFromFile())
         return;
 
     ComPtr<IDXGIFactory7> DXGIFactory;
-    {
-        bbeProfile("CreateDXGIFactory2");
-        DX12_CALL(CreateDXGIFactory2(0, IID_PPV_ARGS(&DXGIFactory)));
-    }
+    DX12_CALL(CreateDXGIFactory2(0, IID_PPV_ARGS(&DXGIFactory)));
 
     ComPtr<IDXGIAdapter1> hardwareAdapter;
     for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != DXGIFactory->EnumAdapters1(adapterIndex, &hardwareAdapter); ++adapterIndex)
@@ -181,8 +175,6 @@ static void GetD3D12ShaderModels()
         ComPtr<ID3D12Device6> D3DDevice;
         for (D3D_FEATURE_LEVEL level : featureLevels)
         {
-            bbeProfile("D3D12CreateDevice");
-
             if (SUCCEEDED(D3D12CreateDevice(hardwareAdapter.Get(), level, IID_PPV_ARGS(&D3DDevice))))
             {
                 g_Log.info("Created ID3D12Device. D3D_FEATURE_LEVEL: %s", GetD3DFeatureLevelName(level));
@@ -224,15 +216,12 @@ static void GetD3D12ShaderModels()
 
 static void GetD3D12ShaderModelsAndPopulateJobs()
 {
-    bbeProfileFunction();
-
     tf::Taskflow tf;
 
     tf.emplace([&]() { GetD3D12ShaderModels(); });
 
     tf.parallel_for(g_AllShaderFiles.begin(), g_AllShaderFiles.end(), [&](const std::string& fullPath)
     {
-        bbeProfile("Parsing file"); 
         g_Log.info("Found shader file: {}", GetFileNameFromPath(fullPath).c_str());
 
         const bool IsReadMode = true;
@@ -301,13 +290,9 @@ static void GetD3D12ShaderModelsAndPopulateJobs()
 
 static void RunAllJobs()
 {
-    bbeProfileFunction();
-
     tf::Taskflow tf;
     tf.parallel_for(g_AllShaderCompileJobs.begin(), g_AllShaderCompileJobs.end(), [&](ShaderCompileJob& shaderJob)
         {
-            bbeProfile("Run ShaderCompileJob");
-
             shaderJob.StartJob();
         });
 
@@ -336,8 +321,6 @@ static std::size_t GetFileContentsHash(const std::string& dir)
 
 static void PrintGeneratedEnumFile()
 {
-    bbeProfileFunction();
-
     const std::size_t existingHash = GetFileContentsHash(g_ShadersEnumsAutoGenDir);
 
     // populate the string with the generated shaders
@@ -368,8 +351,6 @@ static void PrintGeneratedEnumFile()
 
 static void PrintGeneratedByteCodeHeadersFile()
 {
-    bbeProfileFunction();
-
     const std::size_t existingHash = GetFileContentsHash(g_ShadersHeaderAutoGenDir);
 
     std::string generatedString;
@@ -435,9 +416,6 @@ static void PrintGeneratedFiles()
 
 static void RunShaderCompiler()
 {
-    // uncomment to profile entire ShaderCompiler
-    //const ProfilerInstance profilerInstance{ true }; bbeProfileFunction();
-    
     GetFilesInDirectory(g_AllShaderFiles, g_ShadersDir);
 
     GetD3D12ShaderModelsAndPopulateJobs();

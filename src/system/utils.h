@@ -132,8 +132,6 @@ static const std::string StringFormat(const char* format, Args&&... args)
     return std::string{ buf, buf + size - 1 }; // We don't want the '\0' inside
 }
 
-#define BBE_UNUSED_PARAM(p) ((void)&p)
-
 #define bbePrefetchData(address, offset_in_bytes) _mm_prefetch((const char*)(address) + offset_in_bytes, _MM_HINT_T0);
 
 #define bbeSimpleSwitchCaseString(x) case(x): return bbeTOSTRING(x);

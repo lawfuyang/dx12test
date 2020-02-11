@@ -20,13 +20,11 @@ void System::Loop()
     {
         bbeProfile("Frame");
 
-        // ProfilerInstance must be before FrameRateController
-        const ProfilerInstance profilerInstance{ /*ms_SystemFrameNumber == 0*/ };
         const FrameRateController frcInstance;
 
         if (Keyboard::IsKeyPressed(Keyboard::KEY_P))
         {
-            SystemProfiler::EnableProfiling();
+            g_Profiler.DumpProfilerBlocks();
         }
 
         if (Keyboard::IsKeyPressed(Keyboard::KEY_J))
@@ -51,9 +49,6 @@ void System::Loop()
 
 void System::Initialize()
 {
-    // uncomment to profile engine init phase
-    //const ProfilerInstance profilerInstance{ true }; bbeProfileFunction();
-
     tf::Taskflow tf;
 
     GfxManager::GetInstance().Initialize(tf);
@@ -64,10 +59,9 @@ void System::Initialize()
 
 void System::Shutdown()
 {
-    // uncomment to profile engine shutdown phase
-    //const ProfilerInstance profilerInstance{ true }; bbeProfileFunction();
-
     GfxManager::GetInstance().ShutDown();
+
+    g_Profiler.ShutDown();
 }
 
 FrameRateController::FrameRateController()
@@ -95,18 +89,12 @@ FrameRateController::~FrameRateController()
     System::ms_CappedFPS         = cappedFPS;
 }
 
-namespace CommandLineOptionsCBs
-{
-    static void PIXCapture()
-    {
-        g_CommandLineOptions.m_PIXCapture = true;
-    }
-}
-
 #define CommandLineCB(argStr, func) { std::hash<std::string_view>{}(argStr), func }
-static const std::unordered_map<std::size_t, void(*)()> g_CommandLineOptionsCBs =
+static const std::unordered_map<std::size_t, std::function<void()>> g_CommandLineOptionsCBs =
 {
-    CommandLineCB("pixcapture", CommandLineOptionsCBs::PIXCapture)
+    CommandLineCB("pixcapture", [&]() { g_CommandLineOptions.m_PIXCapture = true; }),
+    CommandLineCB("profileinit", [&]() { g_CommandLineOptions.m_ProfileInit = true; }),
+    CommandLineCB("profileshutdown", [&]() { g_CommandLineOptions.m_ProfileShutdown = true; })
 };
 #undef CommandLineCB
 

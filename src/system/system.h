@@ -101,5 +101,7 @@ struct CommandLineOptions
     void ParseCmdLine(char*);
 
     bool m_PIXCapture = false;
+    bool m_ProfileInit = false;
+    bool m_ProfileShutdown = false;
 };
 #define g_CommandLineOptions CommandLineOptions::GetInstance()

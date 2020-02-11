@@ -144,9 +144,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
                      LPTSTR    lpCmdLine,
                      int       nCmdShow)
 {
-    BBE_UNUSED_PARAM(hInstance);
-    BBE_UNUSED_PARAM(hPrevInstance);
-    BBE_UNUSED_PARAM(nCmdShow);
+    UNREFERENCED_PARAMETER(hInstance);
+    UNREFERENCED_PARAMETER(hPrevInstance);
+    UNREFERENCED_PARAMETER(nCmdShow);
 
     // first, Init the logger
     Logger::GetInstance().Initialize("../bin/output.txt");
