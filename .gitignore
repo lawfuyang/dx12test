@@ -14,5 +14,4 @@ dx12test/enc_temp_folder
 /src/template.cpp
 /tmp/
 /extern/boost/
-spdlog/src
 spdlog/x64
