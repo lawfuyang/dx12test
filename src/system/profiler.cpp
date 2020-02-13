@@ -40,7 +40,7 @@ void SystemProfiler::DumpProfilerBlocks(bool condition, bool immediately, bool i
 
     static StopWatch s_StopWatch;
 
-    if (ignoreCD || s_StopWatch.ElapsedMS() > 1000)
+    if (ignoreCD || s_StopWatch.ElapsedMS() > 100)
     {
         const std::string dumpFilePath = StringFormat("..\\bin\\Profiler_Results_%s.html", GetTimeStamp().c_str());
         g_Log.info("Dumping profile capture {}", dumpFilePath.c_str());
