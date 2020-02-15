@@ -4,6 +4,49 @@
 
 #include "system/logger.h"
 
+class ProfilerFlipLoop
+{
+public:
+    DeclareSingletonFunctions(ProfilerFlipLoop);
+
+    void Loop()
+    {
+        g_Log.info("Initializing ProfilerFlipLoop");
+
+        m_FlipTriggerEvent = ::CreateEventA(nullptr, true, false, "ProfilerFlipTriggerEvent");
+
+        while (1)
+        {
+            ::WaitForSingleObject(m_FlipTriggerEvent, INFINITE);
+
+            if (!m_Done)
+            {
+                MicroProfileFlip(nullptr);
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+
+    void OnFlip()
+    {
+        ::SetEvent(m_FlipTriggerEvent);
+        ::ResetEvent(m_FlipTriggerEvent);
+    }
+
+    void ShutDown()
+    {
+        m_Done = true;
+        OnFlip();
+    }
+
+private:
+    bool     m_Done             = false;
+    ::HANDLE m_FlipTriggerEvent = nullptr;
+};
+
 void SystemProfiler::Initialize()
 {
     g_Log.info("Initializing profiler");
@@ -12,6 +55,8 @@ void SystemProfiler::Initialize()
     MicroProfileOnThreadCreate("Main");
     MicroProfileSetEnableAllGroups(true);
     MicroProfileSetForceMetaCounters(true);
+
+    m_FlipThread = std::thread{ []() { ProfilerFlipLoop::GetInstance().Loop(); } };
 }
 
 void SystemProfiler::InitializeGPUProfiler(void* pDevice, void* pCommandQueue)
@@ -26,34 +71,30 @@ void SystemProfiler::ShutDown()
 
     MicroProfileGpuShutdown();
     MicroProfileShutdown();
+
+    ProfilerFlipLoop::GetInstance().ShutDown();
+    m_FlipThread.join();
 }
 
 void SystemProfiler::OnFlip()
 {
-    MicroProfileFlip(nullptr);
+    ProfilerFlipLoop::GetInstance().OnFlip();
 }
 
-void SystemProfiler::DumpProfilerBlocks(bool condition, bool immediately, bool ignoreCD)
+void SystemProfiler::DumpProfilerBlocks(bool condition, bool immediately)
 {
     if (!condition)
         return;
 
-    static StopWatch s_StopWatch;
+    const std::string dumpFilePath = StringFormat("..\\bin\\Profiler_Results_%s.html", GetTimeStamp().c_str());
+    g_Log.info("Dumping profile capture {}", dumpFilePath.c_str());
 
-    if (ignoreCD || s_StopWatch.ElapsedMS() > 100)
+    if (immediately)
     {
-        const std::string dumpFilePath = StringFormat("..\\bin\\Profiler_Results_%s.html", GetTimeStamp().c_str());
-        g_Log.info("Dumping profile capture {}", dumpFilePath.c_str());
-
-        if (immediately)
-        {
-            MicroProfileDumpFileImmediately(dumpFilePath.c_str(), nullptr, nullptr);
-        }
-        else
-        {
-            MicroProfileDumpFile(dumpFilePath.c_str(), nullptr, 0.0f, 0.0f);
-        }
-
-        s_StopWatch.Restart();
+        MicroProfileDumpFileImmediately(dumpFilePath.c_str(), nullptr, nullptr);
+    }
+    else
+    {
+        MicroProfileDumpFile(dumpFilePath.c_str(), nullptr, 0.0f, 0.0f);
     }
 }

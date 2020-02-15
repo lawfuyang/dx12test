@@ -65,7 +65,7 @@ void System::Initialize()
 
     m_Executor.run(tf).wait();
 
-    g_Profiler.DumpProfilerBlocks(g_CommandLineOptions.m_ProfileInit, true, true);
+    g_Profiler.DumpProfilerBlocks(g_CommandLineOptions.m_ProfileInit, true);
 }
 
 void System::Shutdown()
@@ -76,7 +76,7 @@ void System::Shutdown()
         GfxManager::GetInstance().ShutDown();
     }
 
-    g_Profiler.DumpProfilerBlocks(g_CommandLineOptions.m_ProfileShutdown, true, true);
+    g_Profiler.DumpProfilerBlocks(g_CommandLineOptions.m_ProfileShutdown, true);
     g_Profiler.ShutDown();
 }
 

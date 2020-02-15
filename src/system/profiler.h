@@ -16,7 +16,10 @@ public:
     void InitializeGPUProfiler(void* pDevice, void* pCommandQueue);
     void ShutDown();
     void OnFlip();
-    void DumpProfilerBlocks(bool condition, bool immediately = false, bool ignoreCD = false);
+    void DumpProfilerBlocks(bool condition, bool immediately = false);
+
+private:
+    std::thread m_FlipThread;
 };
 #define g_Profiler SystemProfiler::GetInstance()
 
