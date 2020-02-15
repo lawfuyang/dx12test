@@ -242,6 +242,11 @@ void GfxDevice::EndFrame()
 {
     bbeProfileFunction();
 
+    for (GfxContext& context : m_AllContexts)
+    {
+        context.GetGPUProfilerContext().Submit(m_CommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT));
+    }
+
     m_CommandListsManager.ExecuteAllActiveCommandLists();
     m_AllContexts.clear();
 }
@@ -262,6 +267,8 @@ GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType)
     m_AllContexts.push_back(GfxContext{});
     GfxContext& newContext = m_AllContexts.back();
 
+    newContext.m_ID = m_AllContexts.size() - 1;
+
     newContext.m_GfxManager    = &GfxManager::GetInstance();
     newContext.m_Device        = this;
     newContext.m_CommandList   = m_CommandListsManager.Allocate(cmdListType);
@@ -270,6 +277,8 @@ GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType)
 
     // Set default gfx root sig
     newContext.m_PSO.SetRootSignature(&DefaultRootSignatures::DefaultGraphicsRootSignature);
+
+    newContext.m_GPUProfilerContext.Initialize(newContext.m_CommandList->Dev(), newContext.m_ID);
 
     return newContext;
 }

@@ -36,7 +36,7 @@ void System::Loop()
             ++ms_SystemFrameNumber;
         }
 
-        g_Profiler.OnFlip();
+        g_Profiler.OnFlip(); // This shit costs ~0.4ms on the main CPU thread SingleThreaded!
     } while (!m_Exit);
 
     g_Log.info("Exiting main loop");
@@ -54,6 +54,8 @@ void System::RunKeyboardCommands()
 
 void System::Initialize()
 {
+    InitializeThreadIDs();
+
     g_Profiler.Initialize();
 
     bbeConditionalProfile(g_CommandLineOptions.m_ProfileInit, "System::Initialize");
@@ -66,6 +68,43 @@ void System::Initialize()
     m_Executor.run(tf).wait();
 
     g_Profiler.DumpProfilerBlocks(g_CommandLineOptions.m_ProfileInit, true);
+}
+
+uint32_t System::GetCurrentThreadID() const
+{
+    const std::optional<unsigned> workerThreadIdx = m_Executor.this_worker_id();
+    if (workerThreadIdx == std::nullopt)
+    {
+        // executor object will return nullopt for main thread
+        return 0;
+    }
+
+    return workerThreadIdx.value();
+}
+
+void System::InitializeThreadIDs()
+{
+    // nice helper to get thread ID in uint32_t instead of some stupid custom type
+    auto GetSTDThreadID = []() { return *reinterpret_cast<uint32_t*>(&std::this_thread::get_id()); };
+
+    // dummy array because 'taskflow' lib's parallel_for is quite limited...
+    bool* dummyArr = (bool*)alloca(sizeof(bool) * m_Executor.num_workers());
+
+    // 'taskflow' lib does not allow me to readily access its internal thread IDs easily... need to do this lame step
+    tf::Taskflow tf;
+    tf.parallel_for(dummyArr, dummyArr + m_Executor.num_workers(), [&](bool)
+        {
+            const uint32_t workerThreadIdx = m_Executor.this_worker_id().value();
+            const uint32_t STDThreadID = GetSTDThreadID();
+
+            static AdaptiveLock s_Lock;
+            bbeAutoLock(s_Lock);
+            m_STDThreadIDToIndexMap[STDThreadID] = workerThreadIdx + 1; //  +1, because main thread will be 0
+        });
+    m_Executor.run(tf).wait();
+
+    // for main thread
+    m_STDThreadIDToIndexMap[GetSTDThreadID()] = 0;
 }
 
 void System::Shutdown()

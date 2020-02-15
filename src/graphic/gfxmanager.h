@@ -26,6 +26,7 @@ public:
     GfxSwapChain& GetSwapChain() { return *m_SwapChain; }
 
 private:
+    void ScheduleRenderPasses(tf::Subflow& sf);
     void TransitionBackBufferForPresent();
 
     GfxDevice*    m_GfxDevice = nullptr;

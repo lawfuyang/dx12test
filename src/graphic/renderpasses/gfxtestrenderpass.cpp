@@ -91,6 +91,7 @@ GfxTestRenderPass::GfxTestRenderPass(GfxContext& initContext)
 void GfxTestRenderPass::Render(GfxContext& context)
 {
     bbeProfileFunction();
+    bbeProfileGPUFunction(context);
 
     context.GetCommandList().Dev()->SetName(L"GfxTestRenderPass::Render");
 

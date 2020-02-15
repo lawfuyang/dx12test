@@ -61,8 +61,10 @@ public:
     static uint32_t GetSystemFrameNumber() { return ms_SystemFrameNumber; }
 
     tf::Executor& GetTasksExecutor() { return m_Executor; }
+    uint32_t GetCurrentThreadID() const;
 
 private:
+    void InitializeThreadIDs();
     void RunKeyboardCommands();
 
     bool m_Exit             = false;
@@ -75,6 +77,8 @@ private:
     inline static float ms_CappedFPS         = 0.0f;
 
     tf::Executor m_Executor;
+
+    std::unordered_map<uint32_t, uint32_t> m_STDThreadIDToIndexMap;
 
     inline static uint32_t ms_SystemFrameNumber = 0;
 

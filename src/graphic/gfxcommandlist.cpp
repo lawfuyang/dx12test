@@ -80,30 +80,29 @@ void GfxCommandListsManager::Initialize()
         {
             bbeProfile("CreateCommandQueue");
             DX12_CALL(gfxDevice.Dev()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&directPool.m_CommandQueue)));
+            g_Profiler.InitializeGPUProfiler(gfxDevice.Dev(), directPool.m_CommandQueue.Get());
+            g_Profiler.RegisterGPUQueue(directPool.m_CommandQueue.Get(), "Direct Queue");
         }).name("CreateCommandQueue");
 
     for (uint32_t i = 0; i < 32; ++i)
     {
         tf.emplace([&]()
             {
-                static AdaptiveLock s_CmdListsPoolLock;
-
                 GfxCommandList* newCmdList = [&]()
                 {
-                    bbeAutoLock(s_CmdListsPoolLock);
+                    static AdaptiveLock s_Lock;
+                    bbeAutoLock(s_Lock);
                     return directPool.m_CommandListsPool.construct();
                 }();
                 assert(newCmdList);
                 newCmdList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-                static AdaptiveLock s_FreeCmdListsInitialPopulateLock;
-                bbeAutoLock(s_FreeCmdListsInitialPopulateLock);
+                static AdaptiveLock s_Lock;
+                bbeAutoLock(s_Lock);
                 directPool.m_FreeCommandLists.push(newCmdList);
             }).name(StringFormat("New CmdList[%u]", i));
     }
     g_TasksExecutor.run(tf).wait();
-
-    g_Profiler.InitializeGPUProfiler(gfxDevice.Dev(), directPool.m_CommandQueue.Get());
 }
 
 void GfxCommandListsManager::ShutDown()

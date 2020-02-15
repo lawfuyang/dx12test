@@ -1,5 +1,7 @@
 #pragma once
 
+#include "system/profiler.h"
+
 #include "graphic/gfxpipelinestateobject.h"
 #include "graphic/gfxvertexformat.h"
 #include "graphic/gfxswapchain.h"
@@ -25,12 +27,13 @@ public:
     void SetVertexBuffer(GfxVertexBuffer& vBuffer) { m_VertexBuffer = &vBuffer; }
     void SetIndexBuffer(GfxIndexBuffer& iBuffer) { m_IndexBuffer = &iBuffer; }
 
-    GfxManager&             GetGfxManager()    { return *m_GfxManager; }
-    GfxDevice&              GetDevice()        { return *m_Device; }
-    GfxCommandList&         GetCommandList()   { return *m_CommandList; }
-    GfxPSOManager&          GetPSOManager()    { return *m_PSOManager; }
-    GfxShaderManager&       GetShaderManager() { return *m_ShaderManager; }
-    GfxPipelineStateObject& GetPSO()           { return m_PSO; }
+    GfxManager&             GetGfxManager()         { return *m_GfxManager; }
+    GfxDevice&              GetDevice()             { return *m_Device; }
+    GfxCommandList&         GetCommandList()        { return *m_CommandList; }
+    GfxPSOManager&          GetPSOManager()         { return *m_PSOManager; }
+    GfxShaderManager&       GetShaderManager()      { return *m_ShaderManager; }
+    GfxPipelineStateObject& GetPSO()                { return m_PSO; }
+    GPUProfilerContext&     GetGPUProfilerContext() { return m_GPUProfilerContext; }
 
     void DrawInstanced(uint32_t VertexCountPerInstance, uint32_t InstanceCount, uint32_t StartVertexLocation, uint32_t StartInstanceLocation);
     void DrawIndexedInstanced(uint32_t InstanceCount, uint32_t StartIndexLocation, uint32_t BaseVertexLocation, uint32_t StartInstanceLocation);
@@ -38,6 +41,8 @@ public:
 private:
     void CompileAndSetGraphicsPipelineState();
     void CompileAndSetComputePipelineState();
+
+    uint32_t m_ID = 0xDEADBEEF;
 
     CD3DX12_VIEWPORT  m_Viewport{ 0.0f, 0.0f, System::APP_WINDOW_WIDTH, System::APP_WINDOW_HEIGHT };
     CD3DX12_RECT      m_ScissorRect{ 0, 0, static_cast<LONG>(System::APP_WINDOW_WIDTH), static_cast<LONG>(System::APP_WINDOW_HEIGHT) };
@@ -52,6 +57,8 @@ private:
     GfxRenderTargetView* m_RTVs[_countof(D3D12_RT_FORMAT_ARRAY::RTFormats)] = {};
 
     GfxPipelineStateObject m_PSO;
+
+    GPUProfilerContext m_GPUProfilerContext;
 
     friend class GfxDevice;
 };

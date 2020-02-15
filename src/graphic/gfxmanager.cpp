@@ -83,8 +83,6 @@ void GfxManager::ScheduleGraphicTasks(tf::Taskflow& tf)
 {
     bbeProfileFunction();
 
-    GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
-
     // consume all gfx commmands multi-threaded
     std::vector<std::function<void()>> gfxCommandsToConsume;
     m_GfxCommands.consume_all([&](const std::function<void()>& cmd) { gfxCommandsToConsume.push_back(cmd); });
@@ -96,17 +94,17 @@ void GfxManager::ScheduleGraphicTasks(tf::Taskflow& tf)
     tf::Task beginFrameTask = tf.emplace([&]() { BeginFrame(); });
     tf::Task transitionBackBufferTask = tf.emplace([&]() { TransitionBackBufferForPresent(); });
     tf::Task endFrameTask = tf.emplace([&]() { EndFrame(); });
-
-    // TODO: Implement proper automatic dynamic scheduling for render passes
-    tf::Task renderPassesRenderTasks = tf.emplace([&]()
-        {
-            GfxManagerSingletons::gs_TestRenderPass->Render(gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT));
-        });
+    tf::Task renderPassesRenderTasks = tf.emplace([&](tf::Subflow sf) { ScheduleRenderPasses(sf); });
 
     gfxCommandsConsumptionTasks.precede(beginFrameTask);
     beginFrameTask.precede(renderPassesRenderTasks);
     transitionBackBufferTask.succeed(renderPassesRenderTasks);
     endFrameTask.succeed(transitionBackBufferTask);
+}
+
+void GfxManager::ScheduleRenderPasses(tf::Subflow& sf)
+{
+    tf::Task testRenderPass = sf.emplace([&]() { GfxManagerSingletons::gs_TestRenderPass->Render(m_GfxDevice->GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT)); });
 }
 
 void GfxManager::BeginFrame()
