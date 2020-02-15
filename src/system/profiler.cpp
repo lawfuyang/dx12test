@@ -4,14 +4,14 @@
 
 #include "system/logger.h"
 
-class ProfilerFlipLoop
+class ProfilerFlipThread
 {
 public:
-    DeclareSingletonFunctions(ProfilerFlipLoop);
+    DeclareSingletonFunctions(ProfilerFlipThread);
 
     void Loop()
     {
-        g_Log.info("Initializing ProfilerFlipLoop");
+        g_Log.info("Initializing ProfilerFlipThread");
 
         m_FlipTriggerEvent = ::CreateEventA(nullptr, true, false, "ProfilerFlipTriggerEvent");
 
@@ -56,7 +56,7 @@ void SystemProfiler::Initialize()
     MicroProfileSetEnableAllGroups(true);
     MicroProfileSetForceMetaCounters(true);
 
-    m_FlipThread = std::thread{ []() { ProfilerFlipLoop::GetInstance().Loop(); } };
+    m_FlipThread = std::thread{ []() { ProfilerFlipThread::GetInstance().Loop(); } };
 }
 
 void SystemProfiler::InitializeGPUProfiler(void* pDevice, void* pCommandQueue)
@@ -72,13 +72,13 @@ void SystemProfiler::ShutDown()
     MicroProfileGpuShutdown();
     MicroProfileShutdown();
 
-    ProfilerFlipLoop::GetInstance().ShutDown();
+    ProfilerFlipThread::GetInstance().ShutDown();
     m_FlipThread.join();
 }
 
 void SystemProfiler::OnFlip()
 {
-    ProfilerFlipLoop::GetInstance().OnFlip();
+    ProfilerFlipThread::GetInstance().OnFlip();
 }
 
 void SystemProfiler::DumpProfilerBlocks(bool condition, bool immediately)
