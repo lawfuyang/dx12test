@@ -26,7 +26,6 @@ public:
 
     GfxContext& GenerateNewContext(D3D12_COMMAND_LIST_TYPE);
     GfxCommandListsManager& GetCommandListsManager() { return m_CommandListsManager; }
-    GfxDescriptorHeapManager& GetDescriptorHeapManager() { return m_DescriptorHeapManager; }
     D3D12MA::Allocator* GetD3D12MemoryAllocator() { assert(m_D3D12MemoryAllocator); return m_D3D12MemoryAllocator; }
 
     D3D_ROOT_SIGNATURE_VERSION GetHighSupportedRootSignature() const { return m_RootSigSupport.HighestVersion; }
@@ -37,7 +36,6 @@ private:
     void InitD3D12Allocator();
 
     GfxCommandListsManager   m_CommandListsManager;
-    GfxDescriptorHeapManager m_DescriptorHeapManager;
     GfxFence                 m_GfxFence;
 
     std::vector<GfxContext> m_AllContexts;

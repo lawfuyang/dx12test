@@ -27,7 +27,7 @@ void System::Loop()
             RunKeyboardCommands();
 
             tf::Taskflow tf;
-            GfxManager::GetInstance().ScheduleGraphicTasks(tf);
+            g_GfxManager.ScheduleGraphicTasks(tf);
             m_Executor.run(tf).wait();
 
             // make sure I/O ticks happen last
@@ -48,7 +48,7 @@ void System::RunKeyboardCommands()
 
     if (Keyboard::IsKeyPressed(Keyboard::KEY_J))
     {
-        GfxManager::GetInstance().DumpGfxMemory();
+        g_GfxManager.DumpGfxMemory();
     }
 }
 
@@ -62,7 +62,7 @@ void System::Initialize()
 
     tf::Taskflow tf;
 
-    GfxManager::GetInstance().Initialize(tf);
+    g_GfxManager.Initialize(tf);
     // TODO: init other System/Engine/Physics systems here in parallel
 
     m_Executor.run(tf).wait();
@@ -112,7 +112,7 @@ void System::Shutdown()
     {
         bbeConditionalProfile(g_CommandLineOptions.m_ProfileShutdown, "System::Shutdown");
 
-        GfxManager::GetInstance().ShutDown();
+        g_GfxManager.ShutDown();
     }
 
     g_Profiler.DumpProfilerBlocks(g_CommandLineOptions.m_ProfileShutdown, true);

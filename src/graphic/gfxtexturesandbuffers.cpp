@@ -27,7 +27,7 @@ void GfxRenderTargetView::Initialize(ID3D12Resource* resource, DXGI_FORMAT forma
 {
     bbeProfileFunction();
 
-    GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
     m_GfxDescriptorHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 
@@ -36,7 +36,7 @@ void GfxRenderTargetView::Initialize(ID3D12Resource* resource, DXGI_FORMAT forma
 
     {
         bbeProfile("CreateRenderTargetView");
-        gfxDevice.Dev()->CreateRenderTargetView(m_Resource.Get(), nullptr, m_GfxDescriptorHeap.GetCPUDescHandle());
+        gfxDevice.Dev()->CreateRenderTargetView(m_Resource.Get(), nullptr, m_GfxDescriptorHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
     }
 
     m_Format = format;
@@ -172,6 +172,16 @@ D3D12MA::Allocation* GfxIndexBuffer::Initialize(GfxContext& context, const void*
 
     // transition the index buffer data from copy destination state to index buffer state
     Transition(context.GetCommandList(), D3D12_RESOURCE_STATE_INDEX_BUFFER);
+
+    assert(m_D3D12MABufferAllocation);
+    return m_D3D12MABufferAllocation;
+}
+
+D3D12MA::Allocation* GfxConstantBuffer::Initialize()
+{
+    bbeProfileFunction();
+
+    m_GfxDescriptorHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 
     assert(m_D3D12MABufferAllocation);
     return m_D3D12MABufferAllocation;

@@ -8,7 +8,7 @@ void GfxFence::Initialize()
 {
     bbeProfileFunction();
 
-    GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
     const UINT64 initialValue = 0;
 

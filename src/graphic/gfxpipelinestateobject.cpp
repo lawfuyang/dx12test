@@ -17,7 +17,7 @@ void GfxPSOManager::Initialize()
     const std::wstring cacheDir = utf8_decode(GetTempDirectory() + "D3D12PipelineLibraryCache.cache");
     m_MemoryMappedCacheFile.Init(cacheDir);
 
-    GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
     // Create a Pipeline Library from the serialized blob.
     const HRESULT hr = gfxDevice.Dev()->CreatePipelineLibrary(m_MemoryMappedCacheFile.GetData(), m_MemoryMappedCacheFile.GetSize(), IID_PPV_ARGS(&m_PipelineLibrary));
@@ -109,7 +109,7 @@ ID3D12PipelineState* GfxPSOManager::GetGraphicsPSO(const GfxPipelineStateObject&
     const std::size_t psoHash = std::hash<GfxPipelineStateObject>{}(pso);
     const std::wstring psoHashStr = std::to_wstring(psoHash);
 
-    GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
     // Describe and create the Graphics PSO
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
@@ -155,7 +155,7 @@ ID3D12PipelineState* GfxPSOManager::GetComputePSO(const GfxPipelineStateObject& 
     const std::size_t psoHash = std::hash<GfxPipelineStateObject>{}(pso);
     const std::wstring psoHashStr = std::to_wstring(psoHash);
 
-    GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
     // Describe and create the Compute PSO
     D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc = {};

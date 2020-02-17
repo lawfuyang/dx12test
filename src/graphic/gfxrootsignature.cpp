@@ -72,7 +72,7 @@ void GfxRootSignature::Compile()
 
     assert(m_RootSignature.Get() == nullptr);
 
-    GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
     const D3D_ROOT_SIGNATURE_VERSION highestRootSigVer = gfxDevice.GetHighSupportedRootSignature();
 
     assert(highestRootSigVer == D3D_ROOT_SIGNATURE_VERSION_1_1);

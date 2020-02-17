@@ -269,7 +269,7 @@ GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType)
 
     newContext.m_ID = m_AllContexts.size() - 1;
 
-    newContext.m_GfxManager    = &GfxManager::GetInstance();
+    newContext.m_GfxManager    = &g_GfxManager;
     newContext.m_Device        = this;
     newContext.m_CommandList   = m_CommandListsManager.Allocate(cmdListType);
     newContext.m_PSOManager    = &GfxPSOManager::GetInstance();

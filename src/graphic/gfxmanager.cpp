@@ -31,7 +31,6 @@ void GfxManager::Initialize(tf::Taskflow& tf)
     tf::Task adapterInitTask         = tf.emplace([&]() { GfxAdapter::GetInstance().Initialize(); });
     tf::Task deviceInitTask          = tf.emplace([&]() { m_GfxDevice->Initialize(); });
     tf::Task cmdListInitTask         = tf.emplace([&]() { m_GfxDevice->GetCommandListsManager().Initialize(); });
-    tf::Task descHeapManagerInitTask = tf.emplace([&]() { m_GfxDevice->GetDescriptorHeapManager().Initialize(); });
     tf::Task swapChainInitTask       = tf.emplace([&]() { m_SwapChain->Initialize(); });
     tf::Task GUIManagerInitTask      = tf.emplace([&]() { GUIManager::GetInstance().Initialize(); });
     tf::Task rootSigManagerInitTask  = tf.emplace([&]() { GfxRootSignatureManager::GetInstance().Initialize(); });
@@ -53,8 +52,8 @@ void GfxManager::Initialize(tf::Taskflow& tf)
         });
 
     deviceInitTask.succeed(adapterInitTask);
-    deviceInitTask.precede(cmdListInitTask, descHeapManagerInitTask, rootSigManagerInitTask, PSOManagerInitTask);
-    swapChainInitTask.succeed(deviceInitTask, cmdListInitTask, descHeapManagerInitTask);
+    deviceInitTask.precede(cmdListInitTask, rootSigManagerInitTask, PSOManagerInitTask);
+    swapChainInitTask.succeed(deviceInitTask, cmdListInitTask);
     renderPassesInitTask.succeed(swapChainInitTask, rootSigManagerInitTask, PSOManagerInitTask);
 }
 
@@ -104,6 +103,8 @@ void GfxManager::ScheduleGraphicTasks(tf::Taskflow& tf)
 
 void GfxManager::ScheduleRenderPasses(tf::Subflow& sf)
 {
+    bbeProfileFunction();
+
     tf::Task testRenderPass = sf.emplace([&]() { GfxManagerSingletons::gs_TestRenderPass->Render(m_GfxDevice->GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT)); });
 }
 

@@ -14,7 +14,7 @@ void GfxSwapChain::Initialize()
 
     assert(m_SwapChain.Get() == nullptr);
 
-    GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
     // Describe and create the swap chain.
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};

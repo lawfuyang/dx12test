@@ -8,7 +8,7 @@ void GfxCommandList::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType)
 {
     bbeProfileFunction();
 
-    GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
     m_Type = cmdListType;
 
@@ -60,7 +60,7 @@ void GfxCommandListsManager::Initialize()
     bbeProfileFunction();
     g_Log.info("Initializing GfxCommandListsManager");
 
-    GfxDevice& gfxDevice = GfxManager::GetInstance().GetGfxDevice();
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
     CommandListPool& directPool = m_DirectPool;
 

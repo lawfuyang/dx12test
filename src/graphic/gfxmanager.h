@@ -34,3 +34,4 @@ private:
 
     boost::lockfree::stack<std::function<void()>> m_GfxCommands{128};
 };
+#define g_GfxManager GfxManager::GetInstance()

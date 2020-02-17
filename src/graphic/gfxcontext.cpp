@@ -16,7 +16,7 @@ void GfxContext::ClearRenderTargetView(GfxRenderTargetView& rtv, XMFLOAT4 clearC
     const D3D12_RECT* pRects = nullptr;
 
     const FLOAT colorInFloat[] = { clearColor.x, clearColor.y, clearColor.z, clearColor.w };
-    m_CommandList->Dev()->ClearRenderTargetView(rtv.GetDescriptorHeap().GetCPUDescHandle(), colorInFloat, numRects, pRects);
+    m_CommandList->Dev()->ClearRenderTargetView(rtv.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), colorInFloat, numRects, pRects);
 }
 
 void GfxContext::SetRenderTarget(uint32_t idx, GfxRenderTargetView& rtv)
@@ -79,7 +79,7 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[_countof(D3D12_RT_FORMAT_ARRAY::RTFormats)] = {};
     for (uint32_t i = 0; i < m_PSO.m_RenderTargets.NumRenderTargets; ++i)
     {
-        rtvHandles[i] = m_RTVs[i]->GetDescriptorHeap().GetCPUDescHandle();
+        rtvHandles[i] = m_RTVs[i]->GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart();
 
         m_RTVs[i]->Transition(*m_CommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
     }

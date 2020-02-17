@@ -83,3 +83,14 @@ public:
 private:
     DXGI_FORMAT m_Format = DXGI_FORMAT_R16_UINT;
 };
+
+class GfxConstantBuffer : public GfxBufferCommon
+{
+public:
+    D3D12MA::Allocation* Initialize();
+
+    GfxDescriptorHeap& GetDescriptorHeap() { return m_GfxDescriptorHeap; }
+
+private:
+    GfxDescriptorHeap m_GfxDescriptorHeap;
+};
