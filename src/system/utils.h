@@ -69,24 +69,24 @@ namespace UtilsPrivate
     }
 }
 
-#define DeclareSingletonFunctions(ClassName)                                    \
-    public:                                                                     \
-        static ClassName& GetInstance()                                         \
-        {                                                                       \
-            static ClassName s_Instance;                                        \
-            return s_Instance;                                                  \
-        }                                                                       \
-    private:                                                                    \
-        ClassName()                                                             \
-        {                                                                       \
-            ms_Instance = this;                                                 \
-        }                                                                       \
-        ~ClassName() = default;                                                 \
-        ClassName(const ClassName&) = delete;                                   \
-        ClassName(ClassName&&) = delete;                                        \
-        ClassName& operator=(const ClassName&) = delete;                        \
-        ClassName& operator=(ClassName&&) = delete;                             \
-        inline static ClassName* ms_Instance = nullptr;                         \
+#define DeclareSingletonFunctions(ClassName)             \
+    public:                                              \
+        static ClassName& GetInstance()                  \
+        {                                                \
+            static ClassName s_Instance;                 \
+            return s_Instance;                           \
+        }                                                \
+    private:                                             \
+        ClassName()                                      \
+        {                                                \
+            ms_Instance = this;                          \
+        }                                                \
+        ~ClassName() = default;                          \
+        ClassName(const ClassName&) = delete;            \
+        ClassName(ClassName&&) = delete;                 \
+        ClassName& operator=(const ClassName&) = delete; \
+        ClassName& operator=(ClassName&&) = delete;      \
+        inline static ClassName* ms_Instance = nullptr;  \
     public:
 
 #define BBE_OPTIMIZE_OFF __pragma(optimize("",off))
