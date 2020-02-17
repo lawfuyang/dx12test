@@ -86,7 +86,7 @@ void GfxManager::ScheduleGraphicTasks(tf::Taskflow& tf)
     // consume all gfx commmands multi-threaded
     std::vector<std::function<void()>> gfxCommandsToConsume;
     m_GfxCommands.consume_all([&](const std::function<void()>& cmd) { gfxCommandsToConsume.push_back(cmd); });
-    tf::Task gfxCommandsConsumptionTasks = tf.emplace([gfxCommandsToConsume](tf::Subflow subFlow)
+    tf::Task gfxCommandsConsumptionTasks = tf.emplace([gfxCommandsToConsume](tf::Subflow& subFlow)
         {
             subFlow.parallel_for(gfxCommandsToConsume.begin(), gfxCommandsToConsume.end(), [](const std::function<void()>& cmd) { bbeProfile("GfxCommand_MT"); cmd(); });
         });
@@ -94,7 +94,7 @@ void GfxManager::ScheduleGraphicTasks(tf::Taskflow& tf)
     tf::Task beginFrameTask = tf.emplace([&]() { BeginFrame(); });
     tf::Task transitionBackBufferTask = tf.emplace([&]() { TransitionBackBufferForPresent(); });
     tf::Task endFrameTask = tf.emplace([&]() { EndFrame(); });
-    tf::Task renderPassesRenderTasks = tf.emplace([&](tf::Subflow sf) { ScheduleRenderPasses(sf); });
+    tf::Task renderPassesRenderTasks = tf.emplace([&](tf::Subflow& sf) { ScheduleRenderPasses(sf); });
 
     gfxCommandsConsumptionTasks.precede(beginFrameTask);
     beginFrameTask.precede(renderPassesRenderTasks);
