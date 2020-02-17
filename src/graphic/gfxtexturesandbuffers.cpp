@@ -55,53 +55,22 @@ GfxBufferCommon::~GfxBufferCommon()
     }
 }
 
-void GfxBufferCommon::CreateDefaultHeap(GfxContext& context, const CD3DX12_RESOURCE_DESC& resourceDesc, ComPtr<ID3D12Resource>& resource)
+void GfxBufferCommon::CreateHeap(GfxContext& context, D3D12_HEAP_TYPE heapType, const CD3DX12_RESOURCE_DESC& resourceDesc, D3D12_RESOURCE_STATES initialState, D3D12MA::Allocation*& allocHandle)
 {
     GfxDevice& gfxDevice = context.GetDevice();
     D3D12MA::Allocator* d3d12MemoryAllocator = gfxDevice.GetD3D12MemoryAllocator();
 
-    // Default heap is memory on the GPU. Only the GPU has access to this memory
-    // To get data into this heap, we will have to upload the data using an upload heap
     D3D12MA::ALLOCATION_DESC vertexBufferAllocDesc = {};
-    vertexBufferAllocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+    vertexBufferAllocDesc.HeapType = heapType;
 
+    ID3D12Resource* newHeap;
     DX12_CALL(d3d12MemoryAllocator->CreateResource(
         &vertexBufferAllocDesc,
-        &resourceDesc,                  // resource description for a buffer
-        D3D12_RESOURCE_STATE_COPY_DEST, // we will start this heap in the copy destination state since we will copy data from the upload heap to this heap
-        nullptr,                        // optimized clear value must be null for this type of resource. used for render targets and depth/stencil buffers
-        &m_D3D12MABufferAllocation,
-        IID_PPV_ARGS(&resource)));
-}
-
-ID3D12Resource* GfxBufferCommon::CreateUploadHeapForDataInit(GfxContext& context, const CD3DX12_RESOURCE_DESC& resourceDesc)
-{
-    GfxDevice& gfxDevice = context.GetDevice();
-    D3D12MA::Allocator* d3d12MemoryAllocator = gfxDevice.GetD3D12MemoryAllocator();
-
-    // Upload heaps are used to upload data to the GPU. CPU can write to it, GPU can read from it
-    // We will upload the buffer using this heap to the default heap
-    D3D12MA::ALLOCATION_DESC vBufferUploadAllocDesc = {};
-    vBufferUploadAllocDesc.HeapType = D3D12_HEAP_TYPE_UPLOAD;
-
-    ID3D12Resource* vBufferUploadHeap = nullptr;
-    D3D12MA::Allocation* vBufferUploadHeapAllocation = nullptr;
-    DX12_CALL(d3d12MemoryAllocator->CreateResource(
-        &vBufferUploadAllocDesc,
-        &resourceDesc,                     // resource description for a buffer
-        D3D12_RESOURCE_STATE_GENERIC_READ, // GPU will read from this buffer and copy its contents to the default heap
-        nullptr,
-        &vBufferUploadHeapAllocation,
-        IID_PPV_ARGS(&vBufferUploadHeap)));
-
-    // release the upload heap in the beginning of the next gfx frame, when the upload should be complete
-    context.GetGfxManager().AddGraphicCommand([vBufferUploadHeap, vBufferUploadHeapAllocation]()
-        {
-            vBufferUploadHeapAllocation->Release();
-            vBufferUploadHeap->Release();
-        });
-
-    return vBufferUploadHeap;
+        &resourceDesc,
+        initialState,
+        nullptr, // optimized clear value must be null for this type of resource. used for render targets and depth/stencil buffers
+        &allocHandle,
+        IID_PPV_ARGS(&newHeap)));
 }
 
 void GfxBufferCommon::UploadInitData(GfxContext& context, const void* dataSrc, uint32_t rowPitch, uint32_t slicePitch, ID3D12Resource* dest, ID3D12Resource* src)
@@ -123,6 +92,25 @@ void GfxBufferCommon::UploadInitData(GfxContext& context, const void* dataSrc, u
     assert(r);
 }
 
+void GfxBufferCommon::InitializeBufferWithInitData(GfxContext& context, const void* initData)
+{
+    // Create heap to hold final buffer data
+    CreateHeap(context, D3D12_HEAP_TYPE_DEFAULT, CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes), D3D12_RESOURCE_STATE_COPY_DEST, m_D3D12MABufferAllocation);
+    assert(m_D3D12MABufferAllocation);
+
+    // create upload heap to hold upload init data, and perform a CopyBufferRegion
+    D3D12MA::Allocation* uploadHeapAlloc = nullptr;
+    CreateHeap(context, D3D12_HEAP_TYPE_UPLOAD, CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes), D3D12_RESOURCE_STATE_GENERIC_READ, uploadHeapAlloc);
+    UploadInitData(context, initData, m_SizeInBytes, m_SizeInBytes, m_D3D12MABufferAllocation->GetResource(), uploadHeapAlloc->GetResource());
+
+    // we don't need this upload heap anymore... release it next frame
+    g_GfxManager.AddGraphicCommand([uploadHeapAlloc]()
+        {
+            uploadHeapAlloc->GetResource()->Release();
+            uploadHeapAlloc->Release();
+        });
+}
+
 D3D12MA::Allocation* GfxVertexBuffer::Initialize(GfxContext& context, const void* vList, uint32_t numVertices, uint32_t vertexSize)
 {
     bbeProfileFunction();
@@ -134,19 +122,15 @@ D3D12MA::Allocation* GfxVertexBuffer::Initialize(GfxContext& context, const void
     m_StrideInBytes = vertexSize;
     m_SizeInBytes = vertexSize * numVertices;
 
-    CreateDefaultHeap(context, CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes), m_Resource);
-
     // we will start this heap in the copy destination state since we will copy data from the upload heap to this heap
     SetCurrentState(D3D12_RESOURCE_STATE_COPY_DEST);
 
-    ID3D12Resource* uploadHeap = CreateUploadHeapForDataInit(context, CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes));
+    InitializeBufferWithInitData(context, vList);
+    m_Resource = m_D3D12MABufferAllocation->GetResource();
 
-    UploadInitData(context, vList, m_SizeInBytes, m_SizeInBytes, m_Resource.Get(), uploadHeap);
-
-    // transition the vertex buffer data from copy destination state to vertex buffer state
+    // after uploading init values, transition the vertex buffer data from copy destination state to vertex buffer state
     Transition(context.GetCommandList(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
-    assert(m_D3D12MABufferAllocation);
     return m_D3D12MABufferAllocation;
 }
 
@@ -161,19 +145,15 @@ D3D12MA::Allocation* GfxIndexBuffer::Initialize(GfxContext& context, const void*
     m_Format = indexSize == 2 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
     m_SizeInBytes = numIndices * indexSize;
 
-    CreateDefaultHeap(context, CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes), m_Resource);
-
     // we will start this heap in the copy destination state since we will copy data from the upload heap to this heap
     SetCurrentState(D3D12_RESOURCE_STATE_COPY_DEST);
 
-    ID3D12Resource* uploadHeap = CreateUploadHeapForDataInit(context, CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes));
+    InitializeBufferWithInitData(context, iList);
+    m_Resource = m_D3D12MABufferAllocation->GetResource();
 
-    UploadInitData(context, iList, m_SizeInBytes, m_SizeInBytes, m_Resource.Get(), uploadHeap);
-
-    // transition the index buffer data from copy destination state to index buffer state
+    // after uploading init values, transition the index buffer data from copy destination state to index buffer state
     Transition(context.GetCommandList(), D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
-    assert(m_D3D12MABufferAllocation);
     return m_D3D12MABufferAllocation;
 }
 
@@ -182,6 +162,10 @@ D3D12MA::Allocation* GfxConstantBuffer::Initialize()
     bbeProfileFunction();
 
     m_GfxDescriptorHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+
+    D3D12MA::ALLOCATION_DESC constantBufferUploadAllocDesc = {};
+    constantBufferUploadAllocDesc.HeapType = D3D12_HEAP_TYPE_UPLOAD;
+
 
     assert(m_D3D12MABufferAllocation);
     return m_D3D12MABufferAllocation;

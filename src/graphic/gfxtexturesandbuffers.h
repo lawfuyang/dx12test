@@ -18,6 +18,7 @@ class GfxHazardTrackedResource
 public:
     virtual ~GfxHazardTrackedResource() {}
 
+    void SetD3D12Resource(ID3D12Resource* resource) { m_Resource = resource; }
     ID3D12Resource* GetD3D12Resource() const { return m_Resource.Get(); }
 
     void Transition(GfxCommandList&, D3D12_RESOURCE_STATES newState);
@@ -52,8 +53,8 @@ public:
     uint32_t GetSizeInBytes() const { return m_SizeInBytes; }
 
 protected:
-    void CreateDefaultHeap(GfxContext& context, const CD3DX12_RESOURCE_DESC& resourceDesc, ComPtr<ID3D12Resource>& resource);
-    ID3D12Resource* CreateUploadHeapForDataInit(GfxContext& context, const CD3DX12_RESOURCE_DESC& resourceDesc);
+    void InitializeBufferWithInitData(GfxContext& context, const void* initData);
+    void CreateHeap(GfxContext&, D3D12_HEAP_TYPE, const CD3DX12_RESOURCE_DESC&, D3D12_RESOURCE_STATES initialState, D3D12MA::Allocation*&);
     void UploadInitData(GfxContext& context, const void* dataSrc, uint32_t rowPitch, uint32_t slicePitch, ID3D12Resource* dest, ID3D12Resource* src);
 
     D3D12MA::Allocation* m_D3D12MABufferAllocation = nullptr;
