@@ -5,26 +5,26 @@
 #include "graphic/gfxtexturesandbuffers.h"
 #include "graphic/gfxrootsignature.h"
 
-void GfxContext::ClearRenderTargetView(GfxRenderTargetView& rtv, XMFLOAT4 clearColor) const
+void GfxContext::ClearRenderTargetView(GfxTexture& tex, XMFLOAT4 clearColor) const
 {
     bbeProfileFunction();
 
     // TODO: merge all required resource barriers and run them all at once just before GfxDevice::ExecuteAllActiveCommandLists or something
-    rtv.Transition(*m_CommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    tex.Transition(*m_CommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
     const UINT numRects = 0;
     const D3D12_RECT* pRects = nullptr;
 
     const FLOAT colorInFloat[] = { clearColor.x, clearColor.y, clearColor.z, clearColor.w };
-    m_CommandList->Dev()->ClearRenderTargetView(rtv.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), colorInFloat, numRects, pRects);
+    m_CommandList->Dev()->ClearRenderTargetView(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), colorInFloat, numRects, pRects);
 }
 
-void GfxContext::SetRenderTarget(uint32_t idx, GfxRenderTargetView& rtv)
+void GfxContext::SetRenderTarget(uint32_t idx, GfxTexture& tex)
 {
     assert(idx < _countof(m_RTVs));
 
-    m_PSO.SetRenderTargetFormat(idx, rtv.GetFormat());
-    m_RTVs[idx] = &rtv;
+    m_PSO.SetRenderTargetFormat(idx, tex.GetFormat());
+    m_RTVs[idx] = &tex;
 }
 
 void GfxContext::CompileAndSetGraphicsPipelineState()

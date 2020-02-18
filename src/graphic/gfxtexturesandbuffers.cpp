@@ -23,7 +23,7 @@ void GfxHazardTrackedResource::Transition(GfxCommandList& cmdList, D3D12_RESOURC
     }
 }
 
-void GfxRenderTargetView::Initialize(ID3D12Resource* resource, DXGI_FORMAT format)
+void GfxTexture::Initialize(ID3D12Resource* resource, DXGI_FORMAT format)
 {
     bbeProfileFunction();
 

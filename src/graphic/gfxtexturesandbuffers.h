@@ -31,7 +31,7 @@ protected:
     ComPtr<ID3D12Resource> m_Resource;
 };
 
-class GfxRenderTargetView : public GfxHazardTrackedResource
+class GfxTexture : public GfxHazardTrackedResource
 {
 public:
     void Initialize(ID3D12Resource*, DXGI_FORMAT);
