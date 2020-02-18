@@ -34,7 +34,8 @@ protected:
 class GfxTexture : public GfxHazardTrackedResource
 {
 public:
-    void Initialize(ID3D12Resource*, DXGI_FORMAT);
+    void Initialize(DXGI_FORMAT, const std::string& resourceName = "");
+    void InitializeForSwapChain(ComPtr<IDXGISwapChain4>& swapChain, DXGI_FORMAT, uint32_t backBufferIdx);
 
     GfxDescriptorHeap& GetDescriptorHeap() { return m_GfxDescriptorHeap; }
 
@@ -65,7 +66,7 @@ class GfxVertexBuffer : public GfxHazardTrackedResource,
                         public GfxBufferCommon
 {
 public:
-    D3D12MA::Allocation* Initialize(GfxContext& context, const void* vList, uint32_t numVertices, uint32_t vertexSize);
+    D3D12MA::Allocation* Initialize(GfxContext& context, const void* vList, uint32_t numVertices, uint32_t vertexSize, const std::string& resourceName = "");
 
     uint32_t GetStrideInBytes() const { return m_StrideInBytes; }
 
@@ -77,7 +78,7 @@ class GfxIndexBuffer : public GfxHazardTrackedResource,
                        public GfxBufferCommon
 {
 public:
-    D3D12MA::Allocation* Initialize(GfxContext& context, const void* iList, uint32_t numIndices, uint32_t indexSize);
+    D3D12MA::Allocation* Initialize(GfxContext& context, const void* iList, uint32_t numIndices, uint32_t indexSize, const std::string& resourceName = "");
 
     DXGI_FORMAT GetFormat() const { return m_Format; }
 

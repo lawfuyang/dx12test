@@ -53,10 +53,7 @@ void GfxSwapChain::Initialize()
     // Create a RTV for each frame.
     for (uint32_t i = 0; i < _countof(m_RenderTargets); ++i)
     {
-        ComPtr<ID3D12Resource> backBufferResource;
-        DX12_CALL(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&backBufferResource)));
-        m_RenderTargets[i].Initialize(backBufferResource.Get(), DXGI_FORMAT_R8G8B8A8_UNORM);
-        m_RenderTargets[i].GetD3D12Resource()->SetName(utf8_decode(StringFormat("Back Buffer RTV %d", i)).c_str());
+        m_RenderTargets[i].InitializeForSwapChain(m_SwapChain, DXGI_FORMAT_R8G8B8A8_UNORM, i);
     }
 }
 
