@@ -16,6 +16,7 @@ using Microsoft::WRL::ComPtr;
 #include "graphic/dx12utils.h"
 
 struct ShaderCompileJob;
+struct ConstantBufferDesc;
 
 std::string g_AppDir;
 std::string g_ShadersTmpDir;
@@ -24,9 +25,12 @@ std::string g_ShadersDir;
 std::string g_DXCDir;
 std::string g_ShadersEnumsAutoGenDir;
 std::string g_ShadersHeaderAutoGenDir;
+std::string g_ShadersConstantBuffersAutoGenDir;
 
-std::vector<std::string>      g_AllShaderFiles;
-std::vector<ShaderCompileJob> g_AllShaderCompileJobs;
+std::vector<std::string>                     g_AllShaderFiles;
+std::vector<ShaderCompileJob>                g_AllShaderCompileJobs;
+std::vector<ConstantBufferDesc>              g_AllConstantBuffers;
+std::unordered_map<std::size_t, std::string> g_HLSLTypeToCPPTypeMap;
 
 D3D_SHADER_MODEL g_HighestShaderModel = D3D_SHADER_MODEL_5_1;
 
@@ -37,6 +41,7 @@ const char* g_TargetProfileVersionStrings[] = { "_6_0", "_6_1", "_6_2", "_6_3", 
 
 const std::string g_ShaderDeclarationStr    = "ShaderDeclaration:";
 const std::string g_EntryPointStr           = "EntryPoint:";
+const std::string g_CBufferStr              = "cbuffer";
 const std::string g_EndShaderDeclarationStr = "EndShaderDeclaration";
 
 tf::Executor g_TasksExecutor;
@@ -124,6 +129,32 @@ struct ShaderCompileJob
     std::string m_ShaderName;
     std::string m_ShaderObjCodeVarName;
     std::string m_ShaderObjCodeFileDir;
+};
+
+struct ConstantBufferDesc
+{
+    struct CPPTypeVarNamePair
+    {
+        std::string m_CPPVarType;
+        std::string m_VarName;
+    };
+
+    void AddVariable(const std::string& hlslType, const std::string& varName)
+    {
+        assert(varName[0] == 'm' && varName[1] == '_');
+
+        CPPTypeVarNamePair newVar;
+
+        newVar.m_CPPVarType = g_HLSLTypeToCPPTypeMap.at(std::hash<std::string>{}(hlslType));
+        newVar.m_VarName = varName;
+
+        m_Variables.push_back(newVar);
+    }
+
+    std::string m_BufferName;
+    uint32_t    m_Register = 99;
+
+    std::vector<CPPTypeVarNamePair> m_Variables;
 };
 
 static bool ReadShaderModelFromFile()
@@ -214,6 +245,82 @@ static void GetD3D12ShaderModels()
     }
 }
 
+static void HandleShaderDeclaration(ShaderCompileJob& newJob, const std::string& fullPath, char* token)
+{
+    if (std::strncmp(token, g_ShaderDeclarationStr.c_str(), g_ShaderDeclarationStr.size()) == 0)
+    {
+        assert(newJob.m_ShaderName.size() == 0);
+        newJob.m_ShaderName = token + g_ShaderDeclarationStr.size();
+        newJob.m_ShaderFilePath = fullPath;
+
+        for (int i = 0; i < _countof(g_ShaderTypeStrings); ++i)
+        {
+            if (newJob.m_ShaderName[0] == g_ShaderTypeStrings[i][0])
+            {
+                newJob.m_ShaderType = (ShaderType)i;
+                break;
+            }
+        }
+    }
+}
+
+static void HandleShaderEntryPoint(ShaderCompileJob& newJob, char* token)
+{
+    if (std::strncmp(token, g_EntryPointStr.c_str(), g_EntryPointStr.size()) == 0)
+    {
+        assert(newJob.m_ShaderName.size() > 0);
+        newJob.m_EntryPoint = token + g_EntryPointStr.size();
+    }
+}
+
+static void HandleConstantBuffer(CFileWrapper& shaderFile, char (&line)[MAX_PATH], char* token)
+{
+    if (std::strncmp(token, g_CBufferStr.c_str(), g_CBufferStr.size()) == 0)
+    {
+        // assume CBuffer declaration line format == "cbuffer BufferName : register(b0)"
+        // assume no comments in the whole declaration
+        // assume all variables prefix with 'g_', as we will rename it to 'm_' in the engine
+
+        ConstantBufferDesc newCBuffer;
+
+        // get cbuffer name and register
+        char* bufferName = std::strtok(NULL, " ");
+        char* colon = std::strtok(NULL, " ");
+        char* registerStr = std::strtok(NULL, " ");
+        newCBuffer.m_BufferName = bufferName;
+        sscanf(registerStr, "%*10c%u", &newCBuffer.m_Register);
+
+        g_Log.info("Found constant buffer: '{}', bound at register: {}", bufferName, newCBuffer.m_Register);
+
+        while (fgets(line, sizeof(line), shaderFile))
+        {
+            // beginning of CBuffer declaration
+            if (std::strncmp(line, "{", 1) == 0)
+                continue;
+
+            // end of CBuffer declaration
+            if (std::strncmp(line, "};", 2) == 0)
+                break;
+
+            // add variable type and name. Conveniently scan semi-colon as well
+            char typeStr[10] = {};
+            char varName[MAX_PATH] = {};
+            sscanf(line, "%s %s", typeStr, varName);
+
+            varName[0] = 'm';
+            newCBuffer.AddVariable(typeStr, varName);
+        }
+
+        // do some sanity checks
+        for (char c : newCBuffer.m_BufferName)
+        {
+            assert(std::isalpha(c));
+        }
+        assert(newCBuffer.m_Register != 99);
+        g_AllConstantBuffers.push_back(newCBuffer);
+    }
+}
+
 static void GetD3D12ShaderModelsAndPopulateJobs()
 {
     tf::Taskflow tf;
@@ -236,36 +343,21 @@ static void GetD3D12ShaderModelsAndPopulateJobs()
             char* token = std::strtok(line, " \n");
             while (token)
             {
-                // reached end of shader declarations. Stop
+                // reached end of all shader declarations. Stop
                 if (strcmp(token, g_EndShaderDeclarationStr.c_str()) == 0)
                 {
                     endOfShaderDeclarations = true;
                     break;
                 }
 
-                // Shader Declaration
-                if (std::strncmp(token, g_ShaderDeclarationStr.c_str(), g_ShaderDeclarationStr.size()) == 0)
-                {
-                    assert(newJob.m_ShaderName.size() == 0);
-                    newJob.m_ShaderName = token + g_ShaderDeclarationStr.size();
-                    newJob.m_ShaderFilePath = fullPath;
+                HandleShaderDeclaration(newJob, fullPath, token);
+                HandleShaderEntryPoint(newJob, token);
+                HandleConstantBuffer(shaderFile, line, token);
 
-                    for (int i = 0; i < _countof(g_ShaderTypeStrings); ++i)
-                    {
-                        if (newJob.m_ShaderName[0] == g_ShaderTypeStrings[i][0])
-                        {
-                            newJob.m_ShaderType = (ShaderType)i;
-                            break;
-                        }
-                    }
-                }
-
-                // Shader entry point
-                if (std::strncmp(token, g_EntryPointStr.c_str(), g_EntryPointStr.size()) == 0)
-                {
-                    assert(newJob.m_ShaderName.size() > 0);
-                    newJob.m_EntryPoint = token + g_EntryPointStr.size();
-                }
+                // TODO: handle structs
+                // TODO: handle buffers
+                // TODO: handle textures
+                // TODO: handle samplers
 
                 token = strtok(NULL, " \n");
             }
@@ -273,7 +365,7 @@ static void GetD3D12ShaderModelsAndPopulateJobs()
             // insert new shader entry to be compiled
             if (newJob.m_ShaderName.size() > 0)
             {
-                g_Log.info("Found shader entry: {}", newJob.m_ShaderName.c_str());
+                g_Log.info("Found shader: {}", newJob.m_ShaderName.c_str());
                 g_AllShaderCompileJobs.push_back(std::move(newJob));
             }
         }
@@ -319,46 +411,48 @@ static std::size_t GetFileContentsHash(const std::string& dir)
     return std::hash<std::string>{} (fileContents);
 }
 
-static void PrintGeneratedEnumFile()
+static void OverrideExistingFileIfNecessary(const std::string& generatedString, const std::string& dir)
 {
-    const std::size_t existingHash = GetFileContentsHash(g_ShadersEnumsAutoGenDir);
-
-    // populate the string with the generated shaders
-    std::string generatedString;
-    generatedString += "#pragma once\n\n";
-    generatedString += "enum class ShaderPermutation\n";
-    generatedString += "{\n";
-    for (int i = 0; i < g_AllShaderCompileJobs.size(); ++i)
-    {
-        generatedString += StringFormat("    %s,\n", g_AllShaderCompileJobs[i].m_ShaderName.c_str());
-    }
-    generatedString += "};\n";
-    generatedString += StringFormat("const uint32_t g_NumShaders = %" PRIu64 ";\n", g_AllShaderCompileJobs.size());
-
-    // hash it
-    const std::size_t newHash = std::hash<std::string>{} (generatedString);
+    // hash both existing and newly generated contents
+    const std::size_t existingHash = GetFileContentsHash(dir);
+    const std::size_t newHash = std::hash<std::string>{}(generatedString);
 
     // if hashes are different, over ride with new contents
     if (existingHash != newHash)
     {
-        g_Log.info("hash different for 'shadersenumsautogen.h'... over-riding with new contents");
+        g_Log.info("hash different for '{}'... over-riding with new contents", dir);
         const bool IsReadMode = false;
-        CFileWrapper file{ g_ShadersEnumsAutoGenDir, IsReadMode };
+        CFileWrapper file{ dir, IsReadMode };
         assert(file);
         fprintf(file, "%s", generatedString.c_str());
     }
 }
 
+static void PrintGeneratedEnumFile()
+{
+    // populate the string with the generated shaders
+    std::string generatedString;
+    generatedString += "#pragma once\n\n";
+    generatedString += "enum class ShaderPermutation\n";
+    generatedString += "{\n";
+    for (const ShaderCompileJob& shaderJob : g_AllShaderCompileJobs)
+    {
+        generatedString += StringFormat("    %s,\n", shaderJob.m_ShaderName.c_str());
+    }
+    generatedString += "};\n";
+    generatedString += StringFormat("const uint32_t g_NumShaders = %" PRIu64 ";\n", g_AllShaderCompileJobs.size());
+
+    OverrideExistingFileIfNecessary(generatedString, g_ShadersEnumsAutoGenDir);
+}
+
 static void PrintGeneratedByteCodeHeadersFile()
 {
-    const std::size_t existingHash = GetFileContentsHash(g_ShadersHeaderAutoGenDir);
-
     std::string generatedString;
     generatedString += "#pragma once\n\n";
     generatedString += "namespace AutoGenerated\n";
     generatedString += "{\n\n";
 
-    for (ShaderCompileJob& shaderJob : g_AllShaderCompileJobs)
+    for (const ShaderCompileJob& shaderJob : g_AllShaderCompileJobs)
     {
         generatedString += StringFormat("#include \"%s\"\n", shaderJob.m_ShaderObjCodeFileDir.c_str());
     }
@@ -375,10 +469,8 @@ static void PrintGeneratedByteCodeHeadersFile()
     generatedString += "\n";
     generatedString += "static constexpr AutoGeneratedShaderData gs_AllShadersData[] = \n";
     generatedString += "{\n";
-    for (uint32_t i = 0; i < g_AllShaderCompileJobs.size(); ++i)
+    for (const ShaderCompileJob& shaderJob : g_AllShaderCompileJobs)
     {
-        ShaderCompileJob& shaderJob = g_AllShaderCompileJobs[i];
-
         generatedString += "    {\n";
         generatedString += StringFormat("        ShaderPermutation::%s,\n", shaderJob.m_ShaderName.c_str());
         generatedString += StringFormat("        %s,\n", shaderJob.m_ShaderObjCodeVarName.c_str());
@@ -392,16 +484,34 @@ static void PrintGeneratedByteCodeHeadersFile()
     generatedString += "\n";
     generatedString += "}\n";
 
-    const std::size_t newHash = std::hash<std::string>{} (generatedString);
-    if (existingHash != newHash)
-    {
-        g_Log.info("hash different for 'shaderheadersautogen.h'... over-riding with new contents");
+    OverrideExistingFileIfNecessary(generatedString, g_ShadersHeaderAutoGenDir);
+}
 
-        const bool IsReadMode = false;
-        CFileWrapper file{ g_ShadersHeaderAutoGenDir, IsReadMode };
-        assert(file);
-        fprintf(file, "%s", generatedString.c_str());
+static void PrintGeneratedConstantBuffersFile()
+{
+    std::string generatedString;
+    generatedString += "#pragma once\n\n";
+    generatedString += "namespace AutoGenerated\n";
+    generatedString += "{\n\n";
+
+    for (const ConstantBufferDesc& cBuffer : g_AllConstantBuffers)
+    {
+        generatedString += StringFormat("struct %s\n", cBuffer.m_BufferName.c_str());
+        generatedString += "{\n";
+        generatedString += StringFormat("    static const uint32_t ms_Register = %u;\n\n", cBuffer.m_Register);
+
+        for (const ConstantBufferDesc::CPPTypeVarNamePair& var : cBuffer.m_Variables)
+        {
+            generatedString += StringFormat("    %s %s\n", var.m_CPPVarType.c_str(), var.m_VarName.c_str());
+        }
+
+        generatedString += "};\n\n";
     }
+
+    generatedString += "\n";
+    generatedString += "}\n";
+
+    OverrideExistingFileIfNecessary(generatedString, g_ShadersConstantBuffersAutoGenDir);
 }
 
 static void PrintGeneratedFiles()
@@ -410,6 +520,7 @@ static void PrintGeneratedFiles()
 
     tf.emplace([&]() { PrintGeneratedEnumFile(); });
     tf.emplace([&]() { PrintGeneratedByteCodeHeadersFile(); });
+    tf.emplace([&]() { PrintGeneratedConstantBuffersFile(); });
 
     g_TasksExecutor.run(tf).wait();
 }
@@ -430,13 +541,33 @@ int main()
     // first, Init the logger
     Logger::GetInstance().Initialize("../bin/shadercompiler_output.txt");
 
-    g_AppDir                   = GetApplicationDirectory();
-    g_ShadersTmpDir            = g_AppDir + "..\\tmp\\shaders\\";
-    g_SettingsFileDir          = g_ShadersTmpDir + "shadercompilersettings.ini";
-    g_ShadersDir               = g_AppDir + "..\\src\\graphic\\shaders";
-    g_ShadersEnumsAutoGenDir   = g_ShadersTmpDir + "shadersenumsautogen.h";
-    g_ShadersHeaderAutoGenDir  = g_ShadersTmpDir + "shaderheadersautogen.h";;
-    g_DXCDir                   = g_AppDir + "..\\tools\\dxc\\dxc.exe";
+    g_AppDir                           = GetApplicationDirectory();
+    g_ShadersTmpDir                    = g_AppDir + "..\\tmp\\shaders\\";
+    g_SettingsFileDir                  = g_ShadersTmpDir + "shadercompilersettings.ini";
+    g_ShadersDir                       = g_AppDir + "..\\src\\graphic\\shaders";
+    g_ShadersEnumsAutoGenDir           = g_ShadersTmpDir + "shadersenumsautogen.h";
+    g_ShadersHeaderAutoGenDir          = g_ShadersTmpDir + "shaderheadersautogen.h";
+    g_ShadersConstantBuffersAutoGenDir = g_ShadersTmpDir + "shaderconstantbuffersautogen.h";
+    g_DXCDir                           = g_AppDir + "..\\tools\\dxc\\dxc.exe";
+
+#define ADD_TYPE(hlslType, CPPType) g_HLSLTypeToCPPTypeMap[std::hash<std::string>{}(hlslType)] = CPPType;
+
+    ADD_TYPE("bool", "bool");
+    ADD_TYPE("int", "int32_t");
+    ADD_TYPE("int2", "XMINT2");
+    ADD_TYPE("int3", "XMINT3");
+    ADD_TYPE("int4", "XMINT4");
+    ADD_TYPE("uint", "uint32_t");
+    ADD_TYPE("uint2", "XMUINT2");
+    ADD_TYPE("uint3", "XMUINT3");
+    ADD_TYPE("uint4", "XMUINT4");
+    ADD_TYPE("float", "float");
+    ADD_TYPE("float2", "XMFLOAT2");
+    ADD_TYPE("float3", "XMFLOAT3");
+    ADD_TYPE("float4", "XMFLOAT4");
+    ADD_TYPE("float4x4", "XMMATRIX");
+
+#undef ADD_TYPE
     
     RunShaderCompiler();
 

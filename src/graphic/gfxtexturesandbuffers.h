@@ -89,10 +89,11 @@ private:
 class GfxConstantBuffer : public GfxBufferCommon
 {
 public:
-    D3D12MA::Allocation* Initialize();
+    D3D12MA::Allocation* Initialize(GfxContext& context, uint32_t bufferSize);
 
     GfxDescriptorHeap& GetDescriptorHeap() { return m_GfxDescriptorHeap; }
 
 private:
     GfxDescriptorHeap m_GfxDescriptorHeap;
+    void*             m_CBufferMemory = nullptr;
 };

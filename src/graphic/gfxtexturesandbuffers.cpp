@@ -170,16 +170,25 @@ D3D12MA::Allocation* GfxIndexBuffer::Initialize(GfxContext& context, const void*
     return m_D3D12MABufferAllocation;
 }
 
-D3D12MA::Allocation* GfxConstantBuffer::Initialize()
+D3D12MA::Allocation* GfxConstantBuffer::Initialize(GfxContext& context, uint32_t bufferSize)
 {
     bbeProfileFunction();
 
+    m_SizeInBytes = bbeAlignVal(bufferSize, 256); // CB size is required to be 256-byte aligned.
+
     m_GfxDescriptorHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 
-    D3D12MA::ALLOCATION_DESC constantBufferUploadAllocDesc = {};
-    constantBufferUploadAllocDesc.HeapType = D3D12_HEAP_TYPE_UPLOAD;
-
-
+    // Create upload heap for constant buffer
+    CreateHeap(context, D3D12_HEAP_TYPE_UPLOAD, CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes), D3D12_RESOURCE_STATE_GENERIC_READ, m_D3D12MABufferAllocation);
     assert(m_D3D12MABufferAllocation);
+
+    // Map and initialize the constant buffer. We don't unmap this until the app closes. 
+    // Keeping things mapped for the lifetime of the resource is okay.
+    CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
+    DX12_CALL(m_D3D12MABufferAllocation->GetResource()->Map(0, &readRange, reinterpret_cast<void**>(&m_CBufferMemory)));
+
+    // zero-init memory for constant buffer
+    memset(m_CBufferMemory, 0, m_SizeInBytes);
+
     return m_D3D12MABufferAllocation;
 }
