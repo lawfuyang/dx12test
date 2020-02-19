@@ -12,6 +12,7 @@ using Microsoft::WRL::ComPtr;
 
 #include "system/logger.h"
 #include "system/utils.h"
+#include "system/math.h"
 
 #include "graphic/dx12utils.h"
 
@@ -31,6 +32,7 @@ std::vector<std::string>                     g_AllShaderFiles;
 std::vector<ShaderCompileJob>                g_AllShaderCompileJobs;
 std::vector<ConstantBufferDesc>              g_AllConstantBuffers;
 std::unordered_map<std::size_t, std::string> g_HLSLTypeToCPPTypeMap;
+std::unordered_map<std::size_t, uint32_t>    g_CPPTypeSizeMap;
 
 D3D_SHADER_MODEL g_HighestShaderModel = D3D_SHADER_MODEL_5_1;
 
@@ -149,6 +151,28 @@ struct ConstantBufferDesc
         newVar.m_VarName = varName;
 
         m_Variables.push_back(newVar);
+    }
+
+    void SanityCheck()
+    {
+        // check register value
+        assert(m_Register != 99);
+
+        // check buffer name
+        for (char c : m_BufferName)
+        {
+            assert(std::isalpha(c));
+        }
+
+        // check size alignment
+        uint32_t bufferSize = 0;
+        for (const CPPTypeVarNamePair& var : m_Variables)
+        {
+            bufferSize += g_CPPTypeSizeMap.at(std::hash<std::string>{}(var.m_CPPVarType));
+        }
+        
+        // check 16 byte alignment
+        assert((bbeIsAligned(bufferSize, 16)));
     }
 
     std::string m_BufferName;
@@ -311,12 +335,7 @@ static void HandleConstantBuffer(CFileWrapper& shaderFile, char (&line)[MAX_PATH
             newCBuffer.AddVariable(typeStr, varName);
         }
 
-        // do some sanity checks
-        for (char c : newCBuffer.m_BufferName)
-        {
-            assert(std::isalpha(c));
-        }
-        assert(newCBuffer.m_Register != 99);
+        newCBuffer.SanityCheck();
         g_AllConstantBuffers.push_back(newCBuffer);
     }
 }
@@ -541,6 +560,7 @@ int main()
     // first, Init the logger
     Logger::GetInstance().Initialize("../bin/shadercompiler_output.txt");
 
+    // init dirs
     g_AppDir                           = GetApplicationDirectory();
     g_ShadersTmpDir                    = g_AppDir + "..\\tmp\\shaders\\";
     g_SettingsFileDir                  = g_ShadersTmpDir + "shadercompilersettings.ini";
@@ -550,22 +570,24 @@ int main()
     g_ShadersConstantBuffersAutoGenDir = g_ShadersTmpDir + "shaderconstantbuffersautogen.h";
     g_DXCDir                           = g_AppDir + "..\\tools\\dxc\\dxc.exe";
 
-#define ADD_TYPE(hlslType, CPPType) g_HLSLTypeToCPPTypeMap[std::hash<std::string>{}(hlslType)] = CPPType;
+    // init misc traits
+#define ADD_TYPE(hlslType, CPPType, TypeSize)                             \
+    g_HLSLTypeToCPPTypeMap[std::hash<std::string>{}(hlslType)] = CPPType; \
+    g_CPPTypeSizeMap[std::hash<std::string>{}(CPPType)] = TypeSize;
 
-    ADD_TYPE("bool", "bool");
-    ADD_TYPE("int", "int32_t");
-    ADD_TYPE("int2", "XMINT2");
-    ADD_TYPE("int3", "XMINT3");
-    ADD_TYPE("int4", "XMINT4");
-    ADD_TYPE("uint", "uint32_t");
-    ADD_TYPE("uint2", "XMUINT2");
-    ADD_TYPE("uint3", "XMUINT3");
-    ADD_TYPE("uint4", "XMUINT4");
-    ADD_TYPE("float", "float");
-    ADD_TYPE("float2", "XMFLOAT2");
-    ADD_TYPE("float3", "XMFLOAT3");
-    ADD_TYPE("float4", "XMFLOAT4");
-    ADD_TYPE("float4x4", "XMMATRIX");
+    ADD_TYPE("int", "int32_t", 4);
+    ADD_TYPE("int2", "XMINT2", 8);
+    ADD_TYPE("int3", "XMINT3", 12);
+    ADD_TYPE("int4", "XMINT4", 16);
+    ADD_TYPE("uint", "uint32_t", 4);
+    ADD_TYPE("uint2", "XMUINT2", 8);
+    ADD_TYPE("uint3", "XMUINT3", 12);
+    ADD_TYPE("uint4", "XMUINT4", 16);
+    ADD_TYPE("float", "float", 4);
+    ADD_TYPE("float2", "XMFLOAT2", 8);
+    ADD_TYPE("float3", "XMFLOAT3", 12);
+    ADD_TYPE("float4", "XMFLOAT4", 16);
+    ADD_TYPE("float4x4", "XMMATRIX", 64);
 
 #undef ADD_TYPE
     

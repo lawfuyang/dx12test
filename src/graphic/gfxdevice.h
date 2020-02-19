@@ -24,7 +24,7 @@ public:
     void EndFrame();
     void WaitForPreviousFrame();
 
-    GfxContext& GenerateNewContext(D3D12_COMMAND_LIST_TYPE);
+    GfxContext& GenerateNewContext(D3D12_COMMAND_LIST_TYPE, const std::string& name);
     GfxCommandListsManager& GetCommandListsManager() { return m_CommandListsManager; }
     D3D12MA::Allocator* GetD3D12MemoryAllocator() { assert(m_D3D12MemoryAllocator); return m_D3D12MemoryAllocator; }
 

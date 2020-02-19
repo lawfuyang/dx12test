@@ -9,8 +9,10 @@ class GfxContext;
 class GfxTestRenderPass : public GfxRenderPass
 {
 public:
-    GfxTestRenderPass(GfxContext& initContext);
+    GfxTestRenderPass();
 
+    void Initialize(GfxContext&);
+    void ShutDown() override;
     void Render(GfxContext&) override;
 
 private:

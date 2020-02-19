@@ -50,13 +50,16 @@ class GfxBufferCommon
 {
 public:
     virtual ~GfxBufferCommon();
+    void Release();
+    void SetName(std::string&& name) { SetInternalAllocName(std::forward<std::string>(name)); }
 
     uint32_t GetSizeInBytes() const { return m_SizeInBytes; }
 
 protected:
     void InitializeBufferWithInitData(GfxContext& context, const void* initData);
-    void CreateHeap(GfxContext&, D3D12_HEAP_TYPE, const CD3DX12_RESOURCE_DESC&, D3D12_RESOURCE_STATES initialState, D3D12MA::Allocation*&);
+    D3D12MA::Allocation* CreateHeap(GfxContext&, D3D12_HEAP_TYPE, const CD3DX12_RESOURCE_DESC&, D3D12_RESOURCE_STATES initialState);
     void UploadInitData(GfxContext& context, const void* dataSrc, uint32_t rowPitch, uint32_t slicePitch, ID3D12Resource* dest, ID3D12Resource* src);
+    void SetInternalAllocName(const std::string&);
 
     D3D12MA::Allocation* m_D3D12MABufferAllocation = nullptr;
     uint32_t             m_SizeInBytes = 0;
@@ -66,7 +69,7 @@ class GfxVertexBuffer : public GfxHazardTrackedResource,
                         public GfxBufferCommon
 {
 public:
-    D3D12MA::Allocation* Initialize(GfxContext& context, const void* vList, uint32_t numVertices, uint32_t vertexSize, const std::string& resourceName = "");
+    void Initialize(GfxContext& context, const void* vList, uint32_t numVertices, uint32_t vertexSize, const std::string& resourceName = "");
 
     uint32_t GetStrideInBytes() const { return m_StrideInBytes; }
 
@@ -78,7 +81,7 @@ class GfxIndexBuffer : public GfxHazardTrackedResource,
                        public GfxBufferCommon
 {
 public:
-    D3D12MA::Allocation* Initialize(GfxContext& context, const void* iList, uint32_t numIndices, uint32_t indexSize, const std::string& resourceName = "");
+    void Initialize(GfxContext& context, const void* iList, uint32_t numIndices, uint32_t indexSize, const std::string& resourceName = "");
 
     DXGI_FORMAT GetFormat() const { return m_Format; }
 
@@ -89,7 +92,8 @@ private:
 class GfxConstantBuffer : public GfxBufferCommon
 {
 public:
-    D3D12MA::Allocation* Initialize(GfxContext& context, uint32_t bufferSize);
+    void Initialize(GfxContext& context, uint32_t bufferSize, const std::string& resourceName = "");
+    void Update(const void* data) const;
 
     GfxDescriptorHeap& GetDescriptorHeap() { return m_GfxDescriptorHeap; }
 

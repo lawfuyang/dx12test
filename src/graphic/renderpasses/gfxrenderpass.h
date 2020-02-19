@@ -9,8 +9,10 @@ public:
         : m_Name(name)
     {}
 
-    virtual ~GfxRenderPass() { g_Log.info("Destroyed Render Pass: '{}'", m_Name); }
+    virtual ~GfxRenderPass() {}
 
+    virtual void Initialize(GfxContext&) = 0;
+    virtual void ShutDown() = 0;
     virtual void Render(GfxContext&) = 0;
 
     const char* GetName() const { return m_Name; }

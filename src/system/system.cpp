@@ -117,6 +117,8 @@ void System::Shutdown()
 
 FrameRateController::FrameRateController()
 {
+    System::ms_CappedPrevFrameMs = System::ms_RealFrameTimeMs;
+
     m_FrameEndTime = std::chrono::high_resolution_clock::now() + std::chrono::microseconds{ 1000000 / System::FPS_LIMIT };
     m_200FPSFrameEndTime = std::chrono::high_resolution_clock::now() + std::chrono::microseconds{ 1000000 / 200 };
 }

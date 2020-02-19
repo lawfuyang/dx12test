@@ -1,7 +1,9 @@
-cbuffer TestConstantBuffer : register(b0)
+cbuffer FrameParams : register(b0)
 {
-    float4 g_TestConstantBufferValue;
-    float4 g_TestConstantBufferValue2;
+    uint g_FrameNumber;
+    float g_CurrentFrameTime;
+    float g_PreviousFrameTime;
+    uint g_FrameParamsPadding0;
 };
 // EndShaderDeclarations
 

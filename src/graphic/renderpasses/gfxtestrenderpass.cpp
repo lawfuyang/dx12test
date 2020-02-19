@@ -2,11 +2,12 @@
 
 #include "graphic/gfxcontext.h"
 
-GfxTestRenderPass::GfxTestRenderPass(GfxContext& initContext)
+GfxTestRenderPass::GfxTestRenderPass()
     : GfxRenderPass("GfxTestRenderPass")
-{
-    initContext.GetCommandList().Dev()->SetName(L"GfxTestRenderPass::GfxTestRenderPass");
+{}
 
+void GfxTestRenderPass::Initialize(GfxContext& initContext)
+{
     struct Vertex
     {
         XMFLOAT3 m_Position = {};
@@ -81,19 +82,20 @@ GfxTestRenderPass::GfxTestRenderPass(GfxContext& initContext)
         20, 23, 21, // second triangle
     };
 
-    D3D12MA::Allocation* alloc = m_QuadVBuffer.Initialize(initContext, vList, _countof(vList), sizeof(Vertex));
-    alloc->SetName(L"GfxTestRenderPass test quad vertices");
+    m_QuadVBuffer.Initialize(initContext, vList, _countof(vList), sizeof(Vertex), "GfxTestRenderPass test quad vertices");
+    m_QuadIBuffer.Initialize(initContext, iList, _countof(iList), sizeof(uint16_t), "GfxTestRenderPass test quad indices");
+}
 
-    alloc = m_QuadIBuffer.Initialize(initContext, iList, _countof(iList), sizeof(uint16_t));
-    alloc->SetName(L"GfxTestRenderPass test quad indices");
+void GfxTestRenderPass::ShutDown()
+{
+    m_QuadVBuffer.Release();
+    m_QuadIBuffer.Release();
 }
 
 void GfxTestRenderPass::Render(GfxContext& context)
 {
     bbeProfileFunction();
     bbeProfileGPUFunction(context);
-
-    context.GetCommandList().Dev()->SetName(L"GfxTestRenderPass::Render");
 
     context.ClearRenderTargetView(context.GetGfxManager().GetSwapChain().GetCurrentBackBuffer(), XMFLOAT4{ 0.0f, 0.2f, 0.4f, 1.0f });
 

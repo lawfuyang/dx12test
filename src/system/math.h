@@ -41,14 +41,19 @@ inline _Type bbeSmootherStep(_Type min, _Type max, _Type f)
 
 #define bbeAlignVal(val, alignVal)    ((((val)+(alignVal)-1)/(alignVal))*(alignVal))
 
+constexpr bool bbeIsAligned(uint64_t value, size_t alignment) 
+{
+    return ((uint64_t)value & (alignment - 1)) == 0;
+}
+
 // round given value to next multiple, not limited to pow2 multiples...
-inline uint32_t bbeRoundToNextMultiple(uint32_t val, uint32_t multiple)
+constexpr uint32_t bbeRoundToNextMultiple(uint32_t val, uint32_t multiple)
 {
     uint32_t t = val + multiple - 1;
     return t - (t % multiple);
 }
 
-inline uint32_t bbeGetNextPow2(uint32_t n)
+constexpr uint32_t bbeGetNextPow2(uint32_t n)
 {
     --n;
     n = n | (n >> 1);
@@ -61,9 +66,9 @@ inline uint32_t bbeGetNextPow2(uint32_t n)
     return n;
 }
 
-inline uint32_t bbeGetLog2(uint32_t val)
+constexpr uint32_t bbeGetLog2(uint32_t val)
 {
-    uint32_t pow2;
+    uint32_t pow2 = 0;
     for (pow2 = 0; pow2 < 31; ++pow2)
         if (val <= (1u << pow2))
             return pow2;

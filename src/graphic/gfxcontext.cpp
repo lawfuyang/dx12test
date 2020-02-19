@@ -27,10 +27,19 @@ void GfxContext::SetRenderTarget(uint32_t idx, GfxTexture& tex)
     m_RTVs[idx] = &tex;
 }
 
+void GfxContext::SetFrameParamsCB()
+{
+    GfxConstantBuffer& frameParamsCB = m_GfxManager->GetFrameParams();
+    ID3D12DescriptorHeap* ppHeaps[] = { frameParamsCB.GetDescriptorHeap().Dev() };
+    m_CommandList->Dev()->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+    m_CommandList->Dev()->SetGraphicsRootDescriptorTable(0, frameParamsCB.GetDescriptorHeap().Dev()->GetGPUDescriptorHandleForHeapStart());
+}
+
 void GfxContext::CompileAndSetGraphicsPipelineState()
 {
     assert(m_PSOManager);
     assert(m_CommandList);
+
     if (m_VertexBuffer)
     {
         assert(m_PSO.m_VertexFormat);
@@ -44,6 +53,16 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
         assert(m_RTVs[i] != nullptr);
         assert(m_PSO.m_RenderTargets.RTFormats[i] != DXGI_FORMAT_UNKNOWN);
     }
+
+    // first, set Root Sig. use Default if nothing is specified
+    if (!m_PSO.m_RootSig)
+    {
+        m_PSO.m_RootSig = &DefaultRootSignatures::DefaultGraphicsRootSignature;
+    }
+    m_CommandList->Dev()->SetGraphicsRootSignature(m_PSO.m_RootSig->Dev());
+
+    // Constant Buffers
+    SetFrameParamsCB();
 
     // PSO
     m_CommandList->Dev()->SetPipelineState(m_PSOManager->GetGraphicsPSO(m_PSO));
@@ -84,14 +103,10 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
         m_RTVs[i]->Transition(*m_CommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
     }
     m_CommandList->Dev()->OMSetRenderTargets(m_PSO.m_RenderTargets.NumRenderTargets, rtvHandles, FALSE, nullptr); // TODO: Add support for DepthStencil RTV
-
-    m_CommandList->Dev()->SetGraphicsRootSignature(m_PSO.m_RootSig->Dev());
 }
 
 void GfxContext::CompileAndSetComputePipelineState()
 {
-    bbeProfileFunction();
-
     assert(m_PSOManager);
     assert(m_CommandList);
 }

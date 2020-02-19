@@ -4,6 +4,7 @@ class GfxDevice;
 class GfxSwapChain;
 class GUIManager;
 class GfxRootSignatureManager;
+class GfxConstantBuffer;
 
 class GfxManager
 {
@@ -22,15 +23,18 @@ public:
 
     void DumpGfxMemory();
 
-    GfxDevice&    GetGfxDevice() { return *m_GfxDevice; }
-    GfxSwapChain& GetSwapChain() { return *m_SwapChain; }
+    GfxDevice&         GetGfxDevice()   { return *m_GfxDevice; }
+    GfxSwapChain&      GetSwapChain()   { return *m_SwapChain; }
+    GfxConstantBuffer& GetFrameParams() { return *m_FrameParamsCB; }
 
 private:
     void ScheduleRenderPasses(tf::Subflow& sf);
     void TransitionBackBufferForPresent();
+    void UpdateFrameParamsCB();
 
-    GfxDevice*    m_GfxDevice = nullptr;
-    GfxSwapChain* m_SwapChain = nullptr;
+    GfxDevice*         m_GfxDevice     = nullptr;
+    GfxSwapChain*      m_SwapChain     = nullptr;
+    GfxConstantBuffer* m_FrameParamsCB = nullptr;
 
     boost::lockfree::stack<std::function<void()>> m_GfxCommands{128};
 };

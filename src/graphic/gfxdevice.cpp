@@ -259,12 +259,15 @@ void GfxDevice::WaitForPreviousFrame()
     m_GfxFence.WaitForSignalFromGPU();
 }
 
-GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType)
+GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType, const std::string& name)
 {
-    bbeMultiThreadDetector();
     bbeProfileFunction();
 
-    m_AllContexts.push_back(GfxContext{});
+    static AdaptiveLock s_Lock;
+    {
+        bbeAutoLock(s_Lock);
+        m_AllContexts.push_back(GfxContext{});
+    }
     GfxContext& newContext = m_AllContexts.back();
 
     newContext.m_ID = m_AllContexts.size() - 1;
@@ -275,10 +278,10 @@ GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType)
     newContext.m_PSOManager    = &GfxPSOManager::GetInstance();
     newContext.m_ShaderManager = &GfxShaderManager::GetInstance();
 
-    // Set default gfx root sig
-    newContext.m_PSO.SetRootSignature(&DefaultRootSignatures::DefaultGraphicsRootSignature);
-
     newContext.m_GPUProfilerContext.Initialize(newContext.m_CommandList->Dev(), newContext.m_ID);
+
+    const std::wstring nameW = utf8_decode(name);
+    newContext.GetCommandList().Dev()->SetName(reinterpret_cast<LPCWSTR>(nameW.c_str()));
 
     return newContext;
 }

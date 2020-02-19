@@ -32,13 +32,7 @@
     <ClInclude Include="..\src\system\utils.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\system\stopwatch.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\system\locks.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\system\logger.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\graphic\dx12utils.h">

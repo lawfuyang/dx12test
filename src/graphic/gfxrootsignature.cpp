@@ -42,15 +42,14 @@ static constexpr D3D12_STATIC_SAMPLER_DESC gs_StaticSamplers[] =
     gs_AnisotropicWrapSamplerDesc,
 };
 
-void GfxRootSignature::AddSRV()
+void GfxRootSignature::AddRootParam(D3D12_DESCRIPTOR_RANGE_TYPE type)
 {
-    // root sig contains only one srv
     D3D12_DESCRIPTOR_RANGE1 newRange;
-    newRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    newRange.RangeType = type;
     newRange.NumDescriptors = 1;
-    newRange.BaseShaderRegister = m_ShaderRegisters[D3D12_DESCRIPTOR_RANGE_TYPE_SRV]++;
-    newRange.RegisterSpace = 0; // TODO: implement different spaces if needed
-    newRange.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC; // Always static. Change to volatile if needed
+    newRange.BaseShaderRegister = m_ShaderRegisters[type]++;
+    newRange.RegisterSpace = ms_RootSigID; // Use the root sig ID as register space
+    newRange.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC;
     newRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
     boost::hash_combine(m_Hash, newRange.RangeType);
@@ -104,6 +103,6 @@ void GfxRootSignatureManager::Initialize()
     bbeProfileFunction();
 
     assert(DefaultRootSignatures::DefaultGraphicsRootSignature.m_Hash == 0);
-    DefaultRootSignatures::DefaultGraphicsRootSignature.AddSRV();
+    DefaultRootSignatures::DefaultGraphicsRootSignature.AddRootParam(D3D12_DESCRIPTOR_RANGE_TYPE_CBV);
     DefaultRootSignatures::DefaultGraphicsRootSignature.Compile();
 }

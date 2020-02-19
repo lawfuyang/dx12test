@@ -53,10 +53,11 @@ public:
     void ProcessWindowMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     void Loop();
 
-    static float GetRealFrameTimeMs()   { return ms_RealFrameTimeMs; }
-    static float GetRealFPS()           { return ms_FPS; }
-    static float GetCappedFrameTimeMs() { return ms_CappedFrameTimeMs; }
-    static float GetCappedFPS()         { return ms_CappedFPS; }
+    static float GetRealFrameTimeMs()       { return ms_RealFrameTimeMs; }
+    static float GetRealFPS()               { return ms_FPS; }
+    static float GetCappedFrameTimeMs()     { return ms_CappedFrameTimeMs; }
+    static float GetCappedFPS()             { return ms_CappedFPS; }
+    static float GetCappedPrevFrameTimeMs() { return ms_CappedPrevFrameMs; }
 
     static uint32_t GetSystemFrameNumber() { return ms_SystemFrameNumber; }
 
@@ -75,6 +76,7 @@ private:
     inline static float ms_FPS               = 0.0f;
     inline static float ms_CappedFrameTimeMs = 0.0f;
     inline static float ms_CappedFPS         = 0.0f;
+    inline static float ms_CappedPrevFrameMs = 0.0f;
 
     tf::Executor m_Executor;
 

@@ -39,6 +39,7 @@ public:
     void DrawIndexedInstanced(uint32_t InstanceCount, uint32_t StartIndexLocation, uint32_t BaseVertexLocation, uint32_t StartInstanceLocation);
 
 private:
+    void SetFrameParamsCB();
     void CompileAndSetGraphicsPipelineState();
     void CompileAndSetComputePipelineState();
 
