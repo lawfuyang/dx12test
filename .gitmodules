@@ -1,9 +1,11 @@
 [submodule "extern/microprofile"]
 	path = extern/microprofile
 	url = https://github.com/jonasmr/microprofile.git
+    ignore = dirty
 [submodule "extern/cpp-taskflow"]
 	path = extern/cpp-taskflow
 	url = https://github.com/cpp-taskflow/cpp-taskflow.git
+    ignore = dirty
 [submodule "extern/DirectXMath"]
 	path = extern/DirectXMath
 	url = https://github.com/microsoft/DirectXMath.git

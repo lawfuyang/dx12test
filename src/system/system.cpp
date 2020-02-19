@@ -70,23 +70,19 @@ void System::Initialize()
     g_Profiler.DumpProfilerBlocks(g_CommandLineOptions.m_ProfileInit, true);
 }
 
+// nice helper to get thread ID in uint32_t instead of some stupid custom type
+static uint32_t GetSTDThreadID()
+{
+    return *reinterpret_cast<uint32_t*>(&std::this_thread::get_id());
+}
+
 uint32_t System::GetCurrentThreadID() const
 {
-    const std::optional<unsigned> workerThreadIdx = m_Executor.this_worker_id();
-    if (workerThreadIdx == std::nullopt)
-    {
-        // executor object will return nullopt for main thread
-        return 0;
-    }
-
-    return workerThreadIdx.value();
+    return m_STDThreadIDToIndexMap.at(GetSTDThreadID());
 }
 
 void System::InitializeThreadIDs()
 {
-    // nice helper to get thread ID in uint32_t instead of some stupid custom type
-    auto GetSTDThreadID = []() { return *reinterpret_cast<uint32_t*>(&std::this_thread::get_id()); };
-
     // dummy array because 'taskflow' lib's parallel_for is quite limited...
     bool* dummyArr = (bool*)alloca(sizeof(bool) * m_Executor.num_workers());
 
