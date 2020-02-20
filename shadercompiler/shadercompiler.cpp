@@ -13,6 +13,7 @@ using Microsoft::WRL::ComPtr;
 #include "system/logger.h"
 #include "system/utils.h"
 #include "system/math.h"
+#include "system/locks.h"
 
 #include "graphic/dx12utils.h"
 
@@ -336,6 +337,9 @@ static void HandleConstantBuffer(CFileWrapper& shaderFile, char (&line)[MAX_PATH
         }
 
         newCBuffer.SanityCheck();
+
+        static AdaptiveLock s_Lock;
+        bbeAutoLock(s_Lock);
         g_AllConstantBuffers.push_back(newCBuffer);
     }
 }
@@ -385,6 +389,9 @@ static void GetD3D12ShaderModelsAndPopulateJobs()
             if (newJob.m_ShaderName.size() > 0)
             {
                 g_Log.info("Found shader: {}", newJob.m_ShaderName.c_str());
+
+                static AdaptiveLock s_Lock;
+                bbeAutoLock(s_Lock);
                 g_AllShaderCompileJobs.push_back(std::move(newJob));
             }
         }
@@ -444,6 +451,10 @@ static void OverrideExistingFileIfNecessary(const std::string& generatedString, 
         CFileWrapper file{ dir, IsReadMode };
         assert(file);
         fprintf(file, "%s", generatedString.c_str());
+    }
+    else
+    {
+        g_Log.info("No change detected for '{}'", dir);
     }
 }
 

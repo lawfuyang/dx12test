@@ -3,54 +3,74 @@
 #include <type_traits>
 
 #include "extern/tbb/include/tbb/spin_mutex.h"
-#include "extern/tbb/include/tbb/spin_rw_mutex.h"
 
 #include "system/profiler.h"
 
-template <bool ReadWrite>
-class SpinLockImp
-{
-public:
-    using LockType = std::conditional_t<ReadWrite, tbb::spin_rw_mutex, tbb::spin_mutex>;
-
-private:
-    LockType m_Lock;
-};
-using SpinLock   = SpinLockImp<false>;
-using RWSpinLock = SpinLockImp<true>;
-
-template <bool ReadWrite>
-class AdaptiveLockImp : public SpinLockImp<ReadWrite>
+class SpinLock
 {
 public:
     void Lock()
     {
-        const uint32_t SPIN_LIMIT = 100;
+        m_SpinLock.lock();
+    }
 
-        for (uint32_t i = 0; i < SPIN_LIMIT; ++i)
-        {
-            // TODO: Spin for fast locks and early exit
-        }
-
-        m_Mutex.lock();
-        m_IsLocked = true;
+    bool TryLock()
+    {
+        return m_SpinLock.try_lock();
     }
 
     void Unlock()
     {
-        if (m_IsLocked)
+        m_SpinLock.unlock();
+    }
+
+private:
+    tbb::spin_mutex m_SpinLock;
+};
+
+class AdaptiveLock : public SpinLock
+{
+public:
+    // SpinLock prediction by Foster Brereton: https://hackernoon.com/building-a-c-hybrid-spin-mutex-f98de535b4ac
+    void Lock()
+    {
+        using clock_t = std::chrono::high_resolution_clock;
+
+        const auto startTime = clock_t::now();
+        std::size_t spinTime = 0;
+        while (!SpinLock::TryLock())
+        {
+            spinTime = (clock_t::now() - startTime).count();
+            if (spinTime >= m_SpinPredication * 2)
+            {
+                m_Mutex.lock();
+                m_MutexLocked = true;
+                break;
+            }
+        }
+
+        m_SpinPredication += (spinTime - m_SpinPredication) / 8;
+    }
+
+    void Unlock()
+    {
+        if (m_MutexLocked)
         {
             m_Mutex.unlock();
-            m_IsLocked = false;
+            m_MutexLocked = false;
+        }
+        else
+        {
+            SpinLock::Unlock();
         }
     }
 
 private:
     std::mutex m_Mutex;
-    bool m_IsLocked = false;
+
+    std::size_t m_SpinPredication = 0;
+    bool m_MutexLocked = false;
 };
-using AdaptiveLock   = AdaptiveLockImp<false>;
-using RWAdaptiveLock = AdaptiveLockImp<true>;
 
 template <typename LockType>
 struct ProfiledScopedLock

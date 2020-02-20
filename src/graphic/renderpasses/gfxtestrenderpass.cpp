@@ -82,8 +82,8 @@ void GfxTestRenderPass::Initialize(GfxContext& initContext)
         20, 23, 21, // second triangle
     };
 
-    m_QuadVBuffer.Initialize(initContext, vList, _countof(vList), sizeof(Vertex), "GfxTestRenderPass test quad vertices");
-    m_QuadIBuffer.Initialize(initContext, iList, _countof(iList), sizeof(uint16_t), "GfxTestRenderPass test quad indices");
+    m_QuadVBuffer.Initialize(initContext, vList, _countof(vList), sizeof(Vertex), "GfxTestRenderPass GfxVertexBuffer");
+    m_QuadIBuffer.Initialize(initContext, iList, _countof(iList), sizeof(uint16_t), "GfxTestRenderPass GfxIndexBuffer");
 }
 
 void GfxTestRenderPass::ShutDown()

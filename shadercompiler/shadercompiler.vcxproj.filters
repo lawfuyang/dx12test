@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="extern">
+      <UniqueIdentifier>{0186e6cc-fb80-49cd-9e2f-5a2da824f860}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="extern\microprofile">
+      <UniqueIdentifier>{61d84db5-cc64-47b0-8c55-c5e6cc2d1c32}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="shadercompiler.cpp">

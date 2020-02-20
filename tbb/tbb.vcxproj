@@ -7,7 +7,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\extern\tbb\src\tbb\arena.cpp" />
     <ClCompile Include="..\extern\tbb\src\tbb\cache_aligned_allocator.cpp" />
     <ClCompile Include="..\extern\tbb\src\tbb\concurrent_hash_map.cpp" />
     <ClCompile Include="..\extern\tbb\src\tbb\concurrent_monitor.cpp" />
@@ -15,23 +14,14 @@
     <ClCompile Include="..\extern\tbb\src\tbb\concurrent_vector.cpp" />
     <ClCompile Include="..\extern\tbb\src\tbb\condition_variable.cpp" />
     <ClCompile Include="..\extern\tbb\src\tbb\critical_section.cpp" />
-    <ClCompile Include="..\extern\tbb\src\tbb\governor.cpp" />
-    <ClCompile Include="..\extern\tbb\src\tbb\itt_notify.cpp" />
-    <ClCompile Include="..\extern\tbb\src\tbb\market.cpp" />
     <ClCompile Include="..\extern\tbb\src\tbb\mutex.cpp" />
-    <ClCompile Include="..\extern\tbb\src\tbb\observer_proxy.cpp" />
-    <ClCompile Include="..\extern\tbb\src\tbb\pipeline.cpp" />
-    <ClCompile Include="..\extern\tbb\src\tbb\private_server.cpp" />
     <ClCompile Include="..\extern\tbb\src\tbb\queuing_mutex.cpp" />
     <ClCompile Include="..\extern\tbb\src\tbb\queuing_rw_mutex.cpp" />
     <ClCompile Include="..\extern\tbb\src\tbb\reader_writer_lock.cpp" />
     <ClCompile Include="..\extern\tbb\src\tbb\recursive_mutex.cpp" />
-    <ClCompile Include="..\extern\tbb\src\tbb\scheduler.cpp" />
     <ClCompile Include="..\extern\tbb\src\tbb\semaphore.cpp" />
     <ClCompile Include="..\extern\tbb\src\tbb\spin_mutex.cpp" />
     <ClCompile Include="..\extern\tbb\src\tbb\spin_rw_mutex.cpp" />
-    <ClCompile Include="..\extern\tbb\src\tbb\task.cpp" />
-    <ClCompile Include="..\extern\tbb\src\tbb\task_group_context.cpp" />
     <ClCompile Include="..\extern\tbb\src\tbb\tbb_main.cpp" />
     <ClCompile Include="..\extern\tbb\src\tbb\tbb_misc.cpp" />
     <ClCompile Include="..\extern\tbb\src\tbb\tbb_misc_ex.cpp" />
@@ -72,14 +62,16 @@
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;USE_WINTHREAD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;USE_WINTHREAD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>$(solutiondir)..\extern\tbb\include\;$(solutiondir)..\extern\tbb\src\;$(solutiondir)..\extern\tbb\build\vs2013\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <StringPooling>true</StringPooling>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

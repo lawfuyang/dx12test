@@ -1,6 +1,9 @@
 #pragma once
 
-#define MICROPROFILE_ENABLED 1
+#if defined(BBE_PROFILER_ENABLED)
+    #define MICROPROFILE_ENABLED 1
+#endif
+
 #define MICROPROFILE_GPU_TIMERS_D3D12 1
 #define MICROPROFILE_WEBSERVER_MAXFRAMES 100
 #include "extern/microprofile/microprofile.h"
@@ -44,10 +47,20 @@ private:
     friend class GPUProfilerScopeHandler;
 };
 
-#define bbeProfile(str)                        MICROPROFILE_SCOPEI("", str, (GetCompileTimeCRC32(str) | 0XFF000000))
-#define bbeProfileFunction()                   MICROPROFILE_SCOPEI("", __FUNCTION__, (GetCompileTimeCRC32(__FUNCTION__) | 0XFF000000))
-#define bbeConditionalProfile(condition, name) MICROPROFILE_CONDITIONAL_SCOPEI(condition, name, name, (GetCompileTimeCRC32(name) | 0XFF000000))
-#define bbeProfileBlockBegin(str)              MICROPROFILE_ENTERI("", str, (GetCompileTimeCRC32(str) | 0XFF000000))
-#define bbeProfileBlockEnd()                   MicroProfileLeave()
-#define bbeProfileGPU(gfxContext, str)         MICROPROFILE_SCOPEGPUI_L(gfxContext.GetGPUProfilerContext().GetLog(), str, (GetCompileTimeCRC32(str) | 0XFF000000));
-#define bbeProfileGPUFunction(gfxContext)      MICROPROFILE_SCOPEGPUI_L(gfxContext.GetGPUProfilerContext().GetLog(), __FUNCTION__, (GetCompileTimeCRC32(__FUNCTION__) | 0XFF000000));
+#if defined(BBE_PROFILER_ENABLED)
+    #define bbeProfile(str)                        MICROPROFILE_SCOPEI("", str, (GetCompileTimeCRC32(str) | 0XFF000000))
+    #define bbeProfileFunction()                   MICROPROFILE_SCOPEI("", __FUNCTION__, (GetCompileTimeCRC32(__FUNCTION__) | 0XFF000000))
+    #define bbeConditionalProfile(condition, name) MICROPROFILE_CONDITIONAL_SCOPEI(condition, name, name, (GetCompileTimeCRC32(name) | 0XFF000000))
+    #define bbeProfileBlockBegin(str)              MICROPROFILE_ENTERI("", str, (GetCompileTimeCRC32(str) | 0XFF000000))
+    #define bbeProfileBlockEnd()                   MICROPROFILE_LEAVE()
+    #define bbeProfileGPU(gfxContext, str)         MICROPROFILE_SCOPEGPUI_L(gfxContext.GetGPUProfilerContext().GetLog(), str, (GetCompileTimeCRC32(str) | 0XFF000000));
+    #define bbeProfileGPUFunction(gfxContext)      MICROPROFILE_SCOPEGPUI_L(gfxContext.GetGPUProfilerContext().GetLog(), __FUNCTION__, (GetCompileTimeCRC32(__FUNCTION__) | 0XFF000000));
+#else
+    #define bbeProfile(str)                        ((void)0)
+    #define bbeProfileFunction()                   ((void)0)
+    #define bbeConditionalProfile(condition, name) ((void)0)
+    #define bbeProfileBlockBegin(str)              ((void)0)
+    #define bbeProfileBlockEnd()                   ((void)0)
+    #define bbeProfileGPU(gfxContext, str)         ((void)0)
+    #define bbeProfileGPUFunction(gfxContext)      ((void)0)
+#endif // #if defined(BBE_PROFILER_ENABLED)

@@ -27,12 +27,6 @@
     <ClCompile Include="..\extern\tbb\src\tbb\x86_rtm_rw_mutex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\extern\tbb\src\tbb\task.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\extern\tbb\src\tbb\task_group_context.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\extern\tbb\src\tbb\tbb_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -48,19 +42,7 @@
     <ClCompile Include="..\extern\tbb\src\tbb\tbb_thread.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\extern\tbb\src\tbb\market.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\extern\tbb\src\tbb\mutex.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\extern\tbb\src\tbb\observer_proxy.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\extern\tbb\src\tbb\pipeline.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\extern\tbb\src\tbb\private_server.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\extern\tbb\src\tbb\queuing_mutex.cpp">
@@ -73,9 +55,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\extern\tbb\src\tbb\recursive_mutex.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\extern\tbb\src\tbb\scheduler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\extern\tbb\src\tbb\concurrent_hash_map.cpp">
@@ -94,15 +73,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\extern\tbb\src\tbb\critical_section.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\extern\tbb\src\tbb\governor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\extern\tbb\src\tbb\itt_notify.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\extern\tbb\src\tbb\arena.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\extern\tbb\src\tbb\cache_aligned_allocator.cpp">
