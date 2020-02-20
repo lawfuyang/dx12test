@@ -15,4 +15,5 @@ dx12test/enc_temp_folder
 /tmp/
 /extern/boost/
 spdlog/x64
+tbb/x64
 update all git repos.sh

@@ -84,24 +84,23 @@ void GfxCommandListsManager::Initialize()
             g_Profiler.RegisterGPUQueue(directPool.m_CommandQueue.Get(), "Direct Queue");
         }).name("CreateCommandQueue");
 
-    for (uint32_t i = 0; i < 32; ++i)
-    {
-        tf.emplace([&]()
+    bool dummyArr[32];
+    tf.parallel_for(dummyArr, dummyArr + _countof(dummyArr), [&](bool)
+        {
+            GfxCommandList* newCmdList = [&]()
             {
-                GfxCommandList* newCmdList = [&]()
-                {
-                    static AdaptiveLock s_Lock;
-                    bbeAutoLock(s_Lock);
-                    return directPool.m_CommandListsPool.construct();
-                }();
-                assert(newCmdList);
-                newCmdList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT);
-
                 static AdaptiveLock s_Lock;
                 bbeAutoLock(s_Lock);
-                directPool.m_FreeCommandLists.push(newCmdList);
-            }).name(StringFormat("New CmdList[%u]", i));
-    }
+                return directPool.m_CommandListsPool.construct();
+            }();
+            assert(newCmdList);
+            newCmdList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT);
+
+            static AdaptiveLock s_Lock;
+            bbeAutoLock(s_Lock);
+            directPool.m_FreeCommandLists.push(newCmdList);
+        });
+
     g_TasksExecutor.run(tf).wait();
 }
 

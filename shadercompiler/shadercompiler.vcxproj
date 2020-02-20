@@ -57,7 +57,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\graphic\dx12utils.cpp" />
-    <ClCompile Include="..\src\system\locks.cpp" />
     <ClCompile Include="..\src\system\utils.cpp" />
     <ClCompile Include="shadercompiler.cpp" />
   </ItemGroup>

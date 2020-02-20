@@ -1,32 +1,26 @@
 #pragma once
 
-#include <atomic>
+#include <type_traits>
+
+#include "extern/tbb/include/tbb/spin_mutex.h"
+#include "extern/tbb/include/tbb/spin_rw_mutex.h"
 
 #include "system/profiler.h"
 
-class SpinLock
+template <bool ReadWrite>
+class SpinLockImp
 {
 public:
-    void Lock()
-    {
-        while (!TryLock()) {}
-    }
+    using LockType = std::conditional_t<ReadWrite, tbb::spin_rw_mutex, tbb::spin_mutex>;
 
-    void Unlock()
-    {
-        m_Lock.clear(std::memory_order_release);
-    }
-
-protected:
-    bool TryLock()
-    {
-        return !m_Lock.test_and_set(std::memory_order_acquire);
-    }
-
-    std::atomic_flag m_Lock = ATOMIC_FLAG_INIT;
+private:
+    LockType m_Lock;
 };
+using SpinLock   = SpinLockImp<false>;
+using RWSpinLock = SpinLockImp<true>;
 
-class AdaptiveLock : public SpinLock
+template <bool ReadWrite>
+class AdaptiveLockImp : public SpinLockImp<ReadWrite>
 {
 public:
     void Lock()
@@ -35,7 +29,7 @@ public:
 
         for (uint32_t i = 0; i < SPIN_LIMIT; ++i)
         {
-            if (TryLock()) return;
+            // TODO: Spin for fast locks and early exit
         }
 
         m_Mutex.lock();
@@ -55,6 +49,8 @@ private:
     std::mutex m_Mutex;
     bool m_IsLocked = false;
 };
+using AdaptiveLock   = AdaptiveLockImp<false>;
+using RWAdaptiveLock = AdaptiveLockImp<true>;
 
 template <typename LockType>
 struct ProfiledScopedLock
@@ -62,9 +58,8 @@ struct ProfiledScopedLock
     ProfiledScopedLock(LockType& lck, const char* fileAndLine)
         : m_Lock(lck)
     {
-        char fileAndLineBuffer[MAX_PATH] = {};
-        sprintf(fileAndLineBuffer, "Lock: %s", fileAndLine);
-        bbeProfileBlockBegin(fileAndLineBuffer);
+        fileAndLine += std::string{ fileAndLine }.find_last_of('\\');
+        bbeProfileBlockBegin(StringFormat("Lock: %s", fileAndLine).c_str());
 
         m_Lock.Lock();
     }

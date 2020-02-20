@@ -55,9 +55,6 @@
     <ClCompile Include="..\src\graphic\gfxtexturesandbuffers.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\system\locks.cpp">
-      <Filter>system</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\graphic\gfxcontext.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
