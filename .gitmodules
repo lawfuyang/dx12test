@@ -15,9 +15,6 @@
 [submodule "extern/D3D12MemoryAllocator"]
 	path = extern/D3D12MemoryAllocator
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/D3D12MemoryAllocator.git
-[submodule "extern/tbb"]
-	path = extern/tbb
-	url = https://github.com/intel/tbb.git
 [submodule "extern/spdlog"]
 	path = extern/spdlog
 	url = https://github.com/gabime/spdlog.git
