@@ -30,6 +30,9 @@
     <ClCompile Include="..\src\graphic\dx12utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\extern\microprofile\microprofile.cpp">
+      <Filter>extern\microprofile</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\utils.h">
@@ -40,6 +43,9 @@
     </ClInclude>
     <ClInclude Include="..\src\graphic\dx12utils.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\extern\microprofile\microprofile.h">
+      <Filter>extern\microprofile</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

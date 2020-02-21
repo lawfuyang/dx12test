@@ -1,7 +1,5 @@
 #include "system/profiler.h"
 
-#pragma comment(lib, "ws2_32.lib")
-
 #include "system/logger.h"
 
 void SystemProfiler::Initialize()
