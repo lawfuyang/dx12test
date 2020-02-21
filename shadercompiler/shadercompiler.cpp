@@ -1,21 +1,3 @@
-#include <inttypes.h>
-#include <vector>
-#include <assert.h>
-#include <stdio.h>
-#include <array>
-#include <wrl.h>
-
-typedef uint64_t WindowHandle;
-using Microsoft::WRL::ComPtr;
-
-#include "extern/cpp-taskflow/taskflow/taskflow.hpp"
-
-#include "system/logger.h"
-#include "system/utils.h"
-#include "system/math.h"
-#include "system/locks.h"
-
-#include "graphic/dx12utils.h"
 
 struct ShaderCompileJob;
 struct ConstantBufferDesc;
@@ -46,8 +28,6 @@ const std::string g_ShaderDeclarationStr    = "ShaderDeclaration:";
 const std::string g_EntryPointStr           = "EntryPoint:";
 const std::string g_CBufferStr              = "cbuffer";
 const std::string g_EndShaderDeclarationStr = "EndShaderDeclaration";
-
-tf::Executor g_TasksExecutor;
 
 struct DXCProcessWrapper
 {

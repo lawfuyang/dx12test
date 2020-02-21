@@ -23,3 +23,7 @@
 	path = extern/tbb
 	url = https://github.com/intel/tbb
 	branch = tbb_2020
+[submodule "extern/DirectX-Graphics-Samples"]
+	path = extern/DirectX-Graphics-Samples
+	url = https://github.com/microsoft/DirectX-Graphics-Samples
+	branch = master

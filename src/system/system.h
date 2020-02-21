@@ -1,43 +1,5 @@
 #pragma once
 
-#include <inttypes.h>
-#include <atomic>
-#include <chrono>
-#include <stdio.h>
-#include <string>
-#include <thread>
-#include <vector>
-#include <time.h>
-#include <algorithm>
-#include <array>
-#include <numeric>
-#include <mutex>
-#include <functional>
-#include <wrl.h>
-
-// uncomment to disable all asserts
-// #define NDEBUG
-#include <assert.h>
-
-#include "system/utils.h"
-#include "system/math.h"
-#include "system/stopwatch.h"
-#include "system/logger.h"
-#include "system/keyboard.h"
-#include "system/mouse.h"
-#include "system/profiler.h"
-#include "system/locks.h"
-
-#include "extern/cpp-taskflow/taskflow/taskflow.hpp"
-#include "extern/boost/container/small_vector.hpp"
-#include "extern/boost/lockfree/stack.hpp"
-#include "extern/boost/lockfree/queue.hpp"
-#include "extern/boost/pool/object_pool.hpp"
-#include "extern/boost/container_hash/hash.hpp"
-
-typedef uint64_t WindowHandle;
-using Microsoft::WRL::ComPtr;
-
 class System
 {
     DeclareSingletonFunctions(System);

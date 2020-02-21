@@ -48,9 +48,10 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;BBE_PROFILER_ENABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ForcedIncludeFiles>system/system.h;windows.h;d3d12.h;d3dcompiler.h;D3d12SDKLayers.h;dxgi1_6.h;d3d12/d3dx12.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
-      <DisableSpecificWarnings>4267;</DisableSpecificWarnings>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ForcedIncludeFiles>masterheader.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -120,6 +121,7 @@
     <ClInclude Include="..\src\graphic\guimanager.h" />
     <ClInclude Include="..\src\graphic\renderpasses\gfxrenderpass.h" />
     <ClInclude Include="..\src\graphic\renderpasses\gfxtestrenderpass.h" />
+    <ClInclude Include="..\src\masterheader.h" />
     <ClInclude Include="..\src\system\keyboard.h" />
     <ClInclude Include="..\src\system\locks.h" />
     <ClInclude Include="..\src\system\logger.h" />
