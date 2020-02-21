@@ -232,4 +232,7 @@
       <UniqueIdentifier>{d4597559-9270-4817-85c4-19684bd42d6d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
 </Project>

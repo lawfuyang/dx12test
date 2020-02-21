@@ -1,9 +1,9 @@
 #pragma once
 
-#include "extern/DirectXMath/Inc/DirectXMath.h"
-#include "extern/DirectXMath/Inc/DirectXColors.h"
-#include "extern/DirectXMath/Inc/DirectXCollision.h"
-#include "extern/DirectXMath/Inc/DirectXPackedVector.h"
+#include <DirectXMath.h>
+#include <DirectXColors.h>
+#include <DirectXCollision.h>
+#include <DirectXPackedVector.h>
 
 using namespace DirectX;
 
