@@ -18,7 +18,6 @@
 #pragma comment(lib, "extern/tbb/tbbmalloc.lib")
 #pragma comment(lib, "extern/tbb/tbbproxy.lib")
 
-
 #pragma warning(disable : 4267)
 
 // uncomment to disable all asserts

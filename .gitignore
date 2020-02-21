@@ -14,6 +14,7 @@ dx12test/packages/
 /extern/spdlog/
 /extern/microprofile/
 /extern/tbb/
+/extern/imgui/
 spdlog/x64
 tbb/x64
 CMakeLists.txt
