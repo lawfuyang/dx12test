@@ -13,6 +13,7 @@ dx12test/packages/
 /extern/boost/
 /extern/spdlog/
 /extern/microprofile/
+/extern/tbb/
 spdlog/x64
 tbb/x64
 CMakeLists.txt

@@ -2,7 +2,7 @@
 
 #include <type_traits>
 
-#include "extern/tbb/include/tbb/spin_mutex.h"
+#include "extern/tbb/tbb/spin_mutex.h"
 
 #include "system/profiler.h"
 

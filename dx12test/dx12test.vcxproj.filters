@@ -201,10 +201,10 @@
     <ClInclude Include="..\extern\D3D12MemoryAllocator\src\D3D12MemAlloc.h">
       <Filter>extern\d3d12memalloc</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\masterheader.h" />
     <ClInclude Include="..\extern\microprofile\microprofile.h">
       <Filter>extern\microprofile</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\masterheader.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="system">

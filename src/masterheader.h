@@ -4,7 +4,18 @@
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 
+#pragma comment(lib, "d3d12.lib")
+#pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "dxguid.lib")
+
 #pragma comment(lib, "extern/spdlog/spdlog.lib")
+
+#pragma comment(lib, "extern/tbb/tbb.lib")
+#pragma comment(lib, "extern/tbb/tbbbind.lib")
+#pragma comment(lib, "extern/tbb/tbbmalloc.lib")
+#pragma comment(lib, "extern/tbb/tbbproxy.lib")
+
 
 #pragma warning(disable : 4267)
 
@@ -20,6 +31,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <queue>
 #include <algorithm>
 #include <array>
 #include <numeric>
