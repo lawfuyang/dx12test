@@ -58,7 +58,7 @@ struct DXCProcessWrapper
         std::string commandLine = g_DXCDir.c_str();
         commandLine += " " + inputCommandLine;
 
-        g_Log.info(commandLine);
+        g_Log.info("ShaderCompileJob: " + commandLine);
 
         if (::CreateProcess(nullptr,    // No module name (use command line).
             (LPSTR)commandLine.c_str(), // Command line.
@@ -437,24 +437,25 @@ static std::size_t GetFileContentsHash(const std::string& dir)
     return std::hash<std::string>{} (fileContents);
 }
 
-static void OverrideExistingFileIfNecessary(const std::string& generatedString, const std::string& dir)
+static void OverrideExistingFileIfNecessary(const std::string& generatedString, const std::string& dirFull)
 {
     // hash both existing and newly generated contents
-    const std::size_t existingHash = GetFileContentsHash(dir);
+    const std::size_t existingHash = GetFileContentsHash(dirFull);
     const std::size_t newHash = std::hash<std::string>{}(generatedString);
+    const std::string dirShort = std::string{ dirFull, dirFull.find_last_of('\\') + 1 };
 
     // if hashes are different, over ride with new contents
     if (existingHash != newHash)
     {
-        g_Log.info("hash different for '{}'... over-riding with new contents", dir);
+        g_Log.info("hash different for '{}'... over-riding with new contents", dirShort);
         const bool IsReadMode = false;
-        CFileWrapper file{ dir, IsReadMode };
+        CFileWrapper file{ dirFull, IsReadMode };
         assert(file);
         fprintf(file, "%s", generatedString.c_str());
     }
     else
     {
-        g_Log.info("No change detected for '{}'", dir);
+        g_Log.info("No change detected for '{}'", dirShort);
     }
 }
 
@@ -528,7 +529,8 @@ static void PrintGeneratedConstantBuffersFile()
     {
         generatedString += StringFormat("struct %s\n", cBuffer.m_BufferName.c_str());
         generatedString += "{\n";
-        generatedString += StringFormat("    static const uint32_t ms_Register = %u;\n\n", cBuffer.m_Register);
+        generatedString += StringFormat("    static const uint32_t ms_Register = %u;\n", cBuffer.m_Register);
+        generatedString += StringFormat("    inline static const char* ms_Name = \"%s GfxConstantBuffer\";\n\n", cBuffer.m_BufferName.c_str());
 
         for (const ConstantBufferDesc::CPPTypeVarNamePair& var : cBuffer.m_Variables)
         {

@@ -17,3 +17,4 @@ dx12test/enc_temp_folder
 spdlog/x64
 tbb/x64
 update all git repos.sh
+CMakeLists.txt

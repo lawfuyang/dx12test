@@ -92,6 +92,9 @@ private:
 class GfxConstantBuffer : public GfxBufferCommon
 {
 public:
+    template <typename BufferStruct>
+    void Initialize(GfxContext& context) { Initialize(context, sizeof(BufferStruct), BufferStruct::ms_Name); }
+
     void Initialize(GfxContext& context, uint32_t bufferSize, const std::string& resourceName = "");
     void Update(const void* data) const;
 
