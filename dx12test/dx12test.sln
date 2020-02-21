@@ -7,10 +7,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dx12test", "dx12test.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shadercompiler", "..\shadercompiler\shadercompiler.vcxproj", "{4D8B3BB5-9EBD-456C-B1AB-56C0EBDBA577}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "spdlog", "..\spdlog\spdlog.vcxproj", "{14E8606C-5E3F-4952-9912-04425935A96C}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tbb", "..\tbb\tbb.vcxproj", "{4A3BC036-2F24-46FC-8AB3-2F7BF80B58F3}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release Unity|x64 = Release Unity|x64
@@ -25,13 +21,6 @@ Global
 		{4D8B3BB5-9EBD-456C-B1AB-56C0EBDBA577}.Release Unity|x64.Build.0 = Release|x64
 		{4D8B3BB5-9EBD-456C-B1AB-56C0EBDBA577}.Release|x64.ActiveCfg = Release|x64
 		{4D8B3BB5-9EBD-456C-B1AB-56C0EBDBA577}.Release|x64.Build.0 = Release|x64
-		{14E8606C-5E3F-4952-9912-04425935A96C}.Release Unity|x64.ActiveCfg = Release|x64
-		{14E8606C-5E3F-4952-9912-04425935A96C}.Release Unity|x64.Build.0 = Release|x64
-		{14E8606C-5E3F-4952-9912-04425935A96C}.Release|x64.ActiveCfg = Release|x64
-		{4A3BC036-2F24-46FC-8AB3-2F7BF80B58F3}.Release Unity|x64.ActiveCfg = Release|x64
-		{4A3BC036-2F24-46FC-8AB3-2F7BF80B58F3}.Release Unity|x64.Build.0 = Release|x64
-		{4A3BC036-2F24-46FC-8AB3-2F7BF80B58F3}.Release|x64.ActiveCfg = Release|x64
-		{4A3BC036-2F24-46FC-8AB3-2F7BF80B58F3}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

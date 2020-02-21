@@ -4,6 +4,8 @@
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 
+#pragma comment(lib, "extern/spdlog/spdlog.lib")
+
 #pragma warning(disable : 4267)
 
 // uncomment to disable all asserts
