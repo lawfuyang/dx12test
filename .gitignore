@@ -11,6 +11,7 @@ dx12test/packages/
 /src/system/.vs
 /tmp/
 /extern/boost/
+/extern/spdlog/
 spdlog/x64
 tbb/x64
 CMakeLists.txt
