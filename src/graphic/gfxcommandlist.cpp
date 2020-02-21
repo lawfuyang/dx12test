@@ -73,35 +73,10 @@ void GfxCommandListsManager::Initialize()
     queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     queueDesc.NodeMask = 0; // For single-adapter, set to 0. Else, set a bit to identify the node
 
-    // init ID3D12CommandQueue & some free ID3D12GraphicsCommandLists in parallel
-    tf::Taskflow tf;
-
-    tf.emplace([&]()
-        {
-            bbeProfile("CreateCommandQueue");
-            DX12_CALL(gfxDevice.Dev()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&directPool.m_CommandQueue)));
-            g_Profiler.InitializeGPUProfiler(gfxDevice.Dev(), directPool.m_CommandQueue.Get());
-            g_Profiler.RegisterGPUQueue(directPool.m_CommandQueue.Get(), "Direct Queue");
-        }).name("CreateCommandQueue");
-
-    bool dummyArr[32];
-    tf.parallel_for(dummyArr, dummyArr + _countof(dummyArr), [&](bool)
-        {
-            GfxCommandList* newCmdList = [&]()
-            {
-                static AdaptiveLock s_Lock;
-                bbeAutoLock(s_Lock);
-                return directPool.m_CommandListsPool.construct();
-            }();
-            assert(newCmdList);
-            newCmdList->Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT);
-
-            static AdaptiveLock s_Lock;
-            bbeAutoLock(s_Lock);
-            directPool.m_FreeCommandLists.push(newCmdList);
-        });
-
-    g_TasksExecutor.run(tf).wait();
+    bbeProfile("CreateCommandQueue");
+    DX12_CALL(gfxDevice.Dev()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&directPool.m_CommandQueue)));
+    g_Profiler.InitializeGPUProfiler(gfxDevice.Dev(), directPool.m_CommandQueue.Get());
+    g_Profiler.RegisterGPUQueue(directPool.m_CommandQueue.Get(), "Direct Queue");
 }
 
 void GfxCommandListsManager::ShutDown()
@@ -110,45 +85,40 @@ void GfxCommandListsManager::ShutDown()
 
     assert(m_DirectPool.m_ActiveCommandLists.empty() == true);
 
-    while (m_DirectPool.m_FreeCommandLists.size())
+    // free all cmd lists
+    while (!m_DirectPool.m_FreeCommandLists.empty())
     {
-        GfxCommandList* cmdList = m_DirectPool.m_FreeCommandLists.front();
-        m_DirectPool.m_FreeCommandLists.pop();
-        m_DirectPool.m_CommandListsPool.free(cmdList);
+        GfxCommandList* cmdList = nullptr;
+        if (m_DirectPool.m_FreeCommandLists.try_pop(cmdList))
+        {
+            m_DirectPool.m_CommandListsPool.free(cmdList);
+        }
     }
 }
 
 GfxCommandList* GfxCommandListsManager::Allocate(D3D12_COMMAND_LIST_TYPE cmdListType)
 {
-    bbeMultiThreadDetector();
     bbeProfileFunction();
 
-    // TODO: Need to investigate why at high frame rates (>60 fps), it's not allocating proper free cmd lists
-    //       It's always calling "BeginRecording" on recording cmd lists
-
-    CommandListPool& pool = GetPoolFromType(cmdListType);
     GfxCommandList* newCmdList = nullptr;
 
-    // try getting a free cmd list first
-    if (pool.m_FreeCommandLists.size())
+    // if no free list, create a new one
+    if (m_DirectPool.m_FreeCommandLists.empty())
     {
-        newCmdList = pool.m_FreeCommandLists.front();
+        bbeAutoLock(m_DirectPool.m_PoolLock);
+        newCmdList = m_DirectPool.m_CommandListsPool.construct();
         assert(newCmdList);
-        pool.m_FreeCommandLists.pop();
+
+        newCmdList->Initialize(cmdListType);
     }
     else
     {
-        // if no free list, create a new one
-        newCmdList = pool.m_CommandListsPool.construct();
+        while (!m_DirectPool.m_FreeCommandLists.try_pop(newCmdList));
         assert(newCmdList);
-        newCmdList->Initialize(cmdListType);
     }
-    
-    // We should have a legit cmd list at this point
-    assert(newCmdList);
 
     newCmdList->BeginRecording();
-    pool.m_ActiveCommandLists.push(newCmdList);
+    m_DirectPool.m_ActiveCommandLists.push(newCmdList);
 
     return newCmdList;
 }
@@ -158,24 +128,17 @@ void GfxCommandListsManager::ExecuteAllActiveCommandLists()
     bbeMultiThreadDetector();
     bbeProfileFunction();
 
-    CommandListPool* const allPools[] =
+    while (!m_DirectPool.m_ActiveCommandLists.empty())
     {
-        &m_DirectPool,
-    };
-
-    for (CommandListPool* pool : allPools)
-    {
-        while (pool->m_ActiveCommandLists.size())
+        GfxCommandList* cmdListToConsume = nullptr;
+        if (m_DirectPool.m_ActiveCommandLists.try_pop(cmdListToConsume))
         {
-            GfxCommandList* cmdListToConsume = pool->m_ActiveCommandLists.front();
-            pool->m_ActiveCommandLists.pop();
-
             cmdListToConsume->EndRecording();
 
             ID3D12CommandList* ppCommandLists[] = { cmdListToConsume->Dev() };
-            pool->m_CommandQueue->ExecuteCommandLists(1, ppCommandLists);
+            m_DirectPool.m_CommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
-            pool->m_FreeCommandLists.push(cmdListToConsume);
+            m_DirectPool.m_FreeCommandLists.push(cmdListToConsume);
         }
     }
 }

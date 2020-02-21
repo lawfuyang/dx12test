@@ -6,7 +6,7 @@
 
 void SystemProfiler::Initialize()
 {
-    g_Log.info("Initializing profiler");
+    g_Log.info("Initializing CPU Profiler");
 
     //turn on profiling
     MicroProfileOnThreadCreate("Main");
@@ -18,6 +18,8 @@ void SystemProfiler::Initialize()
 
 void SystemProfiler::InitializeGPUProfiler(void* pDevice, void* pCommandQueue)
 {
+    g_Log.info("Initializing GPU Profiler");
+
     MicroProfileGpuInitD3D12(pDevice, 1, (void**)&pCommandQueue);
     MicroProfileSetCurrentNodeD3D12(0);
 }
@@ -42,7 +44,6 @@ void SystemProfiler::ShutDown()
     }
     m_GPULogs.clear();
 
-    MicroProfileGpuShutdown();
     MicroProfileShutdown();
 }
 

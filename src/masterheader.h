@@ -59,6 +59,8 @@
 #include <extern/boost/pool/object_pool.hpp>
 #include <extern/boost/container_hash/hash.hpp>
 
+#include <extern/tbb/tbb/concurrent_queue.h>
+
 // typedefs
 using WindowHandle = uint64_t;
 
