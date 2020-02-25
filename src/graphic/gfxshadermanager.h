@@ -36,3 +36,4 @@ public:
 private:
     std::array<GfxShader, g_NumShaders> m_AllShaders;
 };
+#define g_GfxShaderManager GfxShaderManager::GetInstance()

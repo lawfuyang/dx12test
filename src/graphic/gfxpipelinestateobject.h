@@ -73,5 +73,6 @@ private:
 
     uint32_t m_NewPSOs = 0;
 };
+#define g_GfxPSOManager GfxPSOManager::GetInstance()
 
 #include "graphic/gfxpipelinestateobject.hpp"

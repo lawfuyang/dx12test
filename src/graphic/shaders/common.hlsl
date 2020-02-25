@@ -3,7 +3,6 @@ cbuffer FrameParams : register(b0)
     uint g_FrameNumber;
     float g_CurrentFrameTime;
     float g_PreviousFrameTime;
-    uint g_FrameParamsPadding0;
 };
 // EndShaderDeclarations
 

@@ -94,11 +94,16 @@ struct ShaderCompileJob
         m_ShaderObjCodeVarName = m_ShaderName + "_ObjCode";
 
         std::string commandLine = m_ShaderFilePath;
-        commandLine += " -nologo";
         commandLine += " -E " + m_EntryPoint;
         commandLine += " -T " + GetTargetProfileString();
         commandLine += " -Fh " + m_ShaderObjCodeFileDir;
         commandLine += " -Vn " + m_ShaderObjCodeVarName;
+        commandLine += " -nologo";
+        commandLine += " -Qunused-arguments ";
+        commandLine += " -Qstrip_debug ";
+        commandLine += " -Qstrip_priv ";
+        commandLine += " -Qstrip_reflect ";
+        commandLine += " -Qstrip_rootsignature ";
 
         // debugging stuff
         //commandLine += " -Zi -Qembed_debug -Fd " + g_ShadersTmpDir + m_ShaderName + ".pdb";
@@ -136,9 +141,6 @@ struct ConstantBufferDesc
 
     void SanityCheck()
     {
-        // check register value
-        assert(m_Register != 99);
-
         // check buffer name
         for (char c : m_BufferName)
         {
@@ -152,8 +154,13 @@ struct ConstantBufferDesc
             bufferSize += g_CPPTypeSizeMap.at(std::hash<std::string>{}(var.m_CPPVarType));
         }
         
-        // check 16 byte alignment
-        assert((bbeIsAligned(bufferSize, 16)));
+        // add dummy padding vars to align to 16 byte
+        uint32_t paddingVarCount = 0;
+        while (!bbeIsAligned(bufferSize, 16))
+        {
+            AddVariable("uint", StringFormat("m_%s_DummyPaddingVar%d;", m_BufferName.c_str(), paddingVarCount++));
+            bufferSize += 4;
+        }
     }
 
     std::string m_BufferName;
@@ -507,9 +514,8 @@ static void PrintGeneratedConstantBuffersFile()
 
     for (const ConstantBufferDesc& cBuffer : g_AllConstantBuffers)
     {
-        generatedString += StringFormat("struct %s\n", cBuffer.m_BufferName.c_str());
+        generatedString += StringFormat("struct alignas(16) %s\n", cBuffer.m_BufferName.c_str());
         generatedString += "{\n";
-        generatedString += StringFormat("    static const uint32_t ms_Register = %u;\n", cBuffer.m_Register);
         generatedString += StringFormat("    inline static const char* ms_Name = \"%s GfxConstantBuffer\";\n\n", cBuffer.m_BufferName.c_str());
 
         for (const ConstantBufferDesc::CPPTypeVarNamePair& var : cBuffer.m_Variables)

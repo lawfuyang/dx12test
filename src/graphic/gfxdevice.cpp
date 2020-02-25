@@ -270,13 +270,9 @@ GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType, c
     }
     GfxContext& newContext = m_AllContexts.back();
 
-    newContext.m_ID = m_AllContexts.size() - 1;
-
-    newContext.m_GfxManager    = &g_GfxManager;
-    newContext.m_Device        = this;
-    newContext.m_CommandList   = m_CommandListsManager.Allocate(cmdListType);
-    newContext.m_PSOManager    = &GfxPSOManager::GetInstance();
-    newContext.m_ShaderManager = &GfxShaderManager::GetInstance();
+    newContext.m_ID          = m_AllContexts.size() - 1;
+    newContext.m_Device      = this;
+    newContext.m_CommandList = m_CommandListsManager.Allocate(cmdListType);
 
     newContext.m_GPUProfilerContext.Initialize(newContext.m_CommandList->Dev(), newContext.m_ID);
 

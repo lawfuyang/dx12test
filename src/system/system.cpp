@@ -63,7 +63,7 @@ void System::Initialize()
     tf::Taskflow tf;
 
     g_GfxManager.Initialize(tf);
-    // TODO: init other System/Engine/Physics systems here in parallel
+    // Init other System/Engine/Physics systems here in parallel
 
     m_Executor.run(tf).wait();
 

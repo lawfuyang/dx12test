@@ -1,10 +1,13 @@
 // ShaderDeclaration:VS_TestTriangle EntryPoint:VSMain
 // ShaderDeclaration:PS_TestTriangle EntryPoint:PSMain
+
+cbuffer TestShaderConsts : register(b1)
+{
+    float2 g_CubeOffests;
+};
 // EndShaderDeclaration
 
 #include "common.hlsl"
-
-Texture2D g_Texture : register(t0);
 
 struct VS_IN
 {
@@ -27,6 +30,8 @@ VS_OUT VSMain(VS_IN input)
     result.m_Position = input.m_Position;
     result.m_TexCoord = input.m_TexCoord;
     result.m_Color = input.m_Color;
+
+    result.m_Position.xy += g_CubeOffests;
 
     return result;
 }

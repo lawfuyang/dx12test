@@ -16,6 +16,7 @@ public:
     void Render(GfxContext&) override;
 
 private:
-    GfxVertexBuffer m_QuadVBuffer;
-    GfxIndexBuffer  m_QuadIBuffer;
+    GfxVertexBuffer   m_QuadVBuffer;
+    GfxIndexBuffer    m_QuadIBuffer;
+    GfxConstantBuffer m_RenderPassCB;
 };

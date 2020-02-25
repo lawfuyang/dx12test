@@ -42,27 +42,16 @@ static constexpr D3D12_STATIC_SAMPLER_DESC gs_StaticSamplers[] =
     gs_AnisotropicWrapSamplerDesc,
 };
 
-void GfxRootSignature::AddRootParam(D3D12_DESCRIPTOR_RANGE_TYPE type)
+void GfxRootSignature::AddDescriptorTable(D3D12_DESCRIPTOR_RANGE_TYPE type, uint32_t numDescriptors, uint32_t baseShaderRegister)
 {
-    D3D12_DESCRIPTOR_RANGE1 newRange;
-    newRange.RangeType = type;
-    newRange.NumDescriptors = 1;
-    newRange.BaseShaderRegister = m_ShaderRegisters[type]++;
-    newRange.RegisterSpace = ms_RootSigID; // Use the root sig ID as register space
+    CD3DX12_DESCRIPTOR_RANGE1 newRange;
+    newRange.Init(type, numDescriptors, baseShaderRegister);
     newRange.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC;
-    newRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+    m_DescRanges.push_back(newRange);
 
     boost::hash_combine(m_Hash, newRange.RangeType);
     boost::hash_combine(m_Hash, newRange.NumDescriptors);
     boost::hash_combine(m_Hash, newRange.BaseShaderRegister);
-    boost::hash_combine(m_Hash, newRange.RegisterSpace);
-    boost::hash_combine(m_Hash, newRange.Flags);
-    boost::hash_combine(m_Hash, newRange.OffsetInDescriptorsFromTableStart);
-
-    CD3DX12_ROOT_PARAMETER1 rootParameter;
-    rootParameter.InitAsDescriptorTable(1, &newRange, D3D12_SHADER_VISIBILITY_ALL);
-
-    m_RootParams.push_back(rootParameter);
 }
 
 void GfxRootSignature::Compile()
@@ -76,26 +65,27 @@ void GfxRootSignature::Compile()
 
     assert(highestRootSigVer == D3D_ROOT_SIGNATURE_VERSION_1_1);
 
+    CD3DX12_ROOT_PARAMETER1* rootParams = (CD3DX12_ROOT_PARAMETER1*)alloca(sizeof(CD3DX12_ROOT_PARAMETER1) * m_DescRanges.size());
+    for (uint32_t i = 0; i < m_DescRanges.size(); ++i)
+    {
+        rootParams[i].InitAsDescriptorTable(1, &m_DescRanges[i], D3D12_SHADER_VISIBILITY_ALL);
+    }
+
     D3D12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
     rootSignatureDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
-    rootSignatureDesc.Desc_1_1.NumParameters = m_RootParams.size();
-    rootSignatureDesc.Desc_1_1.pParameters = m_RootParams.data();
+    rootSignatureDesc.Desc_1_1.NumParameters = m_DescRanges.size();
+    rootSignatureDesc.Desc_1_1.pParameters = rootParams;
     rootSignatureDesc.Desc_1_1.NumStaticSamplers = _countof(gs_StaticSamplers);
     rootSignatureDesc.Desc_1_1.pStaticSamplers = gs_StaticSamplers;
     rootSignatureDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT; // change to D3D12_ROOT_SIGNATURE_FLAG_NONE for compute shaders etc
-
-    boost::hash_combine(m_Hash, rootSignatureDesc.Version);
-    boost::hash_combine(m_Hash, rootSignatureDesc.Desc_1_1.Flags);
 
     ComPtr<ID3DBlob> signature;
     ComPtr<ID3DBlob> error;
     DX12_CALL(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, highestRootSigVer, &signature, &error));
     DX12_CALL(gfxDevice.Dev()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature)));
 
-    // clear all root params. we no longer need them.
-    m_RootParams.resize(0);
-
-    ++ms_RootSigID;
+    boost::hash_combine(m_Hash, rootSignatureDesc.Version);
+    boost::hash_combine(m_Hash, rootSignatureDesc.Desc_1_1.Flags);
 }
 
 void GfxRootSignatureManager::Initialize()
@@ -103,6 +93,7 @@ void GfxRootSignatureManager::Initialize()
     bbeProfileFunction();
 
     assert(DefaultRootSignatures::DefaultGraphicsRootSignature.m_Hash == 0);
-    DefaultRootSignatures::DefaultGraphicsRootSignature.AddRootParam(D3D12_DESCRIPTOR_RANGE_TYPE_CBV);
+    DefaultRootSignatures::DefaultGraphicsRootSignature.AddDescriptorTable(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0); // FrameParams CBs
+    DefaultRootSignatures::DefaultGraphicsRootSignature.AddDescriptorTable(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1); // Render Passes CBs
     DefaultRootSignatures::DefaultGraphicsRootSignature.Compile();
 }
