@@ -90,7 +90,7 @@ void System::InitializeThreadIDs()
     tf::Taskflow tf;
     tf.parallel_for(dummyArr, dummyArr + m_Executor.num_workers(), [&](bool)
         {
-            const uint32_t workerThreadIdx = m_Executor.this_worker_id().value();
+            const uint32_t workerThreadIdx = m_Executor.this_worker_id();
             const uint32_t STDThreadID = GetSTDThreadID();
 
             static AdaptiveLock s_Lock;
