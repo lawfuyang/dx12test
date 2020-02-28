@@ -52,8 +52,7 @@
 
 #include <extern/DirectX-Graphics-Samples/Libraries/D3DX12/d3dx12.h>
 
-#include <extern/cpp-taskflow/taskflow/taskflow.hpp>
-
+#include <extern/taskflow/taskflow.hpp>
 #include <extern/boost/container/small_vector.hpp>
 #include <extern/boost/lockfree/stack.hpp>
 #include <extern/boost/lockfree/queue.hpp>
