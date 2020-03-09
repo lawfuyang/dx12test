@@ -1,4 +1,6 @@
 
+#include <graphic/dx12utils.h>
+
 struct ShaderCompileJob;
 struct ConstantBufferDesc;
 
@@ -14,8 +16,8 @@ std::string g_ShadersConstantBuffersAutoGenDir;
 std::vector<std::string>                     g_AllShaderFiles;
 std::vector<ShaderCompileJob>                g_AllShaderCompileJobs;
 std::vector<ConstantBufferDesc>              g_AllConstantBuffers;
-std::unordered_map<std::size_t, std::string> g_HLSLTypeToCPPTypeMap;
-std::unordered_map<std::size_t, uint32_t>    g_CPPTypeSizeMap;
+std::unordered_map<std::string, std::string> g_HLSLTypeToCPPTypeMap;
+std::unordered_map<std::string, uint32_t>    g_CPPTypeSizeMap;
 
 D3D_SHADER_MODEL g_HighestShaderModel = D3D_SHADER_MODEL_5_1;
 
@@ -133,7 +135,7 @@ struct ConstantBufferDesc
 
         CPPTypeVarNamePair newVar;
 
-        newVar.m_CPPVarType = g_HLSLTypeToCPPTypeMap.at(std::hash<std::string>{}(hlslType));
+        newVar.m_CPPVarType = g_HLSLTypeToCPPTypeMap.at(hlslType);
         newVar.m_VarName = varName;
 
         m_Variables.push_back(newVar);
@@ -151,7 +153,7 @@ struct ConstantBufferDesc
         uint32_t bufferSize = 0;
         for (const CPPTypeVarNamePair& var : m_Variables)
         {
-            bufferSize += g_CPPTypeSizeMap.at(std::hash<std::string>{}(var.m_CPPVarType));
+            bufferSize += g_CPPTypeSizeMap.at(var.m_CPPVarType);
         }
         
         // add dummy padding vars to align to 16 byte
@@ -207,27 +209,16 @@ static void GetD3D12ShaderModels()
             continue;
         }
 
-        constexpr D3D_FEATURE_LEVEL featureLevels[] =
-        {
-            D3D_FEATURE_LEVEL_12_1,
-            D3D_FEATURE_LEVEL_12_0,
-            D3D_FEATURE_LEVEL_11_1,
-            D3D_FEATURE_LEVEL_11_0
-        };
-
+        // we only care about D3D_FEATURE_LEVEL_1_0_CORE support
         ComPtr<ID3D12Device6> D3DDevice;
-        for (D3D_FEATURE_LEVEL level : featureLevels)
+        if (SUCCEEDED(D3D12CreateDevice(hardwareAdapter.Get(), D3D_FEATURE_LEVEL_1_0_CORE, IID_PPV_ARGS(&D3DDevice))))
         {
-            if (SUCCEEDED(D3D12CreateDevice(hardwareAdapter.Get(), level, IID_PPV_ARGS(&D3DDevice))))
-            {
-                g_Log.info("Created ID3D12Device. D3D_FEATURE_LEVEL: %s", GetD3DFeatureLevelName(level));
-                break;
-            }
+            g_Log.info("Created ID3D12Device. D3D_FEATURE_LEVEL: %s", GetD3DFeatureLevelName(D3D_FEATURE_LEVEL_1_0_CORE));
         }
-        assert(D3DDevice.Get() != nullptr);
+        assert(D3DDevice);
 
         // Query the level of support of Shader Model.
-        constexpr D3D12_FEATURE_DATA_SHADER_MODEL shaderModels[] =
+        const D3D12_FEATURE_DATA_SHADER_MODEL shaderModels[] =
         {
             D3D_SHADER_MODEL_6_5,
             D3D_SHADER_MODEL_6_4,
@@ -543,8 +534,48 @@ static void PrintGeneratedFiles()
     g_TasksExecutor.run(tf).wait();
 }
 
-static void RunShaderCompiler()
+struct GlobalsInitializer
 {
+    GlobalsInitializer()
+    {
+        // init dirs
+        g_AppDir                           = GetApplicationDirectory();
+        g_ShadersTmpDir                    = g_AppDir + "..\\tmp\\shaders\\";
+        g_SettingsFileDir                  = g_ShadersTmpDir + "shadercompilersettings.ini";
+        g_ShadersDir                       = g_AppDir + "..\\src\\graphic\\shaders";
+        g_ShadersEnumsAutoGenDir           = g_ShadersTmpDir + "shadersenumsautogen.h";
+        g_ShadersHeaderAutoGenDir          = g_ShadersTmpDir + "shaderheadersautogen.h";
+        g_ShadersConstantBuffersAutoGenDir = g_ShadersTmpDir + "shaderconstantbuffersautogen.h";
+        g_DXCDir                           = g_AppDir + "..\\tools\\dxc\\dxc.exe";
+
+        // init misc traits
+    #define ADD_TYPE(hlslType, CPPType, TypeSize)   \
+        g_HLSLTypeToCPPTypeMap[hlslType] = CPPType; \
+        g_CPPTypeSizeMap[CPPType] = TypeSize;
+
+        ADD_TYPE("int", "int32_t", 4);
+        ADD_TYPE("int2", "XMINT2", 8);
+        ADD_TYPE("int3", "XMINT3", 12);
+        ADD_TYPE("int4", "XMINT4", 16);
+        ADD_TYPE("uint", "uint32_t", 4);
+        ADD_TYPE("uint2", "XMUINT2", 8);
+        ADD_TYPE("uint3", "XMUINT3", 12);
+        ADD_TYPE("uint4", "XMUINT4", 16);
+        ADD_TYPE("float", "float", 4);
+        ADD_TYPE("float2", "XMFLOAT2", 8);
+        ADD_TYPE("float3", "XMFLOAT3", 12);
+        ADD_TYPE("float4", "XMFLOAT4", 16);
+        ADD_TYPE("float4x4", "XMMATRIX", 64);
+    #undef ADD_TYPE
+    }
+};
+static const GlobalsInitializer g_GlobalsInitializer;
+
+int main()
+{
+    // first, Init the logger
+    Logger::GetInstance().Initialize("../bin/shadercompiler_output.txt");
+
     GetFilesInDirectory(g_AllShaderFiles, g_ShadersDir);
 
     GetD3D12ShaderModelsAndPopulateJobs();
@@ -552,45 +583,6 @@ static void RunShaderCompiler()
     RunAllJobs();
 
     PrintGeneratedFiles();
-}
-
-int main()
-{
-    // first, Init the logger
-    Logger::GetInstance().Initialize("../bin/shadercompiler_output.txt");
-
-    // init dirs
-    g_AppDir                           = GetApplicationDirectory();
-    g_ShadersTmpDir                    = g_AppDir + "..\\tmp\\shaders\\";
-    g_SettingsFileDir                  = g_ShadersTmpDir + "shadercompilersettings.ini";
-    g_ShadersDir                       = g_AppDir + "..\\src\\graphic\\shaders";
-    g_ShadersEnumsAutoGenDir           = g_ShadersTmpDir + "shadersenumsautogen.h";
-    g_ShadersHeaderAutoGenDir          = g_ShadersTmpDir + "shaderheadersautogen.h";
-    g_ShadersConstantBuffersAutoGenDir = g_ShadersTmpDir + "shaderconstantbuffersautogen.h";
-    g_DXCDir                           = g_AppDir + "..\\tools\\dxc\\dxc.exe";
-
-    // init misc traits
-#define ADD_TYPE(hlslType, CPPType, TypeSize)                             \
-    g_HLSLTypeToCPPTypeMap[std::hash<std::string>{}(hlslType)] = CPPType; \
-    g_CPPTypeSizeMap[std::hash<std::string>{}(CPPType)] = TypeSize;
-
-    ADD_TYPE("int", "int32_t", 4);
-    ADD_TYPE("int2", "XMINT2", 8);
-    ADD_TYPE("int3", "XMINT3", 12);
-    ADD_TYPE("int4", "XMINT4", 16);
-    ADD_TYPE("uint", "uint32_t", 4);
-    ADD_TYPE("uint2", "XMUINT2", 8);
-    ADD_TYPE("uint3", "XMUINT3", 12);
-    ADD_TYPE("uint4", "XMUINT4", 16);
-    ADD_TYPE("float", "float", 4);
-    ADD_TYPE("float2", "XMFLOAT2", 8);
-    ADD_TYPE("float3", "XMFLOAT3", 12);
-    ADD_TYPE("float4", "XMFLOAT4", 16);
-    ADD_TYPE("float4x4", "XMMATRIX", 64);
-
-#undef ADD_TYPE
-    
-    RunShaderCompiler();
 
     system("pause");
     return 0;

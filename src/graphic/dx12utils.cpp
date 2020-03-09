@@ -11,6 +11,7 @@ const char* GetD3DFeatureLevelName(D3D_FEATURE_LEVEL FeatureLevel)
 {
     switch (FeatureLevel)
     {
+        bbeSimpleSwitchCaseString(D3D_FEATURE_LEVEL_1_0_CORE);
         bbeSimpleSwitchCaseString(D3D_FEATURE_LEVEL_9_1);
         bbeSimpleSwitchCaseString(D3D_FEATURE_LEVEL_9_2);
         bbeSimpleSwitchCaseString(D3D_FEATURE_LEVEL_9_3);
