@@ -1,3 +1,5 @@
+#include "extern/argparse/argparse.h"
+
 #include "system.h"
 
 extern void InitializeGraphic(tf::Taskflow&);
@@ -144,30 +146,42 @@ FrameRateController::~FrameRateController()
     g_System.m_CappedFPS         = cappedFPS;
 }
 
-static const std::unordered_map<std::string, std::function<void()>> g_CommandLineOptionsCBs =
+void CommandLineOptions::Parse()
 {
-    {"pixcapture", [&]() { g_CommandLineOptions.m_PIXCapture = true; }},
-    {"profileinit", [&]() { g_CommandLineOptions.m_ProfileInit = true; }},
-    {"profileshutdown", [&]() { g_CommandLineOptions.m_ProfileShutdown = true; }}
-};
+    ArgumentParser parser("Argument Parser");
 
-void CommandLineOptions::ParseCmdLine(char* cmdLine)
-{
-    g_Log.info("cmd line args: {}", cmdLine);
+    parser.add_argument("--pixcapture", "pixcapture");
+    parser.add_argument("--profileinit", "profileinit");
+    parser.add_argument("--profileshutdown", "profileshutdown");
+    parser.add_argument("--resolution", "resolution");
+    parser.add_argument("--gfxmemallocalwayscommitedmemory", "gfxmemallocalwayscommitedmemory");
+    parser.add_argument("--enablegfxdebuglayer", "enablegfxdebuglayer");
 
-    const char* delimiters = " ";
-    char* token = std::strtok(cmdLine, delimiters);
-    while (token)
+    try
     {
-        try
-        {
-            g_CommandLineOptionsCBs.at(token)();
-        }
-        catch (const std::exception & ex)
-        {
-            g_Log.error("CommandLineOptions error for '{}': {}", token, ex.what());
-        }
+        parser.parse(__argc, (const char**)__argv);
+    }
+    catch (const std::exception & ex)
+    {
+        g_Log.error("CommandLineOptions::Parse error: {}", ex.what());
+    }
 
-        token = std::strtok(nullptr, delimiters);
+    m_PIXCapture                      = parser.exists("pixcapture");
+    m_ProfileInit                     = parser.exists("profileinit");
+    m_ProfileShutdown                 = parser.exists("profileshutdown");
+    m_GfxMemAllocAlwaysCommitedMemory = parser.exists("gfxmemallocalwayscommitedmemory");
+    m_EnableGfxDebugLayer             = parser.exists("enablegfxdebuglayer");
+
+    if (parser.exists("resolution"))
+    {
+        const std::vector<uint32_t> resolution = parser.getv<uint32_t>("resolution");
+        m_WindowWidth = resolution[0];
+        m_WindowHeight = resolution[1];
+    }
+
+    const std::vector<std::string> unusedArgs = parser.getv<std::string>("");
+    for (const std::string& str : unusedArgs)
+    {
+        g_Log.warn("Unused commandline arg: {}", str);
     }
 }

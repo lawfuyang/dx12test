@@ -10,6 +10,8 @@ GfxTestRenderPass::GfxTestRenderPass()
 
 void GfxTestRenderPass::Initialize(GfxContext& initContext)
 {
+    bbeProfileFunction();
+
     struct Vertex
     {
         XMFLOAT3 m_Position = {};

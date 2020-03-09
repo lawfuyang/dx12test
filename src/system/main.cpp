@@ -151,7 +151,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
     // first, Init the logger
     Logger::GetInstance().Initialize("../bin/output.txt");
 
-    g_CommandLineOptions.ParseCmdLine(lpCmdLine);
+    g_Log.info("Commandline args: {}", lpCmdLine);
+    g_CommandLineOptions.Parse();
 
     EngineWindowThread::Initialize();
 

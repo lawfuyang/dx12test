@@ -3,8 +3,24 @@
   "Id": "9e787ae2-dbf1-4408-8ceb-6bbef1d8c43f",
   "Items": [
     {
+      "Id": "9ff4b9ec-bf73-4a6a-ae4a-d3dfdaca467f",
+      "Command": "--enablegfxdebuglayer"
+    },
+    {
+      "Id": "5ac8b453-0d42-48ea-9f22-6fc2066d1330",
+      "Command": "--gfxmemallocalwayscommitedmemory"
+    },
+    {
+      "Id": "8c076c2c-7802-4a6f-b014-bae20d92a23f",
+      "Command": "--resolution 1600 900"
+    },
+    {
       "Id": "6de53c5a-3f4f-43c3-aee6-088583035347",
-      "Command": "profileinit"
+      "Command": "--profileinit"
+    },
+    {
+      "Id": "e0f4d39a-f040-44a6-bc08-a0085e2b7529",
+      "Command": "--profileshutdown"
     }
   ]
 }

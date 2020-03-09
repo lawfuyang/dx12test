@@ -12,16 +12,22 @@
 
 void InitializeGraphic(tf::Taskflow& tf)
 {
+    bbeProfileFunction();
+
     g_GfxManager.Initialize(tf);
 }
 
 void ShutdownGraphic()
 {
+    bbeProfileFunction();
+
     g_GfxManager.ShutDown();
 }
 
 void UpdateGraphic(tf::Taskflow& tf)
 {
+    bbeProfileFunction();
+
     g_GfxManager.ScheduleGraphicTasks(tf);
 
     if (Keyboard::IsKeyPressed(Keyboard::KEY_J))

@@ -63,12 +63,14 @@ struct CommandLineOptions
 {
     DeclareSingletonFunctions(CommandLineOptions);
 
-    void ParseCmdLine(char*);
+    void Parse();
 
-    bool     m_PIXCapture      = false;
-    bool     m_ProfileInit     = false;
-    bool     m_ProfileShutdown = false;
-    uint32_t m_WindowWidth     = 1600;  // Add proper cmd line parsing for this
-    uint32_t m_WindowHeight    = 900;   // Add proper cmd line parsing for this
+    bool     m_EnableGfxDebugLayer             = false;
+    bool     m_GfxMemAllocAlwaysCommitedMemory = false;
+    bool     m_PIXCapture                      = false;
+    bool     m_ProfileInit                     = false;
+    bool     m_ProfileShutdown                 = false;
+    uint32_t m_WindowWidth                     = 1600;
+    uint32_t m_WindowHeight                    = 900;
 };
 #define g_CommandLineOptions CommandLineOptions::GetInstance()

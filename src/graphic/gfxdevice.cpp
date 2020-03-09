@@ -9,15 +9,12 @@
 #include "graphic/gfxpipelinestateobject.h"
 #include "graphic/gfxshadermanager.h"
 
-const bool g_EnableGfxDebugLayer                     = true;
-const bool g_AlwaysCommitedMemory                    = false;
-const bool g_BreakOnWarnings                         = g_EnableGfxDebugLayer && true;
-const bool g_BreakOnErrors                           = g_EnableGfxDebugLayer && true;
-const bool g_LogVerbose                              = g_EnableGfxDebugLayer && true;
-const bool g_EnableGPUValidation                     = g_EnableGfxDebugLayer && false; // TODO: investigate _com_error
-const bool g_SynchronizedCommandQueueValidation      = g_EnableGfxDebugLayer && true;
-const bool g_DisableStateTracking                    = g_EnableGfxDebugLayer && false;
-const bool g_EnableConservativeResourceStateTracking = g_EnableGfxDebugLayer && true;
+const bool g_BreakOnWarnings                         = true;
+const bool g_BreakOnErrors                           = true;
+const bool g_EnableGPUValidation                     = false; // TODO: investigate _com_error
+const bool g_SynchronizedCommandQueueValidation      = true;
+const bool g_DisableStateTracking                    = false;
+const bool g_EnableConservativeResourceStateTracking = true;
 
 static void EnableD3D12DebugLayer()
 {
@@ -52,7 +49,7 @@ void GfxDevice::Initialize()
     bbeProfileFunction();
     g_Log.info("Initializing GfxDevice");
 
-    if constexpr (g_EnableGfxDebugLayer)
+    if (g_CommandLineOptions.m_EnableGfxDebugLayer)
     {
         EnableD3D12DebugLayer();
     }
@@ -62,7 +59,8 @@ void GfxDevice::Initialize()
         D3D_FEATURE_LEVEL_12_1,
         D3D_FEATURE_LEVEL_12_0,
         D3D_FEATURE_LEVEL_11_1,
-        D3D_FEATURE_LEVEL_11_0
+        D3D_FEATURE_LEVEL_11_0,
+        D3D_FEATURE_LEVEL_1_0_CORE
     };
 
     for (D3D_FEATURE_LEVEL level : featureLevels)
@@ -78,7 +76,7 @@ void GfxDevice::Initialize()
     }
     assert(m_D3DDevice.Get() != nullptr);
 
-    if constexpr (g_EnableGfxDebugLayer)
+    if (g_CommandLineOptions.m_EnableGfxDebugLayer)
     {
         ConfigureDebugLayer();
     }
@@ -147,8 +145,10 @@ void GfxDevice::ConfigureDebugLayer()
     ComPtr<ID3D12InfoQueue> debugInfoQueue;
     DX12_CALL(Dev()->QueryInterface(__uuidof(ID3D12InfoQueue), (LPVOID*)&debugInfoQueue));
 
-    debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, g_BreakOnErrors);
+    g_Log.info("    Break on Warnings: {}", g_BreakOnWarnings);
+    g_Log.info("    Break on Errors: {}", g_BreakOnErrors);
     debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, g_BreakOnWarnings);
+    debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, g_BreakOnErrors);
 
     D3D12_MESSAGE_ID warningsToIgnore[] =
     {
@@ -218,7 +218,7 @@ void GfxDevice::InitD3D12Allocator()
     g_Log.info("Initializing D3D12 Memory Allocator");
 
     D3D12MA::ALLOCATOR_DESC desc = {};
-    desc.Flags = g_AlwaysCommitedMemory ? D3D12MA::ALLOCATOR_FLAG_ALWAYS_COMMITTED : D3D12MA::ALLOCATOR_FLAG_NONE;
+    desc.Flags = g_CommandLineOptions.m_GfxMemAllocAlwaysCommitedMemory ? D3D12MA::ALLOCATOR_FLAG_ALWAYS_COMMITTED : D3D12MA::ALLOCATOR_FLAG_NONE;
     desc.pDevice = m_D3DDevice.Get();
     desc.pAdapter = GfxAdapter::GetInstance().GetAllAdapters()[0].Get(); // Just get first adapter
 
