@@ -1,6 +1,7 @@
 #include "graphic/gfxcontext.h"
 
 #include "graphic/dx12utils.h"
+#include "graphic/gfxmanager.h"
 #include "graphic/gfxcommandlist.h"
 #include "graphic/gfxtexturesandbuffers.h"
 #include "graphic/gfxrootsignature.h"

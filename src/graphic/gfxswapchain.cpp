@@ -18,8 +18,8 @@ void GfxSwapChain::Initialize()
 
     // Describe and create the swap chain.
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-    swapChainDesc.Width = System::APP_WINDOW_WIDTH;
-    swapChainDesc.Height = System::APP_WINDOW_HEIGHT;
+    swapChainDesc.Width = g_CommandLineOptions.m_WindowWidth;
+    swapChainDesc.Height = g_CommandLineOptions.m_WindowHeight;
     swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     swapChainDesc.Stereo = false; // set to true for VR
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;

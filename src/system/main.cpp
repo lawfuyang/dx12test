@@ -60,19 +60,21 @@ private:
             break;
         }
 
-        g_System.ProcessWindowMessage(hWnd, message, wParam, lParam);
+        g_System.ProcessWindowsMessage(hWnd, message, wParam, lParam);
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
 
     static void Run()
     {
+        static const char* s_AppName = "DX12 Test";
+
         HINSTANCE hInstance = 0;
 
         WNDCLASS wc = { 0 };
         wc.lpfnWndProc = WndProc;
         wc.hInstance = hInstance;
         wc.hbrBackground = (HBRUSH)(COLOR_BACKGROUND);
-        wc.lpszClassName = System::APP_NAME.c_str();
+        wc.lpszClassName = s_AppName;
 
         if (FAILED(RegisterClass(&wc)))
         {
@@ -82,7 +84,7 @@ private:
 
         DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_VISIBLE;
         RECT rect;
-        rect.left = 0; rect.top = 0; rect.right = (uint32_t)System::APP_WINDOW_WIDTH; rect.bottom = (uint32_t)System::APP_WINDOW_HEIGHT;
+        rect.left = 0; rect.top = 0; rect.right = g_CommandLineOptions.m_WindowWidth, rect.bottom = g_CommandLineOptions.m_WindowHeight;
         AdjustWindowRect(&rect, style, false);
 
         RECT desktop;
@@ -91,11 +93,11 @@ private:
 
         const uint32_t nativeWidth = desktop.right - desktop.left;
         const uint32_t nativeHeight = desktop.bottom - desktop.top - 100;
-        const uint32_t windowTopLeftX = (nativeWidth - (uint32_t)System::APP_WINDOW_WIDTH) / 2;
-        const uint32_t windowTopLeftY = (nativeHeight - (uint32_t)System::APP_WINDOW_HEIGHT) / 2;
+        const uint32_t windowTopLeftX = (nativeWidth - g_CommandLineOptions.m_WindowWidth) / 2;
+        const uint32_t windowTopLeftY = (nativeHeight - g_CommandLineOptions.m_WindowHeight) / 2;
 
         g_EngineWindowHandle = CreateWindow(wc.lpszClassName,
-                               System::APP_NAME.c_str(),
+                               s_AppName,
                                style,
                                windowTopLeftX, windowTopLeftY,
                                rect.right - rect.left,

@@ -3,7 +3,7 @@
 
 cbuffer TestShaderConsts : register(b1)
 {
-    float2 g_CubeOffests;
+    float4x4 g_ViewProjMatrix;
 };
 // EndShaderDeclaration
 
@@ -30,8 +30,6 @@ VS_OUT VSMain(VS_IN input)
     result.m_Position = input.m_Position;
     result.m_TexCoord = input.m_TexCoord;
     result.m_Color = input.m_Color;
-
-    result.m_Position.xy += g_CubeOffests;
 
     return result;
 }

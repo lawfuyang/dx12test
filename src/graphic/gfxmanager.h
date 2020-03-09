@@ -1,10 +1,10 @@
 #pragma once
 
-class GfxDevice;
-class GfxSwapChain;
-class GUIManager;
-class GfxRootSignatureManager;
-class GfxConstantBuffer;
+#include "graphic/gfxdevice.h"
+#include "graphic/gfxswapchain.h"
+#include "graphic/gfxtexturesandbuffers.h"
+
+#include "graphic/renderpasses/gfxtestrenderpass.h"
 
 class GfxManager
 {
@@ -23,19 +23,21 @@ public:
 
     void DumpGfxMemory();
 
-    GfxDevice&         GetGfxDevice()   { return *m_GfxDevice; }
-    GfxSwapChain&      GetSwapChain()   { return *m_SwapChain; }
-    GfxConstantBuffer& GetFrameParams() { return *m_FrameParamsCB; }
+    GfxDevice&         GetGfxDevice()   { return m_GfxDevice; }
+    GfxSwapChain&      GetSwapChain()   { return m_SwapChain; }
+    GfxConstantBuffer& GetFrameParams() { return m_FrameParamsCB; }
 
 private:
     void ScheduleRenderPasses(tf::Subflow& sf);
     void TransitionBackBufferForPresent();
     void UpdateFrameParamsCB();
 
-    GfxDevice*         m_GfxDevice     = nullptr;
-    GfxSwapChain*      m_SwapChain     = nullptr;
-    GfxConstantBuffer* m_FrameParamsCB = nullptr;
+    GfxDevice         m_GfxDevice;
+    GfxSwapChain      m_SwapChain;
+    GfxConstantBuffer m_FrameParamsCB;
 
     boost::lockfree::stack<std::function<void()>> m_GfxCommands{128};
+
+    GfxTestRenderPass m_TestRenderPass;
 };
 #define g_GfxManager GfxManager::GetInstance()

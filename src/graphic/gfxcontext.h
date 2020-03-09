@@ -13,6 +13,7 @@ class GfxShaderManager;
 class GfxVertexBuffer;
 class GfxIndexBuffer;
 class GfxDescriptorHeap;
+class GfxConstantBuffer;
 
 class GfxContext
 {
@@ -38,8 +39,8 @@ private:
 
     uint32_t m_ID = 0xDEADBEEF;
 
-    CD3DX12_VIEWPORT  m_Viewport{ 0.0f, 0.0f, System::APP_WINDOW_WIDTH, System::APP_WINDOW_HEIGHT };
-    CD3DX12_RECT      m_ScissorRect{ 0, 0, static_cast<LONG>(System::APP_WINDOW_WIDTH), static_cast<LONG>(System::APP_WINDOW_HEIGHT) };
+    CD3DX12_VIEWPORT  m_Viewport{ 0.0f, 0.0f, (float)g_CommandLineOptions.m_WindowWidth, (float)g_CommandLineOptions.m_WindowHeight };
+    CD3DX12_RECT      m_ScissorRect{ 0, 0, g_CommandLineOptions.m_WindowWidth, g_CommandLineOptions.m_WindowHeight };
 
     GfxDevice*         m_Device                                           = nullptr;
     GfxCommandList*    m_CommandList                                      = nullptr;

@@ -72,14 +72,14 @@ void GfxBufferCommon::Release()
 D3D12MA::Allocation* GfxBufferCommon::CreateHeap(GfxContext& context, D3D12_HEAP_TYPE heapType, const CD3DX12_RESOURCE_DESC& resourceDesc, D3D12_RESOURCE_STATES initialState)
 {
     GfxDevice& gfxDevice = context.GetDevice();
-    D3D12MA::Allocator* d3d12MemoryAllocator = gfxDevice.GetD3D12MemoryAllocator();
+    D3D12MA::Allocator& d3d12MemoryAllocator = gfxDevice.GetD3D12MemoryAllocator();
 
     D3D12MA::ALLOCATION_DESC vertexBufferAllocDesc = {};
     vertexBufferAllocDesc.HeapType = heapType;
 
     D3D12MA::Allocation* allocHandle = nullptr;
     ID3D12Resource* newHeap = nullptr;
-    DX12_CALL(d3d12MemoryAllocator->CreateResource(
+    DX12_CALL(d3d12MemoryAllocator.CreateResource(
         &vertexBufferAllocDesc,
         &resourceDesc,
         initialState,

@@ -88,6 +88,15 @@
     <ClCompile Include="..\extern\microprofile\microprofile.cpp">
       <Filter>extern\microprofile</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxview.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\application\cameracontroller.cpp">
+      <Filter>application</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\application\applicationlayer.cpp">
+      <Filter>application</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -205,6 +214,12 @@
     <ClInclude Include="..\extern\microprofile\microprofile.h">
       <Filter>extern\microprofile</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxview.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\application\cameracontroller.h">
+      <Filter>application</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="system">
@@ -230,6 +245,9 @@
     </Filter>
     <Filter Include="extern\microprofile">
       <UniqueIdentifier>{d4597559-9270-4817-85c4-19684bd42d6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="application">
+      <UniqueIdentifier>{01ca3d87-bef7-4a5b-8e89-d4f53e3b9e94}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -1,15 +1,18 @@
-#include "graphic/gfxmanager.h"
-#include "graphic/guimanager.h"
 #include "system.h"
 
-void System::ProcessWindowMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+extern void InitializeGraphic(tf::Taskflow&);
+extern void UpdateGraphic(tf::Taskflow&);
+extern void ShutdownGraphic();
+extern void InitializeApplicationLayer(tf::Taskflow&);
+extern void UpdateApplicationLayer(tf::Taskflow&);
+extern void ShutdownApplicationLayer();
+
+void System::ProcessWindowsMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     if (message == WM_CLOSE)
     {
         m_Exit = true;
     }
-
-    GUIManager::GetInstance().HandleWindowsInput(hWnd, message, wParam, lParam);
 }
 
 void System::Loop()
@@ -27,13 +30,14 @@ void System::Loop()
             RunKeyboardCommands();
 
             tf::Taskflow tf;
-            g_GfxManager.ScheduleGraphicTasks(tf);
+            UpdateGraphic(tf);
+            UpdateApplicationLayer(tf);
             m_Executor.run(tf).wait();
 
             // make sure I/O ticks happen last
             g_Keyboard.Tick();
-            g_Mouse.Tick(ms_RealFrameTimeMs);
-            ++ms_SystemFrameNumber;
+            g_Mouse.Tick(m_RealFrameTimeMs);
+            ++m_SystemFrameNumber;
         }
 
         g_Profiler.OnFlip(); // This shit costs ~0.4ms on the main CPU thread SingleThreaded!
@@ -45,11 +49,6 @@ void System::Loop()
 void System::RunKeyboardCommands()
 {
     g_Profiler.DumpProfilerBlocks(Keyboard::IsKeyPressed(Keyboard::KEY_P));
-
-    if (Keyboard::IsKeyPressed(Keyboard::KEY_J))
-    {
-        g_GfxManager.DumpGfxMemory();
-    }
 }
 
 void System::Initialize()
@@ -62,8 +61,8 @@ void System::Initialize()
 
     tf::Taskflow tf;
 
-    g_GfxManager.Initialize(tf);
-    // Init other System/Engine/Physics systems here in parallel
+    InitializeGraphic(tf);
+    InitializeApplicationLayer(tf);
 
     m_Executor.run(tf).wait();
 
@@ -108,7 +107,8 @@ void System::Shutdown()
     {
         bbeConditionalProfile(g_CommandLineOptions.m_ProfileShutdown, "System::Shutdown");
 
-        g_GfxManager.ShutDown();
+        ShutdownApplicationLayer();
+        ShutdownGraphic();
     }
 
     g_Profiler.DumpProfilerBlocks(g_CommandLineOptions.m_ProfileShutdown, true);
@@ -117,9 +117,11 @@ void System::Shutdown()
 
 FrameRateController::FrameRateController()
 {
-    System::ms_CappedPrevFrameMs = System::ms_RealFrameTimeMs;
+    static const uint32_t s_FPSLimit = 60;
 
-    m_FrameEndTime = std::chrono::high_resolution_clock::now() + std::chrono::microseconds{ 1000000 / System::FPS_LIMIT };
+    g_System.m_CappedPrevFrameMs = g_System.m_RealFrameTimeMs;
+
+    m_FrameEndTime = std::chrono::high_resolution_clock::now() + std::chrono::microseconds{ 1000000 / s_FPSLimit };
     m_200FPSFrameEndTime = std::chrono::high_resolution_clock::now() + std::chrono::microseconds{ 1000000 / 200 };
 }
 
@@ -136,20 +138,18 @@ FrameRateController::~FrameRateController()
     const float cappedFrameTimeMs = (float)m_StopWatch.ElapsedUS() / 1000;
     const float cappedFPS = 1000.0f / cappedFrameTimeMs;
 
-    System::ms_RealFrameTimeMs   = realFrameTimeMs;
-    System::ms_FPS               = fps;
-    System::ms_CappedFrameTimeMs = cappedFrameTimeMs;
-    System::ms_CappedFPS         = cappedFPS;
+    g_System.m_RealFrameTimeMs   = realFrameTimeMs;
+    g_System.m_FPS               = fps;
+    g_System.m_CappedFrameTimeMs = cappedFrameTimeMs;
+    g_System.m_CappedFPS         = cappedFPS;
 }
 
-#define CommandLineCB(argStr, func) { std::hash<std::string_view>{}(argStr), func }
-static const std::unordered_map<std::size_t, std::function<void()>> g_CommandLineOptionsCBs =
+static const std::unordered_map<std::string, std::function<void()>> g_CommandLineOptionsCBs =
 {
-    CommandLineCB("pixcapture", [&]() { g_CommandLineOptions.m_PIXCapture = true; }),
-    CommandLineCB("profileinit", [&]() { g_CommandLineOptions.m_ProfileInit = true; }),
-    CommandLineCB("profileshutdown", [&]() { g_CommandLineOptions.m_ProfileShutdown = true; })
+    {"pixcapture", [&]() { g_CommandLineOptions.m_PIXCapture = true; }},
+    {"profileinit", [&]() { g_CommandLineOptions.m_ProfileInit = true; }},
+    {"profileshutdown", [&]() { g_CommandLineOptions.m_ProfileShutdown = true; }}
 };
-#undef CommandLineCB
 
 void CommandLineOptions::ParseCmdLine(char* cmdLine)
 {
@@ -159,10 +159,9 @@ void CommandLineOptions::ParseCmdLine(char* cmdLine)
     char* token = std::strtok(cmdLine, delimiters);
     while (token)
     {
-        const std::size_t tokenHash = std::hash<std::string>{}(token);
         try
         {
-            g_CommandLineOptionsCBs.at(tokenHash)();
+            g_CommandLineOptionsCBs.at(token)();
         }
         catch (const std::exception & ex)
         {
