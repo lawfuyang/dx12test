@@ -76,16 +76,16 @@ namespace UtilsPrivate
             static ClassName s_Instance;                 \
             return s_Instance;                           \
         }                                                \
-    private:                                             \
-        ClassName()                                      \
-        {                                                \
-            ms_Instance = this;                          \
-        }                                                \
         ~ClassName() = default;                          \
         ClassName(const ClassName&) = delete;            \
         ClassName(ClassName&&) = delete;                 \
         ClassName& operator=(const ClassName&) = delete; \
         ClassName& operator=(ClassName&&) = delete;      \
+    private:                                             \
+        ClassName()                                      \
+        {                                                \
+            ms_Instance = this;                          \
+        }                                                \
         inline static ClassName* ms_Instance = nullptr;  \
     public:
 

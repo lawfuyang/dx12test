@@ -8,14 +8,16 @@ public:
     void Initialize();
     void Update();
 
-    void Get3DViewProjMatrices(XMFLOAT4X4& view, XMFLOAT4X4& proj, float fovInDegrees, float aspectRatio);
-    void Set(XMVECTOR eye, XMVECTOR at, XMVECTOR up);
-    void RotateYaw(float deg);
-    void RotatePitch(float deg);
-
 private:
-    XMVECTOR m_Eye; // Where the camera is in world space. Z increases into of the screen when using LH coord system (which we are and DX uses)
-    XMVECTOR m_At;  // What the camera is looking at (world origin)
-    XMVECTOR m_Up;  // Which way is up
+    void Reset();
+    XMMATRIX CameraController::Get3DViewProjMatrix();
+
+    float m_Near = 0.01f;
+    float m_Far  = 100.0f;
+    float m_FOV  = 90.0f;
+
+    XMVECTOR m_EyePosition; // Where the camera is in world space. Z increases into of the screen when using LH coord system (which we are and DX uses)
+    XMVECTOR m_Dir;         // Direction that the camera is looking at
+    XMVECTOR m_UpDirection; // Which way is up
 };
 #define g_CameraController CameraController::GetInstance()
