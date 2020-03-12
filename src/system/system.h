@@ -21,9 +21,14 @@ public:
     tf::Executor& GetTasksExecutor() { return m_Executor; }
     uint32_t GetCurrentThreadID() const;
 
+    ::HWND GetEngineWindowHandle() const { return m_EngineWindowHandle; }
+    void SetEngineWindowHandle(::HWND handle) { m_EngineWindowHandle = handle; }
+
 private:
     void InitializeThreadIDs();
     void RunKeyboardCommands();
+
+    ::HWND m_EngineWindowHandle = nullptr;
 
     bool m_Exit             = false;
     uint64_t m_LastUpdateMS = 0;

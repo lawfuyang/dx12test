@@ -6,8 +6,6 @@
 #include "graphic/gfxdevice.h"
 #include "graphic/gfxcontext.h"
 
-extern ::HWND g_EngineWindowHandle;
-
 void GfxSwapChain::Initialize()
 {
     bbeProfileFunction();
@@ -35,7 +33,7 @@ void GfxSwapChain::Initialize()
     {
         bbeProfile("CreateSwapChainForHwnd");
         DX12_CALL(dxgiFactory->CreateSwapChainForHwnd(gfxDevice.GetCommandListsManager().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT), // Swap chain needs the queue so that it can force a flush on it.
-                                                      g_EngineWindowHandle,
+                                                      g_System.GetEngineWindowHandle(),
                                                       &swapChainDesc,
                                                       nullptr,
                                                       nullptr,
@@ -43,7 +41,7 @@ void GfxSwapChain::Initialize()
     }
 
     // Disable Alt-Enter and other DXGI trickery...
-    DX12_CALL(dxgiFactory->MakeWindowAssociation(g_EngineWindowHandle, DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER));
+    DX12_CALL(dxgiFactory->MakeWindowAssociation(g_System.GetEngineWindowHandle(), DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER));
 
     DX12_CALL(swapChain.As(&m_SwapChain));
     swapChain->QueryInterface(IID_PPV_ARGS(&m_SwapChain));

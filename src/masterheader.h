@@ -43,6 +43,7 @@
 #include <inttypes.h>
 #include <wrl.h>
 #include <windows.h>
+#include <winuser.h>
 
 // graphic stuff
 #include <d3d12.h>

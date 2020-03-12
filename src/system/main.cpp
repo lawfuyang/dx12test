@@ -1,7 +1,5 @@
 #pragma once
 
-::HWND g_EngineWindowHandle = 0;
-
 class EngineWindowThread
 {
 public:
@@ -12,18 +10,17 @@ public:
 
     static void Shutdown()
     {
-        if (g_EngineWindowHandle)
-            DestroyWindow(g_EngineWindowHandle);
-        g_EngineWindowHandle = 0;
+        if (g_System.GetEngineWindowHandle())
+            DestroyWindow(g_System.GetEngineWindowHandle());
 
         ms_EngineWindowThread.join();
     }
 
 private:
-    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+    static ::LRESULT CALLBACK WndProc(::HWND hWnd, ::UINT message, ::WPARAM wParam, ::LPARAM lParam)
     {
-        auto Get_X_LPARAM = [&](LPARAM lParam) { return ((int32_t)(int64_t)LOWORD(lParam)); };
-        auto Get_Y_LPARAM = [&](LPARAM lParam) { return ((int32_t)(int64_t)HIWORD(lParam)); };
+        auto Get_X_LPARAM = [&](::LPARAM lParam) { return ((int32_t)(int64_t)LOWORD(lParam)); };
+        auto Get_Y_LPARAM = [&](::LPARAM lParam) { return ((int32_t)(int64_t)HIWORD(lParam)); };
 
         switch (message)
         {
@@ -32,7 +29,7 @@ private:
             break;
         case WM_MOUSEMOVE:
             RECT rect;
-            GetClientRect(g_EngineWindowHandle, &rect);
+            GetClientRect(g_System.GetEngineWindowHandle(), &rect);
             g_Mouse.ProcessMouseMove((uint32_t)wParam, Get_X_LPARAM(lParam) - rect.left, Get_Y_LPARAM(lParam) - rect.top);
             // NO BREAK HERE!
         case WM_KEYUP:
@@ -64,16 +61,27 @@ private:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
 
+    static uint32_t GetTaskBarHeight()
+    {
+        ::RECT rect = {};
+        ::HWND taskBar = ::FindWindowA("Shell_traywnd", NULL);
+        if (taskBar && ::GetWindowRect(taskBar, &rect)) 
+        {
+            return rect.bottom - rect.top;
+        }
+        return 0;
+    }
+
     static void Run()
     {
         static const char* s_AppName = "DX12 Test";
 
-        HINSTANCE hInstance = 0;
+        ::HINSTANCE hInstance = 0;
 
-        WNDCLASS wc = { 0 };
+        ::WNDCLASS wc = { 0 };
         wc.lpfnWndProc = WndProc;
         wc.hInstance = hInstance;
-        wc.hbrBackground = (HBRUSH)(COLOR_BACKGROUND);
+        wc.hbrBackground = (::HBRUSH)(COLOR_BACKGROUND);
         wc.lpszClassName = s_AppName;
 
         if (FAILED(RegisterClass(&wc)))
@@ -82,39 +90,39 @@ private:
             assert(false);
         }
 
-        DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_VISIBLE;
-        RECT rect;
-        rect.left = 0; rect.top = 0; rect.right = g_CommandLineOptions.m_WindowWidth, rect.bottom = g_CommandLineOptions.m_WindowHeight;
-        AdjustWindowRect(&rect, style, false);
+        const ::DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_VISIBLE;
+        ::RECT rect{ 0, 0, (LONG)g_CommandLineOptions.m_WindowWidth, (LONG)g_CommandLineOptions.m_WindowHeight };
+        ::AdjustWindowRect(&rect, style, false);
 
-        RECT desktop;
-        const HWND hDesktop = GetDesktopWindow();
-        GetWindowRect(hDesktop, &desktop);
+        ::RECT desktopRect = {};
+        ::GetWindowRect(::GetDesktopWindow(), &desktopRect);
 
-        const uint32_t nativeWidth = desktop.right - desktop.left;
-        const uint32_t nativeHeight = desktop.bottom - desktop.top - 100;
+        const uint32_t nativeWidth = desktopRect.right;
+        const uint32_t nativeHeight = desktopRect.bottom - GetTaskBarHeight();
         const uint32_t windowTopLeftX = (nativeWidth - g_CommandLineOptions.m_WindowWidth) / 2;
         const uint32_t windowTopLeftY = (nativeHeight - g_CommandLineOptions.m_WindowHeight) / 2;
 
-        g_EngineWindowHandle = CreateWindow(wc.lpszClassName,
-                               s_AppName,
-                               style,
-                               windowTopLeftX, windowTopLeftY,
-                               rect.right - rect.left,
-                               rect.bottom - rect.top,
-                               0, 0, hInstance, NULL);
+        ::HWND engineWindowHandle = CreateWindow(wc.lpszClassName,
+                                                 s_AppName,
+                                                 style,
+                                                 windowTopLeftX, windowTopLeftY,
+                                                 rect.right - rect.left,
+                                                 rect.bottom - rect.top,
+                                                 0, 0, hInstance, NULL);
 
-        if (g_EngineWindowHandle == 0)
+        if (engineWindowHandle == 0)
         {
             g_Log.error("ApplicationWin : Failed to create window: {}", GetLastErrorAsString().c_str());
             assert(false);
         }
 
-        ShowCursor(true);
-        SetCursor(LoadCursor(NULL, IDC_ARROW));
+        g_System.SetEngineWindowHandle(engineWindowHandle);
 
-        MSG msg;
-        BOOL bRet;
+        ::ShowCursor(true);
+        ::SetCursor(LoadCursor(NULL, IDC_ARROW));
+
+        ::MSG msg;
+        ::BOOL bRet;
         while ((bRet = GetMessageW(&msg, NULL, 0, 0)) != 0)
         {
             if (bRet == -1)
@@ -139,9 +147,9 @@ private:
     inline static std::thread ms_EngineWindowThread;
 };
 
-int APIENTRY WinMain(HINSTANCE hInstance,
-                     HINSTANCE hPrevInstance,
-                     LPTSTR    lpCmdLine,
+int APIENTRY WinMain(::HINSTANCE hInstance,
+                     ::HINSTANCE hPrevInstance,
+                     ::LPTSTR    lpCmdLine,
                      int       nCmdShow)
 {
     UNREFERENCED_PARAMETER(hInstance);
