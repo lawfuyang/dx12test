@@ -97,6 +97,9 @@
     <ClCompile Include="..\src\application\applicationlayer.cpp">
       <Filter>application</Filter>
     </ClCompile>
+    <ClCompile Include="..\extern\simplemath\SimpleMath.cpp">
+      <Filter>extern\simplemath</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -249,8 +252,8 @@
     <Filter Include="application">
       <UniqueIdentifier>{01ca3d87-bef7-4a5b-8e89-d4f53e3b9e94}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
+    <Filter Include="extern\simplemath">
+      <UniqueIdentifier>{ac4d35a6-ed92-404b-81d6-dc4f059a08fa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

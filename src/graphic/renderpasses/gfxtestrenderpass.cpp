@@ -15,8 +15,8 @@ void GfxTestRenderPass::Initialize(GfxContext& initContext)
 
     struct Vertex
     {
-        XMFLOAT3 m_Position = {};
-        XMFLOAT2 m_TexCoord = {};
+        Vector3 m_Position = {};
+        Vector2 m_TexCoord = {};
         uint32_t m_Color = 0xFF0000FF;
     };
 
@@ -122,6 +122,6 @@ void GfxTestRenderPass::Render(GfxContext& context)
     context.SetIndexBuffer(m_QuadIBuffer);
     context.SetRenderTarget(0, g_GfxManager.GetSwapChain().GetCurrentBackBuffer());
 
-    context.ClearRenderTargetView(g_GfxManager.GetSwapChain().GetCurrentBackBuffer(), XMFLOAT4{ 0.0f, 0.2f, 0.4f, 1.0f });
+    context.ClearRenderTargetView(g_GfxManager.GetSwapChain().GetCurrentBackBuffer(), Vector4{ 0.0f, 0.2f, 0.4f, 1.0f });
     context.DrawIndexedInstanced(1, 0, 0, 0);
 }

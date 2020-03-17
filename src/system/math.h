@@ -1,11 +1,20 @@
 #pragma once
 
-#include <DirectXMath.h>
-#include <DirectXColors.h>
-#include <DirectXCollision.h>
-#include <DirectXPackedVector.h>
+#include <extern/simplemath/SimpleMath.h>
 
-using namespace DirectX;
+using Vector2    = DirectX::SimpleMath::Vector2;
+using Vector2I   = DirectX::XMINT2;
+using Vector2U   = DirectX::XMUINT2;
+using Vector3    = DirectX::SimpleMath::Vector3;
+using Vector3I   = DirectX::XMINT3;
+using Vector3U   = DirectX::XMUINT3;
+using Vector4    = DirectX::SimpleMath::Vector4;
+using Vector4I   = DirectX::XMINT4;
+using Vector4U   = DirectX::XMUINT4;
+using Matrix     = DirectX::SimpleMath::Matrix;
+using Plane      = DirectX::SimpleMath::Plane;
+using Quaternion = DirectX::SimpleMath::Quaternion;
+using Color      = DirectX::SimpleMath::Color;
 
 #define bbeBIG_Float (1e10f) // use instead of FLT_MAX when overflowing is a concern
 

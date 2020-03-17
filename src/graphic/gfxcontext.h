@@ -18,7 +18,7 @@ class GfxConstantBuffer;
 class GfxContext
 {
 public:
-    void ClearRenderTargetView(GfxTexture&, XMFLOAT4 clearColor) const;
+    void ClearRenderTargetView(GfxTexture&, const Vector4& clearColor) const;
     void SetRenderTarget(uint32_t idx, GfxTexture&);
     void SetVertexBuffer(GfxVertexBuffer& vBuffer) { m_VertexBuffer = &vBuffer; }
     void SetIndexBuffer(GfxIndexBuffer& iBuffer) { m_IndexBuffer = &iBuffer; }

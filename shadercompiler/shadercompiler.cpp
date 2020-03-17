@@ -554,18 +554,18 @@ struct GlobalsInitializer
         g_CPPTypeSizeMap[CPPType] = TypeSize;
 
         ADD_TYPE("int", "int32_t", 4);
-        ADD_TYPE("int2", "XMINT2", 8);
-        ADD_TYPE("int3", "XMINT3", 12);
-        ADD_TYPE("int4", "XMINT4", 16);
+        ADD_TYPE("int2", "Vector2I", 8);
+        ADD_TYPE("int3", "Vector3I", 12);
+        ADD_TYPE("int4", "Vector4I", 16);
         ADD_TYPE("uint", "uint32_t", 4);
-        ADD_TYPE("uint2", "XMUINT2", 8);
-        ADD_TYPE("uint3", "XMUINT3", 12);
-        ADD_TYPE("uint4", "XMUINT4", 16);
+        ADD_TYPE("uint2", "Vector2U", 8);
+        ADD_TYPE("uint3", "Vector3U", 12);
+        ADD_TYPE("uint4", "Vector4U", 16);
         ADD_TYPE("float", "float", 4);
-        ADD_TYPE("float2", "XMFLOAT2", 8);
-        ADD_TYPE("float3", "XMFLOAT3", 12);
-        ADD_TYPE("float4", "XMFLOAT4", 16);
-        ADD_TYPE("float4x4", "XMMATRIX", 64);
+        ADD_TYPE("float2", "Vector2", 8);
+        ADD_TYPE("float3", "Vector3", 12);
+        ADD_TYPE("float4", "Vector4", 16);
+        ADD_TYPE("float4x4", "Matrix", 64);
     #undef ADD_TYPE
     }
 };

@@ -67,6 +67,7 @@
     <ClCompile Include="..\extern\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\extern\imgui\imgui_widgets.cpp" />
     <ClCompile Include="..\extern\microprofile\microprofile.cpp" />
+    <ClCompile Include="..\extern\simplemath\SimpleMath.cpp" />
     <ClCompile Include="..\src\application\applicationlayer.cpp" />
     <ClCompile Include="..\src\application\cameracontroller.cpp" />
     <ClCompile Include="..\src\graphic\dx12utils.cpp" />
@@ -138,17 +139,6 @@
     <ClInclude Include="..\src\system\system.h" />
     <ClInclude Include="..\src\system\utils.h" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-    <Import Project="packages\directxmath.2019.8.23.1\build\native\directxmath.targets" Condition="Exists('packages\directxmath.2019.8.23.1\build\native\directxmath.targets')" />
-  </ImportGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('packages\directxmath.2019.8.23.1\build\native\directxmath.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\directxmath.2019.8.23.1\build\native\directxmath.targets'))" />
-  </Target>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>
