@@ -33,6 +33,11 @@ void GfxContext::BindConstantBuffer(GfxConstantBuffer& cBuffer)
     m_CBVToBind = &cBuffer.GetDescriptorHeap();
 }
 
+void GfxContext::BindSRV(GfxTexture& tex)
+{
+    m_SRVsToBind.push_back(&tex);
+}
+
 void GfxContext::SetRootSigDescTable(uint32_t rootParamIdx, const GfxDescriptorHeap& heap)
 {
     ID3D12DescriptorHeap* ppHeaps[] = { heap.Dev() };
@@ -65,11 +70,19 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
     }
     m_CommandList->Dev()->SetGraphicsRootSignature(m_PSO.m_RootSig->Dev());
 
+    uint32_t numDescTablesBound = 0;
+
     // Constant Buffers
-    SetRootSigDescTable(0, g_GfxManager.GetFrameParams().GetDescriptorHeap());
+    SetRootSigDescTable(numDescTablesBound++, g_GfxManager.GetFrameParams().GetDescriptorHeap());
     if (m_CBVToBind)
     {
-        SetRootSigDescTable(1, *m_CBVToBind);
+        SetRootSigDescTable(numDescTablesBound++, *m_CBVToBind);
+    }
+
+    // SRVs
+    for (GfxTexture* tex : m_SRVsToBind)
+    {
+        SetRootSigDescTable(numDescTablesBound++, tex->GetDescriptorHeap());
     }
 
     // PSO

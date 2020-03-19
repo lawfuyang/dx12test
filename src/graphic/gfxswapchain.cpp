@@ -55,6 +55,14 @@ void GfxSwapChain::Initialize()
     }
 }
 
+void GfxSwapChain::ShutDown()
+{
+    for (GfxTexture& tex : m_RenderTargets)
+    {
+        tex.Release();
+    }
+}
+
 void GfxSwapChain::TransitionBackBufferForPresent(GfxContext& context)
 {
     bbeProfileFunction();

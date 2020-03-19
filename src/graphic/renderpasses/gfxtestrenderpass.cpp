@@ -4,6 +4,7 @@
 #include "graphic/gfxcontext.h"
 #include "graphic/gfxswapchain.h"
 #include "graphic/gfxview.h"
+#include "graphic/gfxdefaulttextures.h"
 
 GfxTestRenderPass::GfxTestRenderPass()
     : GfxRenderPass("GfxTestRenderPass")
@@ -109,6 +110,7 @@ void GfxTestRenderPass::Render(GfxContext& context)
     m_RenderPassCB.Update(&consts);
 
     context.BindConstantBuffer(m_RenderPassCB);
+    context.BindSRV(GfxDefaultTextures::Checkerboard);
 
     GfxPipelineStateObject& pso = context.GetPSO();
     pso.SetDepthEnable(false);

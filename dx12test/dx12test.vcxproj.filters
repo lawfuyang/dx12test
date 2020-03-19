@@ -100,6 +100,9 @@
     <ClCompile Include="..\extern\simplemath\SimpleMath.cpp">
       <Filter>extern\simplemath</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxdefaulttextures.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -222,6 +225,9 @@
     </ClInclude>
     <ClInclude Include="..\src\application\cameracontroller.h">
       <Filter>application</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxdefaulttextures.h">
+      <Filter>graphic</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

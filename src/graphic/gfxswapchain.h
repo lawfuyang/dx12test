@@ -11,6 +11,8 @@ public:
 
     IDXGISwapChain4* Dev() const { return m_SwapChain.Get(); }
 
+    void ShutDown();
+
     GfxTexture& GetCurrentBackBuffer() { return m_RenderTargets[m_FrameIndex]; }
 
     void Initialize();

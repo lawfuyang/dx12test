@@ -6,7 +6,7 @@ public:
     ID3D12RootSignature* Dev() const { return m_RootSignature.Get(); }
 
     void AddDescriptorTable(D3D12_DESCRIPTOR_RANGE_TYPE, uint32_t numDescriptors, uint32_t baseShaderRegister);
-    void Compile();
+    void Compile(const std::string& rootSigName);
 
     std::size_t GetHash() const { return m_Hash; }
 
@@ -20,7 +20,7 @@ private:
 
 struct DefaultRootSignatures
 {
-    inline static GfxRootSignature DefaultGraphicsRootSignature = {};
+    inline static GfxRootSignature DefaultGraphicsRootSignature;
 };
 
 class GfxRootSignatureManager
@@ -30,3 +30,4 @@ public:
 
     void Initialize();
 };
+#define g_GfxRootSignatureManager GfxRootSignatureManager::GetInstance()

@@ -18,3 +18,4 @@ private:
     ComPtr<IDXGIFactory7> m_DXGIFactory;
     GfxAdapterArray m_AllAdapters;
 };
+#define g_GfxAdapter GfxAdapter::GetInstance()

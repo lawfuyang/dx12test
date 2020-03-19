@@ -16,7 +16,9 @@ private:
 
 struct GfxDefaultVertexFormats
 {
-    static void Initialize();
+    DeclareSingletonFunctions(GfxDefaultVertexFormats);
+
+    void Initialize();
 
     inline static GfxVertexFormat Null;
     inline static GfxVertexFormat Position3f_Color4ub;
@@ -24,3 +26,4 @@ struct GfxDefaultVertexFormats
     inline static GfxVertexFormat Position3f_TexCoord2f_Color4ub;
     inline static GfxVertexFormat Position3f_Normal3f_Texcoord2f;
 };
+#define g_GfxDefaultVertexFormats GfxDefaultVertexFormats::GetInstance()

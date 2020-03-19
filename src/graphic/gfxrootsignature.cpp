@@ -54,7 +54,7 @@ void GfxRootSignature::AddDescriptorTable(D3D12_DESCRIPTOR_RANGE_TYPE type, uint
     boost::hash_combine(m_Hash, newRange.BaseShaderRegister);
 }
 
-void GfxRootSignature::Compile()
+void GfxRootSignature::Compile(const std::string& rootSigName)
 {
     bbeProfileFunction();
 
@@ -65,16 +65,18 @@ void GfxRootSignature::Compile()
 
     assert(highestRootSigVer == D3D_ROOT_SIGNATURE_VERSION_1_1);
 
-    CD3DX12_ROOT_PARAMETER1* rootParams = (CD3DX12_ROOT_PARAMETER1*)alloca(sizeof(CD3DX12_ROOT_PARAMETER1) * m_DescRanges.size());
-    for (uint32_t i = 0; i < m_DescRanges.size(); ++i)
+    std::vector<CD3DX12_ROOT_PARAMETER1> rootParams;
+    rootParams.resize(m_DescRanges.size());
+
+    for (uint32_t i = 0; i < rootParams.size(); ++i)
     {
         rootParams[i].InitAsDescriptorTable(1, &m_DescRanges[i], D3D12_SHADER_VISIBILITY_ALL);
     }
 
     D3D12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
     rootSignatureDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
-    rootSignatureDesc.Desc_1_1.NumParameters = m_DescRanges.size();
-    rootSignatureDesc.Desc_1_1.pParameters = rootParams;
+    rootSignatureDesc.Desc_1_1.NumParameters = rootParams.size();
+    rootSignatureDesc.Desc_1_1.pParameters = rootParams.data();
     rootSignatureDesc.Desc_1_1.NumStaticSamplers = _countof(gs_StaticSamplers);
     rootSignatureDesc.Desc_1_1.pStaticSamplers = gs_StaticSamplers;
     rootSignatureDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT; // change to D3D12_ROOT_SIGNATURE_FLAG_NONE for compute shaders etc
@@ -86,6 +88,8 @@ void GfxRootSignature::Compile()
 
     boost::hash_combine(m_Hash, rootSignatureDesc.Version);
     boost::hash_combine(m_Hash, rootSignatureDesc.Desc_1_1.Flags);
+
+    m_RootSignature->SetName(utf8_decode(rootSigName).c_str());
 }
 
 void GfxRootSignatureManager::Initialize()
@@ -95,5 +99,6 @@ void GfxRootSignatureManager::Initialize()
     assert(DefaultRootSignatures::DefaultGraphicsRootSignature.m_Hash == 0);
     DefaultRootSignatures::DefaultGraphicsRootSignature.AddDescriptorTable(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0); // FrameParams CBs
     DefaultRootSignatures::DefaultGraphicsRootSignature.AddDescriptorTable(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1); // Render Passes CBs
-    DefaultRootSignatures::DefaultGraphicsRootSignature.Compile();
+    DefaultRootSignatures::DefaultGraphicsRootSignature.AddDescriptorTable(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // 1 SRV
+    DefaultRootSignatures::DefaultGraphicsRootSignature.Compile("DefaultGraphicsRootSignature");
 }

@@ -7,6 +7,8 @@ cbuffer TestShaderConsts : register(b1)
 };
 // EndShaderDeclaration
 
+Texture2D<float4> g_Texture : register(t0);
+
 #include "common.hlsl"
 
 struct VS_IN
@@ -38,5 +40,5 @@ VS_OUT VSMain(VS_IN input)
 
 float4 PSMain(VS_OUT input) : SV_TARGET
 {
-    return input.m_Color;
+    return input.m_Color * g_Texture.Sample(g_AnisotropicClampSampler, input.m_TexCoord);
 }

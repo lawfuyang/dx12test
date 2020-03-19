@@ -238,7 +238,7 @@ void GfxDevice::InitD3D12Allocator()
     }
 }
 
-void GfxDevice::EndFrame()
+void GfxDevice::Flush(bool waitForPreviousFrame)
 {
     bbeProfileFunction();
 
@@ -249,6 +249,11 @@ void GfxDevice::EndFrame()
 
     m_CommandListsManager.ExecuteAllActiveCommandLists();
     m_AllContexts.clear();
+
+    if (waitForPreviousFrame)
+    {
+        WaitForPreviousFrame();
+    }
 }
 
 void GfxDevice::WaitForPreviousFrame()

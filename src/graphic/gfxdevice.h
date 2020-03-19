@@ -21,7 +21,7 @@ public:
     void Initialize();
     void ShutDown();
     void CheckStatus();
-    void EndFrame();
+    void Flush(bool waitForPreviousFrame = false);
     void WaitForPreviousFrame();
 
     GfxContext& GenerateNewContext(D3D12_COMMAND_LIST_TYPE, const std::string& name);

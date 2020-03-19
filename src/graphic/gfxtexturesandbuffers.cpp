@@ -23,34 +23,6 @@ void GfxHazardTrackedResource::Transition(GfxCommandList& cmdList, D3D12_RESOURC
     }
 }
 
-// TODO: this function does not seem generic enough for future texture uses...
-void GfxTexture::Initialize(DXGI_FORMAT format, const std::string& resourceName)
-{
-    bbeProfileFunction();
-
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-
-    m_GfxDescriptorHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
-
-    m_Resource->SetName(resourceName == "" ? L"GfxTexture" : utf8_decode(resourceName).c_str());
-
-    gfxDevice.Dev()->CreateRenderTargetView(m_Resource.Get(), nullptr, m_GfxDescriptorHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
-
-    m_Format = format;
-}
-
-void GfxTexture::InitializeForSwapChain(ComPtr<IDXGISwapChain4>& swapChain, DXGI_FORMAT format, uint32_t backBufferIdx)
-{
-    bbeProfileFunction();
-    assert(!m_Resource);
-    assert(swapChain);
-    assert(format != DXGI_FORMAT_UNKNOWN);
-    assert(backBufferIdx <= 3); // you dont need more than 3 back buffers...
-
-    DX12_CALL(swapChain->GetBuffer(backBufferIdx, IID_PPV_ARGS(&m_Resource)));
-    Initialize(format, StringFormat("Back Buffer RTV %d", backBufferIdx));
-}
-
 GfxBufferCommon::~GfxBufferCommon()
 {
     assert(m_D3D12MABufferAllocation == nullptr);
@@ -69,7 +41,7 @@ void GfxBufferCommon::Release()
     }
 }
 
-D3D12MA::Allocation* GfxBufferCommon::CreateHeap(GfxContext& context, D3D12_HEAP_TYPE heapType, const CD3DX12_RESOURCE_DESC& resourceDesc, D3D12_RESOURCE_STATES initialState)
+D3D12MA::Allocation* GfxBufferCommon::CreateHeap(GfxContext& context, D3D12_HEAP_TYPE heapType, const D3D12_RESOURCE_DESC& resourceDesc, D3D12_RESOURCE_STATES initialState)
 {
     GfxDevice& gfxDevice = context.GetDevice();
     D3D12MA::Allocator& d3d12MemoryAllocator = gfxDevice.GetD3D12MemoryAllocator();
@@ -119,17 +91,13 @@ void GfxBufferCommon::SetInternalAllocName(const std::string& name)
     m_D3D12MABufferAllocation->GetResource()->SetName(reinterpret_cast<LPCWSTR>(resourceName.data()));
 }
 
-void GfxBufferCommon::InitializeBufferWithInitData(GfxContext& context, const void* initData)
+void GfxBufferCommon::InitializeBufferWithInitData(GfxContext& context, uint32_t uploadBufferSize, uint32_t row, uint32_t pitch, const void* initData)
 {
-    // Create heap to hold final buffer data
-    m_D3D12MABufferAllocation = CreateHeap(context, D3D12_HEAP_TYPE_DEFAULT, CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes), D3D12_RESOURCE_STATE_COPY_DEST);
-    assert(m_D3D12MABufferAllocation);
-
     // create upload heap to hold upload init data
-    D3D12MA::Allocation* uploadHeapAlloc = CreateHeap(context, D3D12_HEAP_TYPE_UPLOAD, CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes), D3D12_RESOURCE_STATE_GENERIC_READ);
+    D3D12MA::Allocation* uploadHeapAlloc = CreateHeap(context, D3D12_HEAP_TYPE_UPLOAD, CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize), D3D12_RESOURCE_STATE_GENERIC_READ);
 
     // upload init data via CopyBufferRegion
-    UploadInitData(context, initData, m_SizeInBytes, m_SizeInBytes, m_D3D12MABufferAllocation->GetResource(), uploadHeapAlloc->GetResource());
+    UploadInitData(context, initData, row, pitch, m_D3D12MABufferAllocation->GetResource(), uploadHeapAlloc->GetResource());
 
     // we don't need this upload heap anymore... release it next frame
     g_GfxManager.AddGraphicCommand([uploadHeapAlloc]()
@@ -151,9 +119,13 @@ void GfxVertexBuffer::Initialize(GfxContext& context, const void* vList, uint32_
     m_SizeInBytes = vertexSize * numVertices;
 
     // we will start this heap in the copy destination state since we will copy data from the upload heap to this heap
-    SetCurrentState(D3D12_RESOURCE_STATE_COPY_DEST);
+    SetHazardTrackedState(D3D12_RESOURCE_STATE_COPY_DEST);
 
-    InitializeBufferWithInitData(context, vList);
+    // Create heap to hold final buffer data
+    m_D3D12MABufferAllocation = CreateHeap(context, D3D12_HEAP_TYPE_DEFAULT, CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes), D3D12_RESOURCE_STATE_COPY_DEST);
+    assert(m_D3D12MABufferAllocation);
+
+    InitializeBufferWithInitData(context, m_SizeInBytes, m_SizeInBytes, m_SizeInBytes, vList);
     m_Resource = m_D3D12MABufferAllocation->GetResource();
 
     // after uploading init values, transition the vertex buffer data from copy destination state to vertex buffer state
@@ -174,9 +146,13 @@ void GfxIndexBuffer::Initialize(GfxContext& context, const void* iList, uint32_t
     m_SizeInBytes = numIndices * indexSize;
 
     // we will start this heap in the copy destination state since we will copy data from the upload heap to this heap
-    SetCurrentState(D3D12_RESOURCE_STATE_COPY_DEST);
+    SetHazardTrackedState(D3D12_RESOURCE_STATE_COPY_DEST);
 
-    InitializeBufferWithInitData(context, iList);
+    // Create heap to hold final buffer data
+    m_D3D12MABufferAllocation = CreateHeap(context, D3D12_HEAP_TYPE_DEFAULT, CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes), D3D12_RESOURCE_STATE_COPY_DEST);
+    assert(m_D3D12MABufferAllocation);
+
+    InitializeBufferWithInitData(context, m_SizeInBytes, m_SizeInBytes, m_SizeInBytes, iList);
     m_Resource = m_D3D12MABufferAllocation->GetResource();
 
     // after uploading init values, transition the index buffer data from copy destination state to index buffer state
@@ -224,4 +200,83 @@ void GfxConstantBuffer::Update(const void* data) const
     assert(m_CBufferMemory);
 
     memcpy(m_CBufferMemory, data, m_SizeInBytes);
+}
+
+void GfxTexture::Initialize(GfxContext& context, 
+                            DXGI_FORMAT format,
+                            uint32_t width, 
+                            uint32_t height, 
+                            D3D12_RESOURCE_FLAGS flags,
+                            const void* initData, 
+                            const std::string& resourceName)
+{
+    bbeProfileFunction();
+
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+
+    m_SizeInBytes = bbeRoundToNextMultiple(width * height * GetBitsPerPixel(format), 8) / 8;
+    m_Format = format;
+
+    // init desc heap for texture
+    m_GfxDescriptorHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+
+    D3D12_RESOURCE_DESC desc = {};
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    desc.Width = width;
+    desc.Height = height;
+    desc.DepthOrArraySize = 1;
+    desc.Format = format;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Flags = flags;
+
+    // Create heap to hold final buffer data
+    m_D3D12MABufferAllocation = CreateHeap(context, D3D12_HEAP_TYPE_DEFAULT, desc, initData ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12_RESOURCE_STATE_COMMON);
+    assert(m_D3D12MABufferAllocation);
+    m_Resource = m_D3D12MABufferAllocation->GetResource();
+
+    // if init data is specified, upload it
+    if (initData)
+    {
+        // we will start this heap in the copy destination state since we will copy data from the upload heap to this heap
+        SetHazardTrackedState(D3D12_RESOURCE_STATE_COPY_DEST);
+
+        const uint32_t uploadBufferSize = (uint32_t)GetRequiredIntermediateSize(m_Resource.Get(), 0, 1);
+        const uint32_t rowPitch = width * 4;// GetBitsPerPixel(format) / 8;
+        InitializeBufferWithInitData(context, uploadBufferSize, rowPitch, rowPitch * height, initData);
+
+        // after uploading init values, transition the texture from copy destination state to common state
+        Transition(context.GetCommandList(), D3D12_RESOURCE_STATE_COMMON);
+    }
+
+    // Describe and create a SRV for the texture
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srvDesc.Format = format;
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels = 1;
+    gfxDevice.Dev()->CreateShaderResourceView(m_Resource.Get(), &srvDesc, m_GfxDescriptorHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
+
+    SetInternalAllocName(resourceName);
+}
+
+void GfxTexture::InitializeForSwapChain(ComPtr<IDXGISwapChain4>& swapChain, DXGI_FORMAT format, uint32_t backBufferIdx)
+{
+    bbeProfileFunction();
+
+    assert(!m_Resource);
+    assert(swapChain);
+    assert(format != DXGI_FORMAT_UNKNOWN);
+    assert(backBufferIdx <= 3); // you dont need more than 3 back buffers...
+
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+    m_Format = format;
+
+    DX12_CALL(swapChain->GetBuffer(backBufferIdx, IID_PPV_ARGS(&m_Resource)));
+
+    m_GfxDescriptorHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+
+    m_Resource->SetName(utf8_decode(StringFormat("Back Buffer RTV %d", backBufferIdx)).c_str());
+
+    gfxDevice.Dev()->CreateRenderTargetView(m_Resource.Get(), nullptr, m_GfxDescriptorHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
 }
