@@ -10,8 +10,6 @@ void SystemProfiler::Initialize()
     MicroProfileOnThreadCreate("Main");
     MicroProfileSetEnableAllGroups(true);
     MicroProfileSetForceMetaCounters(true);
-
-    m_GPULogs.reserve(16);
 }
 
 void SystemProfiler::InitializeGPUProfiler(void* pDevice, void* pCommandQueue)
@@ -36,21 +34,31 @@ void SystemProfiler::ShutDown()
 {
     g_Log.info("Shutting down profiler");
 
+    for (auto& handles : m_GPUQueueToProfilerHandle)
+    {
+        MicroProfileFreeGpuQueue(handles.second);
+    }
+
     for (MicroProfileThreadLogGpu* gpuLog : m_GPULogs)
     {
-        MicroProfileThreadLogGpuFree(gpuLog);
+        if (gpuLog)
+        {
+            MicroProfileThreadLogGpuFree(gpuLog);
+        }
     }
-    m_GPULogs.clear();
 
     MicroProfileShutdown();
 }
 
 void SystemProfiler::OnFlip()
 {
-    for (MicroProfileThreadLogGpu* gpuLog : m_GPULogs)
-    {
-        MicroProfileThreadLogGpuReset(gpuLog);
-    }
+    //for (MicroProfileThreadLogGpu* gpuLog : m_GPULogs)
+    //{
+    //    if (gpuLog)
+    //    {
+    //        MicroProfileThreadLogGpuReset(gpuLog);
+    //    }
+    //}
 
     //g_ProfilerFlipThread.OnFlip();
     MicroProfileFlip(nullptr);
@@ -77,33 +85,18 @@ void SystemProfiler::DumpProfilerBlocks(bool condition, bool immediately)
 
 void GPUProfilerContext::Initialize(void* commandList, uint32_t id)
 {
-    if (g_Profiler.m_GPULogs.size() <= id)
-    {
-        bbeMultiThreadDetector();
-        g_Profiler.m_GPULogs.resize(id + 1);
+    //m_ID = id;
+    //m_Log = g_Profiler.m_GPULogs[id] = MicroProfileThreadLogGpuAlloc();
 
-        // alloc new logs if necessary
-        // TODO: This is bullshit... while not critical for perf, do it in a better way?
-        for (MicroProfileThreadLogGpu*& log : g_Profiler.m_GPULogs)
-        {
-            if (!log)
-            {
-                log = MicroProfileThreadLogGpuAlloc();
-            }
-        }
-    }
-
-    m_Log = g_Profiler.m_GPULogs.at(id);
-
-    MicroProfileGpuBegin(commandList, m_Log);
+    //MicroProfileGpuBegin(commandList, m_Log);
 }
 
 void GPUProfilerContext::Submit(void* submissionQueue)
 {
-    assert(m_Log);
+    //assert(m_Log);
 
-    const uint64_t token = MicroProfileGpuEnd(m_Log);
+    //const uint64_t token = MicroProfileGpuEnd(m_Log);
 
-    const int32_t queueHandle = g_Profiler.m_GPUQueueToProfilerHandle.at(submissionQueue);
-    MicroProfileGpuSubmit(queueHandle, token);
+    //const int32_t queueHandle = g_Profiler.m_GPUQueueToProfilerHandle.at(submissionQueue);
+    //MicroProfileGpuSubmit(queueHandle, token);
 }

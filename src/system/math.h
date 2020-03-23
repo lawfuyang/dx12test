@@ -2,19 +2,19 @@
 
 #include <extern/simplemath/SimpleMath.h>
 
-using Vector2    = DirectX::SimpleMath::Vector2;
-using Vector2I   = DirectX::XMINT2;
-using Vector2U   = DirectX::XMUINT2;
-using Vector3    = DirectX::SimpleMath::Vector3;
-using Vector3I   = DirectX::XMINT3;
-using Vector3U   = DirectX::XMUINT3;
-using Vector4    = DirectX::SimpleMath::Vector4;
-using Vector4I   = DirectX::XMINT4;
-using Vector4U   = DirectX::XMUINT4;
-using Matrix     = DirectX::SimpleMath::Matrix;
-using Plane      = DirectX::SimpleMath::Plane;
-using Quaternion = DirectX::SimpleMath::Quaternion;
-using Color      = DirectX::SimpleMath::Color;
+using bbeVector2    = DirectX::SimpleMath::Vector2;
+using bbeVector2I   = DirectX::XMINT2;
+using bbeVector2U   = DirectX::XMUINT2;
+using bbeVector3    = DirectX::SimpleMath::Vector3;
+using bbeVector3I   = DirectX::XMINT3;
+using bbeVector3U   = DirectX::XMUINT3;
+using bbeVector4    = DirectX::SimpleMath::Vector4;
+using bbeVector4I   = DirectX::XMINT4;
+using bbeVector4U   = DirectX::XMUINT4;
+using bbeMatrix     = DirectX::SimpleMath::Matrix;
+using bbePlane      = DirectX::SimpleMath::Plane;
+using bbeQuaternion = DirectX::SimpleMath::Quaternion;
+using bbeColor      = DirectX::SimpleMath::Color;
 
 #define bbeBIG_Float (1e10f) // use instead of FLT_MAX when overflowing is a concern
 
@@ -25,34 +25,85 @@ inline constexpr T bbeSaturate(T v)
 }
 
 //damps a value using a deltatime and a speed
-template <typename _Type>
-inline _Type bbeDamp(_Type val, _Type target, _Type speed, float dt)
+template <typename T> inline T bbeDamp(T val, T target, T speed, float dt)
 {
-    _Type maxDelta = speed * dt;
+    T maxDelta = speed * dt;
     return val + std::clamp(target - val, -maxDelta, maxDelta);
 }
 
-template <typename _Type>
-inline _Type bbeSmoothStep(_Type min, _Type max, _Type f)
+template <typename T> T bbeSmoothStep(T min, T max, T f)
 {
-    f = std::clamp((f - min) / (max - min), _Type(0.f), _Type(1.f));
-    return f * f * (_Type(3.f) - _Type(2.f) * f);
+    f = std::clamp((f - min) / (max - min), T(0.f), T(1.f));
+    return f * f * (T(3.f) - T(2.f) * f);
 }
 
-template <typename _Type>
-inline _Type bbeSmootherStep(_Type min, _Type max, _Type f)
+template <typename T> T bbeSmootherStep(T min, T max, T f)
 {
-    f = std::clamp((f - min) / (max - min), _Type(0.f), _Type(1.f));
-    return f * f * f * (f * (f * _Type(6.f) - _Type(15.f)) + _Type(10.f));
+    f = std::clamp((f - min) / (max - min), T(0.f), T(1.f));
+    return f * f * f * (f * (f * T(6.f) - T(15.f)) + T(10.f));
 }
 
-#define bbeIsPow2(val)	(val) ? !(((val)-1) & (val)) : true
-
-#define bbeAlignVal(val, alignVal)    ((((val)+(alignVal)-1)/(alignVal))*(alignVal))
-
-constexpr bool bbeIsAligned(uint64_t value, size_t alignment) 
+template <typename T> constexpr bool bbeIsAligned(T value, size_t alignment)
 {
-    return ((uint64_t)value & (alignment - 1)) == 0;
+    return ((size_t)value & (alignment - 1)) == 0;
+}
+
+template <typename T> constexpr T AlignUpWithMask(T value, size_t mask)
+{
+    return (T)(((size_t)value + mask) & ~mask);
+}
+
+template <typename T> constexpr T AlignDownWithMask(T value, size_t mask)
+{
+    return (T)((size_t)value & ~mask);
+}
+
+template <typename T> constexpr T AlignUp(T value, size_t alignment)
+{
+    return AlignUpWithMask(value, alignment - 1);
+}
+
+template <typename T> constexpr T AlignDown(T value, size_t alignment)
+{
+    return AlignDownWithMask(value, alignment - 1);
+}
+
+template <typename T> constexpr bool IsAligned(T value, size_t alignment)
+{
+    return 0 == ((size_t)value & (alignment - 1));
+}
+
+template <typename T> constexpr T DivideByMultiple(T value, size_t alignment)
+{
+    return (T)((value + alignment - 1) / alignment);
+}
+
+template <typename T> constexpr bool IsPowerOfTwo(T value)
+{
+    return 0 == (value & (value - 1));
+}
+
+template <typename T> constexpr bool IsDivisible(T value, T divisor)
+{
+    return (value / divisor) * divisor == value;
+}
+
+static uint8_t Log2(uint64_t value)
+{
+    unsigned long mssb; // most significant set bit
+    unsigned long lssb; // least significant set bit
+
+    // If perfect power of two (only one set bit), return index of bit.  Otherwise round up
+    // fractional log by adding 1 to most signicant set bit's index.
+    if (_BitScanReverse64(&mssb, value) > 0 && _BitScanForward64(&lssb, value) > 0)
+        return uint8_t(mssb + (mssb == lssb ? 0 : 1));
+    else
+        return 0;
+}
+
+template <typename T> constexpr T AlignPowerOfTwo(T value)
+{
+    return value == 0 ? 0 : 1 << Log2(value);
 }
 
 // round given value to next multiple, not limited to pow2 multiples...

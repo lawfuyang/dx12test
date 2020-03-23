@@ -9,6 +9,10 @@
 class SpinLock
 {
 public:
+    SpinLock(const char* name)
+        : m_Name(name)
+    {}
+
     void Lock()
     {
         m_SpinLock.lock();
@@ -24,13 +28,20 @@ public:
         m_SpinLock.unlock();
     }
 
+    const char* GetName() const { return m_Name; }
+
 private:
     tbb::spin_mutex m_SpinLock;
+    const char* m_Name = "";
 };
 
 class AdaptiveLock : public SpinLock
 {
 public:
+    AdaptiveLock(const char* name)
+        : SpinLock(name)
+    {}
+
     // SpinLock prediction by Foster Brereton: https://hackernoon.com/building-a-c-hybrid-spin-mutex-f98de535b4ac
     void Lock()
     {
@@ -75,11 +86,10 @@ private:
 template <typename LockType>
 struct ProfiledScopedLock
 {
-    ProfiledScopedLock(LockType& lck, const char* fileAndLine)
+    ProfiledScopedLock(LockType& lck)
         : m_Lock(lck)
     {
-        fileAndLine += std::string{ fileAndLine }.find_last_of('\\');
-        bbeProfileBlockBegin(StringFormat("Lock: %s", fileAndLine).c_str());
+        bbeProfileBlockBegin(ScopedLock);
 
         m_Lock.Lock();
     }
@@ -92,6 +102,7 @@ struct ProfiledScopedLock
     }
 
     LockType& m_Lock;
+    bbeDefineProfilerToken(ScopedLock, "Locks", m_Lock.GetName(), 0xFF0000);
 };
 
-#define bbeAutoLock(lock) const ProfiledScopedLock<decltype(lock)> bbeUniqueVariable(scopedLock){ lock, bbeFILEandLINE };
+#define bbeAutoLock(lock) const ProfiledScopedLock<decltype(lock)> bbeUniqueVariable(scopedLock){ lock };

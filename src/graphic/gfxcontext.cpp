@@ -6,7 +6,7 @@
 #include "graphic/gfxtexturesandbuffers.h"
 #include "graphic/gfxrootsignature.h"
 
-void GfxContext::ClearRenderTargetView(GfxTexture& tex, const Vector4& clearColor) const
+void GfxContext::ClearRenderTargetView(GfxTexture& tex, const bbeVector4& clearColor) const
 {
     bbeProfileFunction();
 

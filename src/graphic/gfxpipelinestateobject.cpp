@@ -14,7 +14,7 @@ void GfxPSOManager::Initialize()
     assert(!m_PipelineLibrary);
 
     // Init the memory mapped file.
-    const std::wstring cacheDir = utf8_decode(GetTempDirectory() + "D3D12PipelineLibraryCache.cache");
+    const std::wstring cacheDir = MakeWStrFromStr(GetTempDirectory() + "D3D12PipelineLibraryCache.cache");
     m_MemoryMappedCacheFile.Init(cacheDir);
 
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();

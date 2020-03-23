@@ -2,11 +2,11 @@
 
 #include "system.h"
 
-extern void InitializeGraphic(tf::Taskflow&);
-extern void UpdateGraphic(tf::Taskflow&);
+extern void InitializeGraphic();
+extern void UpdateGraphic();
 extern void ShutdownGraphic();
-extern void InitializeApplicationLayer(tf::Taskflow&);
-extern void UpdateApplicationLayer(tf::Taskflow&);
+extern void InitializeApplicationLayer();
+extern void UpdateApplicationLayer();
 extern void ShutdownApplicationLayer();
 
 void System::ProcessWindowsMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -31,10 +31,8 @@ void System::Loop()
 
             RunKeyboardCommands();
 
-            tf::Taskflow tf;
-            UpdateGraphic(tf);
-            UpdateApplicationLayer(tf);
-            m_Executor.run(tf).wait();
+            UpdateGraphic();
+            UpdateApplicationLayer();
 
             // make sure I/O ticks happen last
             g_Keyboard.Tick();
@@ -61,12 +59,8 @@ void System::Initialize()
 
     bbeConditionalProfile(g_CommandLineOptions.m_ProfileInit, "System::Initialize");
 
-    tf::Taskflow tf;
-
-    InitializeGraphic(tf);
-    InitializeApplicationLayer(tf);
-
-    m_Executor.run(tf).wait();
+    InitializeGraphic();
+    InitializeApplicationLayer();
 
     g_Profiler.DumpProfilerBlocks(g_CommandLineOptions.m_ProfileInit, true);
 }
@@ -89,13 +83,14 @@ void System::InitializeThreadIDs()
 
     // 'taskflow' lib does not allow me to readily access its internal thread IDs easily... need to do this lame step
     tf::Taskflow tf;
+
+    AdaptiveLock mapLock{ "m_STDThreadIDToIndexMap lock" };
     tf.parallel_for(dummyArr, dummyArr + m_Executor.num_workers(), [&](bool)
         {
             const uint32_t workerThreadIdx = m_Executor.this_worker_id();
             const uint32_t STDThreadID = GetSTDThreadID();
 
-            static AdaptiveLock s_Lock;
-            bbeAutoLock(s_Lock);
+            bbeAutoLock(mapLock);
             m_STDThreadIDToIndexMap[STDThreadID] = workerThreadIdx + 1; //  +1, because main thread will be 0
         });
     m_Executor.run(tf).wait();

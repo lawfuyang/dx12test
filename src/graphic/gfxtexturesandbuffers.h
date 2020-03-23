@@ -54,7 +54,7 @@ class GfxVertexBuffer : public GfxHazardTrackedResource,
                         public GfxBufferCommon
 {
 public:
-    void Initialize(GfxContext& context, const void* vList, uint32_t numVertices, uint32_t vertexSize, const std::string& resourceName = "");
+    void Initialize(const void* vList, uint32_t numVertices, uint32_t vertexSize, const std::string& resourceName = "");
 
     uint32_t GetStrideInBytes() const { return m_StrideInBytes; }
 
@@ -66,7 +66,7 @@ class GfxIndexBuffer : public GfxHazardTrackedResource,
                        public GfxBufferCommon
 {
 public:
-    void Initialize(GfxContext& context, const void* iList, uint32_t numIndices, uint32_t indexSize, const std::string& resourceName = "");
+    void Initialize(const void* iList, uint32_t numIndices, uint32_t indexSize, const std::string& resourceName = "");
 
     DXGI_FORMAT GetFormat() const { return m_Format; }
 
@@ -78,9 +78,9 @@ class GfxConstantBuffer : public GfxBufferCommon
 {
 public:
     template <typename BufferStruct>
-    void Initialize(GfxContext& context) { Initialize(context, sizeof(BufferStruct), BufferStruct::ms_Name); }
+    void Initialize() { Initialize(sizeof(BufferStruct), BufferStruct::ms_Name); }
 
-    void Initialize(GfxContext& context, uint32_t bufferSize, const std::string& resourceName = "");
+    void Initialize(uint32_t bufferSize, const std::string& resourceName = "");
     void Update(const void* data) const;
 
     GfxDescriptorHeap& GetDescriptorHeap() { return m_GfxDescriptorHeap; }
@@ -94,7 +94,7 @@ class GfxTexture : public GfxHazardTrackedResource,
                    public GfxBufferCommon
 {
 public:
-    void Initialize(GfxContext& context, DXGI_FORMAT, uint32_t width, uint32_t height, D3D12_RESOURCE_FLAGS, const void* initData = nullptr, const std::string& resourceName = "");
+    void Initialize(DXGI_FORMAT, uint32_t width, uint32_t height, D3D12_RESOURCE_FLAGS, const void* initData = nullptr, const std::string& resourceName = "");
     void InitializeForSwapChain(ComPtr<IDXGISwapChain4>& swapChain, DXGI_FORMAT, uint32_t backBufferIdx);
 
     GfxDescriptorHeap& GetDescriptorHeap() { return m_GfxDescriptorHeap; }

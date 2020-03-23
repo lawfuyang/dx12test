@@ -316,7 +316,7 @@ static void HandleConstantBuffer(CFileWrapper& shaderFile, char (&line)[MAX_PATH
 
         newCBuffer.SanityCheck();
 
-        static AdaptiveLock s_Lock;
+        static AdaptiveLock s_Lock{"g_AllConstantBuffers lock"};
         bbeAutoLock(s_Lock);
         g_AllConstantBuffers.push_back(newCBuffer);
     }
@@ -368,7 +368,7 @@ static void GetD3D12ShaderModelsAndPopulateJobs()
             {
                 g_Log.info("Found shader: {}", newJob.m_ShaderName.c_str());
 
-                static AdaptiveLock s_Lock;
+                static AdaptiveLock s_Lock{"g_AllShaderCompileJobs lock"};
                 bbeAutoLock(s_Lock);
                 g_AllShaderCompileJobs.push_back(std::move(newJob));
             }
@@ -554,18 +554,18 @@ struct GlobalsInitializer
         g_CPPTypeSizeMap[CPPType] = TypeSize;
 
         ADD_TYPE("int", "int32_t", 4);
-        ADD_TYPE("int2", "Vector2I", 8);
-        ADD_TYPE("int3", "Vector3I", 12);
-        ADD_TYPE("int4", "Vector4I", 16);
+        ADD_TYPE("int2", "bbeVector2I", 8);
+        ADD_TYPE("int3", "bbeVector3I", 12);
+        ADD_TYPE("int4", "bbeVector4I", 16);
         ADD_TYPE("uint", "uint32_t", 4);
-        ADD_TYPE("uint2", "Vector2U", 8);
-        ADD_TYPE("uint3", "Vector3U", 12);
-        ADD_TYPE("uint4", "Vector4U", 16);
+        ADD_TYPE("uint2", "bbeVector2U", 8);
+        ADD_TYPE("uint3", "bbeVector3U", 12);
+        ADD_TYPE("uint4", "bbeVector4U", 16);
         ADD_TYPE("float", "float", 4);
-        ADD_TYPE("float2", "Vector2", 8);
-        ADD_TYPE("float3", "Vector3", 12);
-        ADD_TYPE("float4", "Vector4", 16);
-        ADD_TYPE("float4x4", "Matrix", 64);
+        ADD_TYPE("float2", "bbeVector2", 8);
+        ADD_TYPE("float3", "bbeVector3", 12);
+        ADD_TYPE("float4", "bbeVector4", 16);
+        ADD_TYPE("float4x4", "bbeMatrix", 64);
     #undef ADD_TYPE
     }
 };

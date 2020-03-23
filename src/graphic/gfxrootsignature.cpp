@@ -89,7 +89,7 @@ void GfxRootSignature::Compile(const std::string& rootSigName)
     boost::hash_combine(m_Hash, rootSignatureDesc.Version);
     boost::hash_combine(m_Hash, rootSignatureDesc.Desc_1_1.Flags);
 
-    m_RootSignature->SetName(utf8_decode(rootSigName).c_str());
+    m_RootSignature->SetName(MakeWStrFromStr(rootSigName).c_str());
 }
 
 void GfxRootSignatureManager::Initialize()

@@ -9,21 +9,21 @@ void CameraController::Initialize()
     m_MouseLastPos = { Mouse::GetX(), Mouse::GetY() };
 }
 
-Matrix CameraController::Get3DViewProjMatrix()
+bbeMatrix CameraController::Get3DViewProjMatrix()
 {
     const float aspectRatio = (float)g_CommandLineOptions.m_WindowWidth / (float)g_CommandLineOptions.m_WindowHeight; // TODO: retrieve window dimensions from somewhere legit
     const float fovAngleY = DirectX::XMConvertToRadians(m_FOV);
 
-    const Vector3 focusPosition = m_EyePosition + m_Dir;
-    const Matrix viewMatrix = Matrix::CreateLookAtLH(m_EyePosition, focusPosition, m_UpDirection).Transpose();
-    const Matrix projMatrix = Matrix::CreatePerspectiveFieldOfViewLH(fovAngleY, aspectRatio, m_Near, m_Far).Transpose();
+    const bbeVector3 focusPosition = m_EyePosition + m_Dir;
+    const bbeMatrix viewMatrix = bbeMatrix::CreateLookAtLH(m_EyePosition, focusPosition, m_UpDirection).Transpose();
+    const bbeMatrix projMatrix = bbeMatrix::CreatePerspectiveFieldOfViewLH(fovAngleY, aspectRatio, m_Near, m_Far).Transpose();
 
     return projMatrix * viewMatrix;
 }
 
 void CameraController::UpdateEyePosition()
 {
-    Vector3 finalMoveVector = Vector3::Zero;
+    bbeVector3 finalMoveVector = bbeVector3::Zero;
 
     if (Keyboard::IsKeyPressed(Keyboard::KEY_A))
     {
@@ -48,8 +48,8 @@ void CameraController::UpdateEyePosition()
 
 void CameraController::UpdateCameraRotation()
 {
-    const Vector2 mousePos{ Mouse::GetX(), Mouse::GetY() };
-    const Vector2 mouseDeltaVec = mousePos - m_MouseLastPos;
+    const bbeVector2 mousePos{ Mouse::GetX(), Mouse::GetY() };
+    const bbeVector2 mouseDeltaVec = mousePos - m_MouseLastPos;
 
     // compute new camera angles and vectors based off mouse delta
     m_HorizontalAngle -= m_MouseRotationSpeed * float(mouseDeltaVec.x);
@@ -100,7 +100,7 @@ void CameraController::Update()
 
     m_UpDirection = m_RightDirection.Cross(m_EyePosition);
 
-    const Matrix viewProjMatrix = Get3DViewProjMatrix();
+    const bbeMatrix viewProjMatrix = Get3DViewProjMatrix();
     g_GfxView.SetViewProjMatrix(viewProjMatrix);
 }
 

@@ -11,7 +11,7 @@ public:
 
     virtual ~GfxRenderPass() {}
 
-    virtual void Initialize(GfxContext&) = 0;
+    virtual void Initialize() = 0;
     virtual void ShutDown() = 0;
     virtual void Render(GfxContext&) = 0;
 

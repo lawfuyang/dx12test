@@ -9,14 +9,15 @@ class GfxDefaultTextures
 public:
     DeclareSingletonFunctions(GfxDefaultTextures);
 
-    void Initialize(GfxContext& initContext);
+    void Initialize();
     void ShutDown();
 
-    inline static GfxTexture White;
-    inline static GfxTexture Black;
+    inline static GfxTexture White2D;
+    inline static GfxTexture Black2D;
     inline static GfxTexture Checkerboard;
 
 private:
-    void InitCheckerboardTexture(GfxContext& initContext);
+    void InitCheckerboardTexture(GfxTexture&);
+    void InitSolidColor(GfxTexture&, const bbeColor&, const char* colorName);
 };
 #define g_GfxDefaultTextures GfxDefaultTextures::GetInstance()

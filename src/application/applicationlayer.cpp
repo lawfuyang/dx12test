@@ -1,13 +1,13 @@
 #include "application/cameracontroller.h"
 
-void InitializeApplicationLayer(tf::Taskflow& tf)
+void InitializeApplicationLayer()
 {
     bbeProfileFunction();
 
     g_CameraController.Initialize();
 }
 
-void UpdateApplicationLayer(tf::Taskflow& tf)
+void UpdateApplicationLayer()
 {
     bbeProfileFunction();
 

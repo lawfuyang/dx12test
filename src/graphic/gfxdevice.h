@@ -38,6 +38,7 @@ private:
     GfxCommandListsManager   m_CommandListsManager;
     GfxFence                 m_GfxFence;
 
+    AdaptiveLock m_ContextsLock{ "m_AllContexts lock" };
     std::vector<GfxContext> m_AllContexts;
 
     ComPtr<ID3D12Device6> m_D3DDevice;

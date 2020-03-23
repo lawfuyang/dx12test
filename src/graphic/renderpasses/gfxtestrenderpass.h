@@ -11,7 +11,7 @@ class GfxTestRenderPass : public GfxRenderPass
 public:
     GfxTestRenderPass();
 
-    void Initialize(GfxContext&);
+    void Initialize();
     void ShutDown() override;
     void Render(GfxContext&) override;
 

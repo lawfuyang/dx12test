@@ -156,10 +156,8 @@ constexpr uint32_t GetCompileTimeCRC32(const char* str)
 }
 
 // Convert a wide Unicode string to an UTF8 string
-const std::string utf8_encode(const std::wstring& wstr);
-
-// Convert an UTF8 string to a wide Unicode String
-const std::wstring utf8_decode(const std::string& str);
+const std::string MakeStrFromWStr(const std::wstring& wstr);
+static const std::wstring MakeWStrFromStr(const std::string& str) { return std::wstring{ str.begin(), str.end() }; }
 
 const std::string GetLastErrorAsString();
 

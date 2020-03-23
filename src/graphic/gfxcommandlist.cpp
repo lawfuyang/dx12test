@@ -62,9 +62,7 @@ void GfxCommandListsManager::Initialize()
 
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
-    CommandListPool& directPool = m_DirectPool;
-
-    assert(directPool.m_CommandQueue.Get() == nullptr);
+    assert(m_DirectPool.m_CommandQueue.Get() == nullptr);
 
     // Describe and create the command queue.
     D3D12_COMMAND_QUEUE_DESC queueDesc = {};
@@ -74,25 +72,24 @@ void GfxCommandListsManager::Initialize()
     queueDesc.NodeMask = 0; // For single-adapter, set to 0. Else, set a bit to identify the node
 
     bbeProfile("CreateCommandQueue");
-    DX12_CALL(gfxDevice.Dev()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&directPool.m_CommandQueue)));
-    g_Profiler.InitializeGPUProfiler(gfxDevice.Dev(), directPool.m_CommandQueue.Get());
-    g_Profiler.RegisterGPUQueue(directPool.m_CommandQueue.Get(), "Direct Queue");
+    DX12_CALL(gfxDevice.Dev()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_DirectPool.m_CommandQueue)));
+    g_Profiler.InitializeGPUProfiler(gfxDevice.Dev(), m_DirectPool.m_CommandQueue.Get());
+    g_Profiler.RegisterGPUQueue(m_DirectPool.m_CommandQueue.Get(), "Direct Queue");
 }
 
 void GfxCommandListsManager::ShutDown()
 {
     bbeProfileFunction();
+    bbeMultiThreadDetector();
 
     assert(m_DirectPool.m_ActiveCommandLists.empty() == true);
 
     // free all cmd lists
     while (!m_DirectPool.m_FreeCommandLists.empty())
     {
-        GfxCommandList* cmdList = nullptr;
-        if (m_DirectPool.m_FreeCommandLists.try_pop(cmdList))
-        {
-            m_DirectPool.m_CommandListsPool.free(cmdList);
-        }
+        GfxCommandList* cmdList = m_DirectPool.m_FreeCommandLists.front();
+        m_DirectPool.m_FreeCommandLists.pop();
+        m_DirectPool.m_CommandListsPool.free(cmdList);
     }
 }
 
@@ -100,20 +97,26 @@ GfxCommandList* GfxCommandListsManager::Allocate(D3D12_COMMAND_LIST_TYPE cmdList
 {
     bbeProfileFunction();
 
+    bbeAutoLock(m_DirectPool.m_ListsLock);
+
     GfxCommandList* newCmdList = nullptr;
 
     // if no free list, create a new one
     if (m_DirectPool.m_FreeCommandLists.empty())
     {
-        bbeAutoLock(m_DirectPool.m_PoolLock);
-        newCmdList = m_DirectPool.m_CommandListsPool.construct();
+        {
+            bbeAutoLock(m_DirectPool.m_PoolLock);
+            newCmdList = m_DirectPool.m_CommandListsPool.construct();
+        }
         assert(newCmdList);
 
         newCmdList->Initialize(cmdListType);
     }
     else
     {
-        while (!m_DirectPool.m_FreeCommandLists.try_pop(newCmdList));
+        newCmdList = m_DirectPool.m_FreeCommandLists.front();
+        m_DirectPool.m_FreeCommandLists.pop();
+
         assert(newCmdList);
     }
 
@@ -125,21 +128,28 @@ GfxCommandList* GfxCommandListsManager::Allocate(D3D12_COMMAND_LIST_TYPE cmdList
 
 void GfxCommandListsManager::ExecuteAllActiveCommandLists()
 {
-    bbeMultiThreadDetector();
     bbeProfileFunction();
+
+    static std::mt19937_64 rng;
+
+    bbeAutoLock(m_DirectPool.m_ListsLock);
 
     while (!m_DirectPool.m_ActiveCommandLists.empty())
     {
-        GfxCommandList* cmdListToConsume = nullptr;
-        if (m_DirectPool.m_ActiveCommandLists.try_pop(cmdListToConsume))
-        {
-            cmdListToConsume->EndRecording();
+        GfxCommandList* cmdListToConsume = m_DirectPool.m_ActiveCommandLists.front();
 
-            ID3D12CommandList* ppCommandLists[] = { cmdListToConsume->Dev() };
-            m_DirectPool.m_CommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+        const std::string cmdListName = GetD3DDebugName(cmdListToConsume->Dev());
+        bbeDefineProfilerToken(token, "Cmd List Exec", cmdListName.c_str(), 0xFF0000);
+        bbeProfileToken(token);
 
-            m_DirectPool.m_FreeCommandLists.push(cmdListToConsume);
-        }
+        m_DirectPool.m_ActiveCommandLists.pop();
+
+        cmdListToConsume->EndRecording();
+
+        ID3D12CommandList* ppCommandLists[] = { cmdListToConsume->Dev() };
+        m_DirectPool.m_CommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+        m_DirectPool.m_FreeCommandLists.push(cmdListToConsume);
     }
 }
 

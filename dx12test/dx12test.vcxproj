@@ -91,6 +91,7 @@
     <ClCompile Include="..\src\graphic\renderpasses\gfxtestrenderpass.cpp" />
     <ClCompile Include="..\src\system\keyboard.cpp" />
     <ClCompile Include="..\src\system\main.cpp" />
+    <ClCompile Include="..\src\system\memcpy.cpp" />
     <ClCompile Include="..\src\system\memorymappedfile.cpp" />
     <ClCompile Include="..\src\system\mouse.cpp" />
     <ClCompile Include="..\src\system\profiler.cpp" />
@@ -134,6 +135,7 @@
     <ClInclude Include="..\src\system\locks.h" />
     <ClInclude Include="..\src\system\logger.h" />
     <ClInclude Include="..\src\system\math.h" />
+    <ClInclude Include="..\src\system\memcpy.h" />
     <ClInclude Include="..\src\system\memorymappedfile.h" />
     <ClInclude Include="..\src\system\mouse.h" />
     <ClInclude Include="..\src\system\profiler.h" />

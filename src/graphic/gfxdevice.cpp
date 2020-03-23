@@ -242,13 +242,17 @@ void GfxDevice::Flush(bool waitForPreviousFrame)
 {
     bbeProfileFunction();
 
-    for (GfxContext& context : m_AllContexts)
     {
-        context.GetGPUProfilerContext().Submit(m_CommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT));
-    }
+        bbeAutoLock(m_ContextsLock);
 
-    m_CommandListsManager.ExecuteAllActiveCommandLists();
-    m_AllContexts.clear();
+        for (GfxContext& context : m_AllContexts)
+        {
+            context.GetGPUProfilerContext().Submit(m_CommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT));
+        }
+
+        m_CommandListsManager.ExecuteAllActiveCommandLists();
+        m_AllContexts.clear();
+    }
 
     if (waitForPreviousFrame)
     {
@@ -268,21 +272,21 @@ GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType, c
 {
     bbeProfileFunction();
 
-    static AdaptiveLock s_Lock;
+    uint32_t newID;
     {
-        bbeAutoLock(s_Lock);
+        bbeAutoLock(m_ContextsLock);
         m_AllContexts.push_back(GfxContext{});
+        newID = m_AllContexts.size() - 1;
     }
     GfxContext& newContext = m_AllContexts.back();
 
-    newContext.m_ID          = m_AllContexts.size() - 1;
+    newContext.m_ID          = newID;
     newContext.m_Device      = this;
     newContext.m_CommandList = m_CommandListsManager.Allocate(cmdListType);
 
     newContext.m_GPUProfilerContext.Initialize(newContext.m_CommandList->Dev(), newContext.m_ID);
 
-    const std::wstring nameW = utf8_decode(name);
-    newContext.GetCommandList().Dev()->SetName(reinterpret_cast<LPCWSTR>(nameW.c_str()));
+    SetD3DDebugName(newContext.GetCommandList().Dev(), name);
 
     return newContext;
 }
