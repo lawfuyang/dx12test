@@ -64,7 +64,7 @@ void GfxManager::Initialize()
 
             g_TasksExecutor.run(tf).wait();
 
-            m_GfxDevice.Flush(true /* waitForPreviousFrame */);
+            m_GfxDevice.Flush(true /* andWait */);
         });
 
     tf::Task renderPassesInitTask = tf.emplace([&]()
@@ -73,7 +73,7 @@ void GfxManager::Initialize()
 
             m_TestRenderPass.Initialize();
 
-            m_GfxDevice.Flush(true /* waitForPreviousFrame */);
+            m_GfxDevice.Flush(true /* andWait */);
         });
 
     deviceInitTask.succeed(adapterInitTask);
@@ -103,7 +103,7 @@ void GfxManager::ShutDown()
     g_GfxDefaultTextures.ShutDown();
 
     // we must complete the previous GPU frame before exiting the app
-    m_GfxDevice.WaitForPreviousFrame();
+    m_GfxDevice.WaitForEndOfCommandQueue();
     m_GfxDevice.ShutDown();
 }
 
@@ -159,7 +159,7 @@ void GfxManager::EndFrame()
     m_SwapChain.Present();
 
     // TODO: refactor this. use fences to sync
-    m_GfxDevice.WaitForPreviousFrame();
+    m_GfxDevice.WaitForEndOfCommandQueue();
 }
 
 void GfxManager::DumpGfxMemory()

@@ -21,8 +21,8 @@ public:
     void Initialize();
     void ShutDown();
     void CheckStatus();
-    void Flush(bool waitForPreviousFrame = false);
-    void WaitForPreviousFrame();
+    void Flush(bool andWait = false);
+    void WaitForEndOfCommandQueue();
 
     GfxContext& GenerateNewContext(D3D12_COMMAND_LIST_TYPE, const std::string& name);
     GfxCommandListsManager& GetCommandListsManager() { return m_CommandListsManager; }

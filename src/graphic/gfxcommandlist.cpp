@@ -130,26 +130,27 @@ void GfxCommandListsManager::ExecuteAllActiveCommandLists()
 {
     bbeProfileFunction();
 
-    static std::mt19937_64 rng;
+    const uint32_t MAX_CMD_LISTS = 128;
 
-    bbeAutoLock(m_DirectPool.m_ListsLock);
-
-    while (!m_DirectPool.m_ActiveCommandLists.empty())
+    uint32_t numCmdListsToExec = 0;
+    ID3D12CommandList* ppCommandLists[MAX_CMD_LISTS] = {};
     {
-        GfxCommandList* cmdListToConsume = m_DirectPool.m_ActiveCommandLists.front();
+        bbeAutoLock(m_DirectPool.m_ListsLock);
+        assert(m_DirectPool.m_ActiveCommandLists.size() < MAX_CMD_LISTS);
 
-        const std::string cmdListName = GetD3DDebugName(cmdListToConsume->Dev());
-        bbeDefineProfilerToken(token, "Cmd List Exec", cmdListName.c_str(), 0xFF0000);
-        bbeProfileToken(token);
+        while (!m_DirectPool.m_ActiveCommandLists.empty())
+        {
+            GfxCommandList* cmdListToConsume = m_DirectPool.m_ActiveCommandLists.front();
+            cmdListToConsume->EndRecording();
 
-        m_DirectPool.m_ActiveCommandLists.pop();
+            ppCommandLists[numCmdListsToExec++] = cmdListToConsume->Dev();
+            m_DirectPool.m_ActiveCommandLists.pop();
+        }
+    }
 
-        cmdListToConsume->EndRecording();
-
-        ID3D12CommandList* ppCommandLists[] = { cmdListToConsume->Dev() };
-        m_DirectPool.m_CommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-        m_DirectPool.m_FreeCommandLists.push(cmdListToConsume);
+    if (numCmdListsToExec > 0)
+    {
+        m_DirectPool.m_CommandQueue->ExecuteCommandLists(numCmdListsToExec, ppCommandLists);
     }
 }
 

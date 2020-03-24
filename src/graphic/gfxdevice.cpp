@@ -238,7 +238,7 @@ void GfxDevice::InitD3D12Allocator()
     }
 }
 
-void GfxDevice::Flush(bool waitForPreviousFrame)
+void GfxDevice::Flush(bool andWait)
 {
     bbeProfileFunction();
 
@@ -254,13 +254,13 @@ void GfxDevice::Flush(bool waitForPreviousFrame)
         m_AllContexts.clear();
     }
 
-    if (waitForPreviousFrame)
+    if (andWait)
     {
-        WaitForPreviousFrame();
+        WaitForEndOfCommandQueue();
     }
 }
 
-void GfxDevice::WaitForPreviousFrame()
+void GfxDevice::WaitForEndOfCommandQueue()
 {
     bbeProfileFunction();
 
@@ -273,20 +273,21 @@ GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType, c
     bbeProfileFunction();
 
     uint32_t newID;
+    GfxContext* newContext;
     {
         bbeAutoLock(m_ContextsLock);
         m_AllContexts.push_back(GfxContext{});
         newID = m_AllContexts.size() - 1;
+        newContext = &m_AllContexts.back();
     }
-    GfxContext& newContext = m_AllContexts.back();
 
-    newContext.m_ID          = newID;
-    newContext.m_Device      = this;
-    newContext.m_CommandList = m_CommandListsManager.Allocate(cmdListType);
+    newContext->m_ID          = newID;
+    newContext->m_Device      = this;
+    newContext->m_CommandList = m_CommandListsManager.Allocate(cmdListType);
 
-    newContext.m_GPUProfilerContext.Initialize(newContext.m_CommandList->Dev(), newContext.m_ID);
+    newContext->m_GPUProfilerContext.Initialize(newContext->m_CommandList->Dev(), newID);
 
-    SetD3DDebugName(newContext.GetCommandList().Dev(), name);
+    SetD3DDebugName(newContext->GetCommandList().Dev(), name);
 
-    return newContext;
+    return *newContext;
 }
