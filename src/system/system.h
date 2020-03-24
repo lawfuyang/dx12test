@@ -25,7 +25,6 @@ public:
     void SetEngineWindowHandle(::HWND handle) { m_EngineWindowHandle = handle; }
 
 private:
-    void InitializeThreadIDs();
     void RunKeyboardCommands();
 
     ::HWND m_EngineWindowHandle = nullptr;
@@ -41,8 +40,6 @@ private:
     float m_CappedPrevFrameMs = 0.0f;
 
     tf::Executor m_Executor;
-
-    std::unordered_map<uint32_t, uint32_t> m_STDThreadIDToIndexMap;
 
     uint32_t m_SystemFrameNumber = 0;
 

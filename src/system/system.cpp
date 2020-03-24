@@ -53,8 +53,6 @@ void System::RunKeyboardCommands()
 
 void System::Initialize()
 {
-    InitializeThreadIDs();
-
     g_Profiler.Initialize();
 
     bbeConditionalProfile(g_CommandLineOptions.m_ProfileInit, "System::Initialize");
@@ -63,40 +61,6 @@ void System::Initialize()
     InitializeApplicationLayer();
 
     g_Profiler.DumpProfilerBlocks(g_CommandLineOptions.m_ProfileInit, true);
-}
-
-// nice helper to get thread ID in uint32_t instead of some stupid custom type
-static uint32_t GetSTDThreadID()
-{
-    return *reinterpret_cast<uint32_t*>(&std::this_thread::get_id());
-}
-
-uint32_t System::GetCurrentThreadID() const
-{
-    return m_STDThreadIDToIndexMap.at(GetSTDThreadID());
-}
-
-void System::InitializeThreadIDs()
-{
-    // dummy array because 'taskflow' lib's parallel_for is quite limited...
-    bool* dummyArr = (bool*)alloca(sizeof(bool) * m_Executor.num_workers());
-
-    // 'taskflow' lib does not allow me to readily access its internal thread IDs easily... need to do this lame step
-    tf::Taskflow tf;
-
-    AdaptiveLock mapLock{ "m_STDThreadIDToIndexMap lock" };
-    tf.parallel_for(dummyArr, dummyArr + m_Executor.num_workers(), [&](bool)
-        {
-            const uint32_t workerThreadIdx = m_Executor.this_worker_id();
-            const uint32_t STDThreadID = GetSTDThreadID();
-
-            bbeAutoLock(mapLock);
-            m_STDThreadIDToIndexMap[STDThreadID] = workerThreadIdx + 1; //  +1, because main thread will be 0
-        });
-    m_Executor.run(tf).wait();
-
-    // for main thread
-    m_STDThreadIDToIndexMap[GetSTDThreadID()] = 0;
 }
 
 void System::Shutdown()
