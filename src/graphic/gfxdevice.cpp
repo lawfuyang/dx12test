@@ -249,10 +249,10 @@ void GfxDevice::Flush(bool andWait)
         {
             context.GetGPUProfilerContext().Submit(m_CommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT));
         }
-
-        m_CommandListsManager.ExecuteAllActiveCommandLists();
         m_AllContexts.clear();
     }
+
+    m_CommandListsManager.ExecuteAllActiveCommandLists();
 
     if (andWait)
     {
