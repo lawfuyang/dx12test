@@ -36,7 +36,6 @@ private:
     {
         ComPtr<ID3D12CommandQueue> m_CommandQueue;
 
-        AdaptiveLock m_PoolLock{"m_PoolLock"};
         boost::object_pool<GfxCommandList> m_CommandListsPool;
 
         AdaptiveLock m_ListsLock{"m_ListsLock"};
