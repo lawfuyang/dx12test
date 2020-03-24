@@ -138,6 +138,7 @@ void GfxCommandListsManager::ExecuteAllActiveCommandLists()
     const uint32_t MAX_CMD_LISTS = 128;
 
     uint32_t numCmdListsToExec = 0;
+    GfxCommandList* ppPendingFreeCommandLists[MAX_CMD_LISTS] = {};
     ID3D12CommandList* ppCommandLists[MAX_CMD_LISTS] = {};
     {
         bbeAutoLock(m_DirectPool.m_ListsLock);
@@ -148,6 +149,7 @@ void GfxCommandListsManager::ExecuteAllActiveCommandLists()
             GfxCommandList* cmdListToConsume = m_DirectPool.m_ActiveCommandLists.front();
             cmdListToConsume->EndRecording();
 
+            ppPendingFreeCommandLists[numCmdListsToExec] = cmdListToConsume;
             ppCommandLists[numCmdListsToExec++] = cmdListToConsume->Dev();
             m_DirectPool.m_ActiveCommandLists.pop();
         }
@@ -156,6 +158,15 @@ void GfxCommandListsManager::ExecuteAllActiveCommandLists()
     if (numCmdListsToExec > 0)
     {
         m_DirectPool.m_CommandQueue->ExecuteCommandLists(numCmdListsToExec, ppCommandLists);
+    }
+
+    {
+        bbeAutoLock(m_DirectPool.m_ListsLock);
+
+        for (uint32_t i = 0; i < numCmdListsToExec; ++i)
+        {
+            m_DirectPool.m_FreeCommandLists.push(ppPendingFreeCommandLists[i]);
+        }
     }
 }
 

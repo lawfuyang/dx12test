@@ -14,6 +14,12 @@ class SystemProfiler
 public:
     DeclareSingletonFunctions(SystemProfiler);
 
+    struct GPUProfileLogContext
+    {
+        MicroProfileThreadLogGpu* m_GPULog = nullptr;
+        bool m_Recording = false;
+    };
+
     void Initialize();
     void InitializeGPUProfiler(void* pDevice, void* pCommandQueue);
     void RegisterGPUQueue(void* pCommandQueue, const char* queueName);
@@ -23,7 +29,7 @@ public:
     void DumpProfilerBlocks(bool condition, bool immediately = false);
 
 private:
-    MicroProfileThreadLogGpu* m_GPULogs[MICROPROFILE_MAX_THREADS] = {};
+    std::unordered_map<int, GPUProfileLogContext> m_ThreadGPULogContexts;
     std::unordered_map<void*, int> m_GPUQueueToProfilerHandle;
 
     friend class GPUProfilerContext;
@@ -33,14 +39,13 @@ private:
 class GPUProfilerContext
 {
 public:
-    void Initialize(void* commandList, uint32_t id);
+    void Initialize(void* commandList);
     void Submit(void* submissionQueue);
 
-    MicroProfileThreadLogGpu* GetLog() { return m_Log; }
+    MicroProfileThreadLogGpu* GetLog() { return m_LogContext->m_GPULog; }
 
 private:
-    uint32_t m_ID = ~0;
-    MicroProfileThreadLogGpu* m_Log = nullptr;
+    SystemProfiler::GPUProfileLogContext* m_LogContext = nullptr;
 
     friend class GPUProfilerScopeHandler;
 };
@@ -53,9 +58,5 @@ private:
 #define bbeProfileBlockBegin(token)                     MICROPROFILE_ENTER(token)
 #define bbeProfileBlockEnd()                            MICROPROFILE_LEAVE()
 
-// TODO: refactor MICROPROFILE gpu stuff
-//#define bbeProfileGPU(gfxContext, str)                  MICROPROFILE_SCOPEGPUI_L(gfxContext.GetGPUProfilerContext().GetLog(), str, GetCompileTimeCRC32(str))
-//#define bbeProfileGPUFunction(gfxContext)               MICROPROFILE_SCOPEGPUI_L(gfxContext.GetGPUProfilerContext().GetLog(), __FUNCTION__, GetCompileTimeCRC32(__FUNCTION__))
-
-#define bbeProfileGPU(gfxContext, str)    ((void)0)
-#define bbeProfileGPUFunction(gfxContext) ((void)0)
+#define bbeProfileGPU(gfxContext, str)                  MICROPROFILE_SCOPEGPUI_L(gfxContext.GetGPUProfilerContext().GetLog(), str, GetCompileTimeCRC32(str))
+#define bbeProfileGPUFunction(gfxContext)               MICROPROFILE_SCOPEGPUI_L(gfxContext.GetGPUProfilerContext().GetLog(), __FUNCTION__, GetCompileTimeCRC32(__FUNCTION__))
