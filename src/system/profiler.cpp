@@ -1,5 +1,3 @@
-BBE_OPTIMIZE_OFF;
-
 #include "system/profiler.h"
 #include "system/logger.h"
 
