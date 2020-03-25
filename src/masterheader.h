@@ -51,7 +51,9 @@
 #include <d3d12sdklayers.h>
 #include <dxgi1_6.h>
 
-#include <extern/DirectX-Graphics-Samples/Libraries/D3DX12/d3dx12.h>
+#include <extern/d3d12/D3D12MemAlloc.h>
+#include <extern/d3d12/d3dx12.h>
+#include <extern/d3d12/d3dx12Residency.h>
 
 #include <extern/taskflow/taskflow.hpp>
 

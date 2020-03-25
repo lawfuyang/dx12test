@@ -1,7 +1,5 @@
 #pragma once
 
-#include "extern/D3D12MemoryAllocator/src/D3D12MemAlloc.h"
-
 #include "graphic/gfxdescriptorheap.h"
 #include "graphic/dx12utils.h"
 

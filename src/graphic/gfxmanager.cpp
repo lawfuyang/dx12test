@@ -1,7 +1,5 @@
 #include "graphic/gfxmanager.h"
 
-#include "extern/D3D12MemoryAllocator/src/D3D12MemAlloc.h"
-
 #include "graphic/dx12utils.h"
 #include "graphic/gfxadapter.h"
 #include "graphic/gfxcontext.h"
