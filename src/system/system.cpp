@@ -36,7 +36,7 @@ void System::Loop()
 
             // make sure I/O ticks happen last
             g_Keyboard.Tick();
-            g_Mouse.Tick(m_RealFrameTimeMs);
+            g_Mouse.Tick();
             ++m_SystemFrameNumber;
         }
 
@@ -76,33 +76,35 @@ void System::Shutdown()
     g_Profiler.ShutDown();
 }
 
-FrameRateController::FrameRateController()
-{
-    static const uint32_t s_FPSLimit = 60;
-
-    g_System.m_CappedPrevFrameMs = g_System.m_RealFrameTimeMs;
-
-    m_FrameEndTime = std::chrono::high_resolution_clock::now() + std::chrono::microseconds{ 1000000 / s_FPSLimit };
-    m_200FPSFrameEndTime = std::chrono::high_resolution_clock::now() + std::chrono::microseconds{ 1000000 / 200 };
-}
-
 FrameRateController::~FrameRateController()
 {
-    const float realFrameTimeMs = (float)m_StopWatch.ElapsedUS() / 1000;
-    const float fps = 1000.0f / realFrameTimeMs;
+    m_Timer.Tick();
 
     bbeProfile("Idle");
 
-    while (std::chrono::high_resolution_clock::now() < m_200FPSFrameEndTime) { std::this_thread::yield(); } // busy wait until hard cap of 200 fps
-    while (std::chrono::high_resolution_clock::now() < m_FrameEndTime) { std::this_thread::yield(); } // busy wait until exactly fps limit
+    const uint32_t s_FPSLimit = 60;
 
-    const float cappedFrameTimeMs = (float)m_StopWatch.ElapsedUS() / 1000;
-    const float cappedFPS = 1000.0f / cappedFrameTimeMs;
+    // busy wait until hard cap of 200 FPS
+    const uint64_t _200FPSFrameEndTime = Timer::MilliSecondsToTicks(1000.0 / 200);
+    BusyWaitUntil(_200FPSFrameEndTime);
+    g_System.m_RealFrameTimeMs = m_Timer.GetElapsedMicroSeconds();
+    g_System.m_RealFPS = 1000.0 / m_Timer.GetElapsedMicroSeconds();
 
-    g_System.m_RealFrameTimeMs   = realFrameTimeMs;
-    g_System.m_FPS               = fps;
-    g_System.m_CappedFrameTimeMs = cappedFrameTimeMs;
-    g_System.m_CappedFPS         = cappedFPS;
+
+    // busy wait until exactly fps limit
+    const uint64_t fpsLimitFrameEndTime = Timer::MilliSecondsToTicks(1000.0 / s_FPSLimit);
+    BusyWaitUntil(fpsLimitFrameEndTime);
+    g_System.m_CappedFrameTimeMs = m_Timer.GetElapsedMicroSeconds();
+    g_System.m_CappedFPS = 1000.0 / m_Timer.GetElapsedMicroSeconds();
+}
+
+void FrameRateController::BusyWaitUntil(uint64_t tick)
+{
+    while (m_Timer.GetElapsedTicks() < tick)
+    {
+        std::this_thread::yield();
+        m_Timer.Tick();
+    }
 }
 
 void CommandLineOptions::Parse()

@@ -69,7 +69,7 @@ int32_t Mouse::GetWheel()
     return Mouse::GetInstance().m_Wheel;
 }
 
-void Mouse::Tick(float timeDelta)
+void Mouse::Tick()
 {
     bbeMemZeroArray(m_WasPressed);
     bbeMemZeroArray(m_WasReleased);
@@ -77,7 +77,7 @@ void Mouse::Tick(float timeDelta)
     for (uint32_t i = 0; i < _countof(m_PressedTime); ++i)
     {
         if (m_Pressed[i])
-            m_PressedTime[i] += timeDelta;
+            m_PressedTime[i] += (float)g_System.GetRealFrameTimeMs();
         else
             m_PressedTime[i] = 0;
     }

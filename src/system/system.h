@@ -10,16 +10,14 @@ public:
     void ProcessWindowsMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     void Loop();
 
-    float GetRealFrameTimeMs()       { return m_RealFrameTimeMs; }
-    float GetRealFPS()               { return m_FPS; }
-    float GetCappedFrameTimeMs()     { return m_CappedFrameTimeMs; }
-    float GetCappedFPS()             { return m_CappedFPS; }
-    float GetCappedPrevFrameTimeMs() { return m_CappedPrevFrameMs; }
+    double GetRealFrameTimeMs()       { return m_RealFrameTimeMs; }
+    double GetRealFPS()               { return m_RealFPS; }
+    double GetCappedFrameTimeMs()     { return m_CappedFrameTimeMs; }
+    double GetCappedFPS()             { return m_CappedFPS; }
 
     uint32_t GetSystemFrameNumber() { return m_SystemFrameNumber; }
 
     tf::Executor& GetTasksExecutor() { return m_Executor; }
-    uint32_t GetCurrentThreadID() const;
 
     ::HWND GetEngineWindowHandle() const { return m_EngineWindowHandle; }
     void SetEngineWindowHandle(::HWND handle) { m_EngineWindowHandle = handle; }
@@ -29,15 +27,12 @@ private:
 
     ::HWND m_EngineWindowHandle = nullptr;
 
-    bool m_Exit             = false;
-    uint64_t m_LastUpdateMS = 0;
+    bool m_Exit = false;
 
-    StopWatch m_Clock;
-    float m_RealFrameTimeMs   = 0.0f;
-    float m_FPS               = 0.0f;
-    float m_CappedFrameTimeMs = 0.0f;
-    float m_CappedFPS         = 0.0f;
-    float m_CappedPrevFrameMs = 0.0f;
+    double m_RealFPS = 0.0;
+    double m_CappedFPS = 0.0;
+    double m_RealFrameTimeMs   = 0.0;
+    double m_CappedFrameTimeMs = 0.0;
 
     tf::Executor m_Executor;
 
@@ -51,14 +46,12 @@ private:
 class FrameRateController
 {
 public:
-    FrameRateController();
     ~FrameRateController();
 
 private:
-    StopWatch m_StopWatch;
+    void BusyWaitUntil(uint64_t tick);
 
-    std::chrono::high_resolution_clock::time_point m_FrameEndTime;
-    std::chrono::high_resolution_clock::time_point m_200FPSFrameEndTime;
+    Timer m_Timer;
 };
 
 struct CommandLineOptions

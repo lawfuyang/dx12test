@@ -30,7 +30,7 @@ public:
 
     static int32_t GetWheel();
 
-    void Tick(float timeDelta);
+    void Tick();
 
 private:
     bool    m_Pressed[ButtonCount]     = {};

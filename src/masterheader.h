@@ -74,7 +74,7 @@ using Microsoft::WRL::ComPtr;
 #include <system/math.h>
 #include <system/utils.h>
 #include <system/memcpy.h>
-#include <system/stopwatch.h>
+#include <system/timer.h>
 #include <system/system.h>
 #include <system/logger.h>
 #include <system/keyboard.h>
