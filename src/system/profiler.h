@@ -57,6 +57,13 @@ private:
 #define bbeConditionalProfile(condition, name)          MICROPROFILE_CONDITIONAL_SCOPEI(condition, name, name, GetCompileTimeCRC32(name))
 #define bbeProfileBlockBegin(token)                     MICROPROFILE_ENTER(token)
 #define bbeProfileBlockEnd()                            MICROPROFILE_LEAVE()
+#define bbePIXEvent(gfxContext)                         const ScopedPixEvent bbeUniqueVariable(pixEvent) { gfxContext.GetCommandList().Dev() }
 
-#define bbeProfileGPU(gfxContext, str)                  MICROPROFILE_SCOPEGPUI_L(gfxContext.GetGPUProfilerContext().GetLog(), str, GetCompileTimeCRC32(str))
-#define bbeProfileGPUFunction(gfxContext)               MICROPROFILE_SCOPEGPUI_L(gfxContext.GetGPUProfilerContext().GetLog(), __FUNCTION__, GetCompileTimeCRC32(__FUNCTION__))
+#define bbeProfileGPU(gfxContext, str)                                                                   \
+    bbePIXEvent(gfxContext);                                                                             \
+    MICROPROFILE_SCOPEGPUI_L(gfxContext.GetGPUProfilerContext().GetLog(), str, GetCompileTimeCRC32(str))
+
+#define bbeProfileGPUFunction(gfxContext)                                                                                  \
+    bbePIXEvent(gfxContext);                                                                                               \
+    MICROPROFILE_SCOPEGPUI_L(gfxContext.GetGPUProfilerContext().GetLog(), __FUNCTION__, GetCompileTimeCRC32(__FUNCTION__))
+ 

@@ -11,6 +11,8 @@
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "dxguid.lib")
 
+#pragma comment(lib, "extern/pix/winpixeventruntime.lib")
+
 #pragma comment(lib, "extern/spdlog/spdlog.lib")
 
 #pragma comment(lib, "extern/tbb/tbb.lib")
@@ -54,6 +56,9 @@
 #include <extern/d3d12/D3D12MemAlloc.h>
 #include <extern/d3d12/d3dx12.h>
 #include <extern/d3d12/d3dx12Residency.h>
+
+#define USE_PIX
+#include <extern/pix/pix3.h>
 
 #include <extern/taskflow/taskflow.hpp>
 

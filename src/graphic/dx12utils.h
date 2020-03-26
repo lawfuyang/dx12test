@@ -20,3 +20,25 @@ void SetD3DDebugParent(ID3D12Object* object, const void* parentPointer);
 void* GetD3DResourceParent(ID3D12Object* resource);
 D3D12_PRIMITIVE_TOPOLOGY_TYPE GetD3D12PrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY primitiveTopology);
 uint32_t GetBitsPerPixel(DXGI_FORMAT fmt);
+
+class ScopedPixEvent
+{
+public:
+    ScopedPixEvent(ID3D12GraphicsCommandList* pCommandList) noexcept
+        : m_CommandList(pCommandList)
+    {
+        if (g_CommandLineOptions.m_PIXCapture)
+        {
+            assert(pCommandList);
+            PIXBeginEvent(pCommandList, 0, GetD3DDebugName(pCommandList).c_str());
+        }
+    }
+    ~ScopedPixEvent()
+    {
+        if (g_CommandLineOptions.m_PIXCapture)
+            PIXEndEvent(m_CommandList);
+    }
+
+private:
+    ID3D12GraphicsCommandList* m_CommandList;
+};

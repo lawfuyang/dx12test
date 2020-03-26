@@ -18,6 +18,7 @@ dx12test/packages/
 /extern/taskflow/
 /extern/argparse/
 /extern/d3d12/
+/extern/pix/
 spdlog/x64
 tbb/x64
 CMakeLists.txt
