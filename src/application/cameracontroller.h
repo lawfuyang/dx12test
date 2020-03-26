@@ -21,7 +21,7 @@ private:
     float m_VerticalAngle = 0.0f;
     float m_HorizontalAngle = 0.0f;
     float m_MouseRotationSpeed = 0.002f;
-    float m_CameraMoveSpeed = 0.1f;
+    float m_CameraMoveSpeed = 0.01f;
     bbeVector2 m_MouseLastPos = {};
 
     bbeVector3 m_EyePosition; // Where the camera is in world space. Z increases into of the screen when using LH coord system (which we are and DX uses)
