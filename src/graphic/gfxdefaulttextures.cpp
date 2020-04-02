@@ -8,9 +8,9 @@ void GfxDefaultTextures::Initialize()
 
     tf::Taskflow tf;
 
-    tf.emplace([&]() { InitCheckerboardTexture(Checkerboard); });
-    tf.emplace([&]() { InitSolidColor(White2D, bbeColor{ 1.0f, 1.0f, 1.0f }, "Default White2D"); });
-    tf.emplace([&]() { InitSolidColor(Black2D, bbeColor{ 0.0f, 0.0f, 0.0f }, "Default Black2D"); });
+    tf.emplace([&]() { InitCheckerboardTexture(Checkerboard); }).name("InitCheckerboardTexture");
+    tf.emplace([&]() { InitSolidColor(White2D, bbeColor{ 1.0f, 1.0f, 1.0f }, "Default White2D Texture"); }).name("InitSolidColor White");
+    tf.emplace([&]() { InitSolidColor(Black2D, bbeColor{ 0.0f, 0.0f, 0.0f }, "Default Black2D Texture"); }).name("InitSolidColor Black");
 
     g_TasksExecutor.run(tf).wait();
 }
@@ -62,7 +62,14 @@ void GfxDefaultTextures::InitCheckerboardTexture(GfxTexture& result)
         }
     }
 
-    result.Initialize(DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight, D3D12_RESOURCE_FLAG_NONE, data, "Default Checkboard Texture");
+    GfxTexture::InitParams initParams;
+    initParams.m_Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    initParams.m_Width = TextureWidth;
+    initParams.m_Height = TextureHeight;
+    initParams.m_InitData = data;
+    initParams.m_ResourceName = "Default Checkboard Texture";
+
+    result.Initialize(initParams);
 }
 
 void GfxDefaultTextures::InitSolidColor(GfxTexture& result, const bbeColor& color, const char* colorName)
@@ -80,5 +87,12 @@ void GfxDefaultTextures::InitSolidColor(GfxTexture& result, const bbeColor& colo
 
     SIMDMemFill(dataVec.data(), color.ToVector4(), DivideByMultiple(textureSize, 16));
 
-    result.Initialize(DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight, D3D12_RESOURCE_FLAG_NONE, dataVec.data(), colorName);
+    GfxTexture::InitParams initParams;
+    initParams.m_Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    initParams.m_Width = TextureWidth;
+    initParams.m_Height = TextureHeight;
+    initParams.m_InitData = dataVec.data();
+    initParams.m_ResourceName = colorName;
+
+    result.Initialize(initParams);
 }

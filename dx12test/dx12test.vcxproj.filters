@@ -25,9 +25,6 @@
     <ClCompile Include="..\src\graphic\gfxmanager.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\graphic\guimanager.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
     <ClCompile Include="..\extern\imgui\imgui.cpp">
       <Filter>extern\imgui</Filter>
     </ClCompile>
@@ -57,9 +54,6 @@
     </ClCompile>
     <ClCompile Include="..\src\graphic\gfxcontext.cpp">
       <Filter>graphic</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\graphic\renderpasses\gfxrenderpass.cpp">
-      <Filter>graphic\renderpasses</Filter>
     </ClCompile>
     <ClCompile Include="..\src\graphic\renderpasses\gfxtestrenderpass.cpp">
       <Filter>graphic\renderpasses</Filter>
@@ -109,6 +103,15 @@
     <ClCompile Include="..\src\system\timer.cpp">
       <Filter>system</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\renderpasses\gfximguirenderer.cpp">
+      <Filter>graphic\renderpasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\system\imguimanager.cpp">
+      <Filter>system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\extern\imgui\imgui_demo.cpp">
+      <Filter>extern\imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -136,9 +139,6 @@
       <Filter>graphic</Filter>
     </ClInclude>
     <ClInclude Include="..\src\graphic\gfxmanager.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\guimanager.h">
       <Filter>graphic</Filter>
     </ClInclude>
     <ClInclude Include="..\extern\imgui\imconfig.h">
@@ -182,9 +182,6 @@
     </ClInclude>
     <ClInclude Include="..\src\graphic\gfxcontext.h">
       <Filter>graphic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\renderpasses\gfxrenderpass.h">
-      <Filter>graphic\renderpasses</Filter>
     </ClInclude>
     <ClInclude Include="..\src\graphic\renderpasses\gfxtestrenderpass.h">
       <Filter>graphic\renderpasses</Filter>
@@ -237,6 +234,15 @@
     </ClInclude>
     <ClInclude Include="..\src\system\timer.h">
       <Filter>system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\renderpasses\gfximguirenderer.h">
+      <Filter>graphic\renderpasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\system\imguimanager.h">
+      <Filter>system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\renderpasses\gfxrenderpass.h">
+      <Filter>graphic\renderpasses</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

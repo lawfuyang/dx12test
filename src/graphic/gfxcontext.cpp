@@ -140,15 +140,13 @@ void GfxContext::DrawInstanced(uint32_t vertexCountPerInstance, uint32_t instanc
     m_CommandList->Dev()->DrawInstanced(vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
 }
 
-void GfxContext::DrawIndexedInstanced(uint32_t instanceCount, uint32_t startIndexLocation, uint32_t baseVertexLocation, uint32_t startInstanceLocation)
+void GfxContext::DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation, uint32_t baseVertexLocation, uint32_t startInstanceLocation)
 {
     bbeProfileFunction();
 
     assert(m_IndexBuffer);
 
     CompileAndSetGraphicsPipelineState();
-
-    const uint32_t indexCountPerInstance = m_IndexBuffer->GetSizeInBytes() / (m_IndexBuffer->GetFormat() == DXGI_FORMAT_R16_UINT ? 2 : 4);
 
     m_CommandList->Dev()->DrawIndexedInstanced(indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
 }

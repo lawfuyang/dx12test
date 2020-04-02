@@ -4,8 +4,6 @@
 #include "graphic/gfxswapchain.h"
 #include "graphic/gfxtexturesandbuffers.h"
 
-#include "graphic/renderpasses/gfxtestrenderpass.h"
-
 class GfxManager
 {
     DeclareSingletonFunctions(GfxManager);
@@ -19,7 +17,7 @@ public:
     void BeginFrame();
     void EndFrame();
 
-    void AddGraphicCommand(const std::function<void()>& newCmd) { m_GfxCommands.push(newCmd); }
+    void AddGraphicCommand(const std::function<void()>& newCmd) { bbeAutoLock(m_GfxCommandsLock); m_GfxCommands.push_back(newCmd); }
 
     void DumpGfxMemory();
 
@@ -28,7 +26,7 @@ public:
     GfxConstantBuffer& GetFrameParams() { return m_FrameParamsCB; }
 
 private:
-    void ScheduleRenderPasses(tf::Subflow& sf);
+    void ScheduleRenderPasses();
     void TransitionBackBufferForPresent();
     void UpdateFrameParamsCB();
 
@@ -36,8 +34,7 @@ private:
     GfxSwapChain      m_SwapChain;
     GfxConstantBuffer m_FrameParamsCB;
 
-    boost::lockfree::stack<std::function<void()>> m_GfxCommands{128};
-
-    GfxTestRenderPass m_TestRenderPass;
+    AdaptiveLock m_GfxCommandsLock{ "m_GfxCommands" };
+    std::vector<std::function<void()>> m_GfxCommands;
 };
 #define g_GfxManager GfxManager::GetInstance()

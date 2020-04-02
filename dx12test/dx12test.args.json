@@ -3,6 +3,10 @@
   "Id": "9e787ae2-dbf1-4408-8ceb-6bbef1d8c43f",
   "Items": [
     {
+      "Id": "1e34132b-9f8a-4799-9d71-d50f8041f47e",
+      "Command": "--showimguidemowindows"
+    },
+    {
       "Id": "9ff4b9ec-bf73-4a6a-ae4a-d3dfdaca467f",
       "Command": "--enablegfxdebuglayer"
     },

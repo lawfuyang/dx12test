@@ -18,21 +18,11 @@ public:
     void SetVertexShader(GfxShader& shader) { m_VS = &shader; }
     void SetPixelShader(GfxShader& shader) { m_PS = &shader; }
     void SetComputeShader(GfxShader& shader) { m_CS = &shader; }
-    void SetDepthEnable(bool b) { m_DepthStencilStates.DepthEnable = b; }
-    void SetStencilEnable(bool b) { m_DepthStencilStates.StencilEnable = b; }
-    void SetFillMode(D3D12_FILL_MODE fillMode) { m_RasterizerStates.FillMode = fillMode; }
-    void SetCullMode(D3D12_CULL_MODE cullMode) { m_RasterizerStates.CullMode = cullMode; }
-    void SetFrontCounterClockwise(bool b) { m_RasterizerStates.FrontCounterClockwise = b; }
-    void SetDepthBias(uint32_t depthBias) { m_RasterizerStates.DepthBias = depthBias; }
-    void SetDepthBiasClamp(float depthBiasClamp) { m_RasterizerStates.DepthBiasClamp = depthBiasClamp; }
-    void SetSlopeScaledDepthBias(float slopeScaledDepthBias) { m_RasterizerStates.SlopeScaledDepthBias = slopeScaledDepthBias; }
-    void SetDepthClipEnable(bool depthClipEnable) { m_RasterizerStates.DepthClipEnable = depthClipEnable; }
-    void SetMultisampleEnable(bool multisampleEnable) { m_RasterizerStates.MultisampleEnable = multisampleEnable; }
-    void SetAntialiasedLineEnable(bool antialiasedLineEnable) { m_RasterizerStates.AntialiasedLineEnable = antialiasedLineEnable; }
-    void SetForcedSampleCount(uint32_t forcedSampleCount) { m_RasterizerStates.ForcedSampleCount = forcedSampleCount; }
-    void SetConservativeRaster(D3D12_CONSERVATIVE_RASTERIZATION_MODE conservativeRaster) { m_RasterizerStates.ConservativeRaster = conservativeRaster; }
     void SetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY topology) { m_PrimitiveTopology = topology; }
     void SetRenderTargetFormat(uint32_t idx, DXGI_FORMAT format);
+    CD3DX12_BLEND_DESC& GetBlendStates() { return m_BlendStates; }
+    CD3DX12_RASTERIZER_DESC& GetRasterizerStates() { return m_RasterizerStates; }
+    CD3DX12_DEPTH_STENCIL_DESC1& GetDepthStencilStates() { return m_DepthStencilStates; }
 
 private:
     GfxRootSignature*           m_RootSig = nullptr;

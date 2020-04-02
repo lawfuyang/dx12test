@@ -73,6 +73,8 @@ void GfxCommandListsManager::Initialize()
 
     bbeProfile("CreateCommandQueue");
     DX12_CALL(gfxDevice.Dev()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_DirectPool.m_CommandQueue)));
+    SetD3DDebugName(m_DirectPool.m_CommandQueue.Get(), "Main Direct Queue");
+
     g_Profiler.InitializeGPUProfiler(gfxDevice.Dev(), m_DirectPool.m_CommandQueue.Get());
     g_Profiler.RegisterGPUQueue(m_DirectPool.m_CommandQueue.Get(), "Direct Queue");
 }

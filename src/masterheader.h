@@ -70,6 +70,8 @@
 
 #include <extern/tbb/tbb/concurrent_queue.h>
 
+#include <extern/argparse/argparse.h>
+
 // typedefs
 using WindowHandle = uint64_t;
 

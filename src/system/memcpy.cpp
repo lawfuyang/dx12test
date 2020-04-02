@@ -1,5 +1,5 @@
 
-// A faster version of memcopy that uses SSE instructions.  TODO:  Write an ARM variant if necessary.
+// A faster version of memcopy that uses SSE instructions
 void SIMDMemCopy(void* __restrict _Dest, const void* __restrict _Source, size_t NumQuadwords)
 {
     assert(bbeIsAligned(_Dest, 16));

@@ -29,9 +29,11 @@ public:
     GfxCommandList&         GetCommandList()        { return *m_CommandList; }
     GfxPipelineStateObject& GetPSO()                { return m_PSO; }
     GPUProfilerContext&     GetGPUProfilerContext() { return m_GPUProfilerContext; }
+    CD3DX12_RECT&           GetScissorRect()        { return m_ScissorRect; }
+    CD3DX12_VIEWPORT&       GetViewport()           { return m_Viewport; }
 
     void DrawInstanced(uint32_t VertexCountPerInstance, uint32_t InstanceCount, uint32_t StartVertexLocation, uint32_t StartInstanceLocation);
-    void DrawIndexedInstanced(uint32_t InstanceCount, uint32_t StartIndexLocation, uint32_t BaseVertexLocation, uint32_t StartInstanceLocation);
+    void DrawIndexedInstanced(uint32_t IndexCountPerInstance, uint32_t InstanceCount, uint32_t StartIndexLocation, uint32_t BaseVertexLocation, uint32_t StartInstanceLocation);
 
 private:
     void SetRootSigDescTable(uint32_t rootParamIdx, const GfxDescriptorHeap& heap);

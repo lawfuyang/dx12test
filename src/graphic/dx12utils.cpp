@@ -258,3 +258,8 @@ uint32_t GetBitsPerPixel(DXGI_FORMAT fmt)
         return 0;
     }
 }
+
+uint32_t GetBytesPerPixel(DXGI_FORMAT fmt)
+{
+    return std::max(1U, GetBitsPerPixel(fmt) / 8);
+}

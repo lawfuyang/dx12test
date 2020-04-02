@@ -25,34 +25,10 @@ private:
         switch (message)
         {
         case WM_CLOSE:
+        case WM_DESTROY:
             ms_Exit = true;
             break;
-        case WM_MOUSEMOVE:
-            RECT rect;
-            GetClientRect(g_System.GetEngineWindowHandle(), &rect);
-            g_Mouse.ProcessMouseMove((uint32_t)wParam, Get_X_LPARAM(lParam) - rect.left, Get_Y_LPARAM(lParam) - rect.top);
-            // NO BREAK HERE!
-        case WM_KEYUP:
-            g_Keyboard.ProcessKeyUp((uint32_t)wParam);
-            break;
-        case WM_KEYDOWN:
-            g_Keyboard.ProcessKeyDown((uint32_t)wParam);
-            break;
-        case WM_LBUTTONDOWN:
-            g_Mouse.UpdateButton(Mouse::Left, true);
-            break;
-        case WM_LBUTTONUP:
-            g_Mouse.UpdateButton(Mouse::Left, false);
-            break;
-        case WM_RBUTTONDOWN:
-            g_Mouse.UpdateButton(Mouse::Right, true);
-            break;
-        case WM_RBUTTONUP:
-            g_Mouse.UpdateButton(Mouse::Right, false);
-            break;
-        case WM_MOUSEWHEEL:
-            g_Mouse.ProcessMouseWheel(GET_WHEEL_DELTA_WPARAM(wParam));
-            break;
+
         default:
             break;
         }

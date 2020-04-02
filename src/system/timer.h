@@ -11,6 +11,9 @@ public:
     double GetElapsedSeconds() const { return TicksToSeconds(m_ElapsedTicks); }
     double GetElapsedMicroSeconds() const { return TicksToMilliSeconds(m_ElapsedTicks); }
 
+    uint64_t GetDeltaTicks() const { return m_DeltaTicks; }
+    double GetDeltaSeconds() const { return TicksToSeconds(m_DeltaTicks); }
+
     // Integer format represents time using 10,000,000 ticks per second.
     static const uint64_t TicksPerSecond = 10000000;
 
@@ -33,7 +36,8 @@ protected:
     LARGE_INTEGER               m_QPCStartTime;
 
     // Derived timing data uses a canonical tick format.
-    uint64_t m_ElapsedTicks    = 0;
+    uint64_t m_ElapsedTicks = 0;
+    uint64_t m_DeltaTicks   = 0;
 
     friend struct StepTimerStaticsInitializer;
 };

@@ -5,10 +5,6 @@ class GfxContext;
 class GfxRenderPass
 {
 public:
-    GfxRenderPass(const char* name)
-        : m_Name(name)
-    {}
-
     virtual ~GfxRenderPass() {}
 
     virtual void Initialize() = 0;

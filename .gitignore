@@ -7,6 +7,7 @@ dx12test/x64/Release
 dx12test/x64/Release Unity
 dx12test/.vs
 dx12test/packages/
+dx12test/imgui.ini
 /shadercompiler/x64
 /src/system/.vs
 /tmp/
@@ -19,6 +20,7 @@ dx12test/packages/
 /extern/argparse/
 /extern/d3d12/
 /extern/pix/
+/extern/dxc/
 spdlog/x64
 tbb/x64
 CMakeLists.txt

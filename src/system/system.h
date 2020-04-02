@@ -65,6 +65,7 @@ struct CommandLineOptions
     bool     m_PIXCapture                      = false;
     bool     m_ProfileInit                     = false;
     bool     m_ProfileShutdown                 = false;
+    bool     m_ShowIMGUIDemoWindows            = false;
     uint32_t m_WindowWidth                     = 1600;
     uint32_t m_WindowHeight                    = 900;
 };

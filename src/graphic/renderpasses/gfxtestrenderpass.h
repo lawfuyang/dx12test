@@ -9,7 +9,7 @@ class GfxContext;
 class GfxTestRenderPass : public GfxRenderPass
 {
 public:
-    GfxTestRenderPass();
+    DeclareSingletonFunctions(GfxTestRenderPass);
 
     void Initialize();
     void ShutDown() override;
@@ -20,3 +20,4 @@ private:
     GfxIndexBuffer    m_QuadIBuffer;
     GfxConstantBuffer m_RenderPassCB;
 };
+#define g_GfxTestRenderPass GfxTestRenderPass::GetInstance()

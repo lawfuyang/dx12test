@@ -25,6 +25,7 @@ void Timer::Tick(UpdateFunctor updateFunctor)
 
     // Variable timestep update logic.
     m_ElapsedTicks += timeDelta;
+    m_DeltaTicks = timeDelta;
 
     if (updateFunctor)
     {

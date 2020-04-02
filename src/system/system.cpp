@@ -1,6 +1,6 @@
-#include "extern/argparse/argparse.h"
-
 #include "system.h"
+
+#include "system/imguimanager.h"
 
 extern void InitializeGraphic();
 extern void UpdateGraphic();
@@ -11,9 +11,49 @@ extern void ShutdownApplicationLayer();
 
 void System::ProcessWindowsMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    if (message == WM_CLOSE)
+    auto Get_X_LPARAM = [&](::LPARAM lParam) { return ((int32_t)(int64_t)LOWORD(lParam)); };
+    auto Get_Y_LPARAM = [&](::LPARAM lParam) { return ((int32_t)(int64_t)HIWORD(lParam)); };
+
+    switch (message)
     {
+    case WM_CLOSE:
+    case WM_DESTROY:
         m_Exit = true;
+        break;
+
+    case WM_MOUSEMOVE:
+        RECT rect;
+        GetClientRect(g_System.GetEngineWindowHandle(), &rect);
+        g_Mouse.ProcessMouseMove((uint32_t)wParam, Get_X_LPARAM(lParam) - rect.left, Get_Y_LPARAM(lParam) - rect.top);
+        // NO BREAK HERE!
+
+    case WM_KEYUP:
+        g_Keyboard.ProcessKeyUp((uint32_t)wParam);
+        break;
+
+    case WM_KEYDOWN:
+        g_Keyboard.ProcessKeyDown((uint32_t)wParam);
+        break;
+
+    case WM_LBUTTONDOWN:
+        g_Mouse.UpdateButton(Mouse::Left, true);
+        break;
+
+    case WM_LBUTTONUP:
+        g_Mouse.UpdateButton(Mouse::Left, false);
+        break;
+
+    case WM_RBUTTONDOWN:
+        g_Mouse.UpdateButton(Mouse::Right, true);
+        break;
+
+    case WM_RBUTTONUP:
+        g_Mouse.UpdateButton(Mouse::Right, false);
+        break;
+
+    case WM_MOUSEWHEEL:
+        g_Mouse.ProcessMouseWheel(GET_WHEEL_DELTA_WPARAM(wParam));
+        break;
     }
 }
 
@@ -33,6 +73,7 @@ void System::Loop()
 
             UpdateGraphic();
             UpdateApplicationLayer();
+            g_IMGUIManager.Update();
 
             // make sure I/O ticks happen last
             g_Keyboard.Tick();
@@ -57,6 +98,7 @@ void System::Initialize()
 
     bbeConditionalProfile(g_CommandLineOptions.m_ProfileInit, "System::Initialize");
 
+    g_IMGUIManager.Initialize();
     InitializeGraphic();
     InitializeApplicationLayer();
 
@@ -68,6 +110,7 @@ void System::Shutdown()
     {
         bbeConditionalProfile(g_CommandLineOptions.m_ProfileShutdown, "System::Shutdown");
 
+        g_IMGUIManager.ShutDown();
         ShutdownApplicationLayer();
         ShutdownGraphic();
     }
@@ -117,6 +160,7 @@ void CommandLineOptions::Parse()
     parser.add_argument("--resolution", "resolution");
     parser.add_argument("--gfxmemallocalwayscommitedmemory", "gfxmemallocalwayscommitedmemory");
     parser.add_argument("--enablegfxdebuglayer", "enablegfxdebuglayer");
+    parser.add_argument("--showimguidemowindows", "showimguidemowindows");
 
     try
     {
@@ -132,6 +176,7 @@ void CommandLineOptions::Parse()
     m_ProfileShutdown                 = parser.exists("profileshutdown");
     m_GfxMemAllocAlwaysCommitedMemory = parser.exists("gfxmemallocalwayscommitedmemory");
     m_EnableGfxDebugLayer             = parser.exists("enablegfxdebuglayer");
+    m_ShowIMGUIDemoWindows            = parser.exists("showimguidemowindows");
 
     if (parser.exists("resolution"))
     {
