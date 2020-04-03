@@ -39,9 +39,8 @@ public:
 
 protected:
     void InitializeBufferWithInitData(GfxContext& context, uint32_t uploadBufferSize, uint32_t row, uint32_t pitch, const void* initData, const char* resourceName);
-    D3D12MA::Allocation* CreateHeap(GfxContext&, D3D12_HEAP_TYPE, const D3D12_RESOURCE_DESC&, D3D12_RESOURCE_STATES initialState);
+    D3D12MA::Allocation* CreateHeap(GfxContext&, D3D12_HEAP_TYPE, const D3D12_RESOURCE_DESC&, D3D12_RESOURCE_STATES initialState, const char* resourceName);
     void UploadInitData(GfxContext& context, const void* dataSrc, uint32_t rowPitch, uint32_t slicePitch, ID3D12Resource* dest, ID3D12Resource* src);
-    void SetInternalAllocName(D3D12MA::Allocation*, const std::string&);
 
     D3D12MA::Allocation* m_D3D12MABufferAllocation = nullptr;
     uint32_t             m_SizeInBytes = 0;
