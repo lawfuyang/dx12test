@@ -142,6 +142,7 @@
     <ClInclude Include="..\src\system\memorymappedfile.h" />
     <ClInclude Include="..\src\system\mouse.h" />
     <ClInclude Include="..\src\system\profiler.h" />
+    <ClInclude Include="..\src\system\staticstring.h" />
     <ClInclude Include="..\src\system\system.h" />
     <ClInclude Include="..\src\system\timer.h" />
     <ClInclude Include="..\src\system\utils.h" />

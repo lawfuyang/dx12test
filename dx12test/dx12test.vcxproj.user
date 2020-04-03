@@ -4,4 +4,7 @@
     <LocalDebuggerCommandArguments>--showimguidemowindows --enablegfxdebuglayer</LocalDebuggerCommandArguments>
     <RemoteDebuggerCommandArguments>--showimguidemowindows --enablegfxdebuglayer</RemoteDebuggerCommandArguments>
   </PropertyGroup>
+  <PropertyGroup>
+    <ShowAllFiles>false</ShowAllFiles>
+  </PropertyGroup>
 </Project>

@@ -244,6 +244,9 @@
     <ClInclude Include="..\src\graphic\renderpasses\gfxrenderpass.h">
       <Filter>graphic\renderpasses</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\system\staticstring.h">
+      <Filter>system</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="system">

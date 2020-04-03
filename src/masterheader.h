@@ -78,6 +78,7 @@ using WindowHandle = uint64_t;
 // ComPtr namespace
 using Microsoft::WRL::ComPtr;
 
+#include <system/staticstring.h>
 #include <system/math.h>
 #include <system/utils.h>
 #include <system/memcpy.h>
