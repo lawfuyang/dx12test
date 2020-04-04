@@ -1,77 +1,92 @@
 #pragma once
 
-template <uint32_t BufferSize, class _Ty>
-class StaticStringAllocator 
+template <typename CharType>
+class StackAllocator
 {
 public:
-    using _From_primary = StaticStringAllocator;
+    using value_type = CharType;
 
-    using value_type = _Ty;
+    StackAllocator() noexcept {}
 
-    _CXX17_DEPRECATE_OLD_ALLOCATOR_MEMBERS typedef _Ty* pointer;
-    _CXX17_DEPRECATE_OLD_ALLOCATOR_MEMBERS typedef const _Ty* const_pointer;
+    template <class U> 
+    StackAllocator(const StackAllocator<U>&) noexcept {}
 
-    _CXX17_DEPRECATE_OLD_ALLOCATOR_MEMBERS typedef _Ty& reference;
-    _CXX17_DEPRECATE_OLD_ALLOCATOR_MEMBERS typedef const _Ty& const_reference;
+    explicit StackAllocator(std::byte* bufferSource)
+        : m_BufferSource((value_type*)bufferSource)
+    {}
 
-    using size_type = std::size_t;
-    using difference_type = std::ptrdiff_t;
-
-    using propagate_on_container_move_assignment = std::true_type;
-    using is_always_equal = std::true_type;
-
-    template <class _Other>
-    struct _CXX17_DEPRECATE_OLD_ALLOCATOR_MEMBERS rebind {
-        using other = StaticStringAllocator<BufferSize, _Other>;
-    };
-
-    _NODISCARD _CXX17_DEPRECATE_OLD_ALLOCATOR_MEMBERS _Ty* address(_Ty& _Val) const noexcept {
-        return _STD addressof(_Val);
+    value_type* allocate(std::size_t n)
+    {
+        assert(m_BufferSource);
+        return m_BufferSource;
     }
 
-    _NODISCARD _CXX17_DEPRECATE_OLD_ALLOCATOR_MEMBERS const _Ty* address(const _Ty& _Val) const noexcept {
-        return _STD addressof(_Val);
+    constexpr void deallocate(value_type* p, std::size_t n) {}
+
+    value_type* m_BufferSource = nullptr;
+};
+
+template <uint32_t BufferSize, typename CharT>
+class StaticStringBase
+{
+public:
+    using UnderlyingStringType = std::basic_string<CharT, std::char_traits<CharT>, StackAllocator<CharT>>;
+
+    UnderlyingStringType* operator->() { return &m_UnderlyingStringType; }
+    const UnderlyingStringType* operator->() const { return &m_UnderlyingStringType; }
+
+    operator UnderlyingStringType() const { return m_UnderlyingStringType; }
+
+    StaticStringBase()
+        : m_Allocator(m_Buffer)
+        , m_UnderlyingStringType(m_Allocator)
+    {
+        m_UnderlyingStringType.reserve(BufferSize);
     }
 
-    constexpr StaticStringAllocator() noexcept {}
-
-    constexpr StaticStringAllocator(const StaticStringAllocator&) noexcept = default;
-    template <class _Other>
-    constexpr StaticStringAllocator(const StaticStringAllocator<BufferSize, _Other>&) noexcept {}
-
-    void deallocate(_Ty* const _Ptr, const size_t _Count) {
-        m_DataPtr -= _Count;
+    StaticStringBase(const CharT* other)
+        : StaticStringBase()
+    {
+        if (other)
+        {
+            m_UnderlyingStringType = other;
+        }
     }
 
-    _NODISCARD _DECLSPEC_ALLOCATOR _Ty* allocate(_CRT_GUARDOVERFLOW const size_t _Count) {
-        _Ty* toReturn = m_DataPtr;
-        m_DataPtr += _Count;
-        assert(m_DataPtr <= &m_Data[BufferSize - 1]);
-        return toReturn;
+    StaticStringBase(const StaticStringBase& other)
+        : StaticStringBase()
+    {
+        m_UnderlyingStringType = other.m_UnderlyingStringType;
     }
 
-    _NODISCARD _CXX17_DEPRECATE_OLD_ALLOCATOR_MEMBERS _DECLSPEC_ALLOCATOR _Ty* allocate(
-        _CRT_GUARDOVERFLOW const size_t _Count, const void*) {
-        return allocate(_Count);
+    StaticStringBase& operator=(const StaticStringBase& other)
+    {
+        m_UnderlyingStringType = other.m_UnderlyingStringType;
+        return *this;
     }
 
-    template <class _Objty, class... _Types>
-    _CXX17_DEPRECATE_OLD_ALLOCATOR_MEMBERS void construct(_Objty* const _Ptr, _Types &&... _Args) {
-        ::new (const_cast<void*>(static_cast<const volatile void*>(_Ptr))) _Objty(_STD forward<_Types>(_Args)...);
+    StaticStringBase& operator+=(const StaticStringBase& other)
+    {
+        m_UnderlyingStringType += other.m_UnderlyingStringType;
+        return *this;
     }
 
-    template <class _Uty>
-    _CXX17_DEPRECATE_OLD_ALLOCATOR_MEMBERS void destroy(_Uty* const _Ptr) {}
+    bool operator<(const StaticStringBase& other) const { return m_UnderlyingStringType < other.m_UnderlyingStringType; }
 
-    _NODISCARD _CXX17_DEPRECATE_OLD_ALLOCATOR_MEMBERS size_t max_size() const noexcept { return static_cast<size_t>(-1) / sizeof(_Ty); }
+    bool operator==(const StaticStringBase& other) const { return m_UnderlyingStringType == other.m_UnderlyingStringType; }
+    bool operator!=(const StaticStringBase& other) const { return m_UnderlyingStringType != other.m_UnderlyingStringType; }
+
+    CharT& operator[](std::size_t idx) { return m_UnderlyingStringType[idx]; }
+    const CharT operator[](std::size_t idx) const { return m_UnderlyingStringType[idx]; }
 
 private:
-    _Ty  m_Data[BufferSize];
-    _Ty* m_DataPtr = m_Data;
+    StackAllocator<CharT> m_Allocator;
+    UnderlyingStringType  m_UnderlyingStringType;
+    std::byte             m_Buffer[BufferSize];
 };
 
 template <uint32_t BufferSize>
-using StaticString = std::basic_string<char, std::char_traits<char>, StaticStringAllocator<BufferSize, char>>;
+using StaticString = StaticStringBase<BufferSize, char>;
 
 template <uint32_t BufferSize>
-using StaticWString = std::basic_string<wchar_t, std::char_traits<wchar_t>, StaticStringAllocator<BufferSize, wchar_t>>;
+using StaticWString = StaticStringBase<BufferSize, wchar_t>;

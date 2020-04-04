@@ -60,6 +60,7 @@ struct CommandLineOptions
 
     void Parse();
 
+    bool     m_RunUnitTests                    = false;
     bool     m_EnableGfxDebugLayer             = false;
     bool     m_GfxMemAllocAlwaysCommitedMemory = false;
     bool     m_PIXCapture                      = false;

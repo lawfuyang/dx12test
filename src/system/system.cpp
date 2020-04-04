@@ -161,6 +161,7 @@ void CommandLineOptions::Parse()
     parser.add_argument("--gfxmemallocalwayscommitedmemory", "gfxmemallocalwayscommitedmemory");
     parser.add_argument("--enablegfxdebuglayer", "enablegfxdebuglayer");
     parser.add_argument("--showimguidemowindows", "showimguidemowindows");
+    parser.add_argument("--rununittests", "rununittests");
 
     try
     {
@@ -177,6 +178,7 @@ void CommandLineOptions::Parse()
     m_GfxMemAllocAlwaysCommitedMemory = parser.exists("gfxmemallocalwayscommitedmemory");
     m_EnableGfxDebugLayer             = parser.exists("enablegfxdebuglayer");
     m_ShowIMGUIDemoWindows            = parser.exists("showimguidemowindows");
+    m_RunUnitTests                    = parser.exists("rununittests");
 
     if (parser.exists("resolution"))
     {

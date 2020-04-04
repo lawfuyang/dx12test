@@ -99,6 +99,8 @@
     <ClCompile Include="..\src\system\system.cpp" />
     <ClCompile Include="..\src\system\timer.cpp" />
     <ClCompile Include="..\src\system\utils.cpp" />
+    <ClCompile Include="..\src\unittests\staticstring_test.cpp" />
+    <ClCompile Include="..\src\unittests\unittests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\extern\d3d12\D3D12MemAlloc.h" />

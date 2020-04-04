@@ -112,6 +112,12 @@
     <ClCompile Include="..\extern\imgui\imgui_demo.cpp">
       <Filter>extern\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\unittests\unittests.cpp">
+      <Filter>unittests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\unittests\staticstring_test.cpp">
+      <Filter>unittests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -278,6 +284,9 @@
     </Filter>
     <Filter Include="extern\simplemath">
       <UniqueIdentifier>{ac4d35a6-ed92-404b-81d6-dc4f059a08fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="unittests">
+      <UniqueIdentifier>{10f59006-77ab-4f35-ac49-55697776e63c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

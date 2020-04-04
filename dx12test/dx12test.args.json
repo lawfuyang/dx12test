@@ -11,6 +11,10 @@
       "Command": "--enablegfxdebuglayer"
     },
     {
+      "Id": "c067b09d-cc8a-411d-b8e5-72f990b0ab80",
+      "Command": "--rununittests"
+    },
+    {
       "Id": "5ac8b453-0d42-48ea-9f22-6fc2066d1330",
       "Command": "--gfxmemallocalwayscommitedmemory"
     },
