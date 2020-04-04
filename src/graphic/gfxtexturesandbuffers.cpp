@@ -99,10 +99,9 @@ void GfxBufferCommon::InitializeBufferWithInitData(GfxContext& context, uint32_t
     bbeProfileFunction();
 
     // create upload heap to hold upload init data
-    char nameBuffer[256] = {};
-    strcpy(nameBuffer, resourceName);
-    strcat(nameBuffer, " Upload Heap");
-    D3D12MA::Allocation* uploadHeapAlloc = CreateHeap(context, D3D12_HEAP_TYPE_UPLOAD, CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize), D3D12_RESOURCE_STATE_GENERIC_READ, nameBuffer);
+    StaticString<256> nameBuffer = resourceName;
+    nameBuffer += " Upload Heap";
+    D3D12MA::Allocation* uploadHeapAlloc = CreateHeap(context, D3D12_HEAP_TYPE_UPLOAD, CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize), D3D12_RESOURCE_STATE_GENERIC_READ, nameBuffer.c_str());
 
     // upload init data via CopyBufferRegion
     UploadInitData(context, initData, row, pitch, m_D3D12MABufferAllocation->GetResource(), uploadHeapAlloc->GetResource());
