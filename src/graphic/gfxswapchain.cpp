@@ -75,7 +75,7 @@ void GfxSwapChain::Present()
     bbeProfileFunction();
 
     // TODO: init these values properly
-    const UINT syncInterval = 1;
+    const UINT syncInterval = 1; // Flip synced to the refresh rate
     const UINT flags = 0;
 
     // Present the frame.

@@ -22,36 +22,31 @@ void GfxCommandList::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType)
 
     DX12_CALL(gfxDevice.Dev()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_CommandAllocator)));
 
-    for (uint32_t i = 0; i < 2; ++i)
-    {
-        assert(m_CommandList[i] == nullptr);
+    assert(m_CommandList == nullptr);
 
-        // Create the command list.
-        DX12_CALL(gfxDevice.Dev()->CreateCommandList(nodeMask, m_Type, m_CommandAllocator.Get(), initialState, IID_PPV_ARGS(&m_CommandList[i])));
+    // Create the command list.
+    DX12_CALL(gfxDevice.Dev()->CreateCommandList(nodeMask, m_Type, m_CommandAllocator.Get(), initialState, IID_PPV_ARGS(&m_CommandList)));
 
-        // Command lists are created in the recording state, but there is nothing
-        // to record yet. The main loop expects it to be closed, so close it now.
-        DX12_CALL(m_CommandList[i]->Close());
-    }
+    // Command lists are created in the recording state, but there is nothing
+    // to record yet. The main loop expects it to be closed, so close it now.
+    DX12_CALL(m_CommandList->Close());
 }
 
 void GfxCommandList::BeginRecording()
 {
     bbeProfileFunction();
 
-    m_RecordingCmdListIdx = 1 - m_RecordingCmdListIdx;
-
     // Command list allocators can only be reset when the associated command lists have finished execution on the GPU
     // Apps should use fences to determine GPU execution progress
     DX12_CALL(m_CommandAllocator->Reset());
 
     // When ExecuteCommandList() is called on a particular command list, that command list can then be reset at any time and must be before re-recording
-    DX12_CALL(m_CommandList[m_RecordingCmdListIdx]->Reset(m_CommandAllocator.Get(), nullptr));
+    DX12_CALL(m_CommandList->Reset(m_CommandAllocator.Get(), nullptr));
 }
 
 void GfxCommandList::EndRecording()
 {
-    DX12_CALL(m_CommandList[m_RecordingCmdListIdx]->Close());
+    DX12_CALL(m_CommandList->Close());
 }
 
 // TODO: Make queues for different types of cmd lists

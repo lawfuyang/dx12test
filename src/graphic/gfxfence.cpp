@@ -32,7 +32,7 @@ bool GfxFence::IsSignaledByGPU() const
     const UINT64 completedValue = m_Fence->GetCompletedValue();
     if (completedValue == UINT64_MAX)
     {
-        g_Log.error(false, "Device removed!");
+        g_Log.error("Device removed!");
         assert(false);
     }
 

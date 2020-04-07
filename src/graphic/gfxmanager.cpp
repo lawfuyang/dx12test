@@ -29,7 +29,7 @@ void UpdateGraphic()
 {
     bbeProfileFunction();
 
-    g_GfxManager.ScheduleGraphicTasks();
+    g_GfxManager.RunGraphicTasks();
 
     if (Keyboard::IsKeyPressed(Keyboard::KEY_J))
     {
@@ -43,14 +43,14 @@ void GfxManager::Initialize()
 
     tf::Taskflow tf;
     
-    tf::Task adapterInitTask         = tf.emplace([&]() { g_GfxAdapter.Initialize(); }).name("adapterInitTask");
-    tf::Task deviceInitTask          = tf.emplace([&]() { m_GfxDevice.Initialize(); }).name("deviceInitTask");
-    tf::Task cmdListInitTask         = tf.emplace([&]() { m_GfxDevice.GetCommandListsManager().Initialize(); }).name("cmdListInitTask");
-    tf::Task swapChainInitTask       = tf.emplace([&]() { m_SwapChain.Initialize(); }).name("swapChainInitTask");
-    tf::Task rootSigManagerInitTask  = tf.emplace([&]() { g_GfxRootSignatureManager.Initialize(); }).name("rootSigManagerInitTask");
-    tf::Task PSOManagerInitTask      = tf.emplace([&]() { g_GfxPSOManager.Initialize(); }).name("PSOManagerInitTask");
-    tf::Task shaderManagerInitTask   = tf.emplace([&]() { g_GfxShaderManager.Initialize(); }).name("shaderManagerInitTask");
-    tf::Task vertexFormatsInitTask   = tf.emplace([&]() { g_GfxDefaultVertexFormats.Initialize(); }).name("vertexFormatsInitTask");
+    tf::Task adapterInitTask        = ADD_TF_TASK(tf, g_GfxAdapter.Initialize());
+    tf::Task deviceInitTask         = ADD_TF_TASK(tf, m_GfxDevice.Initialize());
+    tf::Task cmdListInitTask        = ADD_TF_TASK(tf, m_GfxDevice.GetCommandListsManager().Initialize());
+    tf::Task swapChainInitTask      = ADD_TF_TASK(tf, m_SwapChain.Initialize());
+    tf::Task rootSigManagerInitTask = ADD_TF_TASK(tf, g_GfxRootSignatureManager.Initialize());
+    tf::Task PSOManagerInitTask     = ADD_TF_TASK(tf, g_GfxPSOManager.Initialize());
+    tf::Task shaderManagerInitTask  = ADD_TF_TASK(tf, g_GfxShaderManager.Initialize());
+    tf::Task vertexFormatsInitTask  = ADD_TF_TASK(tf, g_GfxDefaultVertexFormats.Initialize());
 
     tf::Task generalGfxInitTask = tf.emplace([&]()
         {
@@ -106,11 +106,12 @@ void GfxManager::ShutDown()
     g_GfxDefaultTextures.ShutDown();
 
     // we must complete the previous GPU frame before exiting the app
-    m_GfxDevice.WaitForEndOfCommandQueue();
+    m_GfxDevice.IncrementAndSignalFence();
+    m_GfxDevice.WaitForFence();
     m_GfxDevice.ShutDown();
 }
 
-void GfxManager::ScheduleGraphicTasks()
+void GfxManager::RunGraphicTasks()
 {
     bbeProfileFunction();
 
@@ -127,16 +128,14 @@ void GfxManager::ScheduleGraphicTasks()
                 gfxCommandsToConsume.swap(m_GfxCommands);
             }
             auto [s,t] = gfxCmdsTF.parallel_for(gfxCommandsToConsume.begin(), gfxCommandsToConsume.end(), [](const std::function<void()>& cmd) { bbeProfile("GfxCommand_MT"); cmd(); });
-            s.name("gfxCommandsToConsume parallel_for");
-            t.name("gfxCommandsToConsume parallel_for");
 
             g_TasksExecutor.run(gfxCmdsTF).wait();
         }).name("gfxCommandsConsumptionTasks");
 
-    tf::Task beginFrameTask = tf.emplace([&]() { BeginFrame(); }).name("beginFrameTask");
-    tf::Task transitionBackBufferTask = tf.emplace([&]() { TransitionBackBufferForPresent(); }).name("transitionBackBufferTask");
-    tf::Task endFrameTask = tf.emplace([&]() { EndFrame(); }).name("endFrameTask");
-    tf::Task renderPassesRenderTasks = tf.emplace([&]() { ScheduleRenderPasses(); }).name("renderPassesRenderTasks");
+    tf::Task beginFrameTask           = ADD_TF_TASK(tf, BeginFrame());
+    tf::Task transitionBackBufferTask = ADD_TF_TASK(tf, TransitionBackBufferForPresent());
+    tf::Task endFrameTask             = ADD_TF_TASK(tf, EndFrame());
+    tf::Task renderPassesRenderTasks  = ADD_TF_TASK(tf, RunRenderPasses());
 
     gfxCommandsConsumptionTasks.precede(beginFrameTask);
     beginFrameTask.precede(renderPassesRenderTasks);
@@ -146,14 +145,14 @@ void GfxManager::ScheduleGraphicTasks()
     g_TasksExecutor.run(tf).wait();
 }
 
-void GfxManager::ScheduleRenderPasses()
+void GfxManager::RunRenderPasses()
 {
     bbeProfileFunction();
 
     tf::Taskflow tf;
 
-    tf::Task testRenderPass = tf.emplace([&]() { g_GfxTestRenderPass.Render(m_GfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "TestRenderPass")); }).name("TestRenderPass");
-    tf::Task IMGUIRenderPass = tf.emplace([&]() { g_GfxIMGUIRenderer.Render(m_GfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "IMGUIRenderPass")); }).name("IMGUIRenderPass");
+    tf::Task testRenderPass  = ADD_TF_TASK(tf, g_GfxTestRenderPass.Render(m_GfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "TestRenderPass")));
+    tf::Task IMGUIRenderPass = ADD_TF_TASK(tf, g_GfxIMGUIRenderer.Render(m_GfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "IMGUIRenderPass")));
 
     IMGUIRenderPass.succeed(testRenderPass);
 
@@ -163,6 +162,9 @@ void GfxManager::ScheduleRenderPasses()
 void GfxManager::BeginFrame()
 {
     bbeProfileFunction();
+
+    // wait for GPU to be done with previous frame
+    m_GfxDevice.WaitForFence();
 
     // check for DXGI_ERRORs on all GfxDevices
     m_GfxDevice.CheckStatus();
@@ -176,9 +178,7 @@ void GfxManager::EndFrame()
 
     m_GfxDevice.Flush();
     m_SwapChain.Present();
-
-    // TODO: refactor this. use fences to sync
-    m_GfxDevice.WaitForEndOfCommandQueue();
+    m_GfxDevice.IncrementAndSignalFence();
 }
 
 void GfxManager::DumpGfxMemory()

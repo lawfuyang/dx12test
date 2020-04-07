@@ -8,9 +8,9 @@ void GfxDefaultTextures::Initialize()
 
     tf::Taskflow tf;
 
-    tf.emplace([&]() { InitCheckerboardTexture(Checkerboard); }).name("InitCheckerboardTexture");
-    tf.emplace([&]() { InitSolidColor(White2D, bbeColor{ 1.0f, 1.0f, 1.0f }, "Default White2D Texture"); }).name("InitSolidColor White");
-    tf.emplace([&]() { InitSolidColor(Black2D, bbeColor{ 0.0f, 0.0f, 0.0f }, "Default Black2D Texture"); }).name("InitSolidColor Black");
+    ADD_TF_TASK(tf, InitCheckerboardTexture(Checkerboard));
+    ADD_TF_TASK(tf, InitSolidColor(White2D, bbeColor{ 1.0f, 1.0f, 1.0f }, "Default White2D Texture"));
+    ADD_TF_TASK(tf, InitSolidColor(Black2D, bbeColor{ 0.0f, 0.0f, 0.0f }, "Default Black2D Texture"));
 
     g_TasksExecutor.run(tf).wait();
 }

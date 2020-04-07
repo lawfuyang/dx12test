@@ -12,7 +12,7 @@ public:
     void Initialize();
     void ShutDown();
 
-    void ScheduleGraphicTasks();
+    void RunGraphicTasks();
 
     void BeginFrame();
     void EndFrame();
@@ -26,7 +26,7 @@ public:
     GfxConstantBuffer& GetFrameParams() { return m_FrameParamsCB; }
 
 private:
-    void ScheduleRenderPasses();
+    void RunRenderPasses();
     void TransitionBackBufferForPresent();
     void UpdateFrameParamsCB();
 

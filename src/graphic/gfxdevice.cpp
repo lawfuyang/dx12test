@@ -256,15 +256,20 @@ void GfxDevice::Flush(bool andWait)
 
     if (andWait)
     {
-        WaitForEndOfCommandQueue();
+        IncrementAndSignalFence();
+        WaitForFence();
     }
 }
 
-void GfxDevice::WaitForEndOfCommandQueue()
+void GfxDevice::IncrementAndSignalFence()
+{
+    m_GfxFence.IncrementAndSignal(m_CommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT));
+}
+
+void GfxDevice::WaitForFence()
 {
     bbeProfileFunction();
-
-    m_GfxFence.IncrementAndSignal(m_CommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT));
+    
     m_GfxFence.WaitForSignalFromGPU();
 }
 

@@ -326,7 +326,7 @@ static void GetD3D12ShaderModelsAndPopulateJobs()
 {
     tf::Taskflow tf;
 
-    tf.emplace([&]() { GetD3D12ShaderModels(); });
+    ADD_TF_TASK(tf, GetD3D12ShaderModels());
 
     tf.parallel_for(g_AllShaderFiles.begin(), g_AllShaderFiles.end(), [&](const std::string& fullPath)
     {
@@ -527,9 +527,9 @@ static void PrintGeneratedFiles()
 {
     tf::Taskflow tf;
 
-    tf.emplace([&]() { PrintGeneratedEnumFile(); });
-    tf.emplace([&]() { PrintGeneratedByteCodeHeadersFile(); });
-    tf.emplace([&]() { PrintGeneratedConstantBuffersFile(); });
+    ADD_TF_TASK(tf, PrintGeneratedEnumFile()           );
+    ADD_TF_TASK(tf, PrintGeneratedByteCodeHeadersFile());
+    ADD_TF_TASK(tf, PrintGeneratedConstantBuffersFile());
 
     g_TasksExecutor.run(tf).wait();
 }
