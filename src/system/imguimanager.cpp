@@ -1,7 +1,5 @@
 #include "system/imguimanager.h"
 
-BBE_OPTIMIZE_OFF;
-
 void IMGUIManager::Initialize()
 {
     bbeProfileFunction();
