@@ -29,9 +29,7 @@ VS_OUT VSMain(VS_IN input)
 {
     VS_OUT result;
 
-    result.m_Position = input.m_Position;
-    result.m_Position = mul(result.m_Position, g_ProjMatrix);
-
+    result.m_Position = mul(input.m_Position, g_ProjMatrix);
     result.m_TexCoord = input.m_TexCoord;
     result.m_Color = input.m_Color;
 

@@ -1,5 +1,7 @@
 #include "system/imguimanager.h"
 
+BBE_OPTIMIZE_OFF;
+
 void IMGUIManager::Initialize()
 {
     bbeProfileFunction();
@@ -170,6 +172,7 @@ void IMGUIManager::Update()
     static bool show_another_window = false;
 
     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+    if (g_CommandLineOptions.m_ShowIMGUIDemoWindows)
     {
         static float f = 0.0f;
         static int counter = 0;
@@ -195,7 +198,7 @@ void IMGUIManager::Update()
     }
 
     // 3. Show another simple window.
-    if (show_another_window)
+    if (g_CommandLineOptions.m_ShowIMGUIDemoWindows && show_another_window)
     {
         ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
         ImGui::Text("Hello from another window!");
@@ -239,12 +242,5 @@ void IMGUIManager::SaveDrawData()
         memcpy(newDrawData.m_DrawList[n].m_DrawCmd.data(), &cmd_list->CmdBuffer[0], cmd_list->CmdBuffer.size() * sizeof(ImDrawCmd));
     }
 
-    bbeAutoLock(m_DrawDataLock);
     m_DrawData = std::move(newDrawData);
-}
-
-void IMGUIManager::ConsumeDrawData(IMGUIDrawData& dest)
-{
-    bbeAutoLock(m_DrawDataLock);
-    dest = std::move(m_DrawData);
 }

@@ -68,6 +68,10 @@ D3D12MA::Allocation* GfxBufferCommon::CreateHeap(GfxContext& context, D3D12_HEAP
     allocHandle->SetName(resourceNameW.data());
     allocHandle->GetResource()->SetName(resourceNameW.data());
 
+    StaticString<256> heapName = resourceName;
+    heapName += " Heap";
+    SetD3DDebugName(newHeap, heapName.c_str());
+
     g_Log.info("Created D3D12MA::Allocation '{}'", resourceName);
 
     return allocHandle;
@@ -100,7 +104,7 @@ void GfxBufferCommon::InitializeBufferWithInitData(GfxContext& context, uint32_t
 
     // create upload heap to hold upload init data
     StaticString<256> nameBuffer = resourceName;
-    nameBuffer += " Upload Heap";
+    nameBuffer += " Upload Buffer";
     D3D12MA::Allocation* uploadHeapAlloc = CreateHeap(context, D3D12_HEAP_TYPE_UPLOAD, CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize), D3D12_RESOURCE_STATE_GENERIC_READ, nameBuffer.c_str());
 
     // upload init data via CopyBufferRegion
@@ -117,7 +121,7 @@ void GfxBufferCommon::InitializeBufferWithInitData(GfxContext& context, uint32_t
 void GfxVertexBuffer::Initialize(GfxContext& initContext, const InitParams& initParams)
 {
     bbeProfileFunction();
-    assert(!m_Resource);
+    assert(!m_D3D12MABufferAllocation);
 
     assert(initParams.m_NumVertices > 0);
     assert(initParams.m_VertexSize > 0);
@@ -164,7 +168,7 @@ void GfxVertexBuffer::Initialize(const InitParams& initParams)
 void GfxIndexBuffer::Initialize(GfxContext& initContext, const InitParams& initParams)
 {
     bbeProfileFunction();
-    assert(!m_Resource);
+    assert(!m_D3D12MABufferAllocation);
     assert(initParams.m_NumIndices);
     assert(initParams.m_IndexSize == 2 || initParams.m_IndexSize == 4);
 
@@ -251,6 +255,7 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
 {
     bbeProfileFunction();
 
+    assert(!m_D3D12MABufferAllocation);
     assert(initParams.m_Format != DXGI_FORMAT_UNKNOWN);
     assert(initParams.m_Width > 0);
     assert(initParams.m_Height > 0);
@@ -315,7 +320,7 @@ void GfxTexture::InitializeForSwapChain(ComPtr<IDXGISwapChain4>& swapChain, DXGI
 {
     bbeProfileFunction();
 
-    assert(!m_Resource);
+    assert(!m_D3D12MABufferAllocation);
     assert(swapChain);
     assert(format != DXGI_FORMAT_UNKNOWN);
     assert(backBufferIdx <= 3); // you dont need more than 3 back buffers...

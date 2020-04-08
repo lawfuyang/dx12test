@@ -13,6 +13,8 @@ std::string g_ShadersEnumsAutoGenDir;
 std::string g_ShadersHeaderAutoGenDir;
 std::string g_ShadersConstantBuffersAutoGenDir;
 
+AdaptiveLock g_AllShaderCompileJobsLock{"g_AllShaderCompileJobsLock"};
+
 std::vector<std::string>                     g_AllShaderFiles;
 std::vector<ShaderCompileJob>                g_AllShaderCompileJobs;
 std::vector<ConstantBufferDesc>              g_AllConstantBuffers;
@@ -58,6 +60,8 @@ struct DXCProcessWrapper
         }
         else
         {
+            g_Log.error("{}", GetLastErrorAsString());
+
             CloseAllHandles();
             assert(false);
         }
@@ -368,8 +372,7 @@ static void GetD3D12ShaderModelsAndPopulateJobs()
             {
                 g_Log.info("Found shader: {}", newJob.m_ShaderName.c_str());
 
-                static AdaptiveLock s_Lock{"g_AllShaderCompileJobs lock"};
-                bbeAutoLock(s_Lock);
+                bbeAutoLock(g_AllShaderCompileJobsLock);
                 g_AllShaderCompileJobs.push_back(std::move(newJob));
             }
         }
@@ -546,7 +549,7 @@ struct GlobalsInitializer
         g_ShadersEnumsAutoGenDir           = g_ShadersTmpDir + "shadersenumsautogen.h";
         g_ShadersHeaderAutoGenDir          = g_ShadersTmpDir + "shaderheadersautogen.h";
         g_ShadersConstantBuffersAutoGenDir = g_ShadersTmpDir + "shaderconstantbuffersautogen.h";
-        g_DXCDir                           = g_AppDir + "..\\tools\\dxc\\dxc.exe";
+        g_DXCDir                           = g_AppDir + "..\\extern\\dxc\\dxc.exe";
 
         // init misc traits
     #define ADD_TYPE(hlslType, CPPType, TypeSize)   \

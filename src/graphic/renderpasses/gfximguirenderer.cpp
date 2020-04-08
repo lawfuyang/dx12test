@@ -6,8 +6,12 @@
 #include <graphic/gfxcontext.h>
 #include <graphic/gfxdefaulttextures.h>
 
+BBE_OPTIMIZE_OFF;
+
 static const uint32_t gs_VBufferGrowSize = 5000;
 static const uint32_t gs_IBufferGrowSize = 10000;
+
+static_assert(IsAligned(gs_IBufferGrowSize, 4));
 
 void GfxIMGUIRenderer::Initialize()
 {
@@ -58,6 +62,8 @@ void GfxIMGUIRenderer::GrowBuffers(GfxContext& context, const IMGUIDrawData& img
     // empty buffers == init phase
     const bool isInitPhase = (m_VertexBuffer.GetNumVertices() == 0) && (m_IndexBuffer.GetNumIndices() == 0);
 
+    StaticString<128> bufferNames;
+
     // Create and grow vertex/index buffers if needed
     // since we will be continuously streaming vertex/index via "Map", the heap type must be "D3D12_HEAP_TYPE_UPLOAD"
     if (isInitPhase || (m_VertexBuffer.GetNumVertices() < imguiDrawData.m_VtxCount))
@@ -66,10 +72,12 @@ void GfxIMGUIRenderer::GrowBuffers(GfxContext& context, const IMGUIDrawData& img
 
         GfxVertexBuffer::InitParams initParams;
         initParams.m_InitData = nullptr;
-        initParams.m_NumVertices = m_VertexBuffer.GetNumVertices() + gs_VBufferGrowSize;
-        initParams.m_ResourceName = "IMGUI GfxVertexBuffer";
+        initParams.m_NumVertices = isInitPhase ? gs_VBufferGrowSize : imguiDrawData.m_VtxCount + gs_VBufferGrowSize;
         initParams.m_VertexSize = sizeof(ImDrawVert);
         initParams.m_HeapType = D3D12_HEAP_TYPE_UPLOAD;
+
+        bufferNames = "IMGUI GfxVertexBuffer" + StringFormat("_%u", initParams.m_NumVertices);
+        initParams.m_ResourceName = bufferNames.c_str();
 
         m_VertexBuffer.Initialize(context, initParams);
     }
@@ -79,10 +87,12 @@ void GfxIMGUIRenderer::GrowBuffers(GfxContext& context, const IMGUIDrawData& img
 
         GfxIndexBuffer::InitParams initParams;
         initParams.m_InitData = nullptr;
-        initParams.m_NumIndices = m_IndexBuffer.GetNumIndices() + gs_IBufferGrowSize;
-        initParams.m_ResourceName = "IMGUI GfxIndexBuffer";
+        initParams.m_NumIndices = isInitPhase ? gs_IBufferGrowSize : AlignUp(imguiDrawData.m_IdxCount + gs_IBufferGrowSize, 4); // the indexbuffer copy requires alignment
         initParams.m_IndexSize = sizeof(uint16_t);
         initParams.m_HeapType = D3D12_HEAP_TYPE_UPLOAD;
+
+        bufferNames = "IMGUI GfxIndexBuffer" + StringFormat("_%u", initParams.m_NumIndices);
+        initParams.m_ResourceName = bufferNames.c_str();
 
         m_IndexBuffer.Initialize(context, initParams);
     }
@@ -90,12 +100,11 @@ void GfxIMGUIRenderer::GrowBuffers(GfxContext& context, const IMGUIDrawData& img
 
 void GfxIMGUIRenderer::UploadBufferData(const IMGUIDrawData& imguiDrawData)
 {
-    void* vtx_resource, * idx_resource;
+    ImDrawVert* vtx_dst;
+    ImDrawIdx* idx_dst;
     D3D12_RANGE range = {};
-    DX12_CALL(m_VertexBuffer.GetD3D12Resource()->Map(0, &range, &vtx_resource));
-    DX12_CALL(m_IndexBuffer.GetD3D12Resource()->Map(0, &range, &idx_resource));
-    ImDrawVert* vtx_dst = (ImDrawVert*)vtx_resource;
-    ImDrawIdx* idx_dst = (ImDrawIdx*)idx_resource;
+    DX12_CALL(m_VertexBuffer.GetD3D12Resource()->Map(0, &range, &(void*)vtx_dst));
+    DX12_CALL(m_IndexBuffer.GetD3D12Resource()->Map(0, &range, &(void*)idx_dst));
 
     for (uint32_t n = 0; n < imguiDrawData.m_DrawList.size(); n++)
     {
@@ -109,7 +118,7 @@ void GfxIMGUIRenderer::UploadBufferData(const IMGUIDrawData& imguiDrawData)
     m_IndexBuffer.GetD3D12Resource()->Unmap(0, &range);
 }
 
-void GfxIMGUIRenderer::SetupRenderStates(GfxContext& context)
+void GfxIMGUIRenderer::SetupRenderStates(GfxContext& context, const IMGUIDrawData& imguiDrawData)
 {
     GfxPipelineStateObject& pso = context.GetPSO();
 
@@ -152,14 +161,12 @@ void GfxIMGUIRenderer::SetupRenderStates(GfxContext& context)
         desc.BackFace = desc.FrontFace;
     }
 
-    ImDrawData* imguiDrawData = ImGui::GetDrawData();
-
     // Setup viewport
     {
         CD3DX12_VIEWPORT& vp = context.GetViewport();
 
-        vp.Width = imguiDrawData->DisplaySize.x;
-        vp.Height = imguiDrawData->DisplaySize.y;
+        vp.Width = imguiDrawData.m_Size.x;
+        vp.Height = imguiDrawData.m_Size.y;
         vp.MinDepth = 0.0f;
         vp.MaxDepth = 1.0f;
         vp.TopLeftX = vp.TopLeftY = 0.0f;
@@ -182,8 +189,7 @@ void GfxIMGUIRenderer::Render(GfxContext& context)
     static_assert(sizeof(ImDrawVert) == sizeof(float) * 2 + sizeof(float) * 2 + sizeof(uint32_t)); // Position2f_TexCoord2f_Color4ub
     static_assert(sizeof(ImDrawIdx) == sizeof(uint16_t)); // 2 byte index size
 
-    IMGUIDrawData imguiDrawData;
-    g_IMGUIManager.ConsumeDrawData(imguiDrawData);
+    const IMGUIDrawData imguiDrawData = g_IMGUIManager.GetDrawData();
 
     // Avoid rendering when minimized
     if (imguiDrawData.m_Size.x <= 0.0f || imguiDrawData.m_Size.y <= 0.0f)
@@ -199,7 +205,7 @@ void GfxIMGUIRenderer::Render(GfxContext& context)
     // Upload vertex/index data into a single contiguous GPU buffer
     UploadBufferData(imguiDrawData);
 
-    SetupRenderStates(context);
+    SetupRenderStates(context, imguiDrawData);
 
     // Setup orthographic projection matrix into our constant buffer
     // Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right).
@@ -209,8 +215,17 @@ void GfxIMGUIRenderer::Render(GfxContext& context)
         const float T = imguiDrawData.m_Pos.y;
         const float B = imguiDrawData.m_Pos.y + imguiDrawData.m_Size.y;
 
+        bbeMatrix mvp
+        {
+            2.0f / (R - L)   , 0.0f,              0.0f, 0.0f,
+            0.0f             , 2.0f / (T - B),    0.0f, 0.0f,
+            0.0f             , 0.0f,              0.5f, 0.0f,
+            (R + L) / (L - R), (T + B) / (B - T), 0.5f, 1.0f
+        };
+        mvp = mvp.Transpose();
+
         AutoGenerated::TestShaderConsts consts;
-        consts.m_ViewProjMatrix = bbeMatrix::CreateOrthographicLH(R - L, B - T, 0.0f, 1.0f);
+        consts.m_ViewProjMatrix = mvp;
         m_ConstantBuffer.Update(&consts);
     }
 
@@ -220,7 +235,7 @@ void GfxIMGUIRenderer::Render(GfxContext& context)
     GfxPipelineStateObject& pso = context.GetPSO();
     pso.SetVertexShader(g_GfxShaderManager.GetShader(ShaderPermutation::VS_IMGUI));
     pso.SetPixelShader(g_GfxShaderManager.GetShader(ShaderPermutation::PS_IMGUI));
-    pso.SetVertexInputLayout(GfxDefaultVertexFormats::Position3f_TexCoord2f_Color4ub);
+    pso.SetVertexInputLayout(GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub);
 
     context.SetVertexBuffer(m_VertexBuffer);
     context.SetIndexBuffer(m_IndexBuffer);

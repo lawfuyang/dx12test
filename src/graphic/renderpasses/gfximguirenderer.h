@@ -20,7 +20,7 @@ private:
     void InitFontsTexture(GfxContext&);
     void GrowBuffers(GfxContext&, const IMGUIDrawData& imguiDrawData);
     void UploadBufferData(const IMGUIDrawData& imguiDrawData);
-    void SetupRenderStates(GfxContext&);
+    void SetupRenderStates(GfxContext&, const IMGUIDrawData& imguiDrawData);
 
     GfxVertexBuffer   m_VertexBuffer;
     GfxIndexBuffer    m_IndexBuffer;

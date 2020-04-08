@@ -45,35 +45,39 @@ public:
     // SpinLock prediction by Foster Brereton: https://hackernoon.com/building-a-c-hybrid-spin-mutex-f98de535b4ac
     void Lock()
     {
-        using clock_t = std::chrono::high_resolution_clock;
+        //using clock_t = std::chrono::high_resolution_clock;
 
-        const auto startTime = clock_t::now();
-        std::size_t spinTime = 0;
-        while (!SpinLock::TryLock())
-        {
-            spinTime = (clock_t::now() - startTime).count();
-            if (spinTime >= m_SpinPredication * 2)
-            {
-                m_Mutex.lock();
-                m_MutexLocked = true;
-                break;
-            }
-        }
+        //const auto startTime = clock_t::now();
+        //std::size_t spinTime = 0;
+        //while (!SpinLock::TryLock())
+        //{
+        //    spinTime = (clock_t::now() - startTime).count();
+        //    if (spinTime >= m_SpinPredication * 2)
+        //    {
+        //        m_Mutex.lock();
+        //        m_MutexLocked = true;
+        //        break;
+        //    }
+        //}
 
-        m_SpinPredication += (spinTime - m_SpinPredication) / 8;
+        //m_SpinPredication += (spinTime - m_SpinPredication) / 8;
+
+        m_Mutex.lock();
     }
 
     void Unlock()
     {
-        if (m_MutexLocked)
-        {
-            m_Mutex.unlock();
-            m_MutexLocked = false;
-        }
-        else
-        {
-            SpinLock::Unlock();
-        }
+        //if (m_MutexLocked)
+        //{
+        //    m_Mutex.unlock();
+        //    m_MutexLocked = false;
+        //}
+        //else
+        //{
+        //    SpinLock::Unlock();
+        //}
+
+        m_Mutex.unlock();
     }
 
 private:

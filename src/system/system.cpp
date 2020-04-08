@@ -55,6 +55,8 @@ void System::ProcessWindowsMessage(HWND hWnd, UINT message, WPARAM wParam, LPARA
         g_Mouse.ProcessMouseWheel(GET_WHEEL_DELTA_WPARAM(wParam));
         break;
     }
+
+    g_IMGUIManager.ProcessWindowsMessage(hWnd, message, wParam, lParam);
 }
 
 void System::Loop()

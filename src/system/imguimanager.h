@@ -26,8 +26,6 @@ struct IMGUIDrawData
     uint32_t                  m_IdxCount = 0;
     bbeVector2                m_Pos      = bbeVector2::Zero;
     bbeVector2                m_Size     = bbeVector2::Zero;
-
-    IMGUIDrawData& operator=(IMGUIDrawData&&) = default;
 };
 
 class IMGUIManager
@@ -41,13 +39,13 @@ public:
     void ProcessWindowsMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
     void Update();
 
+    const IMGUIDrawData GetDrawData() const { return m_DrawData; }
+
 private:
     void SaveDrawData();
-    void ConsumeDrawData(IMGUIDrawData&);
 
     Timer m_Timer;
 
-    AdaptiveLock m_DrawDataLock{ "IMGUIManagerDrawDataLock" };
     IMGUIDrawData m_DrawData;
 
     friend class GfxIMGUIRenderer;
