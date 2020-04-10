@@ -40,9 +40,10 @@ private:
 
     friend class FrameRateController;
 };
-#define g_System        System::GetInstance()
-#define g_TasksExecutor g_System.GetTasksExecutor()
-#define ADD_TF_TASK(tf, task) tf.emplace([&]() { task; }).name(bbeTOSTRING(task));
+#define g_System                    System::GetInstance()
+#define g_TasksExecutor             g_System.GetTasksExecutor()
+#define ADD_TF_TASK(taskFlow, task) taskFlow.emplace([&]() { task; }).name(bbeTOSTRING(task))
+#define ADD_SF_TASK(taskFlow, task) taskFlow.emplace([&](tf::Subflow& sf) { task; }).name(bbeTOSTRING(task))
 
 class FrameRateController
 {

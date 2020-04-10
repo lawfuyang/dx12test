@@ -2,17 +2,13 @@
 
 #include "graphic/dx12utils.h"
 
-void GfxDefaultTextures::Initialize()
+void GfxDefaultTextures::Initialize(tf::Subflow& sf)
 {
     bbeProfileFunction();
 
-    tf::Taskflow tf;
-
-    ADD_TF_TASK(tf, InitCheckerboardTexture(Checkerboard));
-    ADD_TF_TASK(tf, InitSolidColor(White2D, bbeColor{ 1.0f, 1.0f, 1.0f }, "Default White2D Texture"));
-    ADD_TF_TASK(tf, InitSolidColor(Black2D, bbeColor{ 0.0f, 0.0f, 0.0f }, "Default Black2D Texture"));
-
-    g_TasksExecutor.run(tf).wait();
+    ADD_TF_TASK(sf, InitCheckerboardTexture(Checkerboard));
+    ADD_TF_TASK(sf, InitSolidColor(White2D, bbeColor{ 1.0f, 1.0f, 1.0f }, "Default White2D Texture"));
+    ADD_TF_TASK(sf, InitSolidColor(Black2D, bbeColor{ 0.0f, 0.0f, 0.0f }, "Default Black2D Texture"));
 }
 
 void GfxDefaultTextures::ShutDown()

@@ -34,6 +34,7 @@ class GfxBufferCommon
 public:
     virtual ~GfxBufferCommon();
     void Release();
+    static void ReleaseAllocation(D3D12MA::Allocation*&);
 
     uint32_t GetSizeInBytes() const { return m_SizeInBytes; }
 

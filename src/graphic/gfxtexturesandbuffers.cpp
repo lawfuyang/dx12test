@@ -34,11 +34,19 @@ void GfxBufferCommon::Release()
 
     if (m_D3D12MABufferAllocation)
     {
-        g_Log.info("Destroying D3D12MA::Allocation '{}'", MakeStrFromWStr(m_D3D12MABufferAllocation->GetName()));
-
-        m_D3D12MABufferAllocation->Release();
-        m_D3D12MABufferAllocation = nullptr;
+        ReleaseAllocation(m_D3D12MABufferAllocation);
     }
+}
+
+void GfxBufferCommon::ReleaseAllocation(D3D12MA::Allocation*& allocation)
+{
+    bbeProfileFunction();
+
+    g_Log.info("Destroying D3D12MA::Allocation '{}'", MakeStrFromWStr(allocation->GetName()));
+
+    allocation->GetResource()->Release();
+    allocation->Release();
+    allocation = nullptr;
 }
 
 D3D12MA::Allocation* GfxBufferCommon::CreateHeap(GfxContext& context, D3D12_HEAP_TYPE heapType, const D3D12_RESOURCE_DESC& resourceDesc, D3D12_RESOURCE_STATES initialState, const char* resourceName)
@@ -113,8 +121,8 @@ void GfxBufferCommon::InitializeBufferWithInitData(GfxContext& context, uint32_t
     // we don't need this upload heap anymore... release it next frame
     g_GfxManager.AddGraphicCommand([uploadHeapAlloc]()
         {
-            uploadHeapAlloc->GetResource()->Release();
-            uploadHeapAlloc->Release();
+            D3D12MA::Allocation* copy = uploadHeapAlloc;
+            GfxBufferCommon::ReleaseAllocation(copy);
         });
 }
 

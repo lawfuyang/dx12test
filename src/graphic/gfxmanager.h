@@ -9,15 +9,15 @@ class GfxManager
     DeclareSingletonFunctions(GfxManager);
 
 public:
-    void Initialize();
+    void Initialize(tf::Subflow& subFlow);
     void ShutDown();
 
-    void RunGraphicTasks();
+    void ScheduleGraphicTasks(tf::Subflow& subFlow);
 
     void BeginFrame();
     void EndFrame();
 
-    void AddGraphicCommand(const std::function<void()>& newCmd) { bbeAutoLock(m_GfxCommandsLock); m_GfxCommands.push_back(newCmd); }
+    void AddGraphicCommand(const std::function<void()>& newCmd) { bbeAutoLock(m_GfxCommandsLock); m_PendingGfxCommands.push_back(newCmd); }
 
     void DumpGfxMemory();
 
@@ -26,7 +26,7 @@ public:
     GfxConstantBuffer& GetFrameParams() { return m_FrameParamsCB; }
 
 private:
-    void RunRenderPasses();
+    void ScheduleRenderPasses(tf::Subflow& sf);
     void TransitionBackBufferForPresent();
     void UpdateFrameParamsCB();
 
@@ -35,6 +35,7 @@ private:
     GfxConstantBuffer m_FrameParamsCB;
 
     AdaptiveLock m_GfxCommandsLock{ "m_GfxCommands" };
-    std::vector<std::function<void()>> m_GfxCommands;
+    std::vector<std::function<void()>> m_PendingGfxCommands;
+    std::vector<std::function<void()>> m_ExecutingGfxCommands;
 };
 #define g_GfxManager GfxManager::GetInstance()

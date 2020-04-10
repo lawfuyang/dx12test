@@ -29,7 +29,7 @@ class GfxShaderManager
 public:
     DeclareSingletonFunctions(GfxShaderManager);
 
-    void Initialize();
+    void Initialize(tf::Subflow& sf);
     
     GfxShader& GetShader(ShaderPermutation shaderPermutation) { return m_AllShaders[static_cast<uint32_t>(shaderPermutation)]; }
 

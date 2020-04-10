@@ -9,7 +9,7 @@ class GfxDefaultTextures
 public:
     DeclareSingletonFunctions(GfxDefaultTextures);
 
-    void Initialize();
+    void Initialize(tf::Subflow& sf);
     void ShutDown();
 
     inline static GfxTexture White2D;

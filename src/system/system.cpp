@@ -2,8 +2,8 @@
 
 #include "system/imguimanager.h"
 
-extern void InitializeGraphic();
-extern void UpdateGraphic();
+extern void InitializeGraphic(tf::Subflow& subFlow);
+extern void UpdateGraphic(tf::Subflow& subFlow);
 extern void ShutdownGraphic();
 extern void InitializeApplicationLayer();
 extern void UpdateApplicationLayer();
@@ -73,9 +73,13 @@ void System::Loop()
 
             RunKeyboardCommands();
 
-            UpdateGraphic();
-            UpdateApplicationLayer();
-            g_IMGUIManager.Update();
+            tf::Taskflow tf;
+
+            ADD_SF_TASK(tf, UpdateGraphic(sf));
+            ADD_TF_TASK(tf, UpdateApplicationLayer());
+            ADD_TF_TASK(tf, g_IMGUIManager.Update());
+
+            m_Executor.run(tf).wait();
 
             // make sure I/O ticks happen last
             g_Keyboard.Tick();
@@ -99,10 +103,15 @@ void System::Initialize()
     g_Profiler.Initialize();
 
     bbeConditionalProfile(g_CommandLineOptions.m_ProfileInit, "System::Initialize");
+    bbeProfileFunction();
 
-    g_IMGUIManager.Initialize();
-    InitializeGraphic();
-    InitializeApplicationLayer();
+    tf::Taskflow tf;
+
+    ADD_TF_TASK(tf, g_IMGUIManager.Initialize());
+    ADD_SF_TASK(tf, InitializeGraphic(sf));
+    ADD_TF_TASK(tf, InitializeApplicationLayer());
+
+    m_Executor.run(tf).wait();
 
     g_Profiler.DumpProfilerBlocks(g_CommandLineOptions.m_ProfileInit, true);
 }
