@@ -38,7 +38,8 @@ void GfxCommandList::BeginRecording()
 
     // Command list allocators can only be reset when the associated command lists have finished execution on the GPU
     // Apps should use fences to determine GPU execution progress
-    DX12_CALL(m_CommandAllocator->Reset());
+    // TODO: Investigate why calling this per frame on high fps will crash
+    //DX12_CALL(m_CommandAllocator->Reset());
 
     // When ExecuteCommandList() is called on a particular command list, that command list can then be reset at any time and must be before re-recording
     DX12_CALL(m_CommandList->Reset(m_CommandAllocator.Get(), nullptr));

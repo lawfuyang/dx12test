@@ -6,6 +6,8 @@
 #include <graphic/gfxcontext.h>
 #include <graphic/gfxdefaulttextures.h>
 
+#include <tmp/shaders/IMGUICBuffer.h>
+
 BBE_OPTIMIZE_OFF;
 
 static const uint32_t gs_VBufferGrowSize = 5000;

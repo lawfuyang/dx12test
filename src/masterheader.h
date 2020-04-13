@@ -63,8 +63,6 @@
 #include <extern/taskflow/taskflow.hpp>
 
 #include <extern/boost/container/small_vector.hpp>
-#include <extern/boost/lockfree/stack.hpp>
-#include <extern/boost/lockfree/queue.hpp>
 #include <extern/boost/pool/object_pool.hpp>
 #include <extern/boost/container_hash/hash.hpp>
 
@@ -74,6 +72,9 @@
 
 // typedefs
 using WindowHandle = uint64_t;
+
+template <typename T, uint32_t N>
+using InplaceArray = boost::container::small_vector<T, N>;
 
 // ComPtr namespace
 using Microsoft::WRL::ComPtr;

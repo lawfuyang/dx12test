@@ -102,16 +102,17 @@ void System::Initialize()
 {
     g_Profiler.Initialize();
 
-    bbeConditionalProfile(g_CommandLineOptions.m_ProfileInit, "System::Initialize");
-    bbeProfileFunction();
+    {
+        bbeProfileFunction();
 
-    tf::Taskflow tf;
+        tf::Taskflow tf;
 
-    ADD_TF_TASK(tf, g_IMGUIManager.Initialize());
-    ADD_SF_TASK(tf, InitializeGraphic(sf));
-    ADD_TF_TASK(tf, InitializeApplicationLayer());
+        ADD_TF_TASK(tf, g_IMGUIManager.Initialize());
+        ADD_SF_TASK(tf, InitializeGraphic(sf));
+        ADD_TF_TASK(tf, InitializeApplicationLayer());
 
-    m_Executor.run(tf).wait();
+        m_Executor.run(tf).wait();
+    }
 
     g_Profiler.DumpProfilerBlocks(g_CommandLineOptions.m_ProfileInit, true);
 }

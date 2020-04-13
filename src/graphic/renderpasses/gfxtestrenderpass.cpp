@@ -1,10 +1,12 @@
-#include "graphic/renderpasses/gfxtestrenderpass.h"
+#include <graphic/renderpasses/gfxtestrenderpass.h>
 
-#include "graphic/gfxmanager.h"
-#include "graphic/gfxcontext.h"
-#include "graphic/gfxswapchain.h"
-#include "graphic/gfxview.h"
-#include "graphic/gfxdefaulttextures.h"
+#include <graphic/gfxmanager.h>
+#include <graphic/gfxcontext.h>
+#include <graphic/gfxswapchain.h>
+#include <graphic/gfxview.h>
+#include <graphic/gfxdefaulttextures.h>
+
+#include <tmp/shaders/TestShaderConsts.h>
 
 void GfxTestRenderPass::Initialize()
 {
