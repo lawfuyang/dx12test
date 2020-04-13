@@ -207,6 +207,8 @@ void IMGUIManager::Update()
 
     // This will back up the render data until the next frame.
     SaveDrawData();
+
+    m_DrawDataIdx = 1 - m_DrawDataIdx;
 }
 
 void IMGUIManager::SaveDrawData()
@@ -240,5 +242,5 @@ void IMGUIManager::SaveDrawData()
         memcpy(newDrawData.m_DrawList[n].m_DrawCmd.data(), &cmd_list->CmdBuffer[0], cmd_list->CmdBuffer.size() * sizeof(ImDrawCmd));
     }
 
-    m_DrawData = std::move(newDrawData);
+    m_DrawData[1 - m_DrawDataIdx] = std::move(newDrawData);
 }

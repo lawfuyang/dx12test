@@ -39,14 +39,16 @@ public:
     void ProcessWindowsMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
     void Update();
 
-    const IMGUIDrawData GetDrawData() const { return m_DrawData; }
+
 
 private:
     void SaveDrawData();
+    IMGUIDrawData GetDrawData() const { return m_DrawData[m_DrawDataIdx]; }
 
     Timer m_Timer;
 
-    IMGUIDrawData m_DrawData;
+    IMGUIDrawData m_DrawData[2];
+    uint32_t m_DrawDataIdx = 0;
 
     friend class GfxIMGUIRenderer;
 };
