@@ -74,8 +74,7 @@ void GfxSwapChain::Present()
 {
     bbeProfileFunction();
 
-    // TODO: init these values properly
-    const UINT syncInterval = 1; // Flip synced to the refresh rate
+    const UINT syncInterval = 0; // Need to sync CPU frame to this function if we want V-SYNC
     const UINT flags = 0;
 
     // Present the frame.

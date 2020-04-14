@@ -4,12 +4,12 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-#define DX12_CALL(call)                                                                               \
-    {                                                                                                 \
-        HRESULT result = call;                                                                        \
-        if (FAILED(result)) g_Log.error("DX12 Error: return code 0x%X, call: {0:X}", result, #call);     \
-        if (!SUCCEEDED(result)) g_Log.warn("DX12 Warning: return code 0x%X, call: {0:X}", result, #call);\
-        assert(!FAILED(result));                                                                      \
+#define DX12_CALL(call)                                                                                            \
+    {                                                                                                              \
+        const HRESULT result = call;                                                                               \
+        if (FAILED(result)) g_Log.error("DX12 Error: return code {0:X}, call: {}", result, bbeTOSTRING(call));     \
+        if (!SUCCEEDED(result)) g_Log.warn("DX12 Warning: return code {0:X}, call: {}", result, bbeTOSTRING(call));\
+        assert(!FAILED(result));                                                                                   \
     }
 
 const char* GetD3DFeatureLevelName(D3D_FEATURE_LEVEL FeatureLevel);

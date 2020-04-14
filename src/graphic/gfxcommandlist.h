@@ -11,11 +11,15 @@ public:
 
     D3D12_COMMAND_LIST_TYPE GetType() const { return m_Type; }
 
+    void SetName(const std::string& name) { m_Name = name; };
+
 private:
     D3D12_COMMAND_LIST_TYPE m_Type = (D3D12_COMMAND_LIST_TYPE)0;
 
     ComPtr<ID3D12CommandAllocator> m_CommandAllocator;
     ComPtr<ID3D12GraphicsCommandList5> m_CommandList;
+
+    std::string m_Name;
 };
 
 class GfxCommandListsManager
@@ -24,7 +28,7 @@ public:
     void Initialize();
     void ShutDown();
 
-    GfxCommandList* Allocate(D3D12_COMMAND_LIST_TYPE);
+    GfxCommandList* Allocate(D3D12_COMMAND_LIST_TYPE, const std::string&);
     void ExecuteAllActiveCommandLists();
 
     ID3D12CommandQueue* GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) { return GetPoolFromType(type).m_CommandQueue.Get(); }

@@ -8,8 +8,6 @@
 
 #include <tmp/shaders/IMGUICBuffer.h>
 
-BBE_OPTIMIZE_OFF;
-
 static const uint32_t gs_VBufferGrowSize = 5000;
 static const uint32_t gs_IBufferGrowSize = 10000;
 
@@ -19,12 +17,10 @@ void GfxIMGUIRenderer::Initialize()
 {
     bbeProfileFunction();
 
+    m_Name = "GfxIMGUIRenderer";
+
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
     GfxContext& initContext = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "GfxIMGUIRenderer::Initialize");
-
-    bbeProfileGPUFunction(initContext);
-
-    m_Name = "GfxIMGUIRenderer";
 
     // Build texture atlas
     InitFontsTexture(initContext);
@@ -39,7 +35,6 @@ void GfxIMGUIRenderer::Initialize()
 void GfxIMGUIRenderer::InitFontsTexture(GfxContext& context)
 {
     bbeProfileFunction();
-    bbeProfileGPUFunction(context);
 
     ImGuiIO& io = ImGui::GetIO();
     unsigned char* pixels;
@@ -59,7 +54,6 @@ void GfxIMGUIRenderer::InitFontsTexture(GfxContext& context)
 void GfxIMGUIRenderer::GrowBuffers(GfxContext& context, const IMGUIDrawData& imguiDrawData)
 {
     bbeProfileFunction();
-    bbeProfileGPUFunction(context);
     
     // empty buffers == init phase
     const bool isInitPhase = (m_VertexBuffer.GetNumVertices() == 0) && (m_IndexBuffer.GetNumIndices() == 0);
@@ -183,10 +177,12 @@ void GfxIMGUIRenderer::ShutDown()
     m_FontsTexture.Release();
 }
 
+bbeDefineGPUProfilerToken(GfxIMGUIRenderer_Render);
+
 void GfxIMGUIRenderer::Render(GfxContext& context)
 {
     bbeProfileFunction();
-    bbeProfileGPUFunction(context);
+    bbeProfileGPU(context, bbeGPUProfileToken(GfxIMGUIRenderer_Render));
 
     static_assert(sizeof(ImDrawVert) == sizeof(float) * 2 + sizeof(float) * 2 + sizeof(uint32_t)); // Position2f_TexCoord2f_Color4ub
     static_assert(sizeof(ImDrawIdx) == sizeof(uint16_t)); // 2 byte index size

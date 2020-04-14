@@ -8,6 +8,7 @@
 #include "system/utils.h"
 
 struct MicroProfileThreadLogGpu;
+class GfxContext;
 
 class SystemProfiler
 {
@@ -46,8 +47,18 @@ public:
 
 private:
     SystemProfiler::GPUProfileLogContext* m_LogContext = nullptr;
+    InplaceArray<MicroProfileToken, 4> m_Tokens;
 
-    friend class GPUProfilerScopeHandler;
+    friend struct ScopedGPUProfileHandler;
+};
+
+struct ScopedGPUProfileHandler
+{
+    ScopedGPUProfileHandler(MicroProfileToken& token, GfxContext& gfxContext);
+    ~ScopedGPUProfileHandler();
+
+    GfxContext& m_GfxContext;
+    MicroProfileToken& m_Token;
 };
 
 #define bbeDefineProfilerToken(var, group, name, color) MICROPROFILE_DEFINE(var, group, name, color)
@@ -59,11 +70,9 @@ private:
 #define bbeProfileBlockEnd()                            MICROPROFILE_LEAVE()
 #define bbePIXEvent(gfxContext)                         const ScopedPixEvent bbeUniqueVariable(pixEvent) { gfxContext.GetCommandList().Dev() }
 
-#define bbeProfileGPU(gfxContext, str)                                                                   \
-    bbePIXEvent(gfxContext);                                                                             \
-    MICROPROFILE_SCOPEGPUI_L(gfxContext.GetGPUProfilerContext().GetLog(), str, GetCompileTimeCRC32(str))
+#define bbeDefineGPUProfilerToken(name) static MicroProfileToken gs_GPUProfilerToken_##name = MicroProfileGetToken("GPU", bbeTOSTRING(name), GetCompileTimeCRC32(bbeTOSTRING(name)), MicroProfileTokenTypeGpu)
+#define bbeGPUProfileToken(name) gs_GPUProfilerToken_##name
 
-#define bbeProfileGPUFunction(gfxContext)                                                                                  \
-    bbePIXEvent(gfxContext);                                                                                               \
-    MICROPROFILE_SCOPEGPUI_L(gfxContext.GetGPUProfilerContext().GetLog(), __FUNCTION__, GetCompileTimeCRC32(__FUNCTION__))
- 
+#define bbeProfileGPU(gfxContext, token)                                                     \
+    bbePIXEvent(gfxContext);                                                                 \
+    const ScopedGPUProfileHandler bbeUniqueVariable(scopedGPUProfiler) { token, gfxContext };

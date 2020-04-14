@@ -291,11 +291,9 @@ GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType, c
 
     newContext->m_ID          = newID;
     newContext->m_Device      = this;
-    newContext->m_CommandList = m_CommandListsManager.Allocate(cmdListType);
+    newContext->m_CommandList = m_CommandListsManager.Allocate(cmdListType, name);
 
     newContext->m_GPUProfilerContext.Initialize(newContext->m_CommandList->Dev());
-
-    SetD3DDebugName(newContext->GetCommandList().Dev(), name);
 
     return *newContext;
 }

@@ -152,6 +152,13 @@ void GfxManager::BeginFrame()
     m_GfxDevice.CheckStatus();
 
     UpdateFrameParamsCB();
+
+    GfxContext& context = m_GfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "ClearBackBuffer");
+    SetD3DDebugName(context.GetCommandList().Dev(), "ClearBackBuffer");
+
+    context.ClearRenderTargetView(g_GfxManager.GetSwapChain().GetCurrentBackBuffer(), bbeVector4{ 0.0f, 0.2f, 0.4f, 1.0f });
+
+    m_GfxDevice.Flush();
 }
 
 void GfxManager::EndFrame()
@@ -187,6 +194,8 @@ void GfxManager::TransitionBackBufferForPresent()
     SetD3DDebugName(context.GetCommandList().Dev(), "TransitionBackBufferForPresent");
 
     m_SwapChain.TransitionBackBufferForPresent(context);
+
+    m_GfxDevice.Flush();
 }
 
 void GfxManager::UpdateFrameParamsCB()

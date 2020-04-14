@@ -137,20 +137,13 @@ FrameRateController::~FrameRateController()
 
     bbeProfile("Idle");
 
-    const uint32_t s_FPSLimit = 60;
+    const uint32_t FPSLimit = 200;
 
     // busy wait until hard cap of 200 FPS
-    const uint64_t _200FPSFrameEndTime = Timer::MilliSecondsToTicks(1000.0 / 200);
-    BusyWaitUntil(_200FPSFrameEndTime);
+    const uint64_t FPSFrameEndTime = Timer::MilliSecondsToTicks(1000.0 / FPSLimit);
+    BusyWaitUntil(FPSFrameEndTime);
     g_System.m_RealFrameTimeMs = m_Timer.GetElapsedMicroSeconds();
     g_System.m_RealFPS = 1000.0 / m_Timer.GetElapsedMicroSeconds();
-
-
-    // busy wait until exactly fps limit
-    const uint64_t fpsLimitFrameEndTime = Timer::MilliSecondsToTicks(1000.0 / s_FPSLimit);
-    BusyWaitUntil(fpsLimitFrameEndTime);
-    g_System.m_CappedFrameTimeMs = m_Timer.GetElapsedMicroSeconds();
-    g_System.m_CappedFPS = 1000.0 / m_Timer.GetElapsedMicroSeconds();
 }
 
 void FrameRateController::BusyWaitUntil(uint64_t tick)
@@ -172,7 +165,6 @@ void CommandLineOptions::Parse()
     parser.add_argument("--resolution", "resolution");
     parser.add_argument("--gfxmemallocalwayscommitedmemory", "gfxmemallocalwayscommitedmemory");
     parser.add_argument("--enablegfxdebuglayer", "enablegfxdebuglayer");
-    parser.add_argument("--showimguidemowindows", "showimguidemowindows");
     parser.add_argument("--rununittests", "rununittests");
 
     try
@@ -189,7 +181,6 @@ void CommandLineOptions::Parse()
     m_ProfileShutdown                 = parser.exists("profileshutdown");
     m_GfxMemAllocAlwaysCommitedMemory = parser.exists("gfxmemallocalwayscommitedmemory");
     m_EnableGfxDebugLayer             = parser.exists("enablegfxdebuglayer");
-    m_ShowIMGUIDemoWindows            = parser.exists("showimguidemowindows");
     m_RunUnitTests                    = parser.exists("rununittests");
 
     if (parser.exists("resolution"))

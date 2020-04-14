@@ -1,5 +1,9 @@
-#include "system/profiler.h"
-#include "system/logger.h"
+#include <system/profiler.h>
+
+#include <system/logger.h>
+
+#include <graphic/gfxcontext.h>
+#include <graphic/gfxcommandlist.h>
 
 void SystemProfiler::Initialize()
 {
@@ -78,6 +82,8 @@ thread_local bool g_ThisThreadGPULogInit = false;
 
 void GPUProfilerContext::Initialize(void* commandList)
 {
+    assert(commandList);
+
     const int thisThreadID = g_TasksExecutor.this_worker_id();
     if (!g_ThisThreadGPULogInit)
     {
@@ -86,24 +92,41 @@ void GPUProfilerContext::Initialize(void* commandList)
     }
 
     m_LogContext = &g_Profiler.m_ThreadGPULogContexts[thisThreadID];
-
-    if (!m_LogContext->m_Recording)
-    {
-        MicroProfileGpuBegin(commandList, m_LogContext->m_GPULog);
-        m_LogContext->m_Recording = true;
-    }
 }
 
 void GPUProfilerContext::Submit(void* submissionQueue)
 {
+    assert(submissionQueue);
     assert(m_LogContext);
 
-    if (m_LogContext->m_Recording)
-    {
-        const int32_t queueHandle = g_Profiler.m_GPUQueueToProfilerHandle.at(submissionQueue);
-        const uint64_t token = MicroProfileGpuEnd(m_LogContext->m_GPULog);
-        MicroProfileGpuSubmit(queueHandle, token);
+    const int32_t queueHandle = g_Profiler.m_GPUQueueToProfilerHandle.at(submissionQueue);
 
-        m_LogContext->m_Recording = false;
+    for (MicroProfileToken& token : m_Tokens)
+    {
+        MICROPROFILE_GPU_SUBMIT(queueHandle, token);
     }
+    m_Tokens.clear();
+}
+
+ScopedGPUProfileHandler::ScopedGPUProfileHandler(MicroProfileToken& token, GfxContext& gfxContext)
+    : m_GfxContext(gfxContext)
+    , m_Token(token)
+{
+    void* cmdList = m_GfxContext.GetCommandList().Dev();
+    MicroProfileThreadLogGpu* log = m_GfxContext.GetGPUProfilerContext().GetLog();
+
+    MICROPROFILE_GPU_BEGIN(cmdList, log);
+    MICROPROFILE_GPU_ENTER_TOKEN_L(log, m_Token);
+}
+
+ScopedGPUProfileHandler::~ScopedGPUProfileHandler()
+{
+    GPUProfilerContext& context = m_GfxContext.GetGPUProfilerContext();
+
+    MicroProfileThreadLogGpu* log = context.GetLog();
+
+    MICROPROFILE_GPU_LEAVE_L(log);
+    m_Token = MICROPROFILE_GPU_END(log);
+
+    context.m_Tokens.push_back(m_Token);
 }
