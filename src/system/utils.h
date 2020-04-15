@@ -1,7 +1,5 @@
 #pragma once
 
-#include "extern/boost/container_hash/hash.hpp"
-
 #include <inttypes.h>
 #include <string>
 #include <utility>
