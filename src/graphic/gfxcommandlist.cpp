@@ -155,10 +155,10 @@ void GfxCommandListsManager::ExecuteAllActiveCommandLists()
             m_DirectPool.m_ActiveCommandLists.pop();
         }
     }
-
-    if (numCmdListsToExec > 0)
+    
+    for (uint32_t i = 0; i < numCmdListsToExec; ++i)
     {
-        m_DirectPool.m_CommandQueue->ExecuteCommandLists(numCmdListsToExec, ppCommandLists);
+        m_DirectPool.m_CommandQueue->ExecuteCommandLists(1, ppCommandLists + i);
     }
 
     {

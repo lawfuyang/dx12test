@@ -12,7 +12,6 @@ void SystemProfiler::Initialize()
     //turn on profiling
     MicroProfileOnThreadCreate("Main");
     MicroProfileSetEnableAllGroups(true);
-    MicroProfileSetForceMetaCounters(true);
 
     m_ThreadGPULogContexts.reserve(g_TasksExecutor.num_workers());
     m_GPUQueueToProfilerHandle.reserve(D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE + 1);
@@ -28,12 +27,7 @@ void SystemProfiler::InitializeGPUProfiler(void* pDevice, void* pCommandQueue)
 
 void SystemProfiler::RegisterGPUQueue(void* pCommandQueue, const char* queueName)
 {
-    m_GPUQueueToProfilerHandle[pCommandQueue] = MicroProfileInitGpuQueue(queueName);
-}
-
-void SystemProfiler::RegisterThread(const char* name)
-{
-    MicroProfileOnThreadCreate(name);
+    m_GPUQueueToProfilerHandle[pCommandQueue] = MICROPROFILE_GPU_INIT_QUEUE(queueName);
 }
 
 void SystemProfiler::ShutDown()
@@ -42,7 +36,7 @@ void SystemProfiler::ShutDown()
 
     for (auto& handles : m_GPUQueueToProfilerHandle)
     {
-        MicroProfileFreeGpuQueue(handles.second);
+        MICROPROFILE_GPU_FREE_QUEUE(handles.second);
     }
 
     MicroProfileShutdown();
@@ -50,13 +44,15 @@ void SystemProfiler::ShutDown()
 
 void SystemProfiler::OnFlip()
 {
-    for (const auto& elem : m_ThreadGPULogContexts)
-    {
-        const GPUProfileLogContext& context = elem.second;
-        MicroProfileThreadLogGpuReset(context.m_GPULog);
-    }
-
     MicroProfileFlip(nullptr);
+}
+
+void SystemProfiler::ResetGPULogs()
+{
+    for (const std::pair<int, GPUProfileLogContext>& elem : m_ThreadGPULogContexts)
+    {
+        MICROPROFILE_THREADLOGGPURESET(elem.second.m_GPULog);
+    }
 }
 
 void SystemProfiler::DumpProfilerBlocks(bool condition, bool immediately)
@@ -92,41 +88,24 @@ void GPUProfilerContext::Initialize(void* commandList)
     }
 
     m_LogContext = &g_Profiler.m_ThreadGPULogContexts[thisThreadID];
+
+    if (!m_LogContext->m_Recording)
+    {
+        MICROPROFILE_GPU_BEGIN(commandList, m_LogContext->m_GPULog);
+        m_LogContext->m_Recording = true;
+    }
 }
 
 void GPUProfilerContext::Submit(void* submissionQueue)
 {
     assert(submissionQueue);
-    assert(m_LogContext);
 
-    const int32_t queueHandle = g_Profiler.m_GPUQueueToProfilerHandle.at(submissionQueue);
-
-    for (MicroProfileToken& token : m_Tokens)
+    if (m_LogContext->m_Recording)
     {
+        const int32_t queueHandle = g_Profiler.m_GPUQueueToProfilerHandle.at(submissionQueue);
+        const auto token = MICROPROFILE_GPU_END(m_LogContext->m_GPULog);
         MICROPROFILE_GPU_SUBMIT(queueHandle, token);
+
+        m_LogContext->m_Recording = false;
     }
-    m_Tokens.clear();
-}
-
-ScopedGPUProfileHandler::ScopedGPUProfileHandler(MicroProfileToken& token, GfxContext& gfxContext)
-    : m_GfxContext(gfxContext)
-    , m_Token(token)
-{
-    void* cmdList = m_GfxContext.GetCommandList().Dev();
-    MicroProfileThreadLogGpu* log = m_GfxContext.GetGPUProfilerContext().GetLog();
-
-    MICROPROFILE_GPU_BEGIN(cmdList, log);
-    MICROPROFILE_GPU_ENTER_TOKEN_L(log, m_Token);
-}
-
-ScopedGPUProfileHandler::~ScopedGPUProfileHandler()
-{
-    GPUProfilerContext& context = m_GfxContext.GetGPUProfilerContext();
-
-    MicroProfileThreadLogGpu* log = context.GetLog();
-
-    MICROPROFILE_GPU_LEAVE_L(log);
-    m_Token = MICROPROFILE_GPU_END(log);
-
-    context.m_Tokens.push_back(m_Token);
 }

@@ -254,6 +254,7 @@ void GfxDevice::Flush(bool andWait)
         }
         m_AllContexts.clear();
     }
+    g_Profiler.ResetGPULogs();
 
     m_CommandListsManager.ExecuteAllActiveCommandLists();
 
