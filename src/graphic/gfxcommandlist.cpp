@@ -4,23 +4,6 @@
 #include "graphic/dx12utils.h"
 #include "graphic/gfxdevice.h"
 
-// copy-paste from MicroProfile-3.1
-struct GPULogMetadata
-{
-    using GPULogEntryType = uint64_t;
-    static const uint32_t GPU_LOG_BUFFER_SIZE = (MICROPROFILE_PER_THREAD_GPU_BUFFER_SIZE) / sizeof(GPULogEntryType);
-    static const uint32_t GPU_LOG_SCOPE_STACK_MAX = 32;
-
-    GPULogEntryType Log[GPU_LOG_BUFFER_SIZE];
-    uint32_t nPut;
-    uint32_t nStart;
-    uint32_t nId;
-    void* pContext;
-    uint32_t nAllocated;
-    uint32_t nStackScope;
-    MicroProfileScopeStateC ScopeState[GPU_LOG_SCOPE_STACK_MAX];
-};
-
 void GfxCommandList::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType)
 {
     bbeProfileFunction();
