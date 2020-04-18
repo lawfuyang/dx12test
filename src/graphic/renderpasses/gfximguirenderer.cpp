@@ -180,7 +180,7 @@ void GfxIMGUIRenderer::ShutDown()
 void GfxIMGUIRenderer::Render(GfxContext& context)
 {
     bbeProfileFunction();
-    bbeProfileGPU(context, "GfxIMGUIRenderer_GPU");
+    bbeProfileGPUFunction(context);
 
     static_assert(sizeof(ImDrawVert) == sizeof(float) * 2 + sizeof(float) * 2 + sizeof(uint32_t)); // Position2f_TexCoord2f_Color4ub
     static_assert(sizeof(ImDrawIdx) == sizeof(uint16_t)); // 2 byte index size

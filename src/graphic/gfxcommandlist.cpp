@@ -4,6 +4,23 @@
 #include "graphic/dx12utils.h"
 #include "graphic/gfxdevice.h"
 
+// copy-paste from MicroProfile-3.1
+struct GPULogMetadata
+{
+    using GPULogEntryType = uint64_t;
+    static const uint32_t GPU_LOG_BUFFER_SIZE = (MICROPROFILE_PER_THREAD_GPU_BUFFER_SIZE) / sizeof(GPULogEntryType);
+    static const uint32_t GPU_LOG_SCOPE_STACK_MAX = 32;
+
+    GPULogEntryType Log[GPU_LOG_BUFFER_SIZE];
+    uint32_t nPut;
+    uint32_t nStart;
+    uint32_t nId;
+    void* pContext;
+    uint32_t nAllocated;
+    uint32_t nStackScope;
+    MicroProfileScopeStateC ScopeState[GPU_LOG_SCOPE_STACK_MAX];
+};
+
 void GfxCommandList::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType)
 {
     bbeProfileFunction();
@@ -42,6 +59,19 @@ void GfxCommandList::BeginRecording()
 
     // When ExecuteCommandList() is called on a particular command list, that command list can then be reset at any time and must be before re-recording
     DX12_CALL(m_CommandList->Reset(m_CommandAllocator.Get(), nullptr));
+
+    m_Log = g_Profiler.GetLogForCurrentThread();
+
+    // MicroProfile checks for these values
+    // MP_ASSERT(pLog->pContext == (void*)-1); // dont call begin without calling end
+    // MP_ASSERT(pLog->nStart == (uint32_t)-1);
+    // MP_ASSERT(pContext != (void*)-1);
+
+    GPULogMetadata* logMetaData = reinterpret_cast<GPULogMetadata*>(m_Log);
+    if ((logMetaData->pContext == (void*)-1) && (logMetaData->nStart == (uint32_t)-1))
+    {
+        MICROPROFILE_GPU_BEGIN(m_CommandList.Get(), m_Log);
+    }
 }
 
 void GfxCommandList::EndRecording()
@@ -154,6 +184,8 @@ void GfxCommandListsManager::ExecuteAllActiveCommandLists()
             m_DirectPool.m_ActiveCommandLists.pop();
         }
     }
+
+    // TODO: Submit unique GPU logs
     
     if (numCmdListsToExec > 0)
     {

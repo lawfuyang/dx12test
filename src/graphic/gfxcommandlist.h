@@ -20,6 +20,7 @@ private:
     ComPtr<ID3D12GraphicsCommandList5> m_CommandList;
 
     std::string m_Name;
+    MicroProfileThreadLogGpu* m_Log = nullptr;
 
     friend class GfxCommandListsManager;
 };

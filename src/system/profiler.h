@@ -21,7 +21,7 @@ public:
     void ResetGPULogs();
     void DumpProfilerBlocks(bool condition, bool immediately = false);
 
-    MicroProfileThreadLogGpu* GetLogContextForCurrentThread();
+    MicroProfileThreadLogGpu* GetLogForCurrentThread();
     int GetGPUQueueHandle(void* queue) const { return m_GPUQueueToProfilerHandle.at(queue); }
 
 private:
@@ -40,8 +40,10 @@ private:
 #define bbeProfileBlockEnd()                            MICROPROFILE_LEAVE()
 #define bbePIXEvent(gfxContext)                         const ScopedPixEvent bbeUniqueVariable(pixEvent) { gfxContext.GetCommandList().Dev() }
 
-//#define bbeProfileGPU(gfxContext, name)                                                                         \
-//    bbePIXEvent(gfxContext);                                                                                    \
-//    MICROPROFILE_SCOPEGPUI_L(g_Profiler.GetLogContextForCurrentThread(), name, GetCompileTimeCRC32(name));
+#define bbeProfileGPU(gfxContext, name)                                                                   \
+    bbePIXEvent(gfxContext);                                                                              \
+    MICROPROFILE_SCOPEGPUI_L(g_Profiler.GetLogForCurrentThread(), name, GetCompileTimeCRC32(name));
 
-#define bbeProfileGPU __noop
+#define bbeProfileGPUFunction(gfxContext)                                                                                 \
+    bbePIXEvent(gfxContext);                                                                                              \
+    MICROPROFILE_SCOPEGPUI_L(g_Profiler.GetLogForCurrentThread(), __FUNCTION__, GetCompileTimeCRC32(__FUNCTION__));

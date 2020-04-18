@@ -76,7 +76,7 @@ void SystemProfiler::DumpProfilerBlocks(bool condition, bool immediately)
 
 thread_local bool g_ThisThreadGPULogInit = false;
 
-MicroProfileThreadLogGpu* SystemProfiler::GetLogContextForCurrentThread()
+MicroProfileThreadLogGpu* SystemProfiler::GetLogForCurrentThread()
 {
     const int thisThreadID = g_TasksExecutor.this_worker_id();
     if (!g_ThisThreadGPULogInit)
