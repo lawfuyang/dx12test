@@ -18,14 +18,10 @@ public:
     void RegisterGPUQueue(void* pCommandQueue, const char* queueName);
     void ShutDown();
     void OnFlip();
-    void ResetGPULogs();
     void DumpProfilerBlocks(bool condition, bool immediately = false);
-
-    MicroProfileThreadLogGpu* GetLogForCurrentThread();
     int GetGPUQueueHandle(void* queue) const { return m_GPUQueueToProfilerHandle.at(queue); }
 
 private:
-    std::unordered_map<int, MicroProfileThreadLogGpu*> m_ThreadGPULogs;
     std::unordered_map<void*, int> m_GPUQueueToProfilerHandle;
 
     friend class GPUProfilerContext;
@@ -42,8 +38,8 @@ private:
 
 #define bbeProfileGPU(gfxContext, name)                                                                   \
     bbePIXEvent(gfxContext);                                                                              \
-    MICROPROFILE_SCOPEGPUI_L(g_Profiler.GetLogForCurrentThread(), name, GetCompileTimeCRC32(name));
+    MICROPROFILE_SCOPEGPUI_L(gfxContext.GetCommandList().GetGPULog(), name, GetCompileTimeCRC32(name));
 
 #define bbeProfileGPUFunction(gfxContext)                                                                                 \
     bbePIXEvent(gfxContext);                                                                                              \
-    MICROPROFILE_SCOPEGPUI_L(g_Profiler.GetLogForCurrentThread(), __FUNCTION__, GetCompileTimeCRC32(__FUNCTION__));
+    MICROPROFILE_SCOPEGPUI_L(gfxContext.GetCommandList().GetGPULog(), __FUNCTION__, GetCompileTimeCRC32(__FUNCTION__));

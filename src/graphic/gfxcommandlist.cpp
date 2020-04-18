@@ -60,18 +60,8 @@ void GfxCommandList::BeginRecording()
     // When ExecuteCommandList() is called on a particular command list, that command list can then be reset at any time and must be before re-recording
     DX12_CALL(m_CommandList->Reset(m_CommandAllocator.Get(), nullptr));
 
-    m_Log = g_Profiler.GetLogForCurrentThread();
-
-    // MicroProfile checks for these values
-    // MP_ASSERT(pLog->pContext == (void*)-1); // dont call begin without calling end
-    // MP_ASSERT(pLog->nStart == (uint32_t)-1);
-    // MP_ASSERT(pContext != (void*)-1);
-
-    GPULogMetadata* logMetaData = reinterpret_cast<GPULogMetadata*>(m_Log);
-    if ((logMetaData->pContext == (void*)-1) && (logMetaData->nStart == (uint32_t)-1))
-    {
-        MICROPROFILE_GPU_BEGIN(m_CommandList.Get(), m_Log);
-    }
+    m_Log = MicroProfileThreadLogGpuAlloc();
+    MICROPROFILE_GPU_BEGIN(m_CommandList.Get(), m_Log);
 }
 
 void GfxCommandList::EndRecording()
@@ -170,6 +160,8 @@ void GfxCommandListsManager::ExecuteAllActiveCommandLists()
     uint32_t numCmdListsToExec = 0;
     GfxCommandList* ppPendingFreeCommandLists[MAX_CMD_LISTS] = {};
     ID3D12CommandList* ppCommandLists[MAX_CMD_LISTS] = {};
+
+    // end recording for all active cmd lists and remove them from active queue
     {
         bbeAutoLock(m_DirectPool.m_ListsLock);
         assert(m_DirectPool.m_ActiveCommandLists.size() < MAX_CMD_LISTS);
@@ -185,13 +177,21 @@ void GfxCommandListsManager::ExecuteAllActiveCommandLists()
         }
     }
 
-    // TODO: Submit unique GPU logs
+    // Submit GPU profiler logs
+    for (uint32_t i = 0; i < numCmdListsToExec; ++i)
+    {
+        const uint64_t token = MICROPROFILE_GPU_END(ppPendingFreeCommandLists[i]->m_Log);
+        MICROPROFILE_GPU_SUBMIT(g_Profiler.GetGPUQueueHandle(m_DirectPool.m_CommandQueue.Get()), token);
+        MicroProfileThreadLogGpuFree(ppPendingFreeCommandLists[i]->m_Log);
+    }
     
+    // execute cmd lists
     if (numCmdListsToExec > 0)
     {
         m_DirectPool.m_CommandQueue->ExecuteCommandLists(numCmdListsToExec, ppCommandLists);
     }
 
+    // add executed cmd lists to free list queue
     {
         bbeAutoLock(m_DirectPool.m_ListsLock);
 

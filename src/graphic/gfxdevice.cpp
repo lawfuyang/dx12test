@@ -250,7 +250,6 @@ void GfxDevice::Flush(bool andWait)
         bbeAutoLock(m_ContextsLock);
         m_AllContexts.clear();
     }
-    g_Profiler.ResetGPULogs();
 
     m_CommandListsManager.ExecuteAllActiveCommandLists();
 

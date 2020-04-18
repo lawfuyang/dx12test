@@ -13,7 +13,6 @@ void SystemProfiler::Initialize()
     MicroProfileOnThreadCreate("Main");
     MicroProfileSetEnableAllGroups(true);
 
-    m_ThreadGPULogs.reserve(g_TasksExecutor.num_workers());
     m_GPUQueueToProfilerHandle.reserve(D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE + 1);
 }
 
@@ -47,14 +46,6 @@ void SystemProfiler::OnFlip()
     MicroProfileFlip(nullptr);
 }
 
-void SystemProfiler::ResetGPULogs()
-{
-    for (const std::pair<int, MicroProfileThreadLogGpu*>& elem : m_ThreadGPULogs)
-    {
-        MICROPROFILE_THREADLOGGPURESET(elem.second);
-    }
-}
-
 void SystemProfiler::DumpProfilerBlocks(bool condition, bool immediately)
 {
     if (!condition)
@@ -72,18 +63,4 @@ void SystemProfiler::DumpProfilerBlocks(bool condition, bool immediately)
         // TODO: support auto dumping on CPU/GPU spike
         MicroProfileDumpFile(dumpFilePath.c_str(), nullptr, 0.0f, 0.0f);
     }
-}
-
-thread_local bool g_ThisThreadGPULogInit = false;
-
-MicroProfileThreadLogGpu* SystemProfiler::GetLogForCurrentThread()
-{
-    const int thisThreadID = g_TasksExecutor.this_worker_id();
-    if (!g_ThisThreadGPULogInit)
-    {
-        g_Profiler.m_ThreadGPULogs[thisThreadID] = MicroProfileThreadLogGpuAlloc();
-        g_ThisThreadGPULogInit = true;
-    }
-
-    return m_ThreadGPULogs.at(thisThreadID);
 }
