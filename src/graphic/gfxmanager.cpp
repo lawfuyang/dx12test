@@ -7,6 +7,7 @@
 #include <graphic/gfxshadermanager.h>
 #include <graphic/gfxvertexformat.h>
 #include <graphic/gfxdefaulttextures.h>
+#include <graphic/gfxtexturesandbuffers.h>
 
 #include <graphic/renderpasses/gfxtestrenderpass.h>
 #include <graphic/renderpasses/gfximguirenderer.h>

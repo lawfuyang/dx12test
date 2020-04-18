@@ -1,5 +1,10 @@
 #pragma once
 
+#define MICROPROFILE_ENABLED 1
+#define MICROPROFILE_GPU_TIMERS_D3D12 1
+#define MICROPROFILE_WEBSERVER_MAXFRAMES 100
+#include "extern/microprofile/microprofile.h"
+
 struct MicroProfileThreadLogGpu;
 class GfxContext;
 
@@ -32,7 +37,6 @@ private:
 #define bbeProfileToken(token)                          MICROPROFILE_SCOPE(token)
 #define bbeProfileFunction()                            MICROPROFILE_SCOPEI("", __FUNCTION__, GetCompileTimeCRC32(__FUNCTION__))
 #define bbeConditionalProfile(condition, name)          MICROPROFILE_CONDITIONAL_SCOPEI(condition, name, name, GetCompileTimeCRC32(name))
-#define bbeProfileBlockBegin(token)                     MICROPROFILE_ENTER(token)
 #define bbeProfileBlockEnd()                            MICROPROFILE_LEAVE()
 #define bbePIXEvent(gfxContext)                         const ScopedPixEvent bbeUniqueVariable(pixEvent) { gfxContext.GetCommandList().Dev() }
 

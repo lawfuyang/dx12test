@@ -1,12 +1,12 @@
 #pragma once
 
-#include "graphic/gfxcommandlist.h"
-#include "graphic/gfxcontext.h"
-#include "graphic/gfxfence.h"
-#include "graphic/gfxpipelinestateobject.h"
-#include "graphic/gfxswapchain.h"
-#include "graphic/gfxdescriptorheap.h"
-#include "graphic/gfxpipelinestateobject.h"
+#include <graphic/gfxcommandlist.h>
+#include <graphic/gfxcontext.h>
+#include <graphic/gfxfence.h>
+#include <graphic/gfxpipelinestateobject.h>
+#include <graphic/gfxswapchain.h>
+#include <graphic/gfxdescriptorheap.h>
+#include <graphic/gfxpipelinestateobject.h>
 
 namespace D3D12MA
 {
@@ -40,7 +40,7 @@ private:
     GfxCommandListsManager   m_CommandListsManager;
     GfxFence                 m_GfxFence;
 
-    AdaptiveLock m_ContextsLock{ "m_AllContexts lock" };
+    std::mutex m_ContextsLock;
     std::vector<GfxContext> m_AllContexts;
 
     ComPtr<ID3D12Device6> m_D3DDevice;

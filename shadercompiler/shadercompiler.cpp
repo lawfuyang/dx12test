@@ -12,7 +12,8 @@ std::string g_DXCDir;
 std::string g_ShadersEnumsAutoGenDir;
 std::string g_ShadersHeaderAutoGenDir;
 
-AdaptiveLock g_AllShaderCompileJobsLock{"g_AllShaderCompileJobsLock"};
+std::mutex g_AllShaderCompileJobsLock;
+std::mutex g_AllConstantBuffersLock;
 
 std::vector<std::string>                     g_AllShaderFiles;
 std::vector<ShaderCompileJob>                g_AllShaderCompileJobs;
@@ -321,8 +322,7 @@ static void HandleConstantBuffer(CFileWrapper& shaderFile, char (&line)[MAX_PATH
 
         newCBuffer.SanityCheck();
 
-        static AdaptiveLock s_Lock{"g_AllConstantBuffers lock"};
-        bbeAutoLock(s_Lock);
+        bbeAutoLock(g_AllConstantBuffersLock);
         g_AllConstantBuffers.push_back(newCBuffer);
     }
 }

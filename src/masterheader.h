@@ -47,33 +47,18 @@
 #include <windows.h>
 #include <winuser.h>
 
-// graphic stuff
+// DirectX
 #include <d3d12.h>
-#include <d3dcompiler.h>
 #include <d3d12sdklayers.h>
 #include <dxgi1_6.h>
 
-#include <extern/d3d12/D3D12MemAlloc.h>
 #include <extern/d3d12/d3dx12.h>
-#include <extern/d3d12/d3dx12Residency.h>
-
-#define USE_PIX
-#include <extern/pix/pix3.h>
 
 #include <extern/taskflow/taskflow.hpp>
 
 #include <extern/boost/container/small_vector.hpp>
 #include <extern/boost/pool/object_pool.hpp>
 #include <extern/boost/container_hash/hash.hpp>
-
-#include <extern/tbb/tbb/concurrent_queue.h>
-
-#include <extern/argparse/argparse.h>
-
-#define MICROPROFILE_ENABLED 1
-#define MICROPROFILE_GPU_TIMERS_D3D12 1
-#define MICROPROFILE_WEBSERVER_MAXFRAMES 100
-#include "extern/microprofile/microprofile.h"
 
 // typedefs
 using WindowHandle = uint64_t;

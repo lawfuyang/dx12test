@@ -34,7 +34,7 @@ private:
     GfxSwapChain      m_SwapChain;
     GfxConstantBuffer m_FrameParamsCB;
 
-    AdaptiveLock m_GfxCommandsLock{ "m_GfxCommands" };
+    std::mutex m_GfxCommandsLock;
     std::vector<std::function<void()>> m_PendingGfxCommands;
     std::vector<std::function<void()>> m_ExecutingGfxCommands;
 };

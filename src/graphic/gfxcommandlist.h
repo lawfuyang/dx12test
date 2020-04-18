@@ -42,7 +42,7 @@ private:
 
         boost::object_pool<GfxCommandList> m_CommandListsPool;
 
-        AdaptiveLock m_ListsLock{"m_ListsLock"};
+        std::mutex m_ListsLock;
         std::queue<GfxCommandList*> m_FreeCommandLists;
         std::queue<GfxCommandList*> m_ActiveCommandLists;
         std::queue<GfxCommandList*> m_PendingFreeCommandLists;
