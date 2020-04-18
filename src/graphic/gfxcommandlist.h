@@ -20,6 +20,8 @@ private:
     ComPtr<ID3D12GraphicsCommandList5> m_CommandList;
 
     std::string m_Name;
+
+    friend class GfxCommandListsManager;
 };
 
 class GfxCommandListsManager

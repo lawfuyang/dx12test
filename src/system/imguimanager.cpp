@@ -138,8 +138,7 @@ void IMGUIManager::Update()
     io.DisplaySize = ImVec2((float)(rect.right - rect.left), (float)(rect.bottom - rect.top));
 
     // Setup time step
-    m_Timer.Tick();
-    io.DeltaTime = (float)m_Timer.GetDeltaSeconds();
+    io.DeltaTime = (float)Timer::TicksToSeconds(m_Timer.Tick());
 
     // Read keyboard modifiers inputs
     io.KeyCtrl = g_Keyboard.IsKeyPressed(Keyboard::KEY_CTRL);

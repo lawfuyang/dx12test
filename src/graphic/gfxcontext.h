@@ -28,7 +28,6 @@ public:
     GfxDevice&              GetDevice()             { return *m_Device; }
     GfxCommandList&         GetCommandList()        { return *m_CommandList; }
     GfxPipelineStateObject& GetPSO()                { return m_PSO; }
-    GPUProfilerContext&     GetGPUProfilerContext() { return m_GPUProfilerContext; }
     CD3DX12_RECT&           GetScissorRect()        { return m_ScissorRect; }
     CD3DX12_VIEWPORT&       GetViewport()           { return m_Viewport; }
 
@@ -54,8 +53,6 @@ private:
     std::vector<GfxTexture*> m_SRVsToBind;
 
     GfxPipelineStateObject m_PSO;
-
-    GPUProfilerContext m_GPUProfilerContext;
 
     friend class GfxDevice;
 };

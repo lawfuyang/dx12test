@@ -59,35 +59,51 @@ void System::ProcessWindowsMessage(HWND hWnd, UINT message, WPARAM wParam, LPARA
     g_IMGUIManager.ProcessWindowsMessage(hWnd, message, wParam, lParam);
 }
 
+static void BusyWaitUntilFPSLimit(Timer& timer)
+{
+    bbeProfileFunction();
+
+    const uint32_t FPSLimit = 200;
+
+    // busy wait until hard cap of 200 FPS
+    const uint64_t FPSFrameEndTime = Timer::MilliSecondsToTicks(1000.0 / FPSLimit);
+
+    while (timer.GetElapsedTicks() < FPSFrameEndTime)
+    {
+        std::this_thread::yield();
+    }
+}
+
 void System::Loop()
 {
     g_Log.info("Entering main loop");
 
     do
     {
-        bbeProfile("Frame");
+        m_FrameTimer.Reset();
 
-        // limited FPS scope
-        {
-            const FrameRateController frcInstance;
+        RunKeyboardCommands();
 
-            RunKeyboardCommands();
+        tf::Taskflow tf;
 
-            tf::Taskflow tf;
+        ADD_SF_TASK(tf, UpdateGraphic(sf));
+        ADD_TF_TASK(tf, UpdateApplicationLayer());
+        ADD_TF_TASK(tf, g_IMGUIManager.Update());
 
-            ADD_SF_TASK(tf, UpdateGraphic(sf));
-            ADD_TF_TASK(tf, UpdateApplicationLayer());
-            ADD_TF_TASK(tf, g_IMGUIManager.Update());
+        m_Executor.run(tf).wait();
 
-            m_Executor.run(tf).wait();
+        // make sure I/O ticks happen last
+        g_Keyboard.Tick();
+        g_Mouse.Tick();
+        ++m_SystemFrameNumber;
 
-            // make sure I/O ticks happen last
-            g_Keyboard.Tick();
-            g_Mouse.Tick();
-            ++m_SystemFrameNumber;
-        }
+        g_Profiler.OnFlip();
 
-        g_Profiler.OnFlip(); // This shit costs ~0.4ms on the main CPU thread SingleThreaded!
+        BusyWaitUntilFPSLimit(m_FrameTimer);
+
+        const double elapsedMS = m_FrameTimer.GetElapsedMicroSeconds();
+        g_System.m_RealFrameTimeMs = elapsedMS;
+        g_System.m_RealFPS = 1000.0 / elapsedMS;
     } while (!m_Exit);
 
     g_Log.info("Exiting main loop");
@@ -129,30 +145,6 @@ void System::Shutdown()
 
     g_Profiler.DumpProfilerBlocks(g_CommandLineOptions.m_ProfileShutdown, true);
     g_Profiler.ShutDown();
-}
-
-FrameRateController::~FrameRateController()
-{
-    m_Timer.Tick();
-
-    bbeProfile("Idle");
-
-    const uint32_t FPSLimit = 200;
-
-    // busy wait until hard cap of 200 FPS
-    const uint64_t FPSFrameEndTime = Timer::MilliSecondsToTicks(1000.0 / FPSLimit);
-    BusyWaitUntil(FPSFrameEndTime);
-    g_System.m_RealFrameTimeMs = m_Timer.GetElapsedMicroSeconds();
-    g_System.m_RealFPS = 1000.0 / m_Timer.GetElapsedMicroSeconds();
-}
-
-void FrameRateController::BusyWaitUntil(uint64_t tick)
-{
-    while (m_Timer.GetElapsedTicks() < tick)
-    {
-        std::this_thread::yield();
-        m_Timer.Tick();
-    }
 }
 
 void CommandLineOptions::Parse()

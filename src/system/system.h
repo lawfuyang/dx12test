@@ -36,25 +36,13 @@ private:
 
     tf::Executor m_Executor;
 
+    Timer m_FrameTimer;
     uint32_t m_SystemFrameNumber = 0;
-
-    friend class FrameRateController;
 };
 #define g_System                    System::GetInstance()
 #define g_TasksExecutor             g_System.GetTasksExecutor()
 #define ADD_TF_TASK(taskFlow, task) taskFlow.emplace([&]() { task; }).name(bbeTOSTRING(task))
 #define ADD_SF_TASK(taskFlow, task) taskFlow.emplace([&](tf::Subflow& sf) { task; }).name(bbeTOSTRING(task))
-
-class FrameRateController
-{
-public:
-    ~FrameRateController();
-
-private:
-    void BusyWaitUntil(uint64_t tick);
-
-    Timer m_Timer;
-};
 
 struct CommandLineOptions
 {

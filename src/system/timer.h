@@ -4,15 +4,18 @@
 class Timer
 {
 public:
-    Timer() { QueryPerformanceCounter(&m_QPCStartTime); }
+    Timer() { Reset(); }
+
+    void Reset() 
+    {
+        QueryPerformanceCounter(&m_QPCStartTime);
+        m_ElapsedTicks = 0;
+    }
 
     // Get elapsed time since the previous Update call.
-    uint64_t GetElapsedTicks() const { return m_ElapsedTicks; }
-    double GetElapsedSeconds() const { return TicksToSeconds(m_ElapsedTicks); }
-    double GetElapsedMicroSeconds() const { return TicksToMilliSeconds(m_ElapsedTicks); }
-
-    uint64_t GetDeltaTicks() const { return m_DeltaTicks; }
-    double GetDeltaSeconds() const { return TicksToSeconds(m_DeltaTicks); }
+    uint64_t GetElapsedTicks() { Tick(); return m_ElapsedTicks; }
+    double GetElapsedSeconds() { return TicksToSeconds(GetElapsedTicks()); }
+    double GetElapsedMicroSeconds() { return TicksToMilliSeconds(GetElapsedTicks()); }
 
     // Integer format represents time using 10,000,000 ticks per second.
     static const uint64_t TicksPerSecond = 10000000;
@@ -25,19 +28,17 @@ public:
     constexpr static uint64_t MilliSecondsToTicks(double ms)    { return SecondsToTicks(ms / 1000); }
     constexpr static uint64_t MicroSecondsToTicks(double us)    { return MilliSecondsToTicks(us / 1000); }
 
-    using UpdateFunctor = void(*)(void);
-
-    // Update timer state, calling the specified Update function the appropriate number of times.
-    void Tick(UpdateFunctor updateFunctor = nullptr);
+    // Update timer state
+    uint64_t Tick();
 
 protected:
+
     // Source timing data uses QPC units.
     inline static LARGE_INTEGER ms_QPCFrequency;
     LARGE_INTEGER               m_QPCStartTime;
 
     // Derived timing data uses a canonical tick format.
     uint64_t m_ElapsedTicks = 0;
-    uint64_t m_DeltaTicks   = 0;
 
     friend struct StepTimerStaticsInitializer;
 };

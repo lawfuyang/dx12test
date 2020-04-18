@@ -1,4 +1,4 @@
-#include "gfxcommandlist.h"
+#include "graphic/gfxcommandlist.h"
 
 #include "graphic/gfxmanager.h"
 #include "graphic/dx12utils.h"
@@ -49,7 +49,6 @@ void GfxCommandList::EndRecording()
     DX12_CALL(m_CommandList->Close());
 }
 
-// TODO: Make queues for different types of cmd lists
 void GfxCommandListsManager::Initialize()
 {
     bbeProfileFunction();
@@ -156,9 +155,9 @@ void GfxCommandListsManager::ExecuteAllActiveCommandLists()
         }
     }
     
-    for (uint32_t i = 0; i < numCmdListsToExec; ++i)
+    if (numCmdListsToExec > 0)
     {
-        m_DirectPool.m_CommandQueue->ExecuteCommandLists(1, ppCommandLists + i);
+        m_DirectPool.m_CommandQueue->ExecuteCommandLists(numCmdListsToExec, ppCommandLists);
     }
 
     {

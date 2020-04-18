@@ -39,8 +39,6 @@ public:
     void ProcessWindowsMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
     void Update();
 
-
-
 private:
     void SaveDrawData();
     IMGUIDrawData GetDrawData() const { return m_DrawData[m_DrawDataIdx]; }

@@ -70,6 +70,11 @@
 
 #include <extern/argparse/argparse.h>
 
+#define MICROPROFILE_ENABLED 1
+#define MICROPROFILE_GPU_TIMERS_D3D12 1
+#define MICROPROFILE_WEBSERVER_MAXFRAMES 100
+#include "extern/microprofile/microprofile.h"
+
 // typedefs
 using WindowHandle = uint64_t;
 

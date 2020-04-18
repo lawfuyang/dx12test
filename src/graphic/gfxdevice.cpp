@@ -247,11 +247,6 @@ void GfxDevice::Flush(bool andWait)
 
     {
         bbeAutoLock(m_ContextsLock);
-
-        for (GfxContext& context : m_AllContexts)
-        {
-            context.GetGPUProfilerContext().Submit(m_CommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT));
-        }
         m_AllContexts.clear();
     }
     g_Profiler.ResetGPULogs();
@@ -293,8 +288,6 @@ GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType, c
     newContext->m_ID          = newID;
     newContext->m_Device      = this;
     newContext->m_CommandList = m_CommandListsManager.Allocate(cmdListType, name);
-
-    newContext->m_GPUProfilerContext.Initialize(newContext->m_CommandList->Dev());
 
     return *newContext;
 }

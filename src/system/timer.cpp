@@ -9,7 +9,7 @@ struct StepTimerStaticsInitializer
 };
 static StepTimerStaticsInitializer g_StepTimerStaticsInitializer;
 
-void Timer::Tick(UpdateFunctor updateFunctor)
+uint64_t Timer::Tick()
 {
     // Query the current time.
     LARGE_INTEGER currentTime;
@@ -25,10 +25,5 @@ void Timer::Tick(UpdateFunctor updateFunctor)
 
     // Variable timestep update logic.
     m_ElapsedTicks += timeDelta;
-    m_DeltaTicks = timeDelta;
-
-    if (updateFunctor)
-    {
-        updateFunctor();
-    }
+    return timeDelta;
 }
