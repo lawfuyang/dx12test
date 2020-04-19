@@ -1,5 +1,7 @@
 #pragma once
 
+#include <system/commandmanager.h>
+
 class System
 {
     DeclareSingletonFunctions(System);
@@ -9,6 +11,12 @@ public:
     void Shutdown();
     void ProcessWindowsMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     void Loop();
+
+    template <typename Lambda>
+    void AddSystemCommand(Lambda&& lambda) { m_SystemCommandManager.AddCommand(std::forward<Lambda>(lambda)); }
+
+    template <typename Lambda>
+    void AddBGAsyncCommand(Lambda&& lambda) { m_BGAsyncCommandManager.AddCommand(std::forward<Lambda>(lambda)); }
 
     double GetRealFrameTimeMs()       { return m_RealFrameTimeMs; }
     double GetRealFPS()               { return m_RealFPS; }
@@ -24,10 +32,15 @@ public:
 
 private:
     void RunKeyboardCommands();
+    void BGAsyncThreadLoop();
+
+    CommandManager m_SystemCommandManager;
+    CommandManager m_BGAsyncCommandManager;
 
     ::HWND m_EngineWindowHandle = nullptr;
 
     bool m_Exit = false;
+    bool m_BGAsyncThreadExit = false;
 
     double m_RealFPS = 0.0;
     double m_CappedFPS = 0.0;
@@ -35,6 +48,7 @@ private:
     double m_CappedFrameTimeMs = 0.0;
 
     tf::Executor m_Executor;
+    std::thread m_BGAsyncThread;
 
     Timer m_FrameTimer;
     uint32_t m_SystemFrameNumber = 0;

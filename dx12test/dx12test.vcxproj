@@ -89,6 +89,7 @@
     <ClCompile Include="..\src\graphic\gfxview.cpp" />
     <ClCompile Include="..\src\graphic\renderpasses\gfximguirenderer.cpp" />
     <ClCompile Include="..\src\graphic\renderpasses\gfxtestrenderpass.cpp" />
+    <ClCompile Include="..\src\system\commandmanager.cpp" />
     <ClCompile Include="..\src\system\imguimanager.cpp" />
     <ClCompile Include="..\src\system\keyboard.cpp" />
     <ClCompile Include="..\src\system\main.cpp" />
@@ -135,6 +136,7 @@
     <ClInclude Include="..\src\graphic\renderpasses\gfxrenderpass.h" />
     <ClInclude Include="..\src\graphic\renderpasses\gfxtestrenderpass.h" />
     <ClInclude Include="..\src\masterheader.h" />
+    <ClInclude Include="..\src\system\commandmanager.h" />
     <ClInclude Include="..\src\system\imguimanager.h" />
     <ClInclude Include="..\src\system\keyboard.h" />
     <ClInclude Include="..\src\system\locks.h" />

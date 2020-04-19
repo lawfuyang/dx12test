@@ -1,8 +1,10 @@
 #pragma once
 
-#include "graphic/gfxdevice.h"
-#include "graphic/gfxswapchain.h"
-#include "graphic/gfxtexturesandbuffers.h"
+#include <system/commandmanager.h>
+
+#include <graphic/gfxdevice.h>
+#include <graphic/gfxswapchain.h>
+#include <graphic/gfxtexturesandbuffers.h>
 
 class GfxManager
 {
@@ -17,7 +19,8 @@ public:
     void BeginFrame();
     void EndFrame();
 
-    void AddGraphicCommand(const std::function<void()>& newCmd) { bbeAutoLock(m_GfxCommandsLock); m_PendingGfxCommands.push_back(newCmd); }
+    template <typename Lambda>
+    void AddGraphicCommand(Lambda&& lambda) { m_GfxCommandManager.AddCommand(std::forward<Lambda>(lambda)); }
 
     void DumpGfxMemory();
 
@@ -34,8 +37,6 @@ private:
     GfxSwapChain      m_SwapChain;
     GfxConstantBuffer m_FrameParamsCB;
 
-    std::mutex m_GfxCommandsLock;
-    std::vector<std::function<void()>> m_PendingGfxCommands;
-    std::vector<std::function<void()>> m_ExecutingGfxCommands;
+    CommandManager m_GfxCommandManager;
 };
 #define g_GfxManager GfxManager::GetInstance()

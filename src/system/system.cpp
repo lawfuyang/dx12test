@@ -88,9 +88,17 @@ void System::Loop()
 
         tf::Taskflow tf;
 
-        ADD_SF_TASK(tf, UpdateGraphic(sf));
-        ADD_TF_TASK(tf, UpdateApplicationLayer());
-        ADD_TF_TASK(tf, g_IMGUIManager.Update());
+        tf::Task systemConsumptionTasks = ADD_SF_TASK(tf, m_SystemCommandManager.ConsumeCommandsMT(sf));
+
+        InplaceArray<tf::Task, 4> allSystemTasks;
+        allSystemTasks.push_back(ADD_SF_TASK(tf, UpdateGraphic(sf)));
+        allSystemTasks.push_back(ADD_TF_TASK(tf, UpdateApplicationLayer()));
+        allSystemTasks.push_back(ADD_TF_TASK(tf, g_IMGUIManager.Update()));
+
+        for (tf::Task task : allSystemTasks)
+        {
+            systemConsumptionTasks.precede(task);
+        }
 
         m_Executor.run(tf).wait();
 
@@ -116,12 +124,26 @@ void System::RunKeyboardCommands()
     g_Profiler.DumpProfilerBlocks(Keyboard::IsKeyPressed(Keyboard::KEY_P));
 }
 
+void System::BGAsyncThreadLoop()
+{
+    MicroProfileOnThreadCreate("BG Async Thread");
+
+    while (!m_BGAsyncThreadExit)
+    {
+        m_BGAsyncCommandManager.ConsumeCommandsST();
+
+        ::Sleep(1);
+    }
+}
+
 void System::Initialize()
 {
     g_Profiler.Initialize();
 
     {
         bbeProfileFunction();
+
+        m_BGAsyncThread = std::thread([&]() { BGAsyncThreadLoop(); });
 
         tf::Taskflow tf;
 
@@ -143,6 +165,13 @@ void System::Shutdown()
         g_IMGUIManager.ShutDown();
         ShutdownApplicationLayer();
         ShutdownGraphic();
+
+        {
+            bbeProfile("Wait BG Async Thread Done");
+
+            m_BGAsyncThreadExit = true;
+            m_BGAsyncThread.join();
+        }
     }
 
     g_Profiler.DumpProfilerBlocks(g_CommandLineOptions.m_ProfileShutdown, true);
