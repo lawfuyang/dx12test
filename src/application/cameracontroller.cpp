@@ -1,17 +1,23 @@
-#include "application/cameracontroller.h"
+#include <application/cameracontroller.h>
 
-#include "graphic/gfxview.h"
+#include <system/imguimanager.h>
+#include <graphic/gfxview.h>
 
 void CameraController::Initialize()
 {
     Reset();
 
-    m_MouseLastPos = { Mouse::GetX(), Mouse::GetY() };
+    m_CurrentMousePos = m_MouseLastPos = { Mouse::GetX(), Mouse::GetY() };
+
+    g_System.AddSystemCommand([&]() 
+        {
+            g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUIPropertyGrid(); });
+        });
 }
 
 bbeMatrix CameraController::Get3DViewProjMatrix()
 {
-    const float aspectRatio = (float)g_CommandLineOptions.m_WindowWidth / (float)g_CommandLineOptions.m_WindowHeight; // TODO: retrieve window dimensions from somewhere legit
+    const float aspectRatio = (float)g_CommandLineOptions.m_WindowWidth / (float)g_CommandLineOptions.m_WindowHeight;
     const float fovAngleY = DirectX::XMConvertToRadians(m_FOV);
 
     const bbeVector3 focusPosition = m_EyePosition + m_Dir;
@@ -48,8 +54,7 @@ void CameraController::UpdateEyePosition()
 
 void CameraController::UpdateCameraRotation()
 {
-    const bbeVector2 mousePos{ Mouse::GetX(), Mouse::GetY() };
-    const bbeVector2 mouseDeltaVec = mousePos - m_MouseLastPos;
+    const bbeVector2 mouseDeltaVec = m_CurrentMousePos - m_MouseLastPos;
 
     // compute new camera angles and vectors based off mouse delta
     m_HorizontalAngle -= m_MouseRotationSpeed * float(mouseDeltaVec.x);
@@ -68,34 +73,30 @@ void CameraController::UpdateCameraRotation()
         0,
         std::cos(m_HorizontalAngle - bbePIBy2),
     };
+}
 
-    // lock mouse to center of window when rotating camera
-    // get engine window dimensions
-    ::RECT clientRect = {};
-    ::GetClientRect(g_System.GetEngineWindowHandle(), &clientRect);
-
-    // get engine window position in monitor screen coords
-    ::POINT clientToScreen = {};
-    ::ClientToScreen(g_System.GetEngineWindowHandle(), &clientToScreen);
-
-    // lock mouse to center of window, in monitor screen coords
-    ::SetCursorPos(clientToScreen.x + (clientRect.right / 2), clientToScreen.y + (clientRect.bottom / 2));
-
-    // set last mouse pos to center of window, in window coords
-    m_MouseLastPos = { (float)g_CommandLineOptions.m_WindowWidth / 2, (float)g_CommandLineOptions.m_WindowHeight / 2 };
+void CameraController::UpdateIMGUIPropertyGrid()
+{
+    ImGui::Begin("CameraController");
+    ImGui::Text("Current Mouse Position: %.3f, %.3f", m_CurrentMousePos.x, m_CurrentMousePos.y);
+    ImGui::End();
 }
 
 void CameraController::Update()
 {
+    m_MouseLastPos = m_CurrentMousePos;
+    m_CurrentMousePos = { Mouse::GetX(), Mouse::GetY() };
+
+    // for some weird reason, windows underflows to 65535 when cursor is crosses left/top window
+    m_CurrentMousePos.x = m_CurrentMousePos.x > 60000.0f ? 0.0f : m_CurrentMousePos.x;
+    m_CurrentMousePos.y = m_CurrentMousePos.y > 60000.0f ? 0.0f : m_CurrentMousePos.y;
+    m_CurrentMousePos.Clamp(bbeVector2::Zero, { (float)g_CommandLineOptions.m_WindowWidth, (float)g_CommandLineOptions.m_WindowHeight });
+
     UpdateEyePosition();
 
     if (Mouse::IsButtonPressed(Mouse::Right))
     {
         UpdateCameraRotation();
-    }
-    else
-    {
-        m_MouseLastPos = { Mouse::GetX(), Mouse::GetY() };
     }
 
     m_UpDirection = m_RightDirection.Cross(m_EyePosition);

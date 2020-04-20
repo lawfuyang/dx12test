@@ -38,10 +38,14 @@ public:
 
     void ProcessWindowsMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
     void Update();
+    void RegisterWindowUpdateCB(const std::function<void()>&);
 
 private:
     void SaveDrawData();
     IMGUIDrawData GetDrawData() const { return m_DrawData[m_DrawDataIdx]; }
+
+    std::mutex m_UpdateCBsLock;
+    std::vector<std::function<void()>> m_UpdateCBs;
 
     Timer m_Timer;
 

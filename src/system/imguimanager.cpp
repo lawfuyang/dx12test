@@ -162,8 +162,6 @@ void IMGUIManager::Update()
 
     ImGui::NewFrame();
 
-    // TODO: update all IMGUI windows here
-
     // Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
     static bool showDemoWindow = false;
     if (showDemoWindow)
@@ -172,17 +170,35 @@ void IMGUIManager::Update()
         ImGui::ShowDemoWindow(&isDUmmyWindowOpen);
     }
 
+    // update main window grid
     ImGui::Begin("Main Grid");
-
     ImGui::Text("Frame Time: %.3f ms", 1000.0f / ImGui::GetIO().Framerate);
     ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
     ImGui::Checkbox("Show Demo Window", &showDemoWindow);
     ImGui::End();
 
+    // swap and update the rest
+    InplaceArray<std::function<void()>, 128> windowUpdateCBs;
+    {
+        bbeAutoLock(m_UpdateCBsLock);
+        std::copy(m_UpdateCBs.begin(), m_UpdateCBs.end(), std::back_inserter(windowUpdateCBs));
+    }
+
+    for (const std::function<void()>& cb : windowUpdateCBs)
+    {
+        cb();
+    }
+
     // This will back up the render data until the next frame.
     SaveDrawData();
 
     m_DrawDataIdx = 1 - m_DrawDataIdx;
+}
+
+void IMGUIManager::RegisterWindowUpdateCB(const std::function<void()>& cb)
+{
+    bbeAutoLock(m_UpdateCBsLock);
+    m_UpdateCBs.push_back(cb);
 }
 
 void IMGUIManager::SaveDrawData()
