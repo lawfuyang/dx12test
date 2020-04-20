@@ -18,10 +18,8 @@ public:
     template <typename Lambda>
     void AddBGAsyncCommand(Lambda&& lambda) { m_BGAsyncCommandManager.AddCommand(std::forward<Lambda>(lambda)); }
 
-    double GetRealFrameTimeMs()       { return m_RealFrameTimeMs; }
-    double GetRealFPS()               { return m_RealFPS; }
-    double GetCappedFrameTimeMs()     { return m_CappedFrameTimeMs; }
-    double GetCappedFPS()             { return m_CappedFPS; }
+    double GetFrameTimeMs() { return m_FrameTimeMs; }
+    double GetFPS()         { return m_FPS; }
 
     uint32_t GetSystemFrameNumber() { return m_SystemFrameNumber; }
 
@@ -42,10 +40,8 @@ private:
     bool m_Exit = false;
     bool m_BGAsyncThreadExit = false;
 
-    double m_RealFPS = 0.0;
-    double m_CappedFPS = 0.0;
-    double m_RealFrameTimeMs   = 0.0;
-    double m_CappedFrameTimeMs = 0.0;
+    double m_FPS = 0.0;
+    double m_FrameTimeMs = 0.0;
 
     tf::Executor m_Executor;
     std::thread m_BGAsyncThread;

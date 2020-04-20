@@ -112,8 +112,8 @@ void System::Loop()
         BusyWaitUntilFPSLimit(m_FrameTimer);
 
         const double elapsedMS = m_FrameTimer.GetElapsedMicroSeconds();
-        g_System.m_RealFrameTimeMs = elapsedMS;
-        g_System.m_RealFPS = 1000.0 / elapsedMS;
+        g_System.m_FrameTimeMs = elapsedMS;
+        g_System.m_FPS = 1000.0 / elapsedMS;
     } while (!m_Exit);
 
     g_Log.info("Exiting main loop");

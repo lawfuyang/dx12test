@@ -267,9 +267,6 @@
     <Filter Include="graphic">
       <UniqueIdentifier>{15eb86ff-65b1-4204-8e76-757f7fdaeb58}</UniqueIdentifier>
     </Filter>
-    <Filter Include="dx12">
-      <UniqueIdentifier>{fc42bfd4-3ab6-4f20-9431-e657b2698d47}</UniqueIdentifier>
-    </Filter>
     <Filter Include="extern">
       <UniqueIdentifier>{fdc0d768-648d-466e-8b82-51fe7867e557}</UniqueIdentifier>
     </Filter>

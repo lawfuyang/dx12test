@@ -77,7 +77,7 @@ void Mouse::Tick()
     for (uint32_t i = 0; i < _countof(m_PressedTime); ++i)
     {
         if (m_Pressed[i])
-            m_PressedTime[i] += (float)g_System.GetRealFrameTimeMs();
+            m_PressedTime[i] += (float)g_System.GetFrameTimeMs();
         else
             m_PressedTime[i] = 0;
     }

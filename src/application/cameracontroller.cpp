@@ -43,7 +43,7 @@ void CameraController::UpdateEyePosition()
     }
 
     finalMoveVector.Normalize();
-    m_EyePosition += finalMoveVector * m_CameraMoveSpeed * (float)g_System.GetCappedFrameTimeMs();
+    m_EyePosition += finalMoveVector * m_CameraMoveSpeed * (float)g_System.GetFrameTimeMs();
 }
 
 void CameraController::UpdateCameraRotation()
