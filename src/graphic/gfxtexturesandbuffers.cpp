@@ -134,9 +134,15 @@ void GfxVertexBuffer::Initialize(GfxContext& initContext, const InitParams& init
     assert(initParams.m_NumVertices > 0);
     assert(initParams.m_VertexSize > 0);
 
+    if (initParams.m_NumVertices >= std::numeric_limits<uint16_t>().max())
+        assert(false);
+
     m_NumVertices = initParams.m_NumVertices;
     m_StrideInBytes = initParams.m_VertexSize;
     m_SizeInBytes = initParams.m_VertexSize * initParams.m_NumVertices;
+
+    if (m_SizeInBytes > D3D12_REQ_RESOURCE_SIZE_IN_MEGABYTES_EXPRESSION_A_TERM * 1024 * 1024)
+        assert(false);
 
     // identify resource initial state
     D3D12_RESOURCE_STATES initialState;
@@ -179,6 +185,9 @@ void GfxIndexBuffer::Initialize(GfxContext& initContext, const InitParams& initP
     assert(!m_D3D12MABufferAllocation);
     assert(initParams.m_NumIndices);
     assert(initParams.m_IndexSize == 2 || initParams.m_IndexSize == 4);
+
+    if (initParams.m_NumIndices > std::numeric_limits<uint32_t>().max())
+        assert(false);
 
     m_NumIndices = initParams.m_NumIndices;
     m_Format = initParams.m_IndexSize == 2 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;

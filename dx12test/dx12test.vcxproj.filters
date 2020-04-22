@@ -121,6 +121,9 @@
     <ClCompile Include="..\src\system\commandmanager.cpp">
       <Filter>system</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxdefaultgeometry.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -258,6 +261,9 @@
     </ClInclude>
     <ClInclude Include="..\src\system\commandmanager.h">
       <Filter>system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxdefaultgeometry.h">
+      <Filter>graphic</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
