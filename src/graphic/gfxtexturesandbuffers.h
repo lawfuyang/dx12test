@@ -59,7 +59,7 @@ public:
         const void*     m_InitData     = nullptr;
         uint32_t        m_NumVertices  = 0;
         uint32_t        m_VertexSize   = 0;
-        const char*     m_ResourceName = "";
+        std::string     m_ResourceName;
         D3D12_HEAP_TYPE m_HeapType     = D3D12_HEAP_TYPE_DEFAULT;
     };
 
@@ -83,7 +83,7 @@ public:
         const void*     m_InitData     = nullptr;
         uint32_t        m_NumIndices   = 0;
         uint32_t        m_IndexSize    = 0;
-        const char*     m_ResourceName = "";
+        std::string     m_ResourceName = "";
         D3D12_HEAP_TYPE m_HeapType     = D3D12_HEAP_TYPE_DEFAULT;
     };
 
@@ -126,7 +126,7 @@ public:
         uint32_t              m_Height       = 0;
         D3D12_RESOURCE_FLAGS  m_Flags        = D3D12_RESOURCE_FLAG_NONE;
         const void*           m_InitData     = nullptr;
-        const char*           m_ResourceName = "";
+        std::string           m_ResourceName = "";
         D3D12_RESOURCE_STATES m_InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
     };
 

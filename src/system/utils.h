@@ -226,3 +226,5 @@ static std::size_t GenericTypeHash(const T& s)
     boost::hash_range(hash, rawMem, rawMem + sizeof(T));
     return hash;
 }
+
+void ReadDataFromFile(const std::string& filename, std::vector<std::byte>& data);

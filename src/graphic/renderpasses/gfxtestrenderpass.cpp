@@ -4,8 +4,7 @@
 #include <graphic/gfxcontext.h>
 #include <graphic/gfxswapchain.h>
 #include <graphic/gfxview.h>
-#include <graphic/gfxdefaulttextures.h>
-#include <graphic/gfxdefaultgeometry.h>
+#include <graphic/gfxdefaultassets.h>
 
 #include <tmp/shaders/TestShaderConsts.h>
 
@@ -33,7 +32,7 @@ void GfxTestRenderPass::Render(GfxContext& context)
     m_RenderPassCB.Update(&consts);
 
     context.BindConstantBuffer(m_RenderPassCB);
-    context.BindSRV(GfxDefaultTextures::Checkerboard);
+    context.BindSRV(GfxDefaultAssets::Checkerboard);
 
     GfxPipelineStateObject& pso = context.GetPSO();
 
@@ -48,9 +47,9 @@ void GfxTestRenderPass::Render(GfxContext& context)
     pso.SetPixelShader(g_GfxShaderManager.GetShader(ShaderPermutation::PS_TestTriangle));
     pso.SetVertexInputLayout(GfxDefaultVertexFormats::Position3f_Normal3f_Texcoord2f);
 
-    context.SetVertexBuffer(GfxDefaultGeometry::UnitCube.VertexBuffer);
-    context.SetIndexBuffer(GfxDefaultGeometry::UnitCube.IndexBuffer);
+    context.SetVertexBuffer(GfxDefaultAssets::UnitCube.GetVertexBuffer());
+    context.SetIndexBuffer(GfxDefaultAssets::UnitCube.GetIndexBuffer());
     context.SetRenderTarget(0, g_GfxManager.GetSwapChain().GetCurrentBackBuffer());
 
-    context.DrawIndexedInstanced(GfxDefaultGeometry::UnitCube.IndexBuffer.GetSizeInBytes() / 2, 1, 0, 0, 0);
+    context.DrawIndexedInstanced(GfxDefaultAssets::UnitCube.GetIndexBuffer().GetSizeInBytes() / 2, 1, 0, 0, 0);
 }

@@ -4,7 +4,6 @@
 
 #include <graphic/gfxmanager.h>
 #include <graphic/gfxcontext.h>
-#include <graphic/gfxdefaulttextures.h>
 
 #include <tmp/shaders/IMGUICBuffer.h>
 

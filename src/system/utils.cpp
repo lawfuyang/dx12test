@@ -153,3 +153,39 @@ void MultithreadDetector::Exit()
 {
     m_CurrentID = std::thread::id{};
 }
+
+void ReadDataFromFile(const std::string& filename, std::vector<std::byte>& data)
+{
+    assert(data.empty());
+
+    using namespace Microsoft::WRL;
+
+    CREATEFILE2_EXTENDED_PARAMETERS extendedParams = {};
+    extendedParams.dwSize = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
+    extendedParams.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+    extendedParams.dwFileFlags = FILE_FLAG_SEQUENTIAL_SCAN;
+    extendedParams.dwSecurityQosFlags = SECURITY_ANONYMOUS;
+    extendedParams.lpSecurityAttributes = nullptr;
+    extendedParams.hTemplateFile = nullptr;
+
+    const std::wstring fileNameW = MakeWStrFromStr(filename);
+
+    Wrappers::FileHandle file(CreateFile2(fileNameW.c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &extendedParams));
+    assert(file.Get() != INVALID_HANDLE_VALUE);
+
+    FILE_STANDARD_INFO fileInfo = {};
+    if (!GetFileInformationByHandleEx(file.Get(), FileStandardInfo, &fileInfo, sizeof(fileInfo)))
+    {
+        assert(false);
+    }
+
+    assert(fileInfo.EndOfFile.HighPart == 0);
+
+    const uint32_t size = fileInfo.EndOfFile.LowPart;
+    data.resize(size);
+
+    if (!ReadFile(file.Get(), data.data(), fileInfo.EndOfFile.LowPart, nullptr, nullptr))
+    {
+        assert(false);
+    }
+}

@@ -91,9 +91,6 @@
     <ClCompile Include="..\extern\simplemath\SimpleMath.cpp">
       <Filter>extern\simplemath</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxdefaulttextures.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\system\memcpy.cpp">
       <Filter>system</Filter>
     </ClCompile>
@@ -121,7 +118,10 @@
     <ClCompile Include="..\src\system\commandmanager.cpp">
       <Filter>system</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxdefaultgeometry.cpp">
+    <ClCompile Include="..\src\graphic\gfxmesh.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxdefaultassets.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
   </ItemGroup>
@@ -235,9 +235,6 @@
     <ClInclude Include="..\src\application\cameracontroller.h">
       <Filter>application</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxdefaulttextures.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\system\memcpy.h">
       <Filter>system</Filter>
     </ClInclude>
@@ -262,7 +259,13 @@
     <ClInclude Include="..\src\system\commandmanager.h">
       <Filter>system</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxdefaultgeometry.h">
+    <ClInclude Include="..\src\defaultassets\occcity.h">
+      <Filter>defaultassets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxmesh.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxdefaultassets.h">
       <Filter>graphic</Filter>
     </ClInclude>
   </ItemGroup>
@@ -296,6 +299,9 @@
     </Filter>
     <Filter Include="unittests">
       <UniqueIdentifier>{10f59006-77ab-4f35-ac49-55697776e63c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="defaultassets">
+      <UniqueIdentifier>{d2c04ce1-f141-4f46-800b-4cdee2ca597c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

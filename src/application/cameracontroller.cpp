@@ -78,7 +78,15 @@ void CameraController::UpdateCameraRotation()
 void CameraController::UpdateIMGUIPropertyGrid()
 {
     ImGui::Begin("CameraController");
-    ImGui::Text("Current Mouse Position: %.3f, %.3f", m_CurrentMousePos.x, m_CurrentMousePos.y);
+    ImGui::InputFloat3("Camera Position", (float*)&m_EyePosition);
+
+    if (ImGui::InputFloat3("Camera Direction", (float*)&m_Dir))
+    {
+        m_Dir.Normalize();
+    }
+
+    ImGui::Text("Mouse Position: %.3f, %.3f", m_CurrentMousePos.x, m_CurrentMousePos.y);
+
     ImGui::End();
 }
 
@@ -107,7 +115,7 @@ void CameraController::Update()
 
 void CameraController::Reset()
 {
-    m_EyePosition = { 0.0f, 0.0f, -1.0f };
+    m_EyePosition = { 0.0f, 0.0f, -5.0f };
     m_Dir = { 0.0f, 0.0f, 1.0f };
     m_UpDirection = { 0.0f, 1.0f, 0.0f };
     m_RightDirection = { 1.0f, 0.0f, 0.0f };

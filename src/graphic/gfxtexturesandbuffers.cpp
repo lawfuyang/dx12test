@@ -158,13 +158,13 @@ void GfxVertexBuffer::Initialize(GfxContext& initContext, const InitParams& init
     const bool hasInitData = initParams.m_InitData != nullptr;
 
     // Create heap to hold final buffer data
-    m_D3D12MABufferAllocation = CreateHeap(initContext, initParams.m_HeapType, CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes), hasInitData ? D3D12_RESOURCE_STATE_COPY_DEST : initialState, initParams.m_ResourceName);
+    m_D3D12MABufferAllocation = CreateHeap(initContext, initParams.m_HeapType, CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes), hasInitData ? D3D12_RESOURCE_STATE_COPY_DEST : initialState, initParams.m_ResourceName.c_str());
     assert(m_D3D12MABufferAllocation);
     m_Resource = m_D3D12MABufferAllocation->GetResource();
 
     if (hasInitData)
     {
-        InitializeBufferWithInitData(initContext, m_SizeInBytes, m_SizeInBytes, m_SizeInBytes, initParams.m_InitData, initParams.m_ResourceName);
+        InitializeBufferWithInitData(initContext, m_SizeInBytes, m_SizeInBytes, m_SizeInBytes, initParams.m_InitData, initParams.m_ResourceName.c_str());
 
         // after uploading init values, transition the vertex buffer data from copy destination state to vertex buffer state
         Transition(initContext.GetCommandList(), initialState);
@@ -207,13 +207,13 @@ void GfxIndexBuffer::Initialize(GfxContext& initContext, const InitParams& initP
     const bool hasInitData = initParams.m_InitData != nullptr;
 
     // Create heap to hold final buffer data
-    m_D3D12MABufferAllocation = CreateHeap(initContext, initParams.m_HeapType, CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes), hasInitData ? D3D12_RESOURCE_STATE_COPY_DEST : initialState, initParams.m_ResourceName);
+    m_D3D12MABufferAllocation = CreateHeap(initContext, initParams.m_HeapType, CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes), hasInitData ? D3D12_RESOURCE_STATE_COPY_DEST : initialState, initParams.m_ResourceName.c_str());
     assert(m_D3D12MABufferAllocation);
     m_Resource = m_D3D12MABufferAllocation->GetResource();
 
     if (hasInitData)
     {
-        InitializeBufferWithInitData(initContext, m_SizeInBytes, m_SizeInBytes, m_SizeInBytes, initParams.m_InitData, initParams.m_ResourceName);
+        InitializeBufferWithInitData(initContext, m_SizeInBytes, m_SizeInBytes, m_SizeInBytes, initParams.m_InitData, initParams.m_ResourceName.c_str());
 
         // after uploading init values, transition the index buffer data from copy destination state to index buffer state
         Transition(initContext.GetCommandList(), initialState);
@@ -298,7 +298,7 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     const bool hasInitData = initParams.m_InitData != nullptr;
 
     // Create heap to hold final buffer data
-    m_D3D12MABufferAllocation = CreateHeap(initContext, D3D12_HEAP_TYPE_DEFAULT, desc, hasInitData ? D3D12_RESOURCE_STATE_COPY_DEST : initParams.m_InitialState, initParams.m_ResourceName);
+    m_D3D12MABufferAllocation = CreateHeap(initContext, D3D12_HEAP_TYPE_DEFAULT, desc, hasInitData ? D3D12_RESOURCE_STATE_COPY_DEST : initParams.m_InitialState, initParams.m_ResourceName.c_str());
     assert(m_D3D12MABufferAllocation);
     m_Resource = m_D3D12MABufferAllocation->GetResource();
 
@@ -310,7 +310,7 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
 
         const uint32_t uploadBufferSize = (uint32_t)GetRequiredIntermediateSize(m_Resource.Get(), 0, 1);
         const uint32_t rowPitch = initParams.m_Width * (GetBitsPerPixel(initParams.m_Format) / 8);
-        InitializeBufferWithInitData(initContext, uploadBufferSize, rowPitch, rowPitch * initParams.m_Height, initParams.m_InitData, initParams.m_ResourceName);
+        InitializeBufferWithInitData(initContext, uploadBufferSize, rowPitch, rowPitch * initParams.m_Height, initParams.m_InitData, initParams.m_ResourceName.c_str());
 
         // after uploading init values, transition the texture from copy destination state to common state
         Transition(initContext.GetCommandList(), initParams.m_InitialState);
