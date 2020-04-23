@@ -29,15 +29,16 @@ bbeMatrix CameraController::Get3DViewProjMatrix()
 
 void CameraController::UpdateEyePosition()
 {
-    bbeVector3 finalMoveVector = bbeVector3::Zero;
+    // Calculate the move vector in camera space.
+    bbeVector3 finalMoveVector;
 
     if (Keyboard::IsKeyPressed(Keyboard::KEY_A))
     {
-        finalMoveVector -= m_RightDirection;
+        finalMoveVector += m_RightDirection;
     }
     if (Keyboard::IsKeyPressed(Keyboard::KEY_D))
     {
-        finalMoveVector += m_RightDirection;
+        finalMoveVector -= m_RightDirection;
     }
     if (Keyboard::IsKeyPressed(Keyboard::KEY_W))
     {
@@ -48,7 +49,11 @@ void CameraController::UpdateEyePosition()
         finalMoveVector -= m_Dir;
     }
 
-    finalMoveVector.Normalize();
+    if (finalMoveVector.LengthSquared() > 0.1f)
+    {
+        finalMoveVector.Normalize();
+    }
+
     m_EyePosition += finalMoveVector * m_CameraMoveSpeed * (float)g_System.GetFrameTimeMs();
 }
 
@@ -57,37 +62,49 @@ void CameraController::UpdateCameraRotation()
     const bbeVector2 mouseDeltaVec = m_CurrentMousePos - m_MouseLastPos;
 
     // compute new camera angles and vectors based off mouse delta
-    m_HorizontalAngle -= m_MouseRotationSpeed * float(mouseDeltaVec.x);
-    m_VerticalAngle += m_MouseRotationSpeed * float(mouseDeltaVec.y);
+    m_Yaw += m_MouseRotationSpeed * float(mouseDeltaVec.x);
+    m_Pitch -= m_MouseRotationSpeed * float(mouseDeltaVec.y);
 
+    // Prevent looking too far up or down.
+    m_Pitch = std::clamp(m_Pitch, -bbePIBy2, bbePIBy2);
+
+    const float r = std::cos(m_Pitch);
     m_Dir =
     {
-        std::cos(m_VerticalAngle) * std::sin(m_HorizontalAngle),
-        std::sin(m_VerticalAngle),
-        std::cos(m_VerticalAngle) * std::cos(m_HorizontalAngle),
+        r * std::sin(m_Yaw),
+        std::sin(m_Pitch),
+        r * std::cos(m_Yaw),
     };
 
     m_RightDirection =
     {
-        std::sin(m_HorizontalAngle - bbePIBy2),
+        std::sin(m_Yaw - bbePIBy2),
         0,
-        std::cos(m_HorizontalAngle - bbePIBy2),
+        std::cos(m_Yaw - bbePIBy2),
     };
 }
 
 void CameraController::UpdateIMGUIPropertyGrid()
 {
     ImGui::Begin("CameraController");
-    ImGui::InputFloat3("Camera Position", (float*)&m_EyePosition);
+    ImGui::InputFloat3("Position", (float*)&m_EyePosition);
+    ImGui::InputFloat3("Direction", (float*)&m_Dir, "%.3f", ImGuiInputTextFlags_ReadOnly);
+    ImGui::InputFloat3("Right", (float*)&m_RightDirection, "%.3f", ImGuiInputTextFlags_ReadOnly);
+    ImGui::InputFloat3("Up", (float*)&m_UpDirection, "%.3f", ImGuiInputTextFlags_ReadOnly);
 
-    if (ImGui::InputFloat3("Camera Direction", (float*)&m_Dir))
-    {
-        m_Dir.Normalize();
-    }
+    bool doUpdate = false;
+    doUpdate |= ImGui::InputFloat("Yaw", &m_Yaw);
+    doUpdate |= ImGui::InputFloat("Pitch", &m_Pitch);
 
-    ImGui::Text("Mouse Position: %.3f, %.3f", m_CurrentMousePos.x, m_CurrentMousePos.y);
-
+    ImGui::NewLine();
+    ImGui::InputFloat("Move Speed", &m_CameraMoveSpeed);
+    ImGui::InputFloat("Rotate Speed", &m_MouseRotationSpeed);
     ImGui::End();
+
+    if (doUpdate)
+    {
+        UpdateCameraRotation();
+    }
 }
 
 void CameraController::Update()
@@ -107,7 +124,7 @@ void CameraController::Update()
         UpdateCameraRotation();
     }
 
-    m_UpDirection = m_RightDirection.Cross(m_EyePosition);
+    m_UpDirection = m_RightDirection.Cross(m_Dir);
 
     const bbeMatrix viewProjMatrix = Get3DViewProjMatrix();
     g_GfxView.SetViewProjMatrix(viewProjMatrix);
@@ -115,8 +132,8 @@ void CameraController::Update()
 
 void CameraController::Reset()
 {
-    m_EyePosition = { 0.0f, 0.0f, -5.0f };
-    m_Dir = { 0.0f, 0.0f, 1.0f };
-    m_UpDirection = { 0.0f, 1.0f, 0.0f };
-    m_RightDirection = { 1.0f, 0.0f, 0.0f };
+    m_EyePosition = { 0.0f, 5.0f, -10.0f };
+    m_Pitch = -bbeRad30;
+
+    UpdateCameraRotation();
 }

@@ -16,10 +16,12 @@ public:
     inline static GfxTexture Checkerboard;
 
     inline static GfxMesh UnitCube;
+    inline static GfxMesh Occcity;
 
 private:
     void InitCheckerboardTexture();
     void InitSolidColor(GfxTexture&, const bbeColor&, const char* colorName);
     void CreateUnitCube();
+    void CreateOcccity();
 };
 #define g_GfxDefaultAssets GfxDefaultAssets::GetInstance()

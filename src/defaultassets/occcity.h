@@ -13,57 +13,60 @@
 
 namespace SampleAssets
 {
-    LPCWSTR DataFileName = L"occcity.bin";
-
-    const D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
+    namespace Occcity
     {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-    };
-    UINT StandardVertexDescriptionNumElements = _countof(StandardVertexDescription);
+        LPCWSTR DataFileName = L"occcity.bin";
 
-    const UINT StandardVertexStride = 44;
-
-    const DXGI_FORMAT StandardIndexFormat = DXGI_FORMAT_R32_UINT;
-
-    struct TextureResource
-    {
-        UINT Width;
-        UINT Height;
-        UINT16 MipLevels;
-        DXGI_FORMAT Format;
-        struct DataProperties
+        const D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
         {
-            UINT Offset;
-            UINT Size;
-            UINT Pitch;
-        } Data[D3D12_REQ_MIP_LEVELS];
-    };
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        };
+        UINT StandardVertexDescriptionNumElements = _countof(StandardVertexDescription);
 
-    struct DrawParameters
-    {
-        INT DiffuseTextureIndex;
-        INT NormalTextureIndex;
-        INT SpecularTextureIndex;
-        UINT IndexStart;
-        UINT IndexCount;
-        UINT VertexBase;
-    };
+        const UINT StandardVertexStride = 44;
 
-    const UINT VertexDataOffset = 524288;
-    const UINT VertexDataSize = 820248;
-    const UINT IndexDataOffset = 1344536;
-    const UINT IndexDataSize = 74568;
+        const DXGI_FORMAT StandardIndexFormat = DXGI_FORMAT_R32_UINT;
 
-    TextureResource Textures[] =
-    {
-        { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM, { { 0, 524288, 2048 }, } }, // city.dds
-    };
+        struct TextureResource
+        {
+            UINT Width;
+            UINT Height;
+            UINT16 MipLevels;
+            DXGI_FORMAT Format;
+            struct DataProperties
+            {
+                UINT Offset;
+                UINT Size;
+                UINT Pitch;
+            } Data[D3D12_REQ_MIP_LEVELS];
+        };
 
-    DrawParameters Draws[] =
-    {
-        { 0, -1, -1, 0, 18642, 0 },
-    };
+        struct DrawParameters
+        {
+            INT DiffuseTextureIndex;
+            INT NormalTextureIndex;
+            INT SpecularTextureIndex;
+            UINT IndexStart;
+            UINT IndexCount;
+            UINT VertexBase;
+        };
+
+        const UINT VertexDataOffset = 524288;
+        const UINT VertexDataSize = 820248;
+        const UINT IndexDataOffset = 1344536;
+        const UINT IndexDataSize = 74568;
+
+        TextureResource Textures[] =
+        {
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM, { { 0, 524288, 2048 }, } }, // city.dds
+        };
+
+        DrawParameters Draws[] =
+        {
+            { 0, -1, -1, 0, 18642, 0 },
+        };
+    }
 }

@@ -16,6 +16,7 @@ struct VS_IN
     float4 m_Position : POSITION;
     float3 m_Normal   : NORMAL;
     float2 m_TexCoord : TEXCOORD;
+    float3 m_Tangent  : TANGENT;
 };
 
 struct VS_OUT
@@ -23,6 +24,7 @@ struct VS_OUT
     float4 m_Position : SV_POSITION;
     float3 m_Normal   : NORMAL;
     float2 m_TexCoord : TEXCOORD;
+    float3 m_Tangent  : TANGENT;
 };
 
 VS_OUT VSMain(VS_IN input)
@@ -34,11 +36,12 @@ VS_OUT VSMain(VS_IN input)
 
     result.m_Normal = input.m_Normal;
     result.m_TexCoord = input.m_TexCoord;
+    result.m_Tangent = input.m_Tangent;
 
     return result;
 }
 
 float4 PSMain(VS_OUT input) : SV_TARGET
 {
-    return float4(abs(input.m_Normal), 1.0f) * g_Texture.Sample(g_AnisotropicClampSampler, input.m_TexCoord);
+    return g_Texture.Sample(g_AnisotropicClampSampler, input.m_TexCoord);
 }

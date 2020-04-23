@@ -4,6 +4,8 @@
 #include <graphic/gfxdevice.h>
 #include <graphic/gfxmanager.h>
 
+#include <defaultassets/occcity.h>
+
 void GfxDefaultAssets::Initialize(tf::Subflow& sf)
 {
     bbeProfileFunction();
@@ -12,6 +14,7 @@ void GfxDefaultAssets::Initialize(tf::Subflow& sf)
     ADD_TF_TASK(sf, InitSolidColor(White2D, bbeColor{ 1.0f, 1.0f, 1.0f }, "Default White2D Texture"));
     ADD_TF_TASK(sf, InitSolidColor(Black2D, bbeColor{ 0.0f, 0.0f, 0.0f }, "Default Black2D Texture"));
     ADD_TF_TASK(sf, CreateUnitCube());
+    ADD_TF_TASK(sf, CreateOcccity());
 }
 
 void GfxDefaultAssets::ShutDown()
@@ -20,8 +23,8 @@ void GfxDefaultAssets::ShutDown()
     this->Black2D.Release();
     this->Checkerboard.Release();
 
-    this->UnitCube.GetVertexBuffer().Release();
-    this->UnitCube.GetIndexBuffer().Release();
+    this->UnitCube.Release();
+    this->Occcity.Release();
 }
 
 void GfxDefaultAssets::InitCheckerboardTexture()
@@ -182,13 +185,17 @@ void GfxDefaultAssets::CreateUnitCube()
 
     ReverseWinding(indices, vertices);
 
-    GfxVertexBuffer::InitParams VBInitParams;
+    GfxMesh::InitParams meshInitParams;
+    meshInitParams.MeshName = "UnitCube Mesh";
+    meshInitParams.m_VertexFormat = &GfxDefaultVertexFormats::Position3f_Normal3f_Texcoord2f;
+
+    GfxVertexBuffer::InitParams& VBInitParams = meshInitParams.m_VBInitParams;
     VBInitParams.m_InitData = vertices.data();
     VBInitParams.m_NumVertices = vertices.size();
     VBInitParams.m_VertexSize = sizeof(Vertex);
     VBInitParams.m_ResourceName = "GfxDefaultGeometry::UnitCube Vertex Buffer";
 
-    GfxIndexBuffer::InitParams IBInitParams;
+    GfxIndexBuffer::InitParams& IBInitParams = meshInitParams.m_IBInitParams;
     IBInitParams.m_InitData = indices.data();
     IBInitParams.m_NumIndices = indices.size();
     IBInitParams.m_IndexSize = sizeof(uint16_t);
@@ -197,6 +204,33 @@ void GfxDefaultAssets::CreateUnitCube()
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
     GfxContext& initContext = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "GfxDefaultGeometry::UnitCube");
 
-    this->UnitCube.GetVertexBuffer().Initialize(initContext, VBInitParams);
-    this->UnitCube.GetIndexBuffer().Initialize(initContext, IBInitParams);
+    this->UnitCube.Initialize(initContext, meshInitParams);
+}
+
+void GfxDefaultAssets::CreateOcccity()
+{
+    bbeProfileFunction();
+
+    using namespace SampleAssets;
+
+    std::vector<std::byte> data;
+    ReadDataFromFile("..\\bin\\assets\\occcity.bin", data);
+
+    GfxMesh::InitParams meshInitParams;
+    meshInitParams.MeshName = "occcity Mesh";
+    meshInitParams.m_VertexFormat = &GfxDefaultVertexFormats::Position3f_Normal3f_Texcoord2f_Tangent3f;
+
+    GfxVertexBuffer::InitParams& VBInitParams = meshInitParams.m_VBInitParams;
+    VBInitParams.m_ResourceName = "occcity Mesh Vertex Buffer";
+    VBInitParams.m_InitData = data.data() + Occcity::VertexDataOffset;
+    VBInitParams.m_NumVertices = Occcity::VertexDataSize / Occcity::StandardVertexStride;
+    VBInitParams.m_VertexSize = Occcity::StandardVertexStride;
+
+    GfxIndexBuffer::InitParams& IBInitParams = meshInitParams.m_IBInitParams;
+    IBInitParams.m_ResourceName = "occcity Mesh Index Buffer";
+    IBInitParams.m_InitData = data.data() + Occcity::IndexDataOffset;
+    IBInitParams.m_NumIndices = Occcity::IndexDataSize / 4; // R32_UINT (SampleAssets::StandardIndexFormat) = 4 bytes each.
+    IBInitParams.m_IndexSize = 4;
+
+    this->Occcity.Initialize(meshInitParams);
 }

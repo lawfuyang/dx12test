@@ -43,13 +43,15 @@ void GfxTestRenderPass::Render(GfxContext& context)
     CD3DX12_RASTERIZER_DESC& rasterDesc = pso.GetRasterizerStates();
     rasterDesc.DepthClipEnable = false;
 
+    GfxMesh& mesh = GfxDefaultAssets::Occcity;
+
     pso.SetVertexShader(g_GfxShaderManager.GetShader(ShaderPermutation::VS_TestTriangle));
     pso.SetPixelShader(g_GfxShaderManager.GetShader(ShaderPermutation::PS_TestTriangle));
-    pso.SetVertexInputLayout(GfxDefaultVertexFormats::Position3f_Normal3f_Texcoord2f);
+    pso.SetVertexInputLayout(mesh.GetVertexFormat());
 
-    context.SetVertexBuffer(GfxDefaultAssets::UnitCube.GetVertexBuffer());
-    context.SetIndexBuffer(GfxDefaultAssets::UnitCube.GetIndexBuffer());
+    context.SetVertexBuffer(mesh.GetVertexBuffer());
+    context.SetIndexBuffer(mesh.GetIndexBuffer());
     context.SetRenderTarget(0, g_GfxManager.GetSwapChain().GetCurrentBackBuffer());
 
-    context.DrawIndexedInstanced(GfxDefaultAssets::UnitCube.GetIndexBuffer().GetSizeInBytes() / 2, 1, 0, 0, 0);
+    context.DrawIndexedInstanced(mesh.GetIndexBuffer().GetNumIndices(), 1, 0, 0, 0);
 }

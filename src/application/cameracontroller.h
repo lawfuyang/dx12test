@@ -19,8 +19,8 @@ private:
     float m_Far  = 100.0f;
     float m_FOV  = 90.0f;
 
-    float m_VerticalAngle = 0.0f;
-    float m_HorizontalAngle = 0.0f;
+    float m_Yaw = 0.0f;
+    float m_Pitch = 0.0f;
     float m_MouseRotationSpeed = 0.002f;
     float m_CameraMoveSpeed = 0.01f;
 
