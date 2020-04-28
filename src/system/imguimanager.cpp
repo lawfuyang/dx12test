@@ -197,8 +197,12 @@ void IMGUIManager::Update()
 
 void IMGUIManager::RegisterWindowUpdateCB(const std::function<void()>& cb)
 {
-    bbeAutoLock(m_UpdateCBsLock);
-    m_UpdateCBs.push_back(cb);
+    // Registration could during engine init phase. Defer it to start of next frame
+    g_System.AddSystemCommand([&]()
+        {
+            bbeAutoLock(m_UpdateCBsLock);
+            m_UpdateCBs.push_back(cb);
+        });
 }
 
 void IMGUIManager::SaveDrawData()

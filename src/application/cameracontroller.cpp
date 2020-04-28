@@ -9,10 +9,7 @@ void CameraController::Initialize()
 
     m_CurrentMousePos = m_MouseLastPos = { Mouse::GetX(), Mouse::GetY() };
 
-    g_System.AddSystemCommand([&]() 
-        {
-            g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUIPropertyGrid(); });
-        });
+    g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUIPropertyGrid(); });
 }
 
 bbeMatrix CameraController::Get3DViewProjMatrix()
