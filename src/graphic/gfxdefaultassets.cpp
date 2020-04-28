@@ -217,17 +217,17 @@ void GfxDefaultAssets::CreateOcccity()
     ReadDataFromFile("..\\bin\\assets\\occcity.bin", data);
 
     GfxMesh::InitParams meshInitParams;
-    meshInitParams.MeshName = "occcity Mesh";
+    meshInitParams.MeshName = "Occcity Mesh";
     meshInitParams.m_VertexFormat = &GfxDefaultVertexFormats::Position3f_Normal3f_Texcoord2f_Tangent3f;
 
     GfxVertexBuffer::InitParams& VBInitParams = meshInitParams.m_VBInitParams;
-    VBInitParams.m_ResourceName = "occcity Mesh Vertex Buffer";
+    VBInitParams.m_ResourceName = "Occcity Mesh Vertex Buffer";
     VBInitParams.m_InitData = data.data() + Occcity::VertexDataOffset;
     VBInitParams.m_NumVertices = Occcity::VertexDataSize / Occcity::StandardVertexStride;
     VBInitParams.m_VertexSize = Occcity::StandardVertexStride;
 
     GfxIndexBuffer::InitParams& IBInitParams = meshInitParams.m_IBInitParams;
-    IBInitParams.m_ResourceName = "occcity Mesh Index Buffer";
+    IBInitParams.m_ResourceName = "Occcity Mesh Index Buffer";
     IBInitParams.m_InitData = data.data() + Occcity::IndexDataOffset;
     IBInitParams.m_NumIndices = Occcity::IndexDataSize / 4; // R32_UINT (SampleAssets::StandardIndexFormat) = 4 bytes each.
     IBInitParams.m_IndexSize = 4;

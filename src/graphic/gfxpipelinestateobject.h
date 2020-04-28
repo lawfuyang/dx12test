@@ -14,7 +14,7 @@ class GfxPipelineStateObject
 {
 public:
     void SetRootSignature(GfxRootSignature* rootSig) { m_RootSig = rootSig; }
-    void SetVertexInputLayout(GfxVertexFormat& inputLayout) { m_VertexFormat = &inputLayout; }
+    void SetVertexFormat(GfxVertexFormat& inputLayout) { m_VertexFormat = &inputLayout; }
     void SetVertexShader(GfxShader& shader) { m_VS = &shader; }
     void SetPixelShader(GfxShader& shader) { m_PS = &shader; }
     void SetComputeShader(GfxShader& shader) { m_CS = &shader; }

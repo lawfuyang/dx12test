@@ -49,7 +49,7 @@ void GfxBufferCommon::ReleaseAllocation(D3D12MA::Allocation*& allocation)
     allocation = nullptr;
 }
 
-D3D12MA::Allocation* GfxBufferCommon::CreateHeap(GfxContext& context, D3D12_HEAP_TYPE heapType, const D3D12_RESOURCE_DESC& resourceDesc, D3D12_RESOURCE_STATES initialState, const char* resourceName)
+D3D12MA::Allocation* GfxBufferCommon::CreateHeap(GfxContext& context, const GfxBufferCommon::HeapDesc& heapDesc)
 {
     bbeProfileFunction();
 
@@ -57,30 +57,30 @@ D3D12MA::Allocation* GfxBufferCommon::CreateHeap(GfxContext& context, D3D12_HEAP
     D3D12MA::Allocator& d3d12MemoryAllocator = gfxDevice.GetD3D12MemoryAllocator();
 
     D3D12MA::ALLOCATION_DESC vertexBufferAllocDesc = {};
-    vertexBufferAllocDesc.HeapType = heapType;
+    vertexBufferAllocDesc.HeapType = heapDesc.m_HeapType;
 
     D3D12MA::Allocation* allocHandle = nullptr;
     ID3D12Resource* newHeap = nullptr;
     DX12_CALL(d3d12MemoryAllocator.CreateResource(
         &vertexBufferAllocDesc,
-        &resourceDesc,
-        initialState,
-        nullptr, // optimized clear value must be null for this type of resource. used for render targets and depth/stencil buffers
+        &heapDesc.m_ResourceDesc,
+        heapDesc.m_InitialState,
+        heapDesc.m_ClearValue.Format == DXGI_FORMAT_UNKNOWN ? nullptr : &heapDesc.m_ClearValue,
         &allocHandle,
         IID_PPV_ARGS(&newHeap)));
 
     assert(allocHandle);
     assert(newHeap);
 
-    const std::wstring resourceNameW = MakeWStrFromStr(resourceName);
+    const std::wstring resourceNameW = MakeWStrFromStr(heapDesc.m_ResourceName);
     allocHandle->SetName(resourceNameW.data());
     allocHandle->GetResource()->SetName(resourceNameW.data());
 
-    StaticString<256> heapName = resourceName;
+    StaticString<256> heapName = heapDesc.m_ResourceName;
     heapName += " Heap";
     SetD3DDebugName(newHeap, heapName.c_str());
 
-    g_Log.info("Created D3D12MA::Allocation '{}'", resourceName);
+    g_Log.info("Created D3D12MA::Allocation '{}'", heapDesc.m_ResourceName);
 
     return allocHandle;
 }
@@ -113,7 +113,14 @@ void GfxBufferCommon::InitializeBufferWithInitData(GfxContext& context, uint32_t
     // create upload heap to hold upload init data
     StaticString<256> nameBuffer = resourceName;
     nameBuffer += " Upload Buffer";
-    D3D12MA::Allocation* uploadHeapAlloc = CreateHeap(context, D3D12_HEAP_TYPE_UPLOAD, CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize), D3D12_RESOURCE_STATE_GENERIC_READ, nameBuffer.c_str());
+
+    GfxBufferCommon::HeapDesc heapDesc;
+    heapDesc.m_HeapType = D3D12_HEAP_TYPE_UPLOAD;
+    heapDesc.m_ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
+    heapDesc.m_InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
+    heapDesc.m_ResourceName = nameBuffer.c_str();
+
+    D3D12MA::Allocation* uploadHeapAlloc = CreateHeap(context, heapDesc);
 
     // upload init data via CopyBufferRegion
     UploadInitData(context, initData, row, pitch, m_D3D12MABufferAllocation->GetResource(), uploadHeapAlloc->GetResource());
@@ -124,6 +131,14 @@ void GfxBufferCommon::InitializeBufferWithInitData(GfxContext& context, uint32_t
             D3D12MA::Allocation* copy = uploadHeapAlloc;
             GfxBufferCommon::ReleaseAllocation(copy);
         });
+}
+
+void GfxVertexBuffer::Initialize(const InitParams& initParams)
+{
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+    GfxContext& initContext = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName);
+
+    Initialize(initContext, initParams);
 }
 
 void GfxVertexBuffer::Initialize(GfxContext& initContext, const InitParams& initParams)
@@ -158,7 +173,13 @@ void GfxVertexBuffer::Initialize(GfxContext& initContext, const InitParams& init
     const bool hasInitData = initParams.m_InitData != nullptr;
 
     // Create heap to hold final buffer data
-    m_D3D12MABufferAllocation = CreateHeap(initContext, initParams.m_HeapType, CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes), hasInitData ? D3D12_RESOURCE_STATE_COPY_DEST : initialState, initParams.m_ResourceName.c_str());
+    GfxBufferCommon::HeapDesc heapDesc;
+    heapDesc.m_HeapType = initParams.m_HeapType;
+    heapDesc.m_ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes);
+    heapDesc.m_InitialState = hasInitData ? D3D12_RESOURCE_STATE_COPY_DEST : initialState;
+    heapDesc.m_ResourceName = initParams.m_ResourceName.c_str();
+
+    m_D3D12MABufferAllocation = CreateHeap(initContext, heapDesc);
     assert(m_D3D12MABufferAllocation);
     m_Resource = m_D3D12MABufferAllocation->GetResource();
 
@@ -171,7 +192,7 @@ void GfxVertexBuffer::Initialize(GfxContext& initContext, const InitParams& init
     }
 }
 
-void GfxVertexBuffer::Initialize(const InitParams& initParams)
+void GfxIndexBuffer::Initialize(const InitParams& initParams)
 {
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
     GfxContext& initContext = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName);
@@ -207,7 +228,13 @@ void GfxIndexBuffer::Initialize(GfxContext& initContext, const InitParams& initP
     const bool hasInitData = initParams.m_InitData != nullptr;
 
     // Create heap to hold final buffer data
-    m_D3D12MABufferAllocation = CreateHeap(initContext, initParams.m_HeapType, CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes), hasInitData ? D3D12_RESOURCE_STATE_COPY_DEST : initialState, initParams.m_ResourceName.c_str());
+    GfxBufferCommon::HeapDesc heapDesc;
+    heapDesc.m_HeapType = initParams.m_HeapType;
+    heapDesc.m_ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes);
+    heapDesc.m_InitialState = hasInitData ? D3D12_RESOURCE_STATE_COPY_DEST : initialState;
+    heapDesc.m_ResourceName = initParams.m_ResourceName.c_str();
+
+    m_D3D12MABufferAllocation = CreateHeap(initContext, heapDesc);
     assert(m_D3D12MABufferAllocation);
     m_Resource = m_D3D12MABufferAllocation->GetResource();
 
@@ -220,21 +247,20 @@ void GfxIndexBuffer::Initialize(GfxContext& initContext, const InitParams& initP
     }
 }
 
-void GfxIndexBuffer::Initialize(const InitParams& initParams)
+void GfxConstantBuffer::Initialize(uint32_t bufferSize, const std::string& resourceName)
 {
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-    GfxContext& initContext = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName);
+    GfxContext& initContext = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, resourceName.c_str());
 
-    Initialize(initContext, initParams);
+    Initialize(initContext, bufferSize, resourceName);
 }
 
-void GfxConstantBuffer::Initialize(uint32_t bufferSize, const std::string& resourceName)
+void GfxConstantBuffer::Initialize(GfxContext& initContext, uint32_t bufferSize, const std::string& resourceName)
 {
     bbeProfileFunction();
     assert((bbeIsAligned(bufferSize, 16))); // CBuffers are 16 bytes aligned
 
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-    GfxContext& initContext = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, resourceName.c_str());
 
     m_SizeInBytes = AlignUp(bufferSize, 256); // CB size is required to be 256-byte aligned.
 
@@ -242,7 +268,13 @@ void GfxConstantBuffer::Initialize(uint32_t bufferSize, const std::string& resou
     m_GfxDescriptorHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 
     // Create upload heap for constant buffer
-    m_D3D12MABufferAllocation = CreateHeap(initContext, D3D12_HEAP_TYPE_UPLOAD, CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes), D3D12_RESOURCE_STATE_GENERIC_READ, resourceName.c_str());
+    GfxBufferCommon::HeapDesc heapDesc;
+    heapDesc.m_HeapType = D3D12_HEAP_TYPE_UPLOAD;
+    heapDesc.m_ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes);
+    heapDesc.m_InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
+    heapDesc.m_ResourceName = resourceName.c_str();
+
+    m_D3D12MABufferAllocation = CreateHeap(initContext, heapDesc);
     assert(m_D3D12MABufferAllocation);
 
     // Describe and create a constant buffer view.
@@ -268,6 +300,14 @@ void GfxConstantBuffer::Update(const void* data) const
     SIMDMemCopy(m_CBufferMemory, data, DivideByMultiple(m_SizeInBytes, 16));
 }
 
+void GfxTexture::Initialize(const InitParams& initParams)
+{
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+    GfxContext& initContext = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName);
+
+    Initialize(initContext, initParams);
+}
+
 void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParams)
 {
     bbeProfileFunction();
@@ -277,16 +317,16 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     assert(initParams.m_Width > 0);
     assert(initParams.m_Height > 0);
 
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-
     m_SizeInBytes = initParams.m_Width * initParams.m_Height * GetBytesPerPixel(initParams.m_Format);
     m_Format = initParams.m_Format;
 
     // init desc heap for texture
-    m_GfxDescriptorHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    D3D12_DESCRIPTOR_HEAP_TYPE heapType = initParams.m_ViewType == SRV ? D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV : D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+    D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags = initParams.m_ViewType == SRV ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    m_GfxDescriptorHeap.Initialize(heapType, heapFlags);
 
     D3D12_RESOURCE_DESC desc = {};
-    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    desc.Dimension = initParams.m_Dimension;
     desc.Width = initParams.m_Width;
     desc.Height = initParams.m_Height;
     desc.DepthOrArraySize = 1;
@@ -298,7 +338,13 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     const bool hasInitData = initParams.m_InitData != nullptr;
 
     // Create heap to hold final buffer data
-    m_D3D12MABufferAllocation = CreateHeap(initContext, D3D12_HEAP_TYPE_DEFAULT, desc, hasInitData ? D3D12_RESOURCE_STATE_COPY_DEST : initParams.m_InitialState, initParams.m_ResourceName.c_str());
+    GfxBufferCommon::HeapDesc heapDesc;
+    heapDesc.m_HeapType = D3D12_HEAP_TYPE_DEFAULT;
+    heapDesc.m_ResourceDesc = desc;
+    heapDesc.m_InitialState = hasInitData ? D3D12_RESOURCE_STATE_COPY_DEST : initParams.m_InitialState;
+    heapDesc.m_ResourceName = initParams.m_ResourceName.c_str();
+
+    m_D3D12MABufferAllocation = CreateHeap(initContext, heapDesc);
     assert(m_D3D12MABufferAllocation);
     m_Resource = m_D3D12MABufferAllocation->GetResource();
 
@@ -316,7 +362,21 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
         Transition(initContext.GetCommandList(), initParams.m_InitialState);
     }
 
-    // Describe and create a SRV for the texture
+    if (initParams.m_ViewType == SRV)
+    {
+        CreateSRV(initParams);
+    }
+    else
+    {
+        assert(initParams.m_ViewType == DSV);
+        CreateDSV(initParams);
+    }
+}
+
+void GfxTexture::CreateSRV(const InitParams& initParams)
+{
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     srvDesc.Format = initParams.m_Format;
@@ -325,12 +385,18 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     gfxDevice.Dev()->CreateShaderResourceView(m_Resource.Get(), &srvDesc, m_GfxDescriptorHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
 }
 
-void GfxTexture::Initialize(const InitParams& initParams)
+void GfxTexture::CreateDSV(const InitParams& initParams)
 {
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-    GfxContext& initContext = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName);
 
-    Initialize(initContext, initParams);
+    assert(initParams.m_Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D);
+
+    D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
+    depthStencilDesc.Format = initParams.m_Format;
+    depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+    depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+    gfxDevice.Dev()->CreateDepthStencilView(m_Resource.Get(), &depthStencilDesc, m_GfxDescriptorHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
 }
 
 void GfxTexture::InitializeForSwapChain(ComPtr<IDXGISwapChain4>& swapChain, DXGI_FORMAT format, uint32_t backBufferIdx)

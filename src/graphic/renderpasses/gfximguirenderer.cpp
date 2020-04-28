@@ -230,7 +230,7 @@ void GfxIMGUIRenderer::Render(GfxContext& context)
     GfxPipelineStateObject& pso = context.GetPSO();
     pso.SetVertexShader(g_GfxShaderManager.GetShader(ShaderPermutation::VS_IMGUI));
     pso.SetPixelShader(g_GfxShaderManager.GetShader(ShaderPermutation::PS_IMGUI));
-    pso.SetVertexInputLayout(GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub);
+    pso.SetVertexFormat(GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub);
 
     context.SetVertexBuffer(m_VertexBuffer);
     context.SetIndexBuffer(m_IndexBuffer);

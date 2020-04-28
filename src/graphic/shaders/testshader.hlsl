@@ -32,16 +32,21 @@ VS_OUT VSMain(VS_IN input)
     VS_OUT result;
 
     result.m_Position = input.m_Position;
+    result.m_Normal = normalize(result.m_Position.xyz); // temp world space normal
+
     result.m_Position = mul(result.m_Position, g_ViewProjMatrix);
 
-    result.m_Normal = input.m_Normal;
+    //result.m_Normal = input.m_Normal;
     result.m_TexCoord = input.m_TexCoord;
     result.m_Tangent = input.m_Tangent;
 
     return result;
 }
 
+static const float3 HardCodedDirLight = float3(0.5773f, 0.5773f, 0.5773f);
+
 float4 PSMain(VS_OUT input) : SV_TARGET
 {
-    return g_Texture.Sample(g_AnisotropicClampSampler, input.m_TexCoord);
+    float NdotL = dot(input.m_Normal, HardCodedDirLight);
+    return float4(input.m_Normal, 1.0f);
 }
