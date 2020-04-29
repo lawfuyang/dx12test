@@ -20,6 +20,7 @@ public:
     void SetComputeShader(GfxShader& shader) { m_CS = &shader; }
     void SetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY topology) { m_PrimitiveTopology = topology; }
     void SetRenderTargetFormat(uint32_t idx, DXGI_FORMAT format);
+    void SetDepthStencilFormat(DXGI_FORMAT format) { m_DepthStencilFormat = format; };
     CD3DX12_BLEND_DESC& GetBlendStates() { return m_BlendStates; }
     CD3DX12_RASTERIZER_DESC& GetRasterizerStates() { return m_RasterizerStates; }
     CD3DX12_DEPTH_STENCIL_DESC1& GetDepthStencilStates() { return m_DepthStencilStates; }
@@ -33,7 +34,7 @@ private:
     GfxShader*                  m_CS = nullptr;
     CD3DX12_BLEND_DESC          m_BlendStates{ CD3DX12_DEFAULT{} };
     CD3DX12_DEPTH_STENCIL_DESC1 m_DepthStencilStates{ CD3DX12_DEFAULT{} };
-    DXGI_FORMAT                 m_DepthStencilFormat = DXGI_FORMAT_D32_FLOAT;
+    DXGI_FORMAT                 m_DepthStencilFormat = DXGI_FORMAT_UNKNOWN;
     CD3DX12_RASTERIZER_DESC     m_RasterizerStates{ CD3DX12_DEFAULT{} };
     D3D12_RT_FORMAT_ARRAY       m_RenderTargets = {};
     DXGI_SAMPLE_DESC            m_SampleDescriptors = DefaultSampleDesc{};

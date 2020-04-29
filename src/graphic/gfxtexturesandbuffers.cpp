@@ -342,6 +342,7 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     heapDesc.m_HeapType = D3D12_HEAP_TYPE_DEFAULT;
     heapDesc.m_ResourceDesc = desc;
     heapDesc.m_InitialState = hasInitData ? D3D12_RESOURCE_STATE_COPY_DEST : initParams.m_InitialState;
+    heapDesc.m_ClearValue = initParams.m_ClearValue;
     heapDesc.m_ResourceName = initParams.m_ResourceName.c_str();
 
     m_D3D12MABufferAllocation = CreateHeap(initContext, heapDesc);

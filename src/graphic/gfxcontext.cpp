@@ -6,9 +6,12 @@
 #include "graphic/gfxtexturesandbuffers.h"
 #include "graphic/gfxrootsignature.h"
 
-void GfxContext::ClearRenderTargetView(GfxTexture& tex, const bbeVector4& clearColor) const
+void GfxContext::ClearRenderTargetView(GfxTexture& tex, const bbeVector4& clearColor)
 {
     bbeProfileFunction();
+
+    GfxContext& gfxContext = *this;
+    bbeProfileGPUFunction(gfxContext);
 
     // TODO: merge all required resource barriers and run them all at once just before GfxDevice::ExecuteAllActiveCommandLists or something
     tex.Transition(*m_CommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
@@ -20,12 +23,31 @@ void GfxContext::ClearRenderTargetView(GfxTexture& tex, const bbeVector4& clearC
     m_CommandList->Dev()->ClearRenderTargetView(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), colorInFloat, numRects, pRects);
 }
 
+void GfxContext::ClearDepthStencilView(GfxTexture& tex, float depth, uint8_t stencil)
+{
+    bbeProfileFunction();
+
+    GfxContext& gfxContext = *this;
+    bbeProfileGPUFunction(gfxContext);
+
+    const UINT numRects = 0;
+    const D3D12_RECT* pRects = nullptr;
+
+    m_CommandList->Dev()->ClearDepthStencilView(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, depth, stencil, numRects, pRects);
+}
+
 void GfxContext::SetRenderTarget(uint32_t idx, GfxTexture& tex)
 {
     assert(idx < _countof(m_RTVs));
 
     m_PSO.SetRenderTargetFormat(idx, tex.GetFormat());
     m_RTVs[idx] = &tex;
+}
+
+void GfxContext::SetDepthStencil(GfxTexture& tex)
+{
+    m_PSO.SetDepthStencilFormat(tex.GetFormat());
+    m_DSV = &tex;
 }
 
 void GfxContext::BindConstantBuffer(GfxConstantBuffer& cBuffer)
@@ -123,7 +145,14 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
 
         m_RTVs[i]->Transition(*m_CommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
     }
-    m_CommandList->Dev()->OMSetRenderTargets(m_PSO.m_RenderTargets.NumRenderTargets, rtvHandles, FALSE, nullptr); // TODO: Add support for DepthStencil RTV
+
+    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = {};
+    if (m_DSV)
+    {
+        dsvHandle = m_DSV->GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart();
+    }
+
+    m_CommandList->Dev()->OMSetRenderTargets(m_PSO.m_RenderTargets.NumRenderTargets, rtvHandles, FALSE, m_DSV ? &dsvHandle : nullptr);
 }
 
 void GfxContext::CompileAndSetComputePipelineState()

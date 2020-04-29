@@ -127,6 +127,7 @@ ID3D12PipelineState* GfxPSOManager::GetGraphicsPSO(const GfxPipelineStateObject&
     {
         psoDesc.RTVFormats[i] = pso.m_RenderTargets.RTFormats[i];
     }
+    psoDesc.DSVFormat = pso.m_DepthStencilFormat;
     psoDesc.SampleDesc.Count = pso.m_SampleDescriptors.Count;
 
     ID3D12PipelineState* psoToReturn = nullptr;

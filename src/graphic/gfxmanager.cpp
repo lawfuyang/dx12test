@@ -144,6 +144,7 @@ void GfxManager::BeginFrame()
     GfxContext& context = m_GfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "ClearBackBuffer");
     SetD3DDebugName(context.GetCommandList().Dev(), "ClearBackBuffer");
 
+    // TODO: Remove this when we manage to fill every pixel on screen through various render passes
     context.ClearRenderTargetView(g_GfxManager.GetSwapChain().GetCurrentBackBuffer(), bbeVector4{ 0.0f, 0.2f, 0.4f, 1.0f });
 
     m_GfxDevice.Flush();

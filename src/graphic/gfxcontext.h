@@ -18,8 +18,10 @@ class GfxConstantBuffer;
 class GfxContext
 {
 public:
-    void ClearRenderTargetView(GfxTexture&, const bbeVector4& clearColor) const;
+    void ClearRenderTargetView(GfxTexture&, const bbeVector4& clearColor);
+    void ClearDepthStencilView(GfxTexture&, float depth, uint8_t stencil);
     void SetRenderTarget(uint32_t idx, GfxTexture&);
+    void SetDepthStencil(GfxTexture& tex);
     void SetVertexBuffer(GfxVertexBuffer& vBuffer) { m_VertexBuffer = &vBuffer; }
     void SetIndexBuffer(GfxIndexBuffer& iBuffer) { m_IndexBuffer = &iBuffer; }
     void BindConstantBuffer(GfxConstantBuffer& cBuffer);
@@ -49,6 +51,7 @@ private:
     GfxVertexBuffer*         m_VertexBuffer                                     = nullptr;
     GfxIndexBuffer*          m_IndexBuffer                                      = nullptr;
     GfxTexture*              m_RTVs[_countof(D3D12_RT_FORMAT_ARRAY::RTFormats)] = {};
+    GfxTexture*              m_DSV                                              = nullptr;
     GfxDescriptorHeap*       m_CBVToBind                                        = nullptr;
     std::vector<GfxTexture*> m_SRVsToBind;
 

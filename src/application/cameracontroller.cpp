@@ -83,24 +83,35 @@ void CameraController::UpdateCameraRotation()
 
 void CameraController::UpdateIMGUIPropertyGrid()
 {
+    bool doUpdate = false;
+    bool doReset = false;
+
     ImGui::Begin("CameraController");
+
     ImGui::InputFloat3("Position", (float*)&m_EyePosition);
     ImGui::InputFloat3("Direction", (float*)&m_Dir, "%.3f", ImGuiInputTextFlags_ReadOnly);
     ImGui::InputFloat3("Right", (float*)&m_RightDirection, "%.3f", ImGuiInputTextFlags_ReadOnly);
     ImGui::InputFloat3("Up", (float*)&m_UpDirection, "%.3f", ImGuiInputTextFlags_ReadOnly);
-
-    bool doUpdate = false;
     doUpdate |= ImGui::InputFloat("Yaw", &m_Yaw);
     doUpdate |= ImGui::InputFloat("Pitch", &m_Pitch);
 
     ImGui::NewLine();
     ImGui::InputFloat("Move Speed", &m_CameraMoveSpeed);
     ImGui::InputFloat("Rotate Speed", &m_MouseRotationSpeed);
+
+    ImGui::NewLine();
+    doReset = ImGui::Button("Reset");
+
     ImGui::End();
 
     if (doUpdate)
     {
         UpdateCameraRotation();
+    }
+
+    if (doReset)
+    {
+        Reset();
     }
 }
 
@@ -131,6 +142,9 @@ void CameraController::Reset()
 {
     m_EyePosition = { 0.0f, 5.0f, -10.0f };
     m_Pitch = -bbeRad30;
+    m_Yaw = 0.0f;
+    m_MouseRotationSpeed = 0.002f;
+    m_CameraMoveSpeed = 0.01f;
 
     UpdateCameraRotation();
 }
