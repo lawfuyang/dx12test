@@ -101,8 +101,6 @@
     <ClCompile Include="..\src\system\system.cpp" />
     <ClCompile Include="..\src\system\timer.cpp" />
     <ClCompile Include="..\src\system\utils.cpp" />
-    <ClCompile Include="..\src\unittests\staticstring_test.cpp" />
-    <ClCompile Include="..\src\unittests\unittests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\extern\d3d12\D3D12MemAlloc.h" />
@@ -149,7 +147,6 @@
     <ClInclude Include="..\src\system\memorymappedfile.h" />
     <ClInclude Include="..\src\system\mouse.h" />
     <ClInclude Include="..\src\system\profiler.h" />
-    <ClInclude Include="..\src\system\staticstring.h" />
     <ClInclude Include="..\src\system\system.h" />
     <ClInclude Include="..\src\system\timer.h" />
     <ClInclude Include="..\src\system\utils.h" />

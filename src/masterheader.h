@@ -59,6 +59,7 @@
 #include <extern/boost/container/small_vector.hpp>
 #include <extern/boost/pool/object_pool.hpp>
 #include <extern/boost/container_hash/hash.hpp>
+#include <extern/boost/static_string.hpp>
 
 // typedefs
 using WindowHandle = uint64_t;
@@ -66,10 +67,12 @@ using WindowHandle = uint64_t;
 template <typename T, uint32_t N>
 using InplaceArray = boost::container::small_vector<T, N>;
 
+template<std::size_t N>
+using StaticString = boost::static_strings::static_string<N>;
+
 // ComPtr namespace
 using Microsoft::WRL::ComPtr;
 
-#include <system/staticstring.h>
 #include <system/math.h>
 #include <system/utils.h>
 #include <system/memcpy.h>

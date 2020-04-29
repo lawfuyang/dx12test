@@ -109,12 +109,6 @@
     <ClCompile Include="..\extern\imgui\imgui_demo.cpp">
       <Filter>extern\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\unittests\unittests.cpp">
-      <Filter>unittests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\unittests\staticstring_test.cpp">
-      <Filter>unittests</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\system\commandmanager.cpp">
       <Filter>system</Filter>
     </ClCompile>
@@ -253,9 +247,6 @@
     <ClInclude Include="..\src\graphic\renderpasses\gfxrenderpass.h">
       <Filter>graphic\renderpasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\system\staticstring.h">
-      <Filter>system</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\system\commandmanager.h">
       <Filter>system</Filter>
     </ClInclude>
@@ -296,9 +287,6 @@
     </Filter>
     <Filter Include="extern\simplemath">
       <UniqueIdentifier>{ac4d35a6-ed92-404b-81d6-dc4f059a08fa}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="unittests">
-      <UniqueIdentifier>{10f59006-77ab-4f35-ac49-55697776e63c}</UniqueIdentifier>
     </Filter>
     <Filter Include="defaultassets">
       <UniqueIdentifier>{d2c04ce1-f141-4f46-800b-4cdee2ca597c}</UniqueIdentifier>

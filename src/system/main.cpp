@@ -123,8 +123,6 @@ private:
     inline static std::thread ms_EngineWindowThread;
 };
 
-extern void UnitTests_RunAllTests();
-
 int APIENTRY WinMain(::HINSTANCE hInstance,
                      ::HINSTANCE hPrevInstance,
                      ::LPTSTR    lpCmdLine,
@@ -142,7 +140,6 @@ int APIENTRY WinMain(::HINSTANCE hInstance,
 
     if (g_CommandLineOptions.m_RunUnitTests)
     {
-        UnitTests_RunAllTests();
         return 0;
     }
 
