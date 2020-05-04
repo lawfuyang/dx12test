@@ -28,6 +28,10 @@ private:
 };
 #define g_Profiler SystemProfiler::GetInstance()
 
+#define bbeAutoLock(lck) \
+    MICROPROFILE_SCOPEI("Locks", bbeTOSTRING(lck), 0xFF0000); \
+    const AutoScopeCaller bbeUniqueVariable(ScopedLock){ [&](){ lck.lock(); }, [&](){ lck.unlock(); } };
+
 #define bbeDefineProfilerToken(var, group, name, color) MICROPROFILE_DEFINE(var, group, name, color)
 #define bbeProfile(str)                                 MICROPROFILE_SCOPEI("", str, GetCompileTimeCRC32(str))
 #define bbeProfileToken(token)                          MICROPROFILE_SCOPE(token)

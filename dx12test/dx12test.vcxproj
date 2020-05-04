@@ -140,7 +140,6 @@
     <ClInclude Include="..\src\system\commandmanager.h" />
     <ClInclude Include="..\src\system\imguimanager.h" />
     <ClInclude Include="..\src\system\keyboard.h" />
-    <ClInclude Include="..\src\system\locks.h" />
     <ClInclude Include="..\src\system\logger.h" />
     <ClInclude Include="..\src\system\math.h" />
     <ClInclude Include="..\src\system\memcpy.h" />

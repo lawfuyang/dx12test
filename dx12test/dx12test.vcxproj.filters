@@ -183,9 +183,6 @@
     <ClInclude Include="..\src\graphic\gfxtexturesandbuffers.h">
       <Filter>graphic</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\system\locks.h">
-      <Filter>system</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\graphic\gfxcontext.h">
       <Filter>graphic</Filter>
     </ClInclude>
