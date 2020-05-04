@@ -227,4 +227,4 @@ static std::size_t GenericTypeHash(const T& s)
     return hash;
 }
 
-void ReadDataFromFile(const std::string& filename, std::vector<std::byte>& data);
+void ReadDataFromFile(const char* filename, std::vector<std::byte>& data);

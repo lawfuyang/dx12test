@@ -43,13 +43,17 @@ void UpdateGraphic(tf::Subflow& subFlow)
 void GfxManager::Initialize(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
+
+    // independent tasks
+    ADD_SF_TASK(subFlow, g_GfxShaderManager.Initialize(sf));
+    ADD_TF_TASK(subFlow, g_GfxDefaultVertexFormats.Initialize());
     
+    // tasks with dependencies
     tf::Task cmdListInitTask            = ADD_TF_TASK(subFlow, m_GfxDevice.GetCommandListsManager().Initialize());
     tf::Task swapChainInitTask          = ADD_TF_TASK(subFlow, m_SwapChain.Initialize());
     tf::Task rootSigManagerInitTask     = ADD_TF_TASK(subFlow, g_GfxRootSignatureManager.Initialize());
     tf::Task PSOManagerInitTask         = ADD_TF_TASK(subFlow, g_GfxPSOManager.Initialize());
-    tf::Task shaderManagerInitTask      = ADD_SF_TASK(subFlow, g_GfxShaderManager.Initialize(sf));
-    tf::Task vertexFormatsInitTask      = ADD_TF_TASK(subFlow, g_GfxDefaultVertexFormats.Initialize());
+    tf::Task defaultsAssetsPreInit      = ADD_SF_TASK(subFlow, g_GfxDefaultAssets.PreInitialize(sf));
 
     tf::Task adapterAndDeviceInit = subFlow.emplace([&](tf::Subflow& sf)
         {
@@ -76,6 +80,7 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
         }).name("generalGfxInitTask");
 
     adapterAndDeviceInit.precede(cmdListInitTask, rootSigManagerInitTask, PSOManagerInitTask, miscGfxInitTask, swapChainInitTask);
+    miscGfxInitTask.succeed(cmdListInitTask, rootSigManagerInitTask, defaultsAssetsPreInit);
     miscGfxInitTask.succeed(cmdListInitTask, rootSigManagerInitTask);
     swapChainInitTask.succeed(cmdListInitTask);
 }

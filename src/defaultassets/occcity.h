@@ -15,7 +15,7 @@ namespace SampleAssets
 {
     namespace Occcity
     {
-        LPCWSTR DataFileName = L"occcity.bin";
+        const char* DataFileName = "occcity.bin";
 
         const D3D12_INPUT_ELEMENT_DESC StandardVertexDescription[] =
         {

@@ -154,8 +154,10 @@ void MultithreadDetector::Exit()
     m_CurrentID = std::thread::id{};
 }
 
-void ReadDataFromFile(const std::string& filename, std::vector<std::byte>& data)
+void ReadDataFromFile(const char* filename, std::vector<std::byte>& data)
 {
+    bbeProfileFunction();
+
     assert(data.empty());
 
     using namespace Microsoft::WRL;
