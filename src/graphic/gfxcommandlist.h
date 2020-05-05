@@ -33,7 +33,8 @@ public:
     void ShutDown();
 
     GfxCommandList* Allocate(D3D12_COMMAND_LIST_TYPE, const std::string&);
-    void ExecuteAllActiveCommandLists();
+    void QueueCommandListToExecute(GfxCommandList&, D3D12_COMMAND_LIST_TYPE);
+    void ExecutePendingCommandLists();
 
     ID3D12CommandQueue* GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) { return GetPoolFromType(type).m_CommandQueue.Get(); }
 
@@ -45,9 +46,9 @@ private:
         boost::object_pool<GfxCommandList> m_CommandListsPool;
 
         std::mutex m_ListsLock;
-        std::queue<GfxCommandList*> m_FreeCommandLists;
-        std::queue<GfxCommandList*> m_ActiveCommandLists;
-        std::queue<GfxCommandList*> m_PendingFreeCommandLists;
+
+        CircularBuffer<GfxCommandList*> m_FreeCommandLists;
+        CircularBuffer<GfxCommandList*> m_PendingExecuteCommandLists;
     };
     CommandListPool& GetPoolFromType(D3D12_COMMAND_LIST_TYPE);
 

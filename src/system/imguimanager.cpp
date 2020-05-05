@@ -172,8 +172,8 @@ void IMGUIManager::Update()
 
     // update main window grid
     ImGui::Begin("Main Grid");
-    ImGui::Text("Frame Time: %.3f ms", 1000.0f / ImGui::GetIO().Framerate);
-    ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
+    ImGui::LabelText("Frame Time", "%.3f ms", 1000.0f / ImGui::GetIO().Framerate);
+    ImGui::LabelText("FPS", "%.1f", ImGui::GetIO().Framerate);
     ImGui::Checkbox("Show Demo Window", &showDemoWindow);
     ImGui::End();
 

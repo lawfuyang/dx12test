@@ -13,7 +13,7 @@ public:
 
     void Initialize();
     void ShutDown() override;
-    void Render(GfxContext&) override;
+    void PopulateCommandList(GfxContext&) override;
 
 private:
     GfxConstantBuffer m_RenderPassCB;

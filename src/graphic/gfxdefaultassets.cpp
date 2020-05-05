@@ -236,10 +236,7 @@ void GfxDefaultAssets::CreateUnitCube()
     IBInitParams.m_IndexSize = sizeof(uint16_t);
     IBInitParams.m_ResourceName = "GfxDefaultGeometry::UnitCube Index Buffer";
 
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-    GfxContext& initContext = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "GfxDefaultGeometry::UnitCube");
-
-    this->UnitCube.Initialize(initContext, meshInitParams);
+    this->UnitCube.Initialize(meshInitParams);
 }
 
 void GfxDefaultAssets::CreateOcccity()

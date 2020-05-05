@@ -88,7 +88,7 @@ void GfxDevice::Initialize()
 
     InitD3D12Allocator();
 
-    m_AllContexts.reserve(16);
+    m_AllContexts.reserve(128);
 }
 
 void GfxDevice::ShutDown()
@@ -246,12 +246,7 @@ void GfxDevice::Flush(bool andWait)
 {
     bbeProfileFunction();
 
-    {
-        bbeAutoLock(m_ContextsLock);
-        m_AllContexts.clear();
-    }
-
-    m_CommandListsManager.ExecuteAllActiveCommandLists();
+    m_CommandListsManager.ExecutePendingCommandLists();
 
     if (andWait)
     {
@@ -272,9 +267,18 @@ void GfxDevice::WaitForFence()
     m_GfxFence.WaitForSignalFromGPU();
 }
 
+void GfxDevice::EndFrame()
+{
+    bbeMultiThreadDetector();
+
+    m_AllContexts.clear();
+}
+
 GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType, const std::string& name)
 {
     bbeProfileFunction();
+
+    //g_Log.info("*** GfxDevice::GenerateNewContext: {}", name);
 
     uint32_t newID;
     GfxContext* newContext;
@@ -285,7 +289,6 @@ GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType, c
         newContext = &m_AllContexts.back();
     }
 
-    newContext->m_ID          = newID;
     newContext->m_Device      = this;
     newContext->m_CommandList = m_CommandListsManager.Allocate(cmdListType, name);
 

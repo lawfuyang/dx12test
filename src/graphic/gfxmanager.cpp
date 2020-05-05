@@ -9,6 +9,8 @@
 #include <graphic/gfxdefaultassets.h>
 #include <graphic/gfxtexturesandbuffers.h>
 
+#include <system/imguimanager.h>
+
 #include <graphic/renderpasses/gfxtestrenderpass.h>
 #include <graphic/renderpasses/gfximguirenderer.h>
 
@@ -33,16 +35,13 @@ void UpdateGraphic(tf::Subflow& subFlow)
     bbeProfileFunction();
 
     g_GfxManager.ScheduleGraphicTasks(subFlow);
-
-    if (Keyboard::IsKeyPressed(Keyboard::KEY_J))
-    {
-        g_GfxManager.DumpGfxMemory();
-    }
 }
 
 void GfxManager::Initialize(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
+
+    g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUIPropertyGrid(); });
 
     // independent tasks
     ADD_SF_TASK(subFlow, g_GfxShaderManager.Initialize(sf));
@@ -72,6 +71,7 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
             allTasks.push_back(ADD_TF_TASK(subFlow, g_GfxTestRenderPass.Initialize()));
             allTasks.push_back(ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer.Initialize()));
 
+            // HUGE assumption that all of the above gfx tasks queued their command lists to be executed
             tf::Task flushAndWaitTask = ADD_TF_TASK(subFlow, m_GfxDevice.Flush(true /* andWait */));
             for (tf::Task task : allTasks)
             {
@@ -114,24 +114,43 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
     // consume all gfx commmands multi-threaded
     tf::Task gfxCommandsConsumptionTasks = ADD_SF_TASK(subFlow, m_GfxCommandManager.ConsumeCommandsMT(sf));
     tf::Task beginFrameTask              = ADD_TF_TASK(subFlow, BeginFrame());
-    tf::Task transitionBackBufferTask    = ADD_TF_TASK(subFlow, TransitionBackBufferForPresent());
     tf::Task endFrameTask                = ADD_TF_TASK(subFlow, EndFrame());
-    tf::Task renderPassesRenderTasks     = ADD_SF_TASK(subFlow, ScheduleRenderPasses(sf));
+    tf::Task renderersScheduleTask       = ADD_SF_TASK(subFlow, ScheduleRenderPasses(sf));
+    tf::Task cmdListsExecTask            = ADD_TF_TASK(subFlow, ScheduleCommandListsExecution());
 
     gfxCommandsConsumptionTasks.precede(beginFrameTask);
-    beginFrameTask.precede(renderPassesRenderTasks);
-    transitionBackBufferTask.succeed(renderPassesRenderTasks);
-    endFrameTask.succeed(transitionBackBufferTask);
+    beginFrameTask.precede(renderersScheduleTask);
+    cmdListsExecTask.succeed(renderersScheduleTask);
+    endFrameTask.succeed(cmdListsExecTask);
 }
 
 void GfxManager::ScheduleRenderPasses(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
 
-    tf::Task testRenderPass  = ADD_TF_TASK(subFlow, g_GfxTestRenderPass.Render(m_GfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "TestRenderPass")));
-    tf::Task IMGUIRenderPass = ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer.Render(m_GfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "IMGUIRenderPass")));
+    ADD_TF_TASK(subFlow, g_GfxTestRenderPass.PopulateCommandList(m_GfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "TestRenderPass")));
+    ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer.PopulateCommandList(m_GfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "IMGUIRenderPass")));
+}
 
-    IMGUIRenderPass.succeed(testRenderPass);
+void GfxManager::ScheduleCommandListsExecution()
+{
+    bbeProfileFunction();
+
+    // helper lambda
+    auto QueueRenderPass = [&](GfxRenderPass* pass)
+    {
+        m_GfxDevice.GetCommandListsManager().QueueCommandListToExecute(pass->GetGfxContext()->GetCommandList(), pass->GetGfxContext()->GetCommandList().GetType());
+    };
+
+    // queue all render passes
+    QueueRenderPass(&g_GfxTestRenderPass);
+    QueueRenderPass(&g_GfxIMGUIRenderer);
+
+    // No more draw calls directly to the Back Buffer beyond this point!
+    TransitionBackBufferForPresent();
+
+    // execute all command lists
+    m_GfxDevice.Flush();
 }
 
 void GfxManager::BeginFrame()
@@ -146,38 +165,23 @@ void GfxManager::BeginFrame()
 
     UpdateFrameParamsCB();
 
-    GfxContext& context = m_GfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "ClearBackBuffer");
-    SetD3DDebugName(context.GetCommandList().Dev(), "ClearBackBuffer");
-
     // TODO: Remove this when we manage to fill every pixel on screen through various render passes
-    context.ClearRenderTargetView(g_GfxManager.GetSwapChain().GetCurrentBackBuffer(), bbeVector4{ 0.0f, 0.2f, 0.4f, 1.0f });
+    {
+        GfxContext& clearBackBufferContext = m_GfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "ClearBackBuffer");
+        clearBackBufferContext.ClearRenderTargetView(g_GfxManager.GetSwapChain().GetCurrentBackBuffer(), bbeVector4{ 0.0f, 0.2f, 0.4f, 1.0f });
+        m_GfxDevice.GetCommandListsManager().QueueCommandListToExecute(clearBackBufferContext.GetCommandList(), clearBackBufferContext.GetCommandList().GetType());
 
-    m_GfxDevice.Flush();
+        m_GfxDevice.Flush();
+    }
 }
 
 void GfxManager::EndFrame()
 {
     bbeProfileFunction();
 
-    m_GfxDevice.Flush();
+    m_GfxDevice.EndFrame();
     m_SwapChain.Present();
     m_GfxDevice.IncrementAndSignalFence();
-}
-
-void GfxManager::DumpGfxMemory()
-{
-    WCHAR* statsString = NULL;
-
-    D3D12MA::Allocator& allocator = m_GfxDevice.GetD3D12MemoryAllocator();
-
-    allocator.BuildStatsString(&statsString, allocator.GetD3D12Options().ResourceHeapTier == D3D12_RESOURCE_HEAP_TIER_2);
-
-    const std::string dumpFilePath = StringFormat("..\\bin\\GfxMemoryDump_%s.json", GetTimeStamp().c_str());
-    const bool IsReadMode = false;
-    CFileWrapper outFile{ dumpFilePath, IsReadMode };
-    fprintf(outFile, "%ls", statsString);
-
-    allocator.FreeStatsString(statsString);
 }
 
 void GfxManager::TransitionBackBufferForPresent()
@@ -189,7 +193,7 @@ void GfxManager::TransitionBackBufferForPresent()
 
     m_SwapChain.TransitionBackBufferForPresent(context);
 
-    m_GfxDevice.Flush();
+    m_GfxDevice.GetCommandListsManager().QueueCommandListToExecute(context.GetCommandList(), context.GetCommandList().GetType());
 }
 
 void GfxManager::UpdateFrameParamsCB()
@@ -199,4 +203,55 @@ void GfxManager::UpdateFrameParamsCB()
     params.m_CurrentFrameTime = (float)g_System.GetFrameTimeMs();
 
     m_FrameParamsCB.Update(&params);
+}
+
+void GfxManager::UpdateIMGUIPropertyGrid()
+{
+    bbeProfileFunction();
+
+    D3D12MA::Allocator& allocator = m_GfxDevice.GetD3D12MemoryAllocator();
+
+    static bool showDetailedStats = false;
+
+    {
+        D3D12MA::Budget gpuBudget;
+        D3D12MA::Budget cpuBudget;
+        allocator.GetBudget(&gpuBudget, &cpuBudget);
+
+        ImGui::Begin("GfxManager");
+
+        ImGui::Text("GPU Budget:");
+        ImGui::LabelText("Blocks", "\t%.2f mb", (float)gpuBudget.BlockBytes / 1024 / 1024);
+        ImGui::LabelText("Allocations", "\t%.2f mb", (float)gpuBudget.AllocationBytes / 1024 / 1024);
+        ImGui::LabelText("Usage", "\t%.2f mb", (float)gpuBudget.UsageBytes / 1024 / 1024);
+        ImGui::LabelText("Budget", "\t%.2f mb", (float)gpuBudget.BudgetBytes / 1024 / 1024);
+
+        ImGui::NewLine();
+
+        ImGui::Text("CPU Budget:");
+        ImGui::LabelText("Blocks", "\t%.2f mb", (float)cpuBudget.BlockBytes / 1024 / 1024);
+        ImGui::LabelText("Allocations", "\t%.2f mb", (float)cpuBudget.AllocationBytes / 1024 / 1024);
+        ImGui::LabelText("Usage", "\t%.2f mb", (float)cpuBudget.UsageBytes / 1024 / 1024);
+        ImGui::LabelText("Budget", "\t%.2f mb", (float)cpuBudget.BudgetBytes / 1024 / 1024);
+
+        ImGui::NewLine();
+
+        ImGui::Checkbox("Show Detailed Stats", &showDetailedStats);
+
+        ImGui::End();
+    }
+
+    if (showDetailedStats)
+    {
+        WCHAR* statsStringW = NULL;
+        allocator.BuildStatsString(&statsStringW, allocator.GetD3D12Options().ResourceHeapTier == D3D12_RESOURCE_HEAP_TIER_2);
+        const std::string statsString = MakeStrFromWStr(statsStringW);
+        allocator.FreeStatsString(statsStringW);
+
+        ImGui::Begin("Detailed Gfx Stats");
+
+        ImGui::Text("%s", statsString.c_str());
+
+        ImGui::End();
+    }
 }

@@ -8,6 +8,8 @@ void GfxMesh::Initialize(const GfxMesh::InitParams& initParams)
     GfxContext& initContext = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.MeshName);
 
     Initialize(initContext, initParams);
+
+    gfxDevice.GetCommandListsManager().QueueCommandListToExecute(initContext.GetCommandList(), initContext.GetCommandList().GetType());
 }
 
 void GfxMesh::Initialize(GfxContext& initContext, const InitParams& initParams)

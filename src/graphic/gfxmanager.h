@@ -22,16 +22,16 @@ public:
     template <typename Lambda>
     void AddGraphicCommand(Lambda&& lambda) { m_GfxCommandManager.AddCommand(std::forward<Lambda>(lambda)); }
 
-    void DumpGfxMemory();
-
     GfxDevice&         GetGfxDevice()   { return m_GfxDevice; }
     GfxSwapChain&      GetSwapChain()   { return m_SwapChain; }
     GfxConstantBuffer& GetFrameParams() { return m_FrameParamsCB; }
 
 private:
     void ScheduleRenderPasses(tf::Subflow& sf);
+    void ScheduleCommandListsExecution();
     void TransitionBackBufferForPresent();
     void UpdateFrameParamsCB();
+    void UpdateIMGUIPropertyGrid();
 
     GfxDevice         m_GfxDevice;
     GfxSwapChain      m_SwapChain;

@@ -24,6 +24,7 @@ public:
     void Flush(bool andWait = false);
     void IncrementAndSignalFence();
     void WaitForFence();
+    void EndFrame();
 
     GfxContext& GenerateNewContext(D3D12_COMMAND_LIST_TYPE, const std::string& name);
     GfxCommandListsManager& GetCommandListsManager() { return m_CommandListsManager; }
@@ -37,8 +38,8 @@ private:
     void CheckFeaturesSupports();
     void InitD3D12Allocator();
 
-    GfxCommandListsManager   m_CommandListsManager;
-    GfxFence                 m_GfxFence;
+    GfxCommandListsManager m_CommandListsManager;
+    GfxFence               m_GfxFence;
 
     std::mutex m_ContextsLock;
     std::vector<GfxContext> m_AllContexts;

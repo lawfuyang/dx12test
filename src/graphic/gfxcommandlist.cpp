@@ -4,6 +4,8 @@
 #include "graphic/dx12utils.h"
 #include "graphic/gfxdevice.h"
 
+static const uint32_t gs_MaxCmdLists = 128;
+
 void GfxCommandList::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType)
 {
     bbeProfileFunction();
@@ -74,6 +76,9 @@ void GfxCommandListsManager::Initialize()
 
     g_Profiler.InitializeGPUProfiler(gfxDevice.Dev(), m_DirectPool.m_CommandQueue.Get());
     g_Profiler.RegisterGPUQueue(m_DirectPool.m_CommandQueue.Get(), "Direct Queue");
+
+    m_DirectPool.m_FreeCommandLists.set_capacity(gs_MaxCmdLists);
+    m_DirectPool.m_PendingExecuteCommandLists.set_capacity(gs_MaxCmdLists);
 }
 
 void GfxCommandListsManager::ShutDown()
@@ -81,13 +86,11 @@ void GfxCommandListsManager::ShutDown()
     bbeProfileFunction();
     bbeMultiThreadDetector();
 
-    assert(m_DirectPool.m_ActiveCommandLists.empty() == true);
+    assert(m_DirectPool.m_PendingExecuteCommandLists.empty() == true);
 
     // free all cmd lists
-    while (!m_DirectPool.m_FreeCommandLists.empty())
+    for (GfxCommandList* cmdList : m_DirectPool.m_FreeCommandLists)
     {
-        GfxCommandList* cmdList = m_DirectPool.m_FreeCommandLists.front();
-        m_DirectPool.m_FreeCommandLists.pop();
         m_DirectPool.m_CommandListsPool.free(cmdList);
     }
 }
@@ -95,6 +98,10 @@ void GfxCommandListsManager::ShutDown()
 GfxCommandList* GfxCommandListsManager::Allocate(D3D12_COMMAND_LIST_TYPE cmdListType, const std::string& name)
 {
     bbeProfileFunction();
+
+    //g_Log.info("*** GfxCommandListsManager::Allocate: {}", name);
+
+    assert(m_DirectPool.m_FreeCommandLists.capacity() && m_DirectPool.m_PendingExecuteCommandLists.capacity());
 
     GfxCommandList* newCmdList = nullptr;
     bool isNewCmdList = false;
@@ -110,7 +117,7 @@ GfxCommandList* GfxCommandListsManager::Allocate(D3D12_COMMAND_LIST_TYPE cmdList
         else
         {
             newCmdList = m_DirectPool.m_FreeCommandLists.front();
-            m_DirectPool.m_FreeCommandLists.pop();
+            m_DirectPool.m_FreeCommandLists.pop_front();
         }
     }
 
@@ -126,38 +133,36 @@ GfxCommandList* GfxCommandListsManager::Allocate(D3D12_COMMAND_LIST_TYPE cmdList
 
     newCmdList->BeginRecording();
 
-    {
-        bbeAutoLock(m_DirectPool.m_ListsLock);
-        m_DirectPool.m_ActiveCommandLists.push(newCmdList);
-    }
-
     return newCmdList;
 }
 
-void GfxCommandListsManager::ExecuteAllActiveCommandLists()
+void GfxCommandListsManager::QueueCommandListToExecute(GfxCommandList& cmdList, D3D12_COMMAND_LIST_TYPE cmdListType)
+{
+    bbeAutoLock(m_DirectPool.m_ListsLock);
+    assert(m_DirectPool.m_PendingExecuteCommandLists.size() < gs_MaxCmdLists);
+    m_DirectPool.m_PendingExecuteCommandLists.push_back(&cmdList);
+}
+
+void GfxCommandListsManager::ExecutePendingCommandLists()
 {
     bbeProfileFunction();
 
-    const uint32_t MAX_CMD_LISTS = 128;
-
     uint32_t numCmdListsToExec = 0;
-    GfxCommandList* ppPendingFreeCommandLists[MAX_CMD_LISTS] = {};
-    ID3D12CommandList* ppCommandLists[MAX_CMD_LISTS] = {};
+    GfxCommandList* ppPendingFreeCommandLists[gs_MaxCmdLists] = {};
+    ID3D12CommandList* ppCommandLists[gs_MaxCmdLists] = {};
 
-    // end recording for all active cmd lists and remove them from active queue
+    // end recording for all pending cmd lists
     {
         bbeAutoLock(m_DirectPool.m_ListsLock);
-        assert(m_DirectPool.m_ActiveCommandLists.size() < MAX_CMD_LISTS);
 
-        while (!m_DirectPool.m_ActiveCommandLists.empty())
+        for (GfxCommandList* cmdListToConsume : m_DirectPool.m_PendingExecuteCommandLists)
         {
-            GfxCommandList* cmdListToConsume = m_DirectPool.m_ActiveCommandLists.front();
             cmdListToConsume->EndRecording();
 
             ppPendingFreeCommandLists[numCmdListsToExec] = cmdListToConsume;
             ppCommandLists[numCmdListsToExec++] = cmdListToConsume->Dev();
-            m_DirectPool.m_ActiveCommandLists.pop();
         }
+        m_DirectPool.m_PendingExecuteCommandLists.clear();
     }
 
     // Submit GPU profiler logs
@@ -178,9 +183,10 @@ void GfxCommandListsManager::ExecuteAllActiveCommandLists()
     {
         bbeAutoLock(m_DirectPool.m_ListsLock);
 
+        assert(m_DirectPool.m_FreeCommandLists.size() + numCmdListsToExec < gs_MaxCmdLists);
         for (uint32_t i = 0; i < numCmdListsToExec; ++i)
         {
-            m_DirectPool.m_FreeCommandLists.push(ppPendingFreeCommandLists[i]);
+            m_DirectPool.m_FreeCommandLists.push_back(ppPendingFreeCommandLists[i]);
         }
     }
 }
