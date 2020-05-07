@@ -88,7 +88,7 @@ void System::Loop()
 
         tf::Taskflow tf;
 
-        tf::Task systemConsumptionTasks = ADD_SF_TASK(tf, m_SystemCommandManager.ConsumeCommandsMT(sf));
+        tf::Task systemConsumptionTasks = ADD_SF_TASK(tf, m_SystemCommandManager.ConsumeAllCommandsMT(sf));
 
         InplaceArray<tf::Task, 4> allSystemTasks;
         allSystemTasks.push_back(ADD_SF_TASK(tf, UpdateGraphic(sf)));
@@ -130,7 +130,7 @@ void System::BGAsyncThreadLoop()
 
     while (!m_BGAsyncThreadExit)
     {
-        m_BGAsyncCommandManager.ConsumeCommandsST();
+        m_BGAsyncCommandManager.ConsumeOneCommand();
 
         ::Sleep(1);
     }
@@ -143,7 +143,10 @@ void System::Initialize()
     {
         bbeProfileFunction();
 
+        m_BGAsyncCommandManager.Initialize();
         m_BGAsyncThread = std::thread([&]() { BGAsyncThreadLoop(); });
+
+        m_SystemCommandManager.Initialize();
 
         tf::Taskflow tf;
 

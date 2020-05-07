@@ -17,6 +17,7 @@ public:
     inline static GfxTexture White2D;
     inline static GfxTexture Black2D;
     inline static GfxTexture Checkerboard;
+    inline static std::vector<GfxTexture> SquidRoomTextures;
 
     inline static GfxMesh UnitCube;
     inline static GfxMesh Occcity;
@@ -26,11 +27,13 @@ private:
     void PreInitOcccity();
     void PreInitSquidRoom();
 
-    void InitCheckerboardTexture();
-    void InitSolidColor(GfxTexture&, const bbeColor&, const char* colorName);
-    void CreateUnitCube();
-    void CreateOcccity();
-    void CreateSquidRoom();
+    void CreateCheckerboardTexture();
+    void CreateSolidColorTexture(GfxTexture&, const bbeColor&, const char* colorName);
+    void CreateUnitCubeMesh();
+    void CreateOcccityMesh();
+    void CreateSquidRoomMesh();
+    void CreateSquidRoomTextures(tf::Subflow&);
+    void ClearPreloadedSampleAssetsMemory();
 
     std::vector<std::byte> m_OcccityData;
     std::vector<std::byte> m_SquidRoomData;

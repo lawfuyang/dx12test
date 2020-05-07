@@ -1,12 +1,22 @@
 #include <system/commandmanager.h>
 
+static const uint32_t MaxCommands = 256;
+
+void CommandManager::Initialize()
+{
+    m_PendingCommands.set_capacity(MaxCommands);
+    m_ExecutingCommands.set_capacity(MaxCommands);
+}
+
 void CommandManager::AddCommand(const std::function<void()>& newCmd)
 {
+    assert(m_PendingCommands.size() < MaxCommands);
+
     bbeAutoLock(m_CommandsLock);
     m_PendingCommands.push_back(newCmd);
 }
 
-void CommandManager::ConsumeCommandsMT(tf::Subflow& subFlow)
+void CommandManager::ConsumeAllCommandsMT(tf::Subflow& subFlow)
 {
     subFlow.emplace([&](tf::Subflow& sf)
         {
@@ -23,7 +33,7 @@ void CommandManager::ConsumeCommandsMT(tf::Subflow& subFlow)
         });
 }
 
-void CommandManager::ConsumeCommandsST()
+void CommandManager::ConsumeAllCommandsST()
 {
     bbeProfileFunction();
 
@@ -37,4 +47,22 @@ void CommandManager::ConsumeCommandsST()
     {
         cmd();
     }
+}
+
+void CommandManager::ConsumeOneCommand()
+{
+    bbeProfileFunction();
+
+    std::function<void()> cmd;
+    {
+        bbeAutoLock(m_CommandsLock);
+
+        if (m_PendingCommands.empty())
+            return;
+
+        cmd = m_PendingCommands.front();
+        m_PendingCommands.pop_front();
+    }
+
+    cmd();
 }

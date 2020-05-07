@@ -3,12 +3,15 @@
 class CommandManager
 {
 public:
+    void Initialize();
+
     void AddCommand(const std::function<void()>& newCmd);
-    void ConsumeCommandsMT(tf::Subflow& sf);
-    void ConsumeCommandsST();
+    void ConsumeAllCommandsMT(tf::Subflow& sf);
+    void ConsumeAllCommandsST();
+    void ConsumeOneCommand();
 
 private:
     std::mutex m_CommandsLock;
-    std::vector<std::function<void()>> m_PendingCommands;
-    std::vector<std::function<void()>> m_ExecutingCommands;
+    CircularBuffer<std::function<void()>> m_PendingCommands;
+    CircularBuffer<std::function<void()>> m_ExecutingCommands;
 };

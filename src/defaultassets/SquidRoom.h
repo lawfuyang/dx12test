@@ -43,6 +43,7 @@ namespace SampleAssets
                 UINT Size;
                 UINT Pitch;
             } Data[D3D12_REQ_MIP_LEVELS];
+            const char* Name;
         };
 
         struct DrawParameters
@@ -62,80 +63,80 @@ namespace SampleAssets
 
         const TextureResource Textures[] =
         {
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 0, 131072, 1024 }, } }, // squard room platform_3_diff_512.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 131072, 131072, 1024 }, } }, // squard room platform_3_norm_512.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 262144, 524288, 2048 }, } }, // squard room platform_2_diff_1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 786432, 524288, 2048 }, } }, // squard room platform_2_norm_1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 1310720, 524288, 2048 }, } }, // squard room platform_1_diff_1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 1835008, 524288, 2048 }, } }, // squard room platform_1_norm_1024.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 2359296, 131072, 1024 }, } }, // shelves2_diff1_512.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 2490368, 131072, 1024 }, } }, // shelves2_nm1_512.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 2621440, 524288, 2048 }, } }, // Misc_Boss_2 1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 3145728, 524288, 2048 }, } }, // Misc_Boss_2_normal1024.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 3670016, 131072, 1024 }, } }, // Hanging_bundle_512.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 3801088, 131072, 1024 }, } }, // Catwalk_03_Normal_512.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 3932160, 524288, 2048 }, } }, // Stack_ Boxes_Diff02_1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 4456448, 524288, 2048 }, } }, // Stack_ Boxes_Nm02_1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 4980736, 524288, 2048 }, } }, // Stack_ Boxes_Diff03_1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 5505024, 524288, 2048 }, } }, // Stack_ Boxes_Nm03_1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 6029312, 524288, 2048 }, } }, // Stack_ Boxes_Diff01_1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 6553600, 524288, 2048 }, } }, // Stack_ Boxes_Nm01_1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 7077888, 524288, 2048 }, } }, // Back_Alley_box_1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 7602176, 524288, 2048 }, } }, // Back_Alley_box _norm_1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 8126464, 524288, 2048 }, } }, // gameCrates_01_Diff_1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 8650752, 524288, 2048 }, } }, // gameCrates_01_Nor_1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 9175040, 524288, 2048 }, } }, // RaceCar_Strorage_Diff512.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 9699328, 524288, 2048 }, } }, // RaceCar_Strorage_Norm512.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 10223616, 131072, 1024 }, } }, // hats_02_diff_512.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 10354688, 131072, 1024 }, } }, // hats_02_norm_512.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 10485760, 131072, 1024 }, } }, // hats_01_diff_512.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 10616832, 131072, 1024 }, } }, // hats_01_norm_512.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 10747904, 524288, 2048 }, } }, // Misc_Boss_1_1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 11272192, 524288, 2048 }, } }, // Misc_Boss_1_normal_1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 11796480, 524288, 2048 }, } }, // gameCrates_03_Diff_1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 12320768, 524288, 2048 }, } }, // gameCrates_03_Nor_1024.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 12845056, 131072, 1024 }, } }, // gameCrates_02_Diff_512.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 12976128, 524288, 2048 }, } }, // Back_Alley_Drum.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 13500416, 131072, 1024 }, } }, // Back_Alley_Drum _norm_512.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 13631488, 131072, 1024 }, } }, // shelves2_diff_512.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 13762560, 131072, 1024 }, } }, // shelves2_nor_512.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 13893632, 131072, 1024 }, } }, // shelves2_diff2_512.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 14024704, 131072, 1024 }, } }, // shelves2_nm2_512.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 14155776, 524288, 2048 }, } }, // marbel drum texture_1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 14680064, 524288, 2048 }, } }, // marbel drum texture _Nrml_1024.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 15204352, 131072, 1024 }, } }, // Catwalk_02_Diffuse512.dds
-            {     1,     1,   1,  DXGI_FORMAT_R8G8B8A8_UNORM, { { 15335424, 4, 4 }, } }, // default-normalmap.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 15335428, 131072, 1024 }, } }, // Catwalk_03_Diffuse_512.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 15466500, 131072, 1024 }, } }, // shelves3_diff_512.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 15597572, 131072, 1024 }, } }, // shelves3_nor_512.dds
-            {  2048,  2048,   1,       DXGI_FORMAT_BC1_UNORM, { { 15728644, 2097152, 4096 }, } }, // Misc_Boss_3_2048.dds
-            {  2048,  2048,   1,       DXGI_FORMAT_BC1_UNORM, { { 17825796, 2097152, 4096 }, } }, // Misc_Boss_3_normal2048R.dds
-            {     1,     1,   1,  DXGI_FORMAT_R8G8B8A8_UNORM, { { 19922948, 4, 4 }, } }, // default.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 19922952, 131072, 1024 }, } }, // Hanghing Light_512.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 20054024, 131072, 1024 }, } }, // Hanghing Light_normal_512.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 20185096, 131072, 1024 }, } }, // Hanging_bundle_normal_512.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 20316168, 131072, 1024 }, } }, // Hanging_bundle_marble_512.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 20447240, 131072, 1024 }, } }, // Hanging_bundle_marble_normal_512.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 20578312, 131072, 1024 }, } }, // window_Diff512.dds
-            {   512,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 20709384, 262144, 1024 }, } }, // Sliding Steel Door_Diff_512.dds
-            {   512,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 20971528, 262144, 1024 }, } }, // Sliding Steel Door_Norm_512.dds
-            {   512,   512,   1,       DXGI_FORMAT_BC1_UNORM, { { 21233672, 131072, 1024 }, } }, // window_Norm512.dds
-            {   512,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 21364744, 262144, 1024 }, } }, // Door_Diff_512.dds
-            {   512,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 21626888, 262144, 1024 }, } }, // Door_Norm_512.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 21889032, 524288, 2048 }, } }, // floor_Diff_1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 22413320, 524288, 2048 }, } }, // floor_Normal_1024.dds
-            {  2048,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 22937608, 1048576, 4096 }, } }, // wall03_Diff_2048.dds
-            {  2048,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 23986184, 1048576, 4096 }, } }, // wall03_Normal_2048.dds
-            {  2048,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 25034760, 1048576, 4096 }, } }, // wall01_Diff_2048.dds
-            {  2048,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 26083336, 1048576, 4096 }, } }, // wall01_Normal_2048.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 27131912, 524288, 2048 }, } }, // Roof_Diff1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 27656200, 524288, 2048 }, } }, // Roof_Normal1024.dds
-            {   512,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 28180488, 262144, 1024 }, } }, // pillar_Diff_512.dds
-            {   512,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 28442632, 262144, 1024 }, } }, // pillar_Norm_512.dds
-            {   512,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 28704776, 262144, 1024 }, } }, // Broken_Pillar_Diff_512.dds
-            {   512,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 28966920, 262144, 1024 }, } }, // Broken_Pillar_Norm_512.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 29229064, 524288, 2048 }, } }, // Golfclub_dm_1024.dds
-            {  1024,  1024,   1,       DXGI_FORMAT_BC1_UNORM, { { 29753352, 524288, 2048 }, } }, // Golfclub_nm_1024.dds
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 0, 131072, 1024 }, }        , "squard room platform_3_diff_512.dds" },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 131072, 131072, 1024 }, }   , "squard room platform_3_norm_512.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 262144, 524288, 2048 }, }   , "squard room platform_2_diff_1024.dds" },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 786432, 524288, 2048 }, }   , "squard room platform_2_norm_1024.dds" },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 1310720, 524288, 2048 }, }  , "squard room platform_1_diff_1024.dds" },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 1835008, 524288, 2048 }, }  , "squard room platform_1_norm_1024.dds" },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 2359296, 131072, 1024 }, }  , "shelves2_diff1_512.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 2490368, 131072, 1024 }, }  , "shelves2_nm1_512.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 2621440, 524288, 2048 }, }  , "Misc_Boss_2 1024.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 3145728, 524288, 2048 }, }  , "Misc_Boss_2_normal1024.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 3670016, 131072, 1024 }, }  , "Hanging_bundle_512.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 3801088, 131072, 1024 }, }  , "Catwalk_03_Normal_512.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 3932160, 524288, 2048 }, }  , "Stack_ Boxes_Diff02_1024.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 4456448, 524288, 2048 }, }  , "Stack_ Boxes_Nm02_1024.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 4980736, 524288, 2048 }, }  , "Stack_ Boxes_Diff03_1024.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 5505024, 524288, 2048 }, }  , "Stack_ Boxes_Nm03_1024.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 6029312, 524288, 2048 }, }  , "Stack_ Boxes_Diff01_1024.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 6553600, 524288, 2048 }, }  , "Stack_ Boxes_Nm01_1024.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 7077888, 524288, 2048 }, }  , "Back_Alley_box_1024.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 7602176, 524288, 2048 }, }  , "Back_Alley_box _norm_1024.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 8126464, 524288, 2048 }, }  , "gameCrates_01_Diff_1024.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 8650752, 524288, 2048 }, }  , "gameCrates_01_Nor_1024.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 9175040, 524288, 2048 }, }  , "RaceCar_Strorage_Diff512.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 9699328, 524288, 2048 }, }  , "RaceCar_Strorage_Norm512.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 10223616, 131072, 1024 }, } , "hats_02_diff_512.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 10354688, 131072, 1024 }, } , "hats_02_norm_512.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 10485760, 131072, 1024 }, } , "hats_01_diff_512.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 10616832, 131072, 1024 }, } , "hats_01_norm_512.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 10747904, 524288, 2048 }, } , "Misc_Boss_1_1024.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 11272192, 524288, 2048 }, } , "Misc_Boss_1_normal_1024.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 11796480, 524288, 2048 }, } , "gameCrates_03_Diff_1024.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 12320768, 524288, 2048 }, } , "gameCrates_03_Nor_1024.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 12845056, 131072, 1024 }, } , "gameCrates_02_Diff_512.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 12976128, 524288, 2048 }, } , "Back_Alley_Drum.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 13500416, 131072, 1024 }, } , "Back_Alley_Drum _norm_512.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 13631488, 131072, 1024 }, } , "shelves2_diff_512.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 13762560, 131072, 1024 }, } , "shelves2_nor_512.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 13893632, 131072, 1024 }, } , "shelves2_diff2_512.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 14024704, 131072, 1024 }, } , "shelves2_nm2_512.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 14155776, 524288, 2048 }, } , "marbel drum texture_1024.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 14680064, 524288, 2048 }, } , "marbel drum texture _Nrml_1024.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 15204352, 131072, 1024 }, } , "Catwalk_02_Diffuse512.dds " },
+            { 1, 1, 1,       DXGI_FORMAT_R8G8B8A8_UNORM, { { 15335424, 4, 4 }, }         , "default-normalmap.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 15335428, 131072, 1024 }, } , "Catwalk_03_Diffuse_512.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 15466500, 131072, 1024 }, } , "shelves3_diff_512.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 15597572, 131072, 1024 }, } , "shelves3_nor_512.dds " },
+            { 2048, 2048, 1, DXGI_FORMAT_BC1_UNORM,      { { 15728644, 2097152, 4096 }, }, "Misc_Boss_3_2048.dds " },
+            { 2048, 2048, 1, DXGI_FORMAT_BC1_UNORM,      { { 17825796, 2097152, 4096 }, }, "Misc_Boss_3_normal2048R.dds " },
+            { 1, 1, 1,       DXGI_FORMAT_R8G8B8A8_UNORM, { { 19922948, 4, 4 }, }         , "default.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 19922952, 131072, 1024 }, } , "Hanghing Light_512.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 20054024, 131072, 1024 }, } , "Hanghing Light_normal_512.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 20185096, 131072, 1024 }, } , "Hanging_bundle_normal_512.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 20316168, 131072, 1024 }, } , "Hanging_bundle_marble_512.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 20447240, 131072, 1024 }, } , "Hanging_bundle_marble_normal_512.dds" },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 20578312, 131072, 1024 }, } , "window_Diff512.dds " },
+            { 512, 1024, 1,  DXGI_FORMAT_BC1_UNORM,      { { 20709384, 262144, 1024 }, } , "Sliding Steel Door_Diff_512.dds " },
+            { 512, 1024, 1,  DXGI_FORMAT_BC1_UNORM,      { { 20971528, 262144, 1024 }, } , "Sliding Steel Door_Norm_512.dds " },
+            { 512, 512, 1,   DXGI_FORMAT_BC1_UNORM,      { { 21233672, 131072, 1024 }, } , "window_Norm512.dds " },
+            { 512, 1024, 1,  DXGI_FORMAT_BC1_UNORM,      { { 21364744, 262144, 1024 }, } , "Door_Diff_512.dds " },
+            { 512, 1024, 1,  DXGI_FORMAT_BC1_UNORM,      { { 21626888, 262144, 1024 }, } , "Door_Norm_512.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 21889032, 524288, 2048 }, } , "floor_Diff_1024.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 22413320, 524288, 2048 }, } , "floor_Normal_1024.dds " },
+            { 2048, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 22937608, 1048576, 4096 }, }, "wall03_Diff_2048.dds " },
+            { 2048, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 23986184, 1048576, 4096 }, }, "wall03_Normal_2048.dds " },
+            { 2048, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 25034760, 1048576, 4096 }, }, "wall01_Diff_2048.dds " },
+            { 2048, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 26083336, 1048576, 4096 }, }, "wall01_Normal_2048.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 27131912, 524288, 2048 }, } , "Roof_Diff1024.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 27656200, 524288, 2048 }, } , "Roof_Normal1024.dds " },
+            { 512, 1024, 1,  DXGI_FORMAT_BC1_UNORM,      { { 28180488, 262144, 1024 }, } , "pillar_Diff_512.dds " },
+            { 512, 1024, 1,  DXGI_FORMAT_BC1_UNORM,      { { 28442632, 262144, 1024 }, } , "pillar_Norm_512.dds " },
+            { 512, 1024, 1,  DXGI_FORMAT_BC1_UNORM,      { { 28704776, 262144, 1024 }, } , "Broken_Pillar_Diff_512.dds " },
+            { 512, 1024, 1,  DXGI_FORMAT_BC1_UNORM,      { { 28966920, 262144, 1024 }, } , "Broken_Pillar_Norm_512.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 29229064, 524288, 2048 }, } , "Golfclub_dm_1024.dds " },
+            { 1024, 1024, 1, DXGI_FORMAT_BC1_UNORM,      { { 29753352, 524288, 2048 }, } , "Golfclub_nm_1024.dds " },
         };
 
         const DrawParameters Draws[] =

@@ -41,6 +41,8 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
 
+    m_GfxCommandManager.Initialize();
+
     g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUIPropertyGrid(); });
 
     // independent tasks
@@ -112,7 +114,7 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
     bbeProfileFunction();
 
     // consume all gfx commmands multi-threaded
-    tf::Task gfxCommandsConsumptionTasks = ADD_SF_TASK(subFlow, m_GfxCommandManager.ConsumeCommandsMT(sf));
+    tf::Task gfxCommandsConsumptionTasks = ADD_SF_TASK(subFlow, m_GfxCommandManager.ConsumeAllCommandsMT(sf));
     tf::Task beginFrameTask              = ADD_TF_TASK(subFlow, BeginFrame());
     tf::Task endFrameTask                = ADD_TF_TASK(subFlow, EndFrame());
     tf::Task renderersScheduleTask       = ADD_SF_TASK(subFlow, ScheduleRenderPasses(sf));

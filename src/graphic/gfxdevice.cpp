@@ -271,6 +271,9 @@ void GfxDevice::EndFrame()
 {
     bbeMultiThreadDetector();
 
+    // execute remaining cmd lists
+    Flush();
+
     m_AllContexts.clear();
 }
 

@@ -51,7 +51,7 @@ protected:
         const char*           m_ResourceName = "";
     };
 
-    void InitializeBufferWithInitData(GfxContext& context, uint32_t uploadBufferSize, uint32_t row, uint32_t pitch, const void* initData, const char* resourceName);
+    void InitializeBufferWithInitData(GfxContext& context, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* initData, const char* resourceName);
     D3D12MA::Allocation* CreateHeap(GfxContext&, const HeapDesc&);
     void UploadInitData(GfxContext& context, const void* dataSrc, uint32_t rowPitch, uint32_t slicePitch, ID3D12Resource* dest, ID3D12Resource* src);
 

@@ -19,12 +19,20 @@ void GfxDefaultAssets::Initialize(tf::Subflow& sf)
 {
     bbeProfileFunction();
 
-    ADD_TF_TASK(sf, InitCheckerboardTexture());
-    ADD_TF_TASK(sf, InitSolidColor(White2D, bbeColor{ 1.0f, 1.0f, 1.0f }, "Default White2D Texture"));
-    ADD_TF_TASK(sf, InitSolidColor(Black2D, bbeColor{ 0.0f, 0.0f, 0.0f }, "Default Black2D Texture"));
-    ADD_TF_TASK(sf, CreateUnitCube());
-    ADD_TF_TASK(sf, CreateOcccity());
-    ADD_TF_TASK(sf, CreateSquidRoom());
+    InplaceArray<tf::Task, 7> tasks;
+    tasks.push_back(ADD_TF_TASK(sf, CreateCheckerboardTexture()));
+    tasks.push_back(ADD_TF_TASK(sf, CreateSolidColorTexture(White2D, bbeColor{ 1.0f, 1.0f, 1.0f }, "Default White2D Texture")));
+    tasks.push_back(ADD_TF_TASK(sf, CreateSolidColorTexture(Black2D, bbeColor{ 0.0f, 0.0f, 0.0f }, "Default Black2D Texture")));
+    tasks.push_back(ADD_TF_TASK(sf, CreateUnitCubeMesh()));
+    tasks.push_back(ADD_TF_TASK(sf, CreateOcccityMesh()));
+    tasks.push_back(ADD_TF_TASK(sf, CreateSquidRoomMesh()));
+    tasks.push_back(ADD_SF_TASK(sf, CreateSquidRoomTextures(sf)));
+
+    tf::Task clearPreloadedSampleAssetsMemoryTask = ADD_TF_TASK(sf, ClearPreloadedSampleAssetsMemory());
+    for (tf::Task& t : tasks)
+    {
+        clearPreloadedSampleAssetsMemoryTask.succeed(t);
+    }
 }
 
 void GfxDefaultAssets::ShutDown()
@@ -32,6 +40,11 @@ void GfxDefaultAssets::ShutDown()
     this->White2D.Release();
     this->Black2D.Release();
     this->Checkerboard.Release();
+
+    for (GfxTexture& tex : this->SquidRoomTextures)
+    {
+        tex.Release();
+    }
 
     this->UnitCube.Release();
     this->Occcity.Release();
@@ -62,7 +75,7 @@ void GfxDefaultAssets::PreInitSquidRoom()
     ReadDataFromFile(dataFileName.c_str(), m_SquidRoomData);
 }
 
-void GfxDefaultAssets::InitCheckerboardTexture()
+void GfxDefaultAssets::CreateCheckerboardTexture()
 {
     bbeProfileFunction();
 
@@ -111,7 +124,7 @@ void GfxDefaultAssets::InitCheckerboardTexture()
     this->Checkerboard.Initialize(initParams);
 }
 
-void GfxDefaultAssets::InitSolidColor(GfxTexture& result, const bbeColor& color, const char* colorName)
+void GfxDefaultAssets::CreateSolidColorTexture(GfxTexture& result, const bbeColor& color, const char* colorName)
 {
     bbeProfileFunction();
 
@@ -151,7 +164,7 @@ static void ReverseWinding(std::vector<uint16_t>& indices, std::vector<Vertex>& 
     }
 }
 
-void GfxDefaultAssets::CreateUnitCube()
+void GfxDefaultAssets::CreateUnitCubeMesh()
 {
     bbeProfileFunction();
 
@@ -239,7 +252,7 @@ void GfxDefaultAssets::CreateUnitCube()
     this->UnitCube.Initialize(meshInitParams);
 }
 
-void GfxDefaultAssets::CreateOcccity()
+void GfxDefaultAssets::CreateOcccityMesh()
 {
     bbeProfileFunction();
 
@@ -264,12 +277,9 @@ void GfxDefaultAssets::CreateOcccity()
     IBInitParams.m_IndexSize = 4;
 
     this->Occcity.Initialize(meshInitParams);
-
-    m_OcccityData.clear();
-    m_OcccityData.shrink_to_fit();
 }
 
-void GfxDefaultAssets::CreateSquidRoom()
+void GfxDefaultAssets::CreateSquidRoomMesh()
 {
     bbeProfileFunction();
 
@@ -294,6 +304,42 @@ void GfxDefaultAssets::CreateSquidRoom()
     IBInitParams.m_IndexSize = 4;
 
     this->SquidRoom.Initialize(meshInitParams);
+}
+
+void GfxDefaultAssets::CreateSquidRoomTextures(tf::Subflow& subFlow)
+{
+    bbeProfileFunction();
+
+    assert(m_SquidRoomData.size());
+
+    using namespace SampleAssets;
+
+    const uint32_t srvCount = _countof(SquidRoom::Textures);
+    this->SquidRoomTextures.resize(srvCount);
+
+    for (uint32_t i = 0; i < srvCount; i++)
+    {
+        GfxTexture& tex = this->SquidRoomTextures[i];
+        const SquidRoom::TextureResource& texResource = SquidRoom::Textures[i];
+
+        subFlow.emplace([&]()
+            {
+                GfxTexture::InitParams initParams;
+                initParams.m_Format = texResource.Format;
+                initParams.m_Width = texResource.Width;
+                initParams.m_Height = texResource.Height;
+                initParams.m_InitData = m_SquidRoomData.data() + texResource.Data->Offset;
+                initParams.m_ResourceName = texResource.Name;
+
+                tex.Initialize(initParams);
+            });
+    }
+}
+
+void GfxDefaultAssets::ClearPreloadedSampleAssetsMemory()
+{
+    m_OcccityData.clear();
+    m_OcccityData.shrink_to_fit();
 
     m_SquidRoomData.clear();
     m_SquidRoomData.shrink_to_fit();

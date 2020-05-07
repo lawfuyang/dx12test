@@ -5,17 +5,51 @@
 #include <graphic/gfxcontext.h>
 #include <graphic/dx12utils.h>
 
+struct ID3D12ResourceMemoryLayout
+{
+    uint32_t m_TotalSizeInBytes = 0;
+    uint32_t m_RowPitch = 0;
+    uint32_t m_SlicePitch = 0;
+    uint32_t m_Alignment = 0;
+};
+
+static ID3D12ResourceMemoryLayout GetMemoryLayout(const D3D12_RESOURCE_DESC& desc)
+{
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+
+    assert(desc.MipLevels > 0);
+
+    const uint32_t arraySize = (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D ? desc.DepthOrArraySize : 1);
+    const uint32_t subResourceCount = desc.MipLevels * arraySize;
+
+    const uint32_t ArraySize = 32;
+
+    if (subResourceCount > ArraySize)
+        g_Log.warn("subResourceCount = {}. Increase array sizes in {}", subResourceCount, __FUNCTION__);
+
+    InplaceArray<D3D12_PLACED_SUBRESOURCE_FOOTPRINT, ArraySize> layouts(subResourceCount);
+    InplaceArray<UINT, ArraySize> numRows(subResourceCount);
+    InplaceArray<UINT64, ArraySize> rowSizeInBytes(subResourceCount);
+    UINT64 requiredSize = 0;
+
+    gfxDevice.Dev()->GetCopyableFootprints(&desc, 0, subResourceCount, 0, layouts.data(), numRows.data(), rowSizeInBytes.data(), &requiredSize);
+
+    const D3D12_RESOURCE_ALLOCATION_INFO allocInfo = gfxDevice.Dev()->GetResourceAllocationInfo(0, 1, &desc);
+
+    ID3D12ResourceMemoryLayout memoryLayout;
+    memoryLayout.m_RowPitch = layouts[0].Footprint.RowPitch;
+    memoryLayout.m_SlicePitch = memoryLayout.m_RowPitch * desc.Height;
+    memoryLayout.m_Alignment = static_cast<uint32_t>(allocInfo.Alignment);
+    memoryLayout.m_TotalSizeInBytes = static_cast<uint32_t>(allocInfo.SizeInBytes);
+
+    return memoryLayout;
+}
+
 void GfxHazardTrackedResource::Transition(GfxCommandList& cmdList, D3D12_RESOURCE_STATES newState)
 {
     if (m_CurrentResourceState != newState)
     {
-        D3D12_RESOURCE_BARRIER barrier = {};
-        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-        barrier.Transition.pResource = m_Resource.Get();
-        barrier.Transition.StateBefore = m_CurrentResourceState;
-        barrier.Transition.StateAfter = newState;
-        barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+        const D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_Resource.Get(), m_CurrentResourceState, newState);
 
         const UINT numBarriers = 1;
         cmdList.Dev()->ResourceBarrier(numBarriers, &barrier);
@@ -106,7 +140,7 @@ void GfxBufferCommon::UploadInitData(GfxContext& context, const void* dataSrc, u
     assert(r);
 }
 
-void GfxBufferCommon::InitializeBufferWithInitData(GfxContext& context, uint32_t uploadBufferSize, uint32_t row, uint32_t pitch, const void* initData, const char* resourceName)
+void GfxBufferCommon::InitializeBufferWithInitData(GfxContext& context, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* initData, const char* resourceName)
 {
     bbeProfileFunction();
 
@@ -123,7 +157,7 @@ void GfxBufferCommon::InitializeBufferWithInitData(GfxContext& context, uint32_t
     D3D12MA::Allocation* uploadHeapAlloc = CreateHeap(context, heapDesc);
 
     // upload init data via CopyBufferRegion
-    UploadInitData(context, initData, row, pitch, m_D3D12MABufferAllocation->GetResource(), uploadHeapAlloc->GetResource());
+    UploadInitData(context, initData, rowPitch, slicePitch, m_D3D12MABufferAllocation->GetResource(), uploadHeapAlloc->GetResource());
 
     // we don't need this upload heap anymore... release it next frame
     g_GfxManager.AddGraphicCommand([uploadHeapAlloc]()
@@ -325,7 +359,6 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     assert(initParams.m_Width > 0);
     assert(initParams.m_Height > 0);
 
-    m_SizeInBytes = initParams.m_Width * initParams.m_Height * GetBytesPerPixel(initParams.m_Format);
     m_Format = initParams.m_Format;
 
     // init desc heap for texture
@@ -338,10 +371,15 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     desc.Width = initParams.m_Width;
     desc.Height = initParams.m_Height;
     desc.DepthOrArraySize = 1;
+    desc.MipLevels = 1;
     desc.Format = initParams.m_Format;
     desc.SampleDesc.Count = 1;
     desc.SampleDesc.Quality = 0;
     desc.Flags = initParams.m_Flags;
+
+    const ID3D12ResourceMemoryLayout memoryLayout = GetMemoryLayout(desc);
+
+    m_SizeInBytes = memoryLayout.m_TotalSizeInBytes;
 
     const bool hasInitData = initParams.m_InitData != nullptr;
 
@@ -364,8 +402,8 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
         SetHazardTrackedState(D3D12_RESOURCE_STATE_COPY_DEST);
 
         const uint32_t uploadBufferSize = (uint32_t)GetRequiredIntermediateSize(m_Resource.Get(), 0, 1);
-        const uint32_t rowPitch = initParams.m_Width * (GetBitsPerPixel(initParams.m_Format) / 8);
-        InitializeBufferWithInitData(initContext, uploadBufferSize, rowPitch, rowPitch * initParams.m_Height, initParams.m_InitData, initParams.m_ResourceName.c_str());
+
+        InitializeBufferWithInitData(initContext, uploadBufferSize, memoryLayout.m_RowPitch, uploadBufferSize, initParams.m_InitData, initParams.m_ResourceName.c_str());
 
         // after uploading init values, transition the texture from copy destination state to common state
         Transition(initContext.GetCommandList(), initParams.m_InitialState);
