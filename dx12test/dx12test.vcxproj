@@ -94,6 +94,7 @@
     <ClCompile Include="..\src\system\imguimanager.cpp" />
     <ClCompile Include="..\src\system\keyboard.cpp" />
     <ClCompile Include="..\src\system\main.cpp" />
+    <ClCompile Include="..\src\system\math.cpp" />
     <ClCompile Include="..\src\system\memcpy.cpp" />
     <ClCompile Include="..\src\system\memorymappedfile.cpp" />
     <ClCompile Include="..\src\system\mouse.cpp" />

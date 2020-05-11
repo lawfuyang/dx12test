@@ -18,8 +18,8 @@ bbeMatrix CameraController::Get3DViewProjMatrix()
     const float fovAngleY = DirectX::XMConvertToRadians(m_FOV);
 
     const bbeVector3 focusPosition = m_EyePosition + m_Dir;
-    const bbeMatrix viewMatrix = bbeMatrix::CreateLookAtLH(m_EyePosition, focusPosition, m_UpDirection).Transpose();
-    const bbeMatrix projMatrix = bbeMatrix::CreatePerspectiveFieldOfViewLH(fovAngleY, aspectRatio, m_Near, m_Far).Transpose();
+    const bbeMatrix viewMatrix = CreateLookAtLH(m_EyePosition, focusPosition, m_UpDirection).Transpose();
+    const bbeMatrix projMatrix = CreatePerspectiveFieldOfViewLH(fovAngleY, aspectRatio, m_Near, m_Far).Transpose();
 
     return projMatrix * viewMatrix;
 }

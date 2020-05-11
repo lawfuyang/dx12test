@@ -88,18 +88,7 @@ template <typename T> constexpr bool IsDivisible(T value, T divisor)
     return (value / divisor) * divisor == value;
 }
 
-static uint8_t Log2(uint64_t value)
-{
-    unsigned long mssb; // most significant set bit
-    unsigned long lssb; // least significant set bit
-
-    // If perfect power of two (only one set bit), return index of bit.  Otherwise round up
-    // fractional log by adding 1 to most signicant set bit's index.
-    if (_BitScanReverse64(&mssb, value) > 0 && _BitScanForward64(&lssb, value) > 0)
-        return uint8_t(mssb + (mssb == lssb ? 0 : 1));
-    else
-        return 0;
-}
+uint8_t Log2(uint64_t value);
 
 template <typename T> constexpr T AlignPowerOfTwo(T value)
 {
@@ -135,6 +124,9 @@ constexpr uint32_t bbeGetLog2(uint32_t val)
 
     return val;
 }
+
+bbeMatrix CreateLookAtLH(const bbeVector3& position, const bbeVector3& target, const bbeVector3& up);
+bbeMatrix CreatePerspectiveFieldOfViewLH(float fov, float aspectRatio, float nearPlane, float farPlane);
 
 #define bbePI           3.1415926535897932384626433832795f
 #define bbe2PI          6.2831853071795864769252867665590f
