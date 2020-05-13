@@ -186,6 +186,7 @@ void IMGUIManager::Update()
 
     for (const std::function<void()>& cb : windowUpdateCBs)
     {
+        bbeProfile("Update IMGUI Window");
         cb();
     }
 

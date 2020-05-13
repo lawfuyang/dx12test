@@ -3,11 +3,11 @@
 #define MICROPROFILE_ENABLED 1
 #define MICROPROFILE_GPU_TIMERS_D3D12 1
 #define MICROPROFILE_WEBSERVER_MAXFRAMES 100
-#define MICROPROFILE_MAX_THREADS 128
 #include "extern/microprofile/microprofile.h"
 
 struct MicroProfileThreadLogGpu;
 class GfxContext;
+class GfxCommandList;
 
 class SystemProfiler
 {
@@ -21,11 +21,21 @@ public:
     void OnFlip();
     void DumpProfilerBlocks(bool condition, bool immediately = false);
     int GetGPUQueueHandle(void* queue) const { return m_GPUQueueToProfilerHandle.at(queue); }
+    void SubmitAllGPULogsToQueue(ID3D12CommandQueue*);
+
+    MicroProfileThreadLogGpu* GetGPULogForCurrentThread(const GfxCommandList&);
 
 private:
     std::unordered_map<void*, int> m_GPUQueueToProfilerHandle;
 
-    friend class GPUProfilerContext;
+    struct GPULogContext
+    {
+        bool m_Begun = false;
+        MicroProfileThreadLogGpu* m_Log = nullptr;
+    };
+
+    std::mutex m_GPULogsMutex;
+    std::unordered_map<std::thread::id, GPULogContext> m_PerThreadGPULogs;
 };
 #define g_Profiler SystemProfiler::GetInstance()
 
@@ -41,10 +51,10 @@ private:
 #define bbeProfileBlockEnd()                            MICROPROFILE_LEAVE()
 #define bbePIXEvent(gfxContext)                         const ScopedPixEvent bbeUniqueVariable(pixEvent) { gfxContext.GetCommandList().Dev() }
 
-#define bbeProfileGPU(gfxContext, name)                                                                   \
-    bbePIXEvent(gfxContext);                                                                              \
-    MICROPROFILE_SCOPEGPUI_L(gfxContext.GetCommandList().GetGPULog(), name, GetCompileTimeCRC32(name));
+#define bbeProfileGPU(gfxContext, name) \
+    bbePIXEvent(gfxContext); \
+    MICROPROFILE_SCOPEGPUI_L(g_Profiler.GetGPULogForCurrentThread(gfxContext.GetCommandList()), name, GetCompileTimeCRC32(name));
 
-#define bbeProfileGPUFunction(gfxContext)                                                                                 \
-    bbePIXEvent(gfxContext);                                                                                              \
-    MICROPROFILE_SCOPEGPUI_L(gfxContext.GetCommandList().GetGPULog(), __FUNCTION__, GetCompileTimeCRC32(__FUNCTION__));
+#define bbeProfileGPUFunction(gfxContext) \
+    bbePIXEvent(gfxContext); \
+    MICROPROFILE_SCOPEGPUI_L(g_Profiler.GetGPULogForCurrentThread(gfxContext.GetCommandList()), __FUNCTION__, GetCompileTimeCRC32(__FUNCTION__));

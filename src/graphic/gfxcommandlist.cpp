@@ -44,9 +44,6 @@ void GfxCommandList::BeginRecording()
 
     // When ExecuteCommandList() is called on a particular command list, that command list can then be reset at any time and must be before re-recording
     DX12_CALL(m_CommandList->Reset(m_CommandAllocator.Get(), nullptr));
-
-    m_Log = MicroProfileThreadLogGpuAlloc();
-    MICROPROFILE_GPU_BEGIN(m_CommandList.Get(), m_Log);
 }
 
 void GfxCommandList::EndRecording()
@@ -165,13 +162,7 @@ void GfxCommandListsManager::ExecutePendingCommandLists()
         m_DirectPool.m_PendingExecuteCommandLists.clear();
     }
 
-    // Submit GPU profiler logs
-    for (uint32_t i = 0; i < numCmdListsToExec; ++i)
-    {
-        const uint64_t token = MICROPROFILE_GPU_END(ppPendingFreeCommandLists[i]->m_Log);
-        MICROPROFILE_GPU_SUBMIT(g_Profiler.GetGPUQueueHandle(m_DirectPool.m_CommandQueue.Get()), token);
-        MicroProfileThreadLogGpuFree(ppPendingFreeCommandLists[i]->m_Log);
-    }
+    g_Profiler.SubmitAllGPULogsToQueue(m_DirectPool.m_CommandQueue.Get());
     
     // execute cmd lists
     if (numCmdListsToExec > 0)

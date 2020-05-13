@@ -12,7 +12,6 @@ public:
     D3D12_COMMAND_LIST_TYPE GetType() const { return m_Type; }
 
     void SetName(const std::string& name) { m_Name = name; };
-    MicroProfileThreadLogGpu* GetGPULog() { return m_Log; }
 
 private:
     D3D12_COMMAND_LIST_TYPE m_Type = (D3D12_COMMAND_LIST_TYPE)0;
@@ -21,7 +20,6 @@ private:
     ComPtr<ID3D12GraphicsCommandList5> m_CommandList;
 
     std::string m_Name;
-    MicroProfileThreadLogGpu* m_Log = nullptr;
 
     friend class GfxCommandListsManager;
 };
