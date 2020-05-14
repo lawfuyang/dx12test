@@ -15,14 +15,14 @@ private:
     void UpdateCameraRotation();
     void UpdateIMGUIPropertyGrid();
 
-    float m_Near = 0.01f;
-    float m_Far  = 100.0f;
-    float m_FOV  = 90.0f;
+    float m_Near;
+    float m_Far;
+    float m_FOV;
 
-    float m_Yaw = 0.0f;
-    float m_Pitch = 0.0f;
-    float m_MouseRotationSpeed = 0.002f;
-    float m_CameraMoveSpeed = 0.01f;
+    float m_Yaw;
+    float m_Pitch;
+    float m_MouseRotationSpeed;
+    float m_CameraMoveSpeed;
 
     bbeVector2 m_CurrentMousePos = {};
     bbeVector2 m_MouseLastPos = {};

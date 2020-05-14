@@ -55,9 +55,10 @@ void GfxContext::BindConstantBuffer(GfxConstantBuffer& cBuffer)
     m_CBVToBind = &cBuffer.GetDescriptorHeap();
 }
 
-void GfxContext::BindSRV(GfxTexture& tex)
+void GfxContext::BindSRV(uint32_t textureRegister, GfxTexture& tex)
 {
-    m_SRVsToBind.push_back(&tex);
+    m_SRVsToBind.resize(textureRegister + 1, nullptr);
+    m_SRVsToBind[textureRegister] = &tex;
 }
 
 void GfxContext::SetRootSigDescTable(uint32_t rootParamIdx, const GfxDescriptorHeap& heap)
@@ -69,6 +70,8 @@ void GfxContext::SetRootSigDescTable(uint32_t rootParamIdx, const GfxDescriptorH
 
 void GfxContext::CompileAndSetGraphicsPipelineState()
 {
+    bbeProfileFunction();
+
     assert(m_CommandList);
 
     if (m_VertexBuffer)
@@ -85,40 +88,55 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
         assert(m_PSO.m_RenderTargets.RTFormats[i] != DXGI_FORMAT_UNKNOWN);
     }
 
-    // first, set Root Sig. use Default if nothing is specified
-    if (!m_PSO.m_RootSig)
-    {
-        m_PSO.m_RootSig = &DefaultRootSignatures::DefaultGraphicsRootSignature;
-    }
-    m_CommandList->Dev()->SetGraphicsRootSignature(m_PSO.m_RootSig->Dev());
-
-    uint32_t numDescTablesBound = 0;
-
-    // Constant Buffers
-    SetRootSigDescTable(numDescTablesBound++, g_GfxManager.GetFrameParams().GetDescriptorHeap());
-    if (m_CBVToBind)
-    {
-        SetRootSigDescTable(numDescTablesBound++, *m_CBVToBind);
-    }
-
-    // SRVs
-    for (GfxTexture* tex : m_SRVsToBind)
-    {
-        SetRootSigDescTable(numDescTablesBound++, tex->GetDescriptorHeap());
-    }
-
-    // PSO
-    m_CommandList->Dev()->SetPipelineState(g_GfxPSOManager.GetGraphicsPSO(m_PSO));
-
     // Rasterizer
-    m_CommandList->Dev()->RSSetViewports(1, &m_Viewport);
-    m_CommandList->Dev()->RSSetScissorRects(1, &m_ScissorRect);
-
-    // Input Assembler
-    m_CommandList->Dev()->IASetPrimitiveTopology(m_PSO.m_PrimitiveTopology);
-
-    if (m_VertexBuffer)
+    if (m_DirtyRasterizer)
     {
+        bbeProfile("Set Rasterizer Params");
+
+        m_CommandList->Dev()->RSSetViewports(1, &m_Viewport);
+        m_CommandList->Dev()->RSSetScissorRects(1, &m_ScissorRect);
+    }
+
+    if (m_DirtyPSO)
+    {
+        bbeProfile("Set PSO Params");
+
+        // first, set Root Sig. use Default if nothing is specified
+        if (!m_PSO.m_RootSig)
+        {
+            m_PSO.m_RootSig = &DefaultRootSignatures::DefaultGraphicsRootSignature;
+        }
+        m_CommandList->Dev()->SetGraphicsRootSignature(m_PSO.m_RootSig->Dev());
+
+        // PSO
+        m_CommandList->Dev()->SetPipelineState(g_GfxPSOManager.GetGraphicsPSO(m_PSO));
+
+        // Input Assembler
+        m_CommandList->Dev()->IASetPrimitiveTopology(m_PSO.m_PrimitiveTopology);
+
+        // Output Merger
+        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[_countof(D3D12_RT_FORMAT_ARRAY::RTFormats)] = {};
+        for (uint32_t i = 0; i < m_PSO.m_RenderTargets.NumRenderTargets; ++i)
+        {
+            rtvHandles[i] = m_RTVs[i]->GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart();
+
+            m_RTVs[i]->Transition(*m_CommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        }
+
+        D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = {};
+        if (m_DSV)
+        {
+            dsvHandle = m_DSV->GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart();
+        }
+
+        m_CommandList->Dev()->OMSetRenderTargets(m_PSO.m_RenderTargets.NumRenderTargets, rtvHandles, FALSE, m_DSV ? &dsvHandle : nullptr);
+    }
+
+
+    if (m_DirtyBuffers && m_VertexBuffer)
+    {
+        bbeProfile("Set Buffer Params");
+
         D3D12_VERTEX_BUFFER_VIEW vBufferView;
         vBufferView.BufferLocation = m_VertexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
         vBufferView.StrideInBytes = m_VertexBuffer->GetStrideInBytes();
@@ -137,27 +155,39 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
         }
     }
 
-    // Output Merger
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[_countof(D3D12_RT_FORMAT_ARRAY::RTFormats)] = {};
-    for (uint32_t i = 0; i < m_PSO.m_RenderTargets.NumRenderTargets; ++i)
+    if (m_DirtyDescTables)
     {
-        rtvHandles[i] = m_RTVs[i]->GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart();
+        bbeProfile("Set Descriptor Table Params");
 
-        m_RTVs[i]->Transition(*m_CommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        uint32_t numDescTablesBound = 0;
+
+        // Constant Buffers
+        SetRootSigDescTable(numDescTablesBound++, g_GfxManager.GetFrameParams().GetDescriptorHeap());
+        if (m_CBVToBind)
+        {
+            SetRootSigDescTable(numDescTablesBound++, *m_CBVToBind);
+        }
+
+        // SRVs
+        for (GfxTexture* tex : m_SRVsToBind)
+        {
+            SetRootSigDescTable(numDescTablesBound++, tex->GetDescriptorHeap());
+        }
     }
-
-    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = {};
-    if (m_DSV)
-    {
-        dsvHandle = m_DSV->GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart();
-    }
-
-    m_CommandList->Dev()->OMSetRenderTargets(m_PSO.m_RenderTargets.NumRenderTargets, rtvHandles, FALSE, m_DSV ? &dsvHandle : nullptr);
 }
 
 void GfxContext::CompileAndSetComputePipelineState()
 {
     assert(m_CommandList);
+}
+
+void GfxContext::PostDraw()
+{
+    // Assume user will manually dirty the flags after each draw
+    m_DirtyPSO        = false;
+    m_DirtyRasterizer = false;
+    m_DirtyBuffers    = false;
+    m_DirtyDescTables = false;
 }
 
 void GfxContext::DrawInstanced(uint32_t vertexCountPerInstance, uint32_t instanceCount, uint32_t startVertexLocation, uint32_t startInstanceLocation)
@@ -167,6 +197,8 @@ void GfxContext::DrawInstanced(uint32_t vertexCountPerInstance, uint32_t instanc
     CompileAndSetGraphicsPipelineState();
 
     m_CommandList->Dev()->DrawInstanced(vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
+
+    PostDraw();
 }
 
 void GfxContext::DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation, uint32_t baseVertexLocation, uint32_t startInstanceLocation)
@@ -178,4 +210,6 @@ void GfxContext::DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t i
     CompileAndSetGraphicsPipelineState();
 
     m_CommandList->Dev()->DrawIndexedInstanced(indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
+
+    PostDraw();
 }

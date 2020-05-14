@@ -15,11 +15,10 @@ void CameraController::Initialize()
 bbeMatrix CameraController::Get3DViewProjMatrix()
 {
     const float aspectRatio = (float)g_CommandLineOptions.m_WindowWidth / (float)g_CommandLineOptions.m_WindowHeight;
-    const float fovAngleY = DirectX::XMConvertToRadians(m_FOV);
 
     const bbeVector3 focusPosition = m_EyePosition + m_Dir;
     const bbeMatrix viewMatrix = CreateLookAtLH(m_EyePosition, focusPosition, m_UpDirection).Transpose();
-    const bbeMatrix projMatrix = CreatePerspectiveFieldOfViewLH(fovAngleY, aspectRatio, m_Near, m_Far).Transpose();
+    const bbeMatrix projMatrix = CreatePerspectiveFieldOfViewLH(m_FOV, aspectRatio, m_Near, m_Far).Transpose();
 
     return projMatrix * viewMatrix;
 }
@@ -92,8 +91,11 @@ void CameraController::UpdateIMGUIPropertyGrid()
     ImGui::InputFloat3("Direction", (float*)&m_Dir, "%.3f", ImGuiInputTextFlags_ReadOnly);
     ImGui::InputFloat3("Right", (float*)&m_RightDirection, "%.3f", ImGuiInputTextFlags_ReadOnly);
     ImGui::InputFloat3("Up", (float*)&m_UpDirection, "%.3f", ImGuiInputTextFlags_ReadOnly);
-    doUpdate |= ImGui::InputFloat("Yaw", &m_Yaw);
-    doUpdate |= ImGui::InputFloat("Pitch", &m_Pitch);
+    doUpdate |= ImGui::SliderAngle("Yaw", &m_Yaw);
+    doUpdate |= ImGui::SliderAngle("Pitch", &m_Pitch, -90.0f, 90.0f);
+    ImGui::SliderFloat("Near", &m_Near, 0.1f, 100.0f);
+    ImGui::SliderFloat("Far", &m_Far, 100.0f, 10000.0f);
+    ImGui::SliderAngle("FOV", &m_FOV, 1.0f, 179.0f);
 
     ImGui::NewLine();
     ImGui::InputFloat("Move Speed", &m_CameraMoveSpeed);
@@ -140,11 +142,15 @@ void CameraController::Update()
 
 void CameraController::Reset()
 {
-    m_EyePosition = { 0.0f, 5.0f, -10.0f };
-    m_Pitch = -bbeRad30;
+    m_EyePosition = { 0.0f, 200.0f, -400.0f };
+    m_Pitch = -bbeRad15;
     m_Yaw = 0.0f;
     m_MouseRotationSpeed = 0.002f;
-    m_CameraMoveSpeed = 0.01f;
+    m_CameraMoveSpeed = 1.0f;
+
+    m_Near = 1.0f;
+    m_Far = 2000.0f;
+    m_FOV = bbeRad45;
 
     UpdateCameraRotation();
 }

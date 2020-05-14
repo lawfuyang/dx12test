@@ -37,18 +37,46 @@ void GfxDefaultAssets::Initialize(tf::Subflow& sf)
 
 void GfxDefaultAssets::ShutDown()
 {
-    this->White2D.Release();
-    this->Black2D.Release();
-    this->Checkerboard.Release();
+    GfxDefaultAssets::White2D.Release();
+    GfxDefaultAssets::Black2D.Release();
+    GfxDefaultAssets::Checkerboard.Release();
+    GfxDefaultAssets::UnitCube.Release();
+    GfxDefaultAssets::Occcity.Release();
 
-    for (GfxTexture& tex : this->SquidRoomTextures)
+    m_SquidRoomMesh.Release();
+    for (GfxTexture& tex : m_SquidRoomTextures)
     {
         tex.Release();
     }
+}
 
-    this->UnitCube.Release();
-    this->Occcity.Release();
-    this->SquidRoom.Release();
+void GfxDefaultAssets::DrawSquidRoom(GfxContext& context)
+{
+    using namespace SampleAssets;
+
+    GfxPipelineStateObject& pso = context.GetPSO();
+
+    pso.GetRasterizerStates().FrontCounterClockwise = true;
+
+    pso.SetVertexFormat(g_GfxDefaultAssets.m_SquidRoomMesh.GetVertexFormat());
+    context.SetVertexBuffer(g_GfxDefaultAssets.m_SquidRoomMesh.GetVertexBuffer());
+    context.SetIndexBuffer(g_GfxDefaultAssets.m_SquidRoomMesh.GetIndexBuffer());
+
+    GfxTexture* lastDrawCallTex = nullptr;
+    for (const SquidRoom::DrawParameters& drawParams : SquidRoom::Draws)
+    {
+        GfxTexture& thisDrawCallTex = g_GfxDefaultAssets.m_SquidRoomTextures[drawParams.DiffuseTextureIndex];
+
+        if (lastDrawCallTex != &thisDrawCallTex)
+        {
+            context.BindSRV(0, thisDrawCallTex);
+            context.DirtyDescTables();
+        }
+
+        context.DrawIndexedInstanced(drawParams.IndexCount, 1, drawParams.IndexStart, drawParams.VertexBase, 0);
+
+        lastDrawCallTex = &thisDrawCallTex;
+    }
 }
 
 void GfxDefaultAssets::PreInitOcccity()
@@ -121,7 +149,7 @@ void GfxDefaultAssets::CreateCheckerboardTexture()
     initParams.m_InitData = data.data();
     initParams.m_ResourceName = "Default Checkboard Texture";
 
-    this->Checkerboard.Initialize(initParams);
+    GfxDefaultAssets::Checkerboard.Initialize(initParams);
 }
 
 void GfxDefaultAssets::CreateSolidColorTexture(GfxTexture& result, const bbeColor& color, const char* colorName)
@@ -249,7 +277,7 @@ void GfxDefaultAssets::CreateUnitCubeMesh()
     IBInitParams.m_IndexSize = sizeof(uint16_t);
     IBInitParams.m_ResourceName = "GfxDefaultGeometry::UnitCube Index Buffer";
 
-    this->UnitCube.Initialize(meshInitParams);
+    GfxDefaultAssets::UnitCube.Initialize(meshInitParams);
 }
 
 void GfxDefaultAssets::CreateOcccityMesh()
@@ -276,7 +304,7 @@ void GfxDefaultAssets::CreateOcccityMesh()
     IBInitParams.m_NumIndices = Occcity::IndexDataSize / 4; // R32_UINT (SampleAssets::StandardIndexFormat) = 4 bytes each.
     IBInitParams.m_IndexSize = 4;
 
-    this->Occcity.Initialize(meshInitParams);
+    GfxDefaultAssets::Occcity.Initialize(meshInitParams);
 }
 
 void GfxDefaultAssets::CreateSquidRoomMesh()
@@ -303,7 +331,7 @@ void GfxDefaultAssets::CreateSquidRoomMesh()
     IBInitParams.m_NumIndices = SquidRoom::IndexDataSize / 4; // R32_UINT (SampleAssets::StandardIndexFormat) = 4 bytes each.
     IBInitParams.m_IndexSize = 4;
 
-    this->SquidRoom.Initialize(meshInitParams);
+    m_SquidRoomMesh.Initialize(meshInitParams);
 }
 
 void GfxDefaultAssets::CreateSquidRoomTextures(tf::Subflow& subFlow)
@@ -315,11 +343,11 @@ void GfxDefaultAssets::CreateSquidRoomTextures(tf::Subflow& subFlow)
     using namespace SampleAssets;
 
     const uint32_t srvCount = _countof(SquidRoom::Textures);
-    this->SquidRoomTextures.resize(srvCount);
+    m_SquidRoomTextures.resize(srvCount);
 
     for (uint32_t i = 0; i < srvCount; i++)
     {
-        GfxTexture& tex = this->SquidRoomTextures[i];
+        GfxTexture& tex = m_SquidRoomTextures[i];
         const SquidRoom::TextureResource& texResource = SquidRoom::Textures[i];
 
         subFlow.emplace([&]()

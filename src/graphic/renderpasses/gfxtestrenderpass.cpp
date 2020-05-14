@@ -56,20 +56,15 @@ void GfxTestRenderPass::PopulateCommandList(GfxContext& context)
     m_RenderPassCB.Update(&consts);
 
     context.BindConstantBuffer(m_RenderPassCB);
-    context.BindSRV(GfxDefaultAssets::Checkerboard);
+    //context.BindSRV(GfxDefaultAssets::Checkerboard);
 
     GfxPipelineStateObject& pso = context.GetPSO();
 
-    GfxMesh& mesh = GfxDefaultAssets::Occcity;
-
     pso.SetVertexShader(g_GfxShaderManager.GetShader(ShaderPermutation::VS_TestTriangle));
     pso.SetPixelShader(g_GfxShaderManager.GetShader(ShaderPermutation::PS_TestTriangle));
-    pso.SetVertexFormat(mesh.GetVertexFormat());
 
-    context.SetVertexBuffer(mesh.GetVertexBuffer());
-    context.SetIndexBuffer(mesh.GetIndexBuffer());
     context.SetRenderTarget(0, g_GfxManager.GetSwapChain().GetCurrentBackBuffer());
     context.SetDepthStencil(m_DepthBuffer);
 
-    context.DrawIndexedInstanced(mesh.GetIndexBuffer().GetNumIndices(), 1, 0, 0, 0);
+    GfxDefaultAssets::DrawSquidRoom(context);
 }

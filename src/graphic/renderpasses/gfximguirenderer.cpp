@@ -229,7 +229,7 @@ void GfxIMGUIRenderer::PopulateCommandList(GfxContext& context)
     }
 
     context.BindConstantBuffer(m_ConstantBuffer);
-    context.BindSRV(m_FontsTexture);
+    context.BindSRV(0, m_FontsTexture);
 
     GfxPipelineStateObject& pso = context.GetPSO();
     pso.SetVertexShader(g_GfxShaderManager.GetShader(ShaderPermutation::VS_IMGUI));

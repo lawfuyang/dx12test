@@ -25,7 +25,12 @@ public:
     void SetVertexBuffer(GfxVertexBuffer& vBuffer) { m_VertexBuffer = &vBuffer; }
     void SetIndexBuffer(GfxIndexBuffer& iBuffer) { m_IndexBuffer = &iBuffer; }
     void BindConstantBuffer(GfxConstantBuffer& cBuffer);
-    void BindSRV(GfxTexture&);
+    void BindSRV(uint32_t textureRegister, GfxTexture&);
+
+    void DirtyPSO() { m_DirtyPSO = true; }
+    void DirtyRasterizer() { m_DirtyRasterizer = true; }
+    void DirtyBuffers() { m_DirtyBuffers = true; }
+    void DirtyDescTables() { m_DirtyDescTables = true; }
 
     GfxDevice&              GetDevice()      { return *m_Device; }
     GfxCommandList&         GetCommandList() { return *m_CommandList; }
@@ -40,6 +45,7 @@ private:
     void SetRootSigDescTable(uint32_t rootParamIdx, const GfxDescriptorHeap& heap);
     void CompileAndSetGraphicsPipelineState();
     void CompileAndSetComputePipelineState();
+    void PostDraw();
 
     CD3DX12_VIEWPORT  m_Viewport{ 0.0f, 0.0f, (float)g_CommandLineOptions.m_WindowWidth, (float)g_CommandLineOptions.m_WindowHeight };
     CD3DX12_RECT      m_ScissorRect{ 0, 0, g_CommandLineOptions.m_WindowWidth, g_CommandLineOptions.m_WindowHeight };
@@ -54,6 +60,11 @@ private:
     std::vector<GfxTexture*> m_SRVsToBind;
 
     GfxPipelineStateObject m_PSO;
+
+    bool m_DirtyPSO        = true;
+    bool m_DirtyRasterizer = true;
+    bool m_DirtyBuffers    = true;
+    bool m_DirtyDescTables = true;
 
     friend class GfxDevice;
 };
