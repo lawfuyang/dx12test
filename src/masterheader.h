@@ -71,6 +71,9 @@ using InplaceArray = boost::container::small_vector<T, N>;
 template<std::size_t N>
 using StaticString = boost::static_strings::static_string<N>;
 
+template<std::size_t N>
+using StaticWString = boost::static_strings::static_wstring<N>;
+
 template <typename T>
 using CircularBuffer = boost::circular_buffer<T>;
 

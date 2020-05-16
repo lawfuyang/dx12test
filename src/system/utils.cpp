@@ -170,7 +170,7 @@ void ReadDataFromFile(const char* filename, std::vector<std::byte>& data)
     extendedParams.lpSecurityAttributes = nullptr;
     extendedParams.hTemplateFile = nullptr;
 
-    const std::wstring fileNameW = MakeWStrFromStr(filename);
+    StaticWString<FILENAME_MAX> fileNameW = MakeWStrFromStr(filename).c_str();
 
     Wrappers::FileHandle file(CreateFile2(fileNameW.c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &extendedParams));
     assert(file.Get() != INVALID_HANDLE_VALUE);

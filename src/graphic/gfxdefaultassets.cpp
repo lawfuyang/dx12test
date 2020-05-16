@@ -85,7 +85,7 @@ void GfxDefaultAssets::PreInitOcccity()
 
     using namespace SampleAssets;
 
-    StaticString<128> dataFileName = "..\\bin\\assets\\";
+    StaticString<FILENAME_MAX> dataFileName = "..\\bin\\assets\\";
     dataFileName += Occcity::DataFileName;
 
     ReadDataFromFile(dataFileName.c_str(), m_OcccityData);
@@ -97,7 +97,7 @@ void GfxDefaultAssets::PreInitSquidRoom()
 
     using namespace SampleAssets;
 
-    StaticString<128> dataFileName = "..\\bin\\assets\\";
+    StaticString<FILENAME_MAX> dataFileName = "..\\bin\\assets\\";
     dataFileName += SquidRoom::DataFileName;
 
     ReadDataFromFile(dataFileName.c_str(), m_SquidRoomData);

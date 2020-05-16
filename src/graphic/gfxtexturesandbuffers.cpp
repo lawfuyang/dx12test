@@ -106,9 +106,9 @@ D3D12MA::Allocation* GfxBufferCommon::CreateHeap(GfxContext& context, const GfxB
     assert(allocHandle);
     assert(newHeap);
 
-    const std::wstring resourceNameW = MakeWStrFromStr(heapDesc.m_ResourceName);
-    allocHandle->SetName(resourceNameW.data());
-    allocHandle->GetResource()->SetName(resourceNameW.data());
+    const StaticWString<256> resourceNameW = MakeWStrFromStr(heapDesc.m_ResourceName).c_str();
+    allocHandle->SetName(resourceNameW.c_str());
+    allocHandle->GetResource()->SetName(resourceNameW.c_str());
 
     StaticString<256> heapName = heapDesc.m_ResourceName;
     heapName += " Heap";
