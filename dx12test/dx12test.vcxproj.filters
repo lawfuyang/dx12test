@@ -121,6 +121,9 @@
     <ClCompile Include="..\src\system\math.cpp">
       <Filter>system</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxcommonstates.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -257,6 +260,9 @@
       <Filter>graphic</Filter>
     </ClInclude>
     <ClInclude Include="..\src\graphic\gfxdefaultassets.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxcommonstates.h">
       <Filter>graphic</Filter>
     </ClInclude>
   </ItemGroup>

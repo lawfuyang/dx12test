@@ -1,11 +1,12 @@
 #pragma once
 
-#include "system/memorymappedfile.h"
+#include <system/memorymappedfile.h>
 
-#include "graphic/dx12utils.h"
-#include "graphic/gfxrootsignature.h"
-#include "graphic/gfxvertexformat.h"
-#include "graphic/gfxshadermanager.h"
+#include <graphic/dx12utils.h>
+#include <graphic/gfxrootsignature.h>
+#include <graphic/gfxvertexformat.h>
+#include <graphic/gfxshadermanager.h>
+#include <graphic/gfxcommonstates.h>
 
 class GfxRootSignature;
 class GfxShader;
@@ -32,10 +33,10 @@ private:
     GfxShader*                  m_VS = nullptr;
     GfxShader*                  m_PS = nullptr;
     GfxShader*                  m_CS = nullptr;
-    CD3DX12_BLEND_DESC          m_BlendStates{ CD3DX12_DEFAULT{} };
-    CD3DX12_DEPTH_STENCIL_DESC1 m_DepthStencilStates{ CD3DX12_DEFAULT{} };
+    CD3DX12_BLEND_DESC          m_BlendStates{ GfxCommonStates::Opaque };
+    CD3DX12_DEPTH_STENCIL_DESC1 m_DepthStencilStates{ GfxCommonStates::DepthDefault };
     DXGI_FORMAT                 m_DepthStencilFormat = DXGI_FORMAT_UNKNOWN;
-    CD3DX12_RASTERIZER_DESC     m_RasterizerStates{ CD3DX12_DEFAULT{} };
+    CD3DX12_RASTERIZER_DESC     m_RasterizerStates{ GfxCommonStates::CullCounterClockwise };
     D3D12_RT_FORMAT_ARRAY       m_RenderTargets = {};
     DXGI_SAMPLE_DESC            m_SampleDescriptors = DefaultSampleDesc{};
 

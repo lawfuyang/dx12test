@@ -213,14 +213,17 @@ void GfxManager::UpdateIMGUIPropertyGrid()
 
     D3D12MA::Allocator& allocator = m_GfxDevice.GetD3D12MemoryAllocator();
 
+    static bool showMemoryStats = false;
     static bool showDetailedStats = false;
 
+    ImGui::Begin("GfxManager");
+    ImGui::Checkbox("Show Memory Stats", &showMemoryStats);
+
+    if (showMemoryStats)
     {
         D3D12MA::Budget gpuBudget;
         D3D12MA::Budget cpuBudget;
         allocator.GetBudget(&gpuBudget, &cpuBudget);
-
-        ImGui::Begin("GfxManager");
 
         ImGui::Text("GPU Budget:");
         ImGui::LabelText("Blocks", "\t%.2f mb", (float)gpuBudget.BlockBytes / 1024 / 1024);
@@ -239,9 +242,9 @@ void GfxManager::UpdateIMGUIPropertyGrid()
         ImGui::NewLine();
 
         ImGui::Checkbox("Show Detailed Stats", &showDetailedStats);
-
-        ImGui::End();
     }
+
+    ImGui::End();
 
     if (showDetailedStats)
     {

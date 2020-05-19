@@ -17,6 +17,9 @@ struct VS_IN
     float3 m_Normal   : NORMAL;
     float2 m_TexCoord : TEXCOORD;
     float3 m_Tangent  : TANGENT;
+
+    uint m_VertexID   : SV_VertexID;
+    uint m_InstanceID : SV_InstanceID;
 };
 
 struct VS_OUT
@@ -45,6 +48,6 @@ float4 PSMain(VS_OUT input) : SV_TARGET
 {
     //float NdotL = dot(input.m_Normal, HardCodedDirLight);
 
-    float4 diffuse = g_Texture.Sample(g_AnisotropicClampSampler, input.m_TexCoord);
+    float4 diffuse = g_Texture.Sample(g_AnisotropicWrapSampler, input.m_TexCoord);
     return diffuse;
 }

@@ -74,6 +74,7 @@
     <ClCompile Include="..\src\graphic\dx12utils.cpp" />
     <ClCompile Include="..\src\graphic\gfxadapter.cpp" />
     <ClCompile Include="..\src\graphic\gfxcommandlist.cpp" />
+    <ClCompile Include="..\src\graphic\gfxcommonstates.cpp" />
     <ClCompile Include="..\src\graphic\gfxcontext.cpp" />
     <ClCompile Include="..\src\graphic\gfxdefaultassets.cpp" />
     <ClCompile Include="..\src\graphic\gfxdescriptorheap.cpp" />
@@ -117,6 +118,7 @@
     <ClInclude Include="..\src\graphic\dx12utils.h" />
     <ClInclude Include="..\src\graphic\gfxadapter.h" />
     <ClInclude Include="..\src\graphic\gfxcommandlist.h" />
+    <ClInclude Include="..\src\graphic\gfxcommonstates.h" />
     <ClInclude Include="..\src\graphic\gfxcontext.h" />
     <ClInclude Include="..\src\graphic\gfxdefaultassets.h" />
     <ClInclude Include="..\src\graphic\gfxdescriptorheap.h" />
