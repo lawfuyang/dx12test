@@ -124,9 +124,6 @@
     <ClCompile Include="..\src\graphic\dx12utils.cpp">
       <Filter>graphic\dx12</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\system\serializer.cpp">
-      <Filter>system</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">

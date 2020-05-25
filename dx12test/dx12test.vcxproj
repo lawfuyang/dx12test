@@ -100,7 +100,6 @@
     <ClCompile Include="..\src\system\memorymappedfile.cpp" />
     <ClCompile Include="..\src\system\mouse.cpp" />
     <ClCompile Include="..\src\system\profiler.cpp" />
-    <ClCompile Include="..\src\system\serializer.cpp" />
     <ClCompile Include="..\src\system\system.cpp" />
     <ClCompile Include="..\src\system\timer.cpp" />
     <ClCompile Include="..\src\system\utils.cpp" />
