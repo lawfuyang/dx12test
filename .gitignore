@@ -3,13 +3,10 @@
 ################################################################################
 
 /bin
-dx12test/x64/Release
-dx12test/x64/Release Unity
-dx12test/.vs
-dx12test/packages/
-dx12test/imgui.ini
+*/.vs
+/dx12test/x64/Release Unity
+/dx12test/imgui.ini
 /shadercompiler/x64
-/src/system/.vs
 /tmp/
 /extern/boost/
 /extern/spdlog/
@@ -21,6 +18,4 @@ dx12test/imgui.ini
 /extern/d3d12/
 /extern/pix/
 /extern/dxc/
-spdlog/x64
-tbb/x64
-CMakeLists.txt
+/extern/cereal/
