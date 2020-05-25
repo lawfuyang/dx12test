@@ -25,10 +25,12 @@
 // uncomment to disable all asserts
 //#define NDEBUG
 
-// C/C++ Standard Library
+// C Standard Lib
 #include <time.h>
 #include <stdio.h>
 #include <assert.h>
+
+// C++ STL
 #include <atomic>
 #include <chrono>
 #include <string>
@@ -40,6 +42,7 @@
 #include <numeric>
 #include <mutex>
 #include <functional>
+#include <fstream>
 
 // windows
 #include <inttypes.h>
@@ -51,16 +54,24 @@
 #include <d3d12.h>
 #include <d3d12sdklayers.h>
 #include <dxgi1_6.h>
-
 #include <extern/d3d12/d3dx12.h>
 
+// TaskFlow task threading lib
 #include <extern/taskflow/taskflow.hpp>
 
+// Boost
 #include <extern/boost/container/small_vector.hpp>
 #include <extern/boost/circular_buffer.hpp>
 #include <extern/boost/pool/object_pool.hpp>
 #include <extern/boost/container_hash/hash.hpp>
 #include <extern/boost/static_string.hpp>
+
+// Cereal serialization lib
+#define CEREAL_SERIALIZE_FUNCTION_NAME Serialize
+#include <cereal/types/vector.hpp> // allow Cereal to serialize std::vector
+#include <cereal/types/string.hpp> // allow Cereal to serialize std::string
+#include <cereal/archives/binary.hpp> // Binary I/O
+#include <cereal/archives/json.hpp> // Binary I/O
 
 // typedefs
 using WindowHandle = uint64_t;

@@ -68,6 +68,12 @@ const std::string GetTempDirectory()
     return s_TmpDir;
 }
 
+const std::string GetAssetsDirectory()
+{
+    static std::string dir = GetApplicationDirectory() + "\\assets\\";
+    return dir;
+}
+
 const std::string GetDirectoryFromPath(const std::string& fullPath)
 {
     if (fullPath.empty())

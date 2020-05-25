@@ -19,12 +19,6 @@
     <ClCompile Include="..\src\system\utils.cpp">
       <Filter>system</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxdevice.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxmanager.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
     <ClCompile Include="..\extern\imgui\imgui.cpp">
       <Filter>extern\imgui</Filter>
     </ClCompile>
@@ -34,53 +28,14 @@
     <ClCompile Include="..\extern\imgui\imgui_widgets.cpp">
       <Filter>extern\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxadapter.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\graphic\dx12utils.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxswapchain.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxcommandlist.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxfence.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxtexturesandbuffers.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxcontext.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\graphic\renderpasses\gfxtestrenderpass.cpp">
       <Filter>graphic\renderpasses</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxdescriptorheap.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxrootsignature.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxpipelinestateobject.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxshadermanager.cpp">
-      <Filter>graphic</Filter>
     </ClCompile>
     <ClCompile Include="..\src\system\memorymappedfile.cpp">
       <Filter>system</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxvertexformat.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
     <ClCompile Include="..\extern\microprofile\microprofile.cpp">
       <Filter>extern\microprofile</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxview.cpp">
-      <Filter>graphic</Filter>
     </ClCompile>
     <ClCompile Include="..\src\application\cameracontroller.cpp">
       <Filter>application</Filter>
@@ -112,17 +67,62 @@
     <ClCompile Include="..\src\system\commandmanager.cpp">
       <Filter>system</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxmesh.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxdefaultassets.cpp">
-      <Filter>graphic</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\system\math.cpp">
       <Filter>system</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxadapter.cpp">
+      <Filter>graphic\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxcommandlist.cpp">
+      <Filter>graphic\gfx</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\graphic\gfxcommonstates.cpp">
-      <Filter>graphic</Filter>
+      <Filter>graphic\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxcontext.cpp">
+      <Filter>graphic\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxdefaultassets.cpp">
+      <Filter>graphic\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxdescriptorheap.cpp">
+      <Filter>graphic\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxdevice.cpp">
+      <Filter>graphic\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxfence.cpp">
+      <Filter>graphic\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxmanager.cpp">
+      <Filter>graphic\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxmesh.cpp">
+      <Filter>graphic\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxpipelinestateobject.cpp">
+      <Filter>graphic\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxrootsignature.cpp">
+      <Filter>graphic\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxshadermanager.cpp">
+      <Filter>graphic\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxswapchain.cpp">
+      <Filter>graphic\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxtexturesandbuffers.cpp">
+      <Filter>graphic\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxvertexformat.cpp">
+      <Filter>graphic\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxview.cpp">
+      <Filter>graphic\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\dx12utils.cpp">
+      <Filter>graphic\dx12</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -144,15 +144,6 @@
     <ClInclude Include="..\src\system\utils.h">
       <Filter>system</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxdevice.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxenums.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxmanager.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
     <ClInclude Include="..\extern\imgui\imconfig.h">
       <Filter>extern\imgui</Filter>
     </ClInclude>
@@ -171,44 +162,8 @@
     <ClInclude Include="..\extern\imgui\imstb_truetype.h">
       <Filter>extern\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxadapter.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\dx12utils.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxswapchain.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxcommandlist.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxfence.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxtexturesandbuffers.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxcontext.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\graphic\renderpasses\gfxtestrenderpass.h">
       <Filter>graphic\renderpasses</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxdescriptorheap.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxrootsignature.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxdescriptorheap.hpp">
-      <Filter>graphic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxpipelinestateobject.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxshadermanager.h">
-      <Filter>graphic</Filter>
     </ClInclude>
     <ClInclude Include="..\src\system\memorymappedfile.h">
       <Filter>system</Filter>
@@ -216,18 +171,9 @@
     <ClInclude Include="..\src\system\logger.h">
       <Filter>system</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxvertexformat.h">
-      <Filter>graphic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxpipelinestateobject.hpp">
-      <Filter>graphic</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\masterheader.h" />
     <ClInclude Include="..\extern\microprofile\microprofile.h">
       <Filter>extern\microprofile</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxview.h">
-      <Filter>graphic</Filter>
     </ClInclude>
     <ClInclude Include="..\src\application\cameracontroller.h">
       <Filter>application</Filter>
@@ -256,14 +202,68 @@
     <ClInclude Include="..\src\defaultassets\occcity.h">
       <Filter>defaultassets</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxmesh.h">
-      <Filter>graphic</Filter>
+    <ClInclude Include="..\src\graphic\gfxadapter.h">
+      <Filter>graphic\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxdefaultassets.h">
-      <Filter>graphic</Filter>
+    <ClInclude Include="..\src\graphic\gfxcommandlist.h">
+      <Filter>graphic\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\src\graphic\gfxcommonstates.h">
-      <Filter>graphic</Filter>
+      <Filter>graphic\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxcontext.h">
+      <Filter>graphic\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxdefaultassets.h">
+      <Filter>graphic\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxdescriptorheap.h">
+      <Filter>graphic\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxdescriptorheap.hpp">
+      <Filter>graphic\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxdevice.h">
+      <Filter>graphic\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxenums.h">
+      <Filter>graphic\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxfence.h">
+      <Filter>graphic\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxmanager.h">
+      <Filter>graphic\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxmesh.h">
+      <Filter>graphic\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxpipelinestateobject.h">
+      <Filter>graphic\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxpipelinestateobject.hpp">
+      <Filter>graphic\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxrootsignature.h">
+      <Filter>graphic\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxshadermanager.h">
+      <Filter>graphic\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxswapchain.h">
+      <Filter>graphic\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxtexturesandbuffers.h">
+      <Filter>graphic\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxvertexformat.h">
+      <Filter>graphic\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxview.h">
+      <Filter>graphic\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\dx12utils.h">
+      <Filter>graphic\dx12</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -296,6 +296,12 @@
     </Filter>
     <Filter Include="defaultassets">
       <UniqueIdentifier>{d2c04ce1-f141-4f46-800b-4cdee2ca597c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="graphic\gfx">
+      <UniqueIdentifier>{95d4ef7b-f420-45d8-b634-193f4f3b1576}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="graphic\dx12">
+      <UniqueIdentifier>{0e7d14e5-ff57-4650-ae04-db81f1944f5e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

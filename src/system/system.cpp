@@ -191,7 +191,6 @@ void CommandLineOptions::Parse()
     parser.add_argument("--resolution", "resolution");
     parser.add_argument("--gfxmemallocalwayscommitedmemory", "gfxmemallocalwayscommitedmemory");
     parser.add_argument("--enablegfxdebuglayer", "enablegfxdebuglayer");
-    parser.add_argument("--rununittests", "rununittests");
 
     try
     {
@@ -207,7 +206,6 @@ void CommandLineOptions::Parse()
     m_ProfileShutdown                 = parser.exists("profileshutdown");
     m_GfxMemAllocAlwaysCommitedMemory = parser.exists("gfxmemallocalwayscommitedmemory");
     m_EnableGfxDebugLayer             = parser.exists("enablegfxdebuglayer");
-    m_RunUnitTests                    = parser.exists("rununittests");
 
     if (parser.exists("resolution"))
     {

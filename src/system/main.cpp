@@ -136,11 +136,6 @@ int APIENTRY WinMain(::HINSTANCE hInstance,
     g_Log.info("Commandline args: {}", lpCmdLine);
     g_CommandLineOptions.Parse();
 
-    if (g_CommandLineOptions.m_RunUnitTests)
-    {
-        return 0;
-    }
-
     EngineWindowThread::Initialize();
 
     g_System.Initialize();
