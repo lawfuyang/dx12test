@@ -31,11 +31,17 @@ public:
     template <typename CerealArchiveType>
     static bool IsWriting() { return std::is_base_of_v<cereal::detail::OutputArchiveBase, CerealArchiveType>; }
 
+    template <typename CerealArchiveType>
+    static bool IsBinaryArchive() { return std::is_same_v<CerealArchiveType, cereal::BinaryInputArchive> || std::is_same_v<CerealArchiveType, cereal::BinaryOutputArchive>; }
+
+    template <typename CerealArchiveType>
+    static bool IsJSONArchive() { return std::is_same_v<CerealArchiveType, cereal::JSONInputArchive> || std::is_same_v<CerealArchiveType, cereal::JSONOutputArchive>; }
+
 private:
     template <typename CerealArchiveType>
     const char* GetFileExtention()
     {
-        return (std::is_same_v<CerealArchiveType, cereal::BinaryInputArchive> || std::is_same_v<CerealArchiveType, cereal::BinaryInputArchive>) ? ".bin" : ".json";
+        return IsBinaryArchive<CerealArchiveType>() ? ".bin" : ".json";
     }
 
     template <typename CerealArchiveType, typename T>
