@@ -7,6 +7,9 @@ void CameraController::Initialize()
 {
     Reset();
 
+    g_Serializer.Read(Serializer::JSON, "CameraControllerValues", *this);
+    UpdateCameraRotation();
+
     m_CurrentMousePos = m_MouseLastPos = { Mouse::GetX(), Mouse::GetY() };
 
     g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUIPropertyGrid(); });
@@ -84,16 +87,14 @@ void CameraController::UpdateIMGUIPropertyGrid()
 {
     bool doUpdate = false;
     bool doReset = false;
+    bool doSave = false;
 
-    ImGui::Begin("CameraController");
+    ScopedIMGUIWindow window{ "CameraController" };
 
     ImGui::InputFloat3("Position", (float*)&m_EyePosition);
     ImGui::InputFloat3("Direction", (float*)&m_Dir, "%.3f", ImGuiInputTextFlags_ReadOnly);
-    ImGui::InputFloat3("Right", (float*)&m_RightDirection, "%.3f", ImGuiInputTextFlags_ReadOnly);
-    ImGui::InputFloat3("Up", (float*)&m_UpDirection, "%.3f", ImGuiInputTextFlags_ReadOnly);
-    doUpdate |= ImGui::SliderAngle("Yaw", &m_Yaw);
+    doUpdate |= ImGui::SliderAngle("Yaw", &m_Yaw, -180.0f, 180.0f);
     doUpdate |= ImGui::SliderAngle("Pitch", &m_Pitch, -90.0f, 90.0f);
-    ImGui::SliderFloat("Near", &m_Near, 0.1f, 100.0f);
     ImGui::SliderFloat("Far", &m_Far, 100.0f, 10000.0f);
     ImGui::SliderAngle("FOV", &m_FOV, 1.0f, 179.0f);
 
@@ -104,7 +105,8 @@ void CameraController::UpdateIMGUIPropertyGrid()
     ImGui::NewLine();
     doReset = ImGui::Button("Reset");
 
-    ImGui::End();
+    ImGui::SameLine();
+    doSave = ImGui::Button("Save Values");
 
     if (doUpdate)
     {
@@ -115,6 +117,21 @@ void CameraController::UpdateIMGUIPropertyGrid()
     {
         Reset();
     }
+
+    if (doSave)
+    {
+        g_Serializer.Write(Serializer::JSON, "CameraControllerValues", *this);
+    }
+}
+
+template<typename Archive>
+void CameraController::Serialize(Archive& ar)
+{
+    ar(CEREAL_NVP(m_Yaw));
+    ar(CEREAL_NVP(m_Pitch));
+    ar(CEREAL_NVP(m_MouseRotationSpeed));
+    ar(CEREAL_NVP(m_CameraMoveSpeed));
+    ar(CEREAL_NVP(m_EyePosition));
 }
 
 void CameraController::Update()

@@ -171,11 +171,12 @@ void IMGUIManager::Update()
     }
 
     // update main window grid
-    ImGui::Begin("Main Grid");
-    ImGui::LabelText("Frame Time", "%.3f ms", 1000.0f / ImGui::GetIO().Framerate);
-    ImGui::LabelText("FPS", "%.1f", ImGui::GetIO().Framerate);
-    ImGui::Checkbox("Show Demo Window", &showDemoWindow);
-    ImGui::End();
+    {
+        ScopedIMGUIWindow window{ "Main Grid" };
+        ImGui::LabelText("Frame Time", "%.3f ms", 1000.0f / ImGui::GetIO().Framerate);
+        ImGui::LabelText("FPS", "%.1f", ImGui::GetIO().Framerate);
+        ImGui::Checkbox("Show Demo Window", &showDemoWindow);
+    }
 
     // swap and update the rest
     InplaceArray<std::function<void()>, 128> windowUpdateCBs;

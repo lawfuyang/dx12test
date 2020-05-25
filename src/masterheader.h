@@ -100,3 +100,4 @@ using Microsoft::WRL::ComPtr;
 #include <system/keyboard.h>
 #include <system/mouse.h>
 #include <system/profiler.h>
+#include <system/serializer.h>

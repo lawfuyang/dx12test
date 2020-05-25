@@ -47,7 +47,7 @@ const std::string GetLastErrorAsString()
     return std::string{ messageBuffer };
 }
 
-const std::string GetApplicationDirectory()
+const std::string& GetApplicationDirectory()
 {
     static std::once_flag s_OnceFlag;
     static std::string s_AppDir;
@@ -62,13 +62,13 @@ const std::string GetApplicationDirectory()
     return s_AppDir;
 }
 
-const std::string GetTempDirectory()
+const std::string& GetTempDirectory()
 {
     static std::string s_TmpDir = GetApplicationDirectory() + "..\\tmp\\";
     return s_TmpDir;
 }
 
-const std::string GetAssetsDirectory()
+const std::string& GetAssetsDirectory()
 {
     static std::string dir = GetApplicationDirectory() + "\\assets\\";
     return dir;

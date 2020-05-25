@@ -15,6 +15,9 @@ private:
     void UpdateCameraRotation();
     void UpdateIMGUIPropertyGrid();
 
+    template <typename Archive>
+    void Serialize(Archive&);
+
     float m_Near;
     float m_Far;
     float m_FOV;
@@ -31,5 +34,7 @@ private:
     bbeVector3 m_Dir;         // Direction that the camera is looking at
     bbeVector3 m_UpDirection; // Which way is up
     bbeVector3 m_RightDirection;
+
+    friend class cereal::access;
 };
 #define g_CameraController CameraController::GetInstance()

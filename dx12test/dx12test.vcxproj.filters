@@ -124,6 +124,9 @@
     <ClCompile Include="..\src\graphic\dx12utils.cpp">
       <Filter>graphic\dx12</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\system\serializer.cpp">
+      <Filter>system</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -264,6 +267,9 @@
     </ClInclude>
     <ClInclude Include="..\src\graphic\dx12utils.h">
       <Filter>graphic\dx12</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\system\serializer.h">
+      <Filter>system</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -55,3 +55,18 @@ private:
     friend class GfxIMGUIRenderer;
 };
 #define g_IMGUIManager IMGUIManager::GetInstance()
+
+// Helper scoped class for always auto-resized imgui windows
+struct ScopedIMGUIWindow
+{
+    ScopedIMGUIWindow(const char* windowName)
+    {
+        bool* pOpen = nullptr;
+        ImGui::Begin(windowName, pOpen, ImGuiWindowFlags_AlwaysAutoResize);
+    }
+
+    ~ScopedIMGUIWindow()
+    {
+        ImGui::End();
+    }
+};

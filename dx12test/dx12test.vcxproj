@@ -100,6 +100,7 @@
     <ClCompile Include="..\src\system\memorymappedfile.cpp" />
     <ClCompile Include="..\src\system\mouse.cpp" />
     <ClCompile Include="..\src\system\profiler.cpp" />
+    <ClCompile Include="..\src\system\serializer.cpp" />
     <ClCompile Include="..\src\system\system.cpp" />
     <ClCompile Include="..\src\system\timer.cpp" />
     <ClCompile Include="..\src\system\utils.cpp" />
@@ -149,6 +150,7 @@
     <ClInclude Include="..\src\system\memorymappedfile.h" />
     <ClInclude Include="..\src\system\mouse.h" />
     <ClInclude Include="..\src\system\profiler.h" />
+    <ClInclude Include="..\src\system\serializer.h" />
     <ClInclude Include="..\src\system\system.h" />
     <ClInclude Include="..\src\system\timer.h" />
     <ClInclude Include="..\src\system\utils.h" />

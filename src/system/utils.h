@@ -159,11 +159,9 @@ static const std::wstring MakeWStrFromStr(const std::string& str) { return std::
 
 const std::string GetLastErrorAsString();
 
-const std::string GetApplicationDirectory();
-
-const std::string GetTempDirectory();
-
-const std::string GetAssetsDirectory();
+const std::string& GetApplicationDirectory();
+const std::string& GetTempDirectory();
+const std::string& GetAssetsDirectory();
 
 const std::string GetDirectoryFromPath(const std::string& fullPath);
 
@@ -230,12 +228,3 @@ static std::size_t GenericTypeHash(const T& s)
 }
 
 void ReadDataFromFile(const char* filename, std::vector<std::byte>& data);
-
-namespace Serializer
-{
-    template <typename CerealArchiveType>
-    static constexpr bool IsReading() { return std::is_base_of_v<cereal::detail::InputArchiveBase, CerealArchiveType>; }
-
-    template <typename CerealArchiveType>
-    static constexpr bool IsWriting() { return std::is_base_of_v<cereal::detail::OutputArchiveBase, CerealArchiveType>; }
-}
