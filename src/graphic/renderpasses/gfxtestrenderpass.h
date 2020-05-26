@@ -17,6 +17,5 @@ public:
 
 private:
     GfxConstantBuffer m_RenderPassCB;
-    GfxTexture m_DepthBuffer;
 };
 #define g_GfxTestRenderPass GfxTestRenderPass::GetInstance()

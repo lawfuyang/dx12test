@@ -14,7 +14,7 @@ public:
     void Initialize(tf::Subflow& sf);
     void ShutDown();
 
-    static void DrawSquidRoom(GfxContext& context);
+    static void DrawSquidRoom(GfxContext& context, bool bindTextures);
 
     inline static GfxTexture White2D;
     inline static GfxTexture Black2D;
@@ -22,6 +22,9 @@ public:
 
     inline static GfxMesh UnitCube;
     inline static GfxMesh Occcity;
+    inline static GfxMesh SquidRoom;
+
+    inline static std::vector<GfxTexture> SquidRoomTextures;
 
 private:
     void PreInitOcccity();
@@ -37,8 +40,5 @@ private:
 
     std::vector<std::byte> m_OcccityData;
     std::vector<std::byte> m_SquidRoomData;
-
-    GfxMesh m_SquidRoomMesh;
-    std::vector<GfxTexture> m_SquidRoomTextures;
 };
 #define g_GfxDefaultAssets GfxDefaultAssets::GetInstance()

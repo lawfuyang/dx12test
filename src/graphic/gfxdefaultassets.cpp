@@ -42,15 +42,15 @@ void GfxDefaultAssets::ShutDown()
     GfxDefaultAssets::Checkerboard.Release();
     GfxDefaultAssets::UnitCube.Release();
     GfxDefaultAssets::Occcity.Release();
+    GfxDefaultAssets::SquidRoom.Release();
 
-    m_SquidRoomMesh.Release();
-    for (GfxTexture& tex : m_SquidRoomTextures)
+    for (GfxTexture& tex : GfxDefaultAssets::SquidRoomTextures)
     {
         tex.Release();
     }
 }
 
-void GfxDefaultAssets::DrawSquidRoom(GfxContext& context)
+void GfxDefaultAssets::DrawSquidRoom(GfxContext& context, bool bindTextures)
 {
     using namespace SampleAssets;
 
@@ -58,16 +58,16 @@ void GfxDefaultAssets::DrawSquidRoom(GfxContext& context)
 
     pso.GetRasterizerStates().FrontCounterClockwise = true;
 
-    pso.SetVertexFormat(g_GfxDefaultAssets.m_SquidRoomMesh.GetVertexFormat());
-    context.SetVertexBuffer(g_GfxDefaultAssets.m_SquidRoomMesh.GetVertexBuffer());
-    context.SetIndexBuffer(g_GfxDefaultAssets.m_SquidRoomMesh.GetIndexBuffer());
+    pso.SetVertexFormat(GfxDefaultAssets::SquidRoom.GetVertexFormat());
+    context.SetVertexBuffer(GfxDefaultAssets::SquidRoom.GetVertexBuffer());
+    context.SetIndexBuffer(GfxDefaultAssets::SquidRoom.GetIndexBuffer());
 
     GfxTexture* lastDrawCallTex = nullptr;
     for (const SquidRoom::DrawParameters& drawParams : SquidRoom::Draws)
     {
-        GfxTexture& thisDrawCallTex = g_GfxDefaultAssets.m_SquidRoomTextures[drawParams.DiffuseTextureIndex];
+        GfxTexture& thisDrawCallTex = GfxDefaultAssets::SquidRoomTextures[drawParams.DiffuseTextureIndex];
 
-        if (lastDrawCallTex != &thisDrawCallTex)
+        if (bindTextures && (lastDrawCallTex != &thisDrawCallTex))
         {
             context.BindSRV(0, thisDrawCallTex);
             context.DirtyDescTables();
@@ -331,7 +331,7 @@ void GfxDefaultAssets::CreateSquidRoomMesh()
     IBInitParams.m_NumIndices = SquidRoom::IndexDataSize / 4; // R32_UINT (SampleAssets::StandardIndexFormat) = 4 bytes each.
     IBInitParams.m_IndexSize = 4;
 
-    m_SquidRoomMesh.Initialize(meshInitParams);
+    GfxDefaultAssets::SquidRoom.Initialize(meshInitParams);
 }
 
 void GfxDefaultAssets::CreateSquidRoomTextures(tf::Subflow& subFlow)
@@ -343,11 +343,11 @@ void GfxDefaultAssets::CreateSquidRoomTextures(tf::Subflow& subFlow)
     using namespace SampleAssets;
 
     const uint32_t srvCount = _countof(SquidRoom::Textures);
-    m_SquidRoomTextures.resize(srvCount);
+    GfxDefaultAssets::SquidRoomTextures.resize(srvCount);
 
     for (uint32_t i = 0; i < srvCount; i++)
     {
-        GfxTexture& tex = m_SquidRoomTextures[i];
+        GfxTexture& tex = GfxDefaultAssets::SquidRoomTextures[i];
         const SquidRoom::TextureResource& texResource = SquidRoom::Textures[i];
 
         subFlow.emplace([&]()
