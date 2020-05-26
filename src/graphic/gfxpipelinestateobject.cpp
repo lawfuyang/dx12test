@@ -14,8 +14,8 @@ void GfxPSOManager::Initialize()
     assert(!m_PipelineLibrary);
 
     // Init the memory mapped file.
-    const std::wstring cacheDir = MakeWStrFromStr(GetTempDirectory() + "D3D12PipelineLibraryCache.cache");
-    m_MemoryMappedCacheFile.Init(cacheDir);
+    StaticWString<MAX_PATH> cacheDir = MakeWStrFromStr(GetTempDirectory() + "D3D12PipelineLibraryCache.cache").c_str();
+    m_MemoryMappedCacheFile.Init(cacheDir.c_str());
 
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
@@ -33,7 +33,7 @@ void GfxPSOManager::Initialize()
     case D3D12_ERROR_DRIVER_VERSION_MISMATCH:
         g_Log.info("The provided Library contains data from an old driver or runtime. We need to re-create it");
         m_MemoryMappedCacheFile.Destroy(true);
-        m_MemoryMappedCacheFile.Init(cacheDir);
+        m_MemoryMappedCacheFile.Init(cacheDir.c_str());
         DX12_CALL(gfxDevice.Dev()->CreatePipelineLibrary(m_MemoryMappedCacheFile.GetData(), m_MemoryMappedCacheFile.GetSize(), IID_PPV_ARGS(&m_PipelineLibrary)));
     }
 
