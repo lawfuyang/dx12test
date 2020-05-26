@@ -1,12 +1,12 @@
 #pragma once
 
-#include "graphic/renderpasses/gfxrenderpass.h"
+#include <graphic/renderers/gfxrendererbase.h>
 
-#include "graphic/gfxtexturesandbuffers.h"
+#include <graphic/gfxtexturesandbuffers.h>
 
 class GfxContext;
 
-class GfxTestRenderPass : public GfxRenderPass
+class GfxTestRenderPass : public GfxRendererBase
 {
 public:
     DeclareSingletonFunctions(GfxTestRenderPass);

@@ -1,13 +1,13 @@
 #pragma once
 
-#include "graphic/renderpasses/gfxrenderpass.h"
+#include <graphic/renderers/gfxrendererbase.h>
 
-#include "graphic/gfxtexturesandbuffers.h"
+#include <graphic/gfxtexturesandbuffers.h>
 
 class GfxContext;
 struct IMGUIDrawData;
 
-class GfxIMGUIRenderer : public GfxRenderPass
+class GfxIMGUIRenderer : public GfxRendererBase
 {
 public:
     DeclareSingletonFunctions(GfxIMGUIRenderer);

@@ -1,4 +1,4 @@
-#include <graphic/renderpasses/gfxtestrenderpass.h>
+#include <graphic/renderers/gfxtestrenderpass.h>
 
 #include <graphic/gfxmanager.h>
 #include <graphic/gfxcontext.h>

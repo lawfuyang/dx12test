@@ -89,8 +89,9 @@
     <ClCompile Include="..\src\graphic\gfxtexturesandbuffers.cpp" />
     <ClCompile Include="..\src\graphic\gfxvertexformat.cpp" />
     <ClCompile Include="..\src\graphic\gfxview.cpp" />
-    <ClCompile Include="..\src\graphic\renderpasses\gfximguirenderer.cpp" />
-    <ClCompile Include="..\src\graphic\renderpasses\gfxtestrenderpass.cpp" />
+    <ClCompile Include="..\src\graphic\renderers\gfximguirenderer.cpp" />
+    <ClCompile Include="..\src\graphic\renderers\gfxtestrenderpass.cpp" />
+    <ClCompile Include="..\src\graphic\renderers\gfxzprepassrenderer.cpp" />
     <ClCompile Include="..\src\system\commandmanager.cpp" />
     <ClCompile Include="..\src\system\imguimanager.cpp" />
     <ClCompile Include="..\src\system\keyboard.cpp" />
@@ -136,9 +137,10 @@
     <ClInclude Include="..\src\graphic\gfxtexturesandbuffers.h" />
     <ClInclude Include="..\src\graphic\gfxvertexformat.h" />
     <ClInclude Include="..\src\graphic\gfxview.h" />
-    <ClInclude Include="..\src\graphic\renderpasses\gfximguirenderer.h" />
-    <ClInclude Include="..\src\graphic\renderpasses\gfxrenderpass.h" />
-    <ClInclude Include="..\src\graphic\renderpasses\gfxtestrenderpass.h" />
+    <ClInclude Include="..\src\graphic\renderers\gfximguirenderer.h" />
+    <ClInclude Include="..\src\graphic\renderers\gfxrendererbase.h" />
+    <ClInclude Include="..\src\graphic\renderers\gfxtestrenderpass.h" />
+    <ClInclude Include="..\src\graphic\renderers\gfxzprepassrenderer.h" />
     <ClInclude Include="..\src\masterheader.h" />
     <ClInclude Include="..\src\system\commandmanager.h" />
     <ClInclude Include="..\src\system\imguimanager.h" />

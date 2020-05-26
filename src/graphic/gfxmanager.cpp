@@ -11,8 +11,8 @@
 
 #include <system/imguimanager.h>
 
-#include <graphic/renderpasses/gfxtestrenderpass.h>
-#include <graphic/renderpasses/gfximguirenderer.h>
+#include <graphic/renderers/gfxtestrenderpass.h>
+#include <graphic/renderers/gfximguirenderer.h>
 
 #include <tmp/shaders/FrameParams.h>
 
@@ -142,7 +142,7 @@ void GfxManager::ScheduleCommandListsExecution()
     bbeProfileFunction();
 
     // helper lambda
-    auto QueueRenderPass = [&](GfxRenderPass* pass)
+    auto QueueRenderPass = [&](GfxRendererBase* pass)
     {
         m_GfxDevice.GetCommandListsManager().QueueCommandListToExecute(pass->GetGfxContext()->GetCommandList(), pass->GetGfxContext()->GetCommandList().GetType());
     };

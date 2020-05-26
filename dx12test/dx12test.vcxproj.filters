@@ -28,9 +28,6 @@
     <ClCompile Include="..\extern\imgui\imgui_widgets.cpp">
       <Filter>extern\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\graphic\renderpasses\gfxtestrenderpass.cpp">
-      <Filter>graphic\renderpasses</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\system\memorymappedfile.cpp">
       <Filter>system</Filter>
     </ClCompile>
@@ -54,9 +51,6 @@
     </ClCompile>
     <ClCompile Include="..\src\system\timer.cpp">
       <Filter>system</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\graphic\renderpasses\gfximguirenderer.cpp">
-      <Filter>graphic\renderpasses</Filter>
     </ClCompile>
     <ClCompile Include="..\src\system\imguimanager.cpp">
       <Filter>system</Filter>
@@ -124,6 +118,15 @@
     <ClCompile Include="..\src\graphic\dx12utils.cpp">
       <Filter>graphic\dx12</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\renderers\gfxtestrenderpass.cpp">
+      <Filter>graphic\renderers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\renderers\gfximguirenderer.cpp">
+      <Filter>graphic\renderers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\renderers\gfxzprepassrenderer.cpp">
+      <Filter>graphic\renderers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -162,9 +165,6 @@
     <ClInclude Include="..\extern\imgui\imstb_truetype.h">
       <Filter>extern\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\renderpasses\gfxtestrenderpass.h">
-      <Filter>graphic\renderpasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\system\memorymappedfile.h">
       <Filter>system</Filter>
     </ClInclude>
@@ -187,14 +187,8 @@
     <ClInclude Include="..\src\system\timer.h">
       <Filter>system</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\renderpasses\gfximguirenderer.h">
-      <Filter>graphic\renderpasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\system\imguimanager.h">
       <Filter>system</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\renderpasses\gfxrenderpass.h">
-      <Filter>graphic\renderpasses</Filter>
     </ClInclude>
     <ClInclude Include="..\src\system\commandmanager.h">
       <Filter>system</Filter>
@@ -268,6 +262,18 @@
     <ClInclude Include="..\src\system\serializer.h">
       <Filter>system</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\graphic\renderers\gfxtestrenderpass.h">
+      <Filter>graphic\renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\renderers\gfximguirenderer.h">
+      <Filter>graphic\renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\renderers\gfxrendererbase.h">
+      <Filter>graphic\renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\renderers\gfxzprepassrenderer.h">
+      <Filter>graphic\renderers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="system">
@@ -281,9 +287,6 @@
     </Filter>
     <Filter Include="extern\imgui">
       <UniqueIdentifier>{c12770a0-aeca-4907-9392-b66b8a7818aa}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="graphic\renderpasses">
-      <UniqueIdentifier>{406acab7-fe2d-4363-aa67-ad3dc6e25050}</UniqueIdentifier>
     </Filter>
     <Filter Include="extern\d3d12memalloc">
       <UniqueIdentifier>{aac21eff-8d1a-40a9-b5a9-a35ed9aafe13}</UniqueIdentifier>
@@ -305,6 +308,9 @@
     </Filter>
     <Filter Include="graphic\dx12">
       <UniqueIdentifier>{0e7d14e5-ff57-4650-ae04-db81f1944f5e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="graphic\renderers">
+      <UniqueIdentifier>{406acab7-fe2d-4363-aa67-ad3dc6e25050}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

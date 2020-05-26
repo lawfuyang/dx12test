@@ -1,4 +1,4 @@
-#include <graphic/renderpasses/GfxIMGUIRenderer.h>
+#include <graphic/renderers/GfxIMGUIRenderer.h>
 
 #include <system/imguimanager.h>
 

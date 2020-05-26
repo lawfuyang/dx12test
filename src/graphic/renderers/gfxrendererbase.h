@@ -2,7 +2,7 @@
 
 class GfxContext;
 
-class GfxRenderPass
+class GfxRendererBase
 {
 public:
     virtual void Initialize() = 0;
