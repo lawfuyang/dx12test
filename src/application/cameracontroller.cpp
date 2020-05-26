@@ -7,9 +7,6 @@ void CameraController::Initialize()
 {
     Reset();
 
-    g_Serializer.Read(Serializer::JSON, "CameraControllerValues", *this);
-    UpdateCameraRotation();
-
     m_CurrentMousePos = m_MouseLastPos = { Mouse::GetX(), Mouse::GetY() };
 
     g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUIPropertyGrid(); });
@@ -85,6 +82,9 @@ void CameraController::UpdateCameraRotation()
 
 void CameraController::UpdateIMGUIPropertyGrid()
 {
+    if (!g_IMGUIManager.m_ShowCameraControllerWindow)
+        return;
+
     bool doUpdate = false;
     bool doReset = false;
     bool doSave = false;
@@ -159,15 +159,8 @@ void CameraController::Update()
 
 void CameraController::Reset()
 {
-    m_EyePosition = { 0.0f, 200.0f, -400.0f };
-    m_Pitch = -bbeRad15;
-    m_Yaw = 0.0f;
-    m_MouseRotationSpeed = 0.002f;
-    m_CameraMoveSpeed = 1.0f;
-
-    m_Near = 1.0f;
-    m_Far = 2000.0f;
-    m_FOV = bbeRad45;
-
-    UpdateCameraRotation();
+    if (g_Serializer.Read(Serializer::JSON, "CameraControllerValues", *this))
+    {
+        UpdateCameraRotation();
+    }
 }

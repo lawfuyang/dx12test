@@ -18,14 +18,14 @@ private:
     template <typename Archive>
     void Serialize(Archive&);
 
-    float m_Near;
-    float m_Far;
-    float m_FOV;
+    float m_Near = 1.0f;
+    float m_Far = 2000.0f;
+    float m_FOV = bbeRad45;;
 
-    float m_Yaw;
-    float m_Pitch;
-    float m_MouseRotationSpeed;
-    float m_CameraMoveSpeed;
+    float m_Yaw = 0.0f;
+    float m_Pitch = 0.0f;
+    float m_MouseRotationSpeed = 0.002f;
+    float m_CameraMoveSpeed = 1.0f;
 
     bbeVector2 m_CurrentMousePos = {};
     bbeVector2 m_MouseLastPos = {};

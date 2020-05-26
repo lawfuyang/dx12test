@@ -209,6 +209,9 @@ void GfxManager::UpdateFrameParamsCB()
 
 void GfxManager::UpdateIMGUIPropertyGrid()
 {
+    if (!g_IMGUIManager.m_ShowGfxManagerWindow)
+        return;
+
     bbeProfileFunction();
 
     D3D12MA::Allocator& allocator = m_GfxDevice.GetD3D12MemoryAllocator();

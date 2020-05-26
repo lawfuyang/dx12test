@@ -8,12 +8,12 @@ public:
     enum ArchiveType { Binary, JSON };
 
     template <typename T>
-    void Read(ArchiveType archiveType, const char* fileName, T&& var)
+    bool Read(ArchiveType archiveType, const char* fileName, T&& var)
     {
         if (archiveType == Binary)
-            ReadInternal<cereal::BinaryInputArchive>(fileName, std::forward<T>(var));
+            return ReadInternal<cereal::BinaryInputArchive>(fileName, std::forward<T>(var));
         else
-            ReadInternal<cereal::JSONInputArchive>(fileName, std::forward<T>(var));
+            return ReadInternal<cereal::JSONInputArchive>(fileName, std::forward<T>(var));
     }
 
     template <typename T>
@@ -45,12 +45,15 @@ private:
     }
 
     template <typename CerealArchiveType, typename T>
-    void ReadInternal(const char* fileName, T&& var)
+    bool ReadInternal(const char* fileName, T&& var)
     {
-        if (std::ifstream stream{ (m_AssetsDir + fileName + GetFileExtention<CerealArchiveType>()).c_str() })
+        std::ifstream stream{ (m_AssetsDir + fileName + GetFileExtention<CerealArchiveType>()).c_str() };
+        if (stream)
         {
             CerealArchiveType{ stream }(std::forward<T>(var));
+            return true;
         }
+        return false;
     }
 
     template <typename CerealArchiveType, typename T>

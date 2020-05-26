@@ -40,9 +40,15 @@ public:
     void Update();
     void RegisterWindowUpdateCB(const std::function<void()>&);
 
+    bool m_ShowCameraControllerWindow = false;
+    bool m_ShowGfxManagerWindow = false;
+
 private:
     void SaveDrawData();
     IMGUIDrawData GetDrawData() const { return m_DrawData[m_DrawDataIdx]; }
+
+    template <typename Archive>
+    void Serialize(Archive&);
 
     std::mutex m_UpdateCBsLock;
     std::vector<std::function<void()>> m_UpdateCBs;
@@ -52,6 +58,7 @@ private:
     IMGUIDrawData m_DrawData[2];
     uint32_t m_DrawDataIdx = 0;
 
+    friend class cereal::access;
     friend class GfxIMGUIRenderer;
 };
 #define g_IMGUIManager IMGUIManager::GetInstance()

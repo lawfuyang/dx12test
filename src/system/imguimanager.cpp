@@ -40,6 +40,8 @@ void IMGUIManager::Initialize()
     io.KeyMap[ImGuiKey_Z]           = 'Z';
 
     ImGui::StyleColorsDark();
+
+    g_Serializer.Read(Serializer::JSON, "IMGUIManagerValues", *this);
 }
 
 void IMGUIManager::ShutDown()
@@ -47,6 +49,8 @@ void IMGUIManager::ShutDown()
     bbeProfileFunction();
 
     ImGui::DestroyContext();
+
+    g_Serializer.Write(Serializer::JSON, "IMGUIManagerValues", *this);
 }
 
 void IMGUIManager::ProcessWindowsMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -166,16 +170,30 @@ void IMGUIManager::Update()
     static bool showDemoWindow = false;
     if (showDemoWindow)
     {
-        bool isDUmmyWindowOpen = true;
-        ImGui::ShowDemoWindow(&isDUmmyWindowOpen);
+        ImGui::ShowDemoWindow();
     }
 
-    // update main window grid
+    auto MenuItemBoolToggle = [](const char* label, bool& b) { if (ImGui::MenuItem(label, nullptr, b)) { b = !b; } };
+
+    if (ImGui::BeginMainMenuBar())
     {
-        ScopedIMGUIWindow window{ "Main Grid" };
-        ImGui::LabelText("Frame Time", "%.3f ms", 1000.0f / ImGui::GetIO().Framerate);
-        ImGui::LabelText("FPS", "%.1f", ImGui::GetIO().Framerate);
-        ImGui::Checkbox("Show Demo Window", &showDemoWindow);
+        if (ImGui::BeginMenu("Engine"))
+        {
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("IMGUI Windows"))
+        {
+            MenuItemBoolToggle("Demo Window", showDemoWindow);
+            MenuItemBoolToggle("Camera Controller", m_ShowCameraControllerWindow);
+            MenuItemBoolToggle("GfxManager", m_ShowGfxManagerWindow);
+            ImGui::EndMenu();
+        }
+
+        ImGui::Text("\t\tFrame Time: %.3f ms", 1000.0f / ImGui::GetIO().Framerate);
+        ImGui::SameLine();
+        ImGui::Text("\tFPS: %.1f", ImGui::GetIO().Framerate);
+
+        ImGui::EndMainMenuBar();
     }
 
     // swap and update the rest
@@ -235,4 +253,11 @@ void IMGUIManager::SaveDrawData()
     }
 
     m_DrawData[1 - m_DrawDataIdx] = std::move(newDrawData);
+}
+
+template <typename Archive>
+void IMGUIManager::Serialize(Archive& ar)
+{
+    ar(CEREAL_NVP(m_ShowCameraControllerWindow));
+    ar(CEREAL_NVP(m_ShowGfxManagerWindow));
 }
