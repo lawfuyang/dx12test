@@ -87,8 +87,6 @@ void GfxDevice::Initialize()
     CheckFeaturesSupports();
 
     InitD3D12Allocator();
-
-    m_AllContexts.reserve(128);
 }
 
 void GfxDevice::ShutDown()
@@ -273,27 +271,4 @@ void GfxDevice::EndFrame()
 
     // execute remaining cmd lists
     Flush();
-
-    m_AllContexts.clear();
-}
-
-GfxContext& GfxDevice::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType, const std::string& name)
-{
-    bbeProfileFunction();
-
-    //g_Log.info("*** GfxDevice::GenerateNewContext: {}", name);
-
-    uint32_t newID;
-    GfxContext* newContext;
-    {
-        bbeAutoLock(m_ContextsLock);
-        m_AllContexts.push_back(GfxContext{});
-        newID = m_AllContexts.size() - 1;
-        newContext = &m_AllContexts.back();
-    }
-
-    newContext->m_Device      = this;
-    newContext->m_CommandList = m_CommandListsManager.Allocate(cmdListType, name);
-
-    return *newContext;
 }

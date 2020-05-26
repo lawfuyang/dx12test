@@ -22,6 +22,8 @@ public:
     template <typename Lambda>
     void AddGraphicCommand(Lambda&& lambda) { m_GfxCommandManager.AddCommand(std::forward<Lambda>(lambda)); }
 
+    GfxContext& GenerateNewContext(D3D12_COMMAND_LIST_TYPE, const std::string& name);
+
     GfxDevice&         GetGfxDevice()   { return m_GfxDevice; }
     GfxSwapChain&      GetSwapChain()   { return m_SwapChain; }
     GfxConstantBuffer& GetFrameParams() { return m_FrameParamsCB; }
@@ -34,6 +36,9 @@ private:
     void UpdateFrameParamsCB();
     void UpdateIMGUIPropertyGrid();
     void InitDepthBuffer();
+
+    std::mutex m_ContextsLock;
+    std::vector<GfxContext> m_AllContexts;
 
     GfxDevice         m_GfxDevice;
     GfxSwapChain      m_SwapChain;

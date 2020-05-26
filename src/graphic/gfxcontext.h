@@ -33,7 +33,6 @@ public:
     void DirtyBuffers() { m_DirtyBuffers = true; }
     void DirtyDescTables() { m_DirtyDescTables = true; }
 
-    GfxDevice&              GetDevice()      { return *m_Device; }
     GfxCommandList&         GetCommandList() { return *m_CommandList; }
     GfxPipelineStateObject& GetPSO()         { return m_PSO; }
     CD3DX12_RECT&           GetScissorRect() { return m_ScissorRect; }
@@ -55,7 +54,6 @@ private:
     CD3DX12_VIEWPORT  m_Viewport{ 0.0f, 0.0f, (float)g_CommandLineOptions.m_WindowWidth, (float)g_CommandLineOptions.m_WindowHeight };
     CD3DX12_RECT      m_ScissorRect{ 0, 0, g_CommandLineOptions.m_WindowWidth, g_CommandLineOptions.m_WindowHeight };
 
-    GfxDevice*               m_Device                                           = nullptr;
     GfxCommandList*          m_CommandList                                      = nullptr;
     GfxVertexBuffer*         m_VertexBuffer                                     = nullptr;
     GfxIndexBuffer*          m_IndexBuffer                                      = nullptr;
@@ -73,5 +71,5 @@ private:
     bool m_DirtyBuffers    = true;
     bool m_DirtyDescTables = true;
 
-    friend class GfxDevice;
+    friend class GfxManager;
 };

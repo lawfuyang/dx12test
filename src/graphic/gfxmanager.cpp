@@ -85,6 +85,8 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
     adapterAndDeviceInit.precede(cmdListInitTask, rootSigManagerInitTask, PSOManagerInitTask, miscGfxInitTask, swapChainInitTask);
     miscGfxInitTask.succeed(cmdListInitTask, rootSigManagerInitTask, defaultsAssetsPreInit);
     swapChainInitTask.succeed(cmdListInitTask);
+
+    m_AllContexts.reserve(128);
 }
 
 void GfxManager::ShutDown()
@@ -131,8 +133,8 @@ void GfxManager::ScheduleRenderPasses(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
 
-    ADD_TF_TASK(subFlow, g_GfxTestRenderPass.PopulateCommandList(m_GfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "TestRenderPass")));
-    ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer.PopulateCommandList(m_GfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "IMGUIRenderPass")));
+    ADD_TF_TASK(subFlow, g_GfxTestRenderPass.PopulateCommandList(GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "TestRenderPass")));
+    ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer.PopulateCommandList(GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "IMGUIRenderPass")));
 }
 
 void GfxManager::ScheduleCommandListsExecution()
@@ -170,7 +172,7 @@ void GfxManager::BeginFrame()
 
     // TODO: Remove clearing of BackBuffer when we manage to fill every pixel on screen through various render passes
     {
-        GfxContext& clearBackBufferContext = m_GfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "ClearBackBuffer");
+        GfxContext& clearBackBufferContext = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "ClearBackBuffer");
         clearBackBufferContext.ClearRenderTargetView(g_GfxManager.GetSwapChain().GetCurrentBackBuffer(), bbeVector4{ 0.0f, 0.2f, 0.4f, 1.0f });
         clearBackBufferContext.ClearDepthStencilView(m_DepthBuffer, 1.0f, 0);
         m_GfxDevice.GetCommandListsManager().QueueCommandListToExecute(clearBackBufferContext.GetCommandList(), clearBackBufferContext.GetCommandList().GetType());
@@ -186,13 +188,32 @@ void GfxManager::EndFrame()
     m_GfxDevice.EndFrame();
     m_SwapChain.Present();
     m_GfxDevice.IncrementAndSignalFence();
+
+    m_AllContexts.clear();
+}
+
+GfxContext& GfxManager::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType, const std::string& name)
+{
+    bbeProfileFunction();
+
+    //g_Log.info("*** GfxManager::GenerateNewContext: {}", name);
+
+    GfxContext* newContext;
+    {
+        bbeAutoLock(m_ContextsLock);
+        newContext = &m_AllContexts.emplace_back(GfxContext{});
+    }
+
+    newContext->m_CommandList = m_GfxDevice.GetCommandListsManager().Allocate(cmdListType, name);
+
+    return *newContext;
 }
 
 void GfxManager::TransitionBackBufferForPresent()
 {
     bbeProfileFunction();
 
-    GfxContext& context = m_GfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "TransitionBackBufferForPresent");
+    GfxContext& context = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "TransitionBackBufferForPresent");
     SetD3DDebugName(context.GetCommandList().Dev(), "TransitionBackBufferForPresent");
 
     m_SwapChain.TransitionBackBufferForPresent(context);
@@ -264,7 +285,7 @@ void GfxManager::UpdateIMGUIPropertyGrid()
 
 void GfxManager::InitDepthBuffer()
 {
-    GfxContext& initContext = m_GfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "GfxManager::InitDepthBuffer");
+    GfxContext& initContext = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "GfxManager::InitDepthBuffer");
 
     GfxTexture::InitParams depthBufferInitParams;
     depthBufferInitParams.m_Format = DXGI_FORMAT_D32_FLOAT;

@@ -75,7 +75,7 @@ D3D12MA::Allocation* GfxBufferCommon::CreateHeap(GfxContext& context, const GfxB
 {
     bbeProfileFunction();
 
-    GfxDevice& gfxDevice = context.GetDevice();
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
     D3D12MA::Allocator& d3d12MemoryAllocator = gfxDevice.GetD3D12MemoryAllocator();
 
     D3D12MA::ALLOCATION_DESC vertexBufferAllocDesc = {};
@@ -157,11 +157,11 @@ void GfxBufferCommon::InitializeBufferWithInitData(GfxContext& context, uint32_t
 
 void GfxVertexBuffer::Initialize(const InitParams& initParams)
 {
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-    GfxContext& initContext = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName);
+    GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName);
 
     Initialize(initContext, initParams);
 
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
     gfxDevice.GetCommandListsManager().QueueCommandListToExecute(initContext.GetCommandList(), initContext.GetCommandList().GetType());
 }
 
@@ -217,11 +217,11 @@ void GfxVertexBuffer::Initialize(GfxContext& initContext, const InitParams& init
 
 void GfxIndexBuffer::Initialize(const InitParams& initParams)
 {
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-    GfxContext& initContext = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName);
+    GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName);
 
     Initialize(initContext, initParams);
 
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
     gfxDevice.GetCommandListsManager().QueueCommandListToExecute(initContext.GetCommandList(), initContext.GetCommandList().GetType());
 }
 
@@ -273,11 +273,11 @@ void GfxIndexBuffer::Initialize(GfxContext& initContext, const InitParams& initP
 
 void GfxConstantBuffer::Initialize(uint32_t bufferSize, const std::string& resourceName)
 {
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-    GfxContext& initContext = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, resourceName.c_str());
+    GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, resourceName.c_str());
 
     Initialize(initContext, bufferSize, resourceName);
 
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
     gfxDevice.GetCommandListsManager().QueueCommandListToExecute(initContext.GetCommandList(), initContext.GetCommandList().GetType());
 }
 
@@ -330,11 +330,11 @@ void GfxConstantBuffer::Update(const void* data) const
 
 void GfxTexture::Initialize(const InitParams& initParams)
 {
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-    GfxContext& initContext = gfxDevice.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName);
+    GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName);
 
     Initialize(initContext, initParams);
 
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
     gfxDevice.GetCommandListsManager().QueueCommandListToExecute(initContext.GetCommandList(), initContext.GetCommandList().GetType());
 }
 

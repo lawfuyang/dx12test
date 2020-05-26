@@ -26,7 +26,6 @@ public:
     void WaitForFence();
     void EndFrame();
 
-    GfxContext& GenerateNewContext(D3D12_COMMAND_LIST_TYPE, const std::string& name);
     GfxCommandListsManager& GetCommandListsManager() { return m_CommandListsManager; }
     D3D12MA::Allocator& GetD3D12MemoryAllocator() { assert(m_D3D12MemoryAllocator); return *m_D3D12MemoryAllocator; }
     GfxFence& GetFence() { return m_GfxFence; }
@@ -40,9 +39,6 @@ private:
 
     GfxCommandListsManager m_CommandListsManager;
     GfxFence               m_GfxFence;
-
-    std::mutex m_ContextsLock;
-    std::vector<GfxContext> m_AllContexts;
 
     ComPtr<ID3D12Device6> m_D3DDevice;
 
