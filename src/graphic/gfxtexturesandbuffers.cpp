@@ -45,18 +45,6 @@ static ID3D12ResourceMemoryLayout GetMemoryLayout(const D3D12_RESOURCE_DESC& des
     return memoryLayout;
 }
 
-void GfxHazardTrackedResource::Transition(GfxCommandList& cmdList, D3D12_RESOURCE_STATES newState)
-{
-    if (m_CurrentResourceState != newState)
-    {
-        const D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_Resource.Get(), m_CurrentResourceState, newState);
-
-        const UINT numBarriers = 1;
-        cmdList.Dev()->ResourceBarrier(numBarriers, &barrier);
-        m_CurrentResourceState = newState;
-    }
-}
-
 GfxBufferCommon::~GfxBufferCommon()
 {
     assert(m_D3D12MABufferAllocation == nullptr);
@@ -222,7 +210,8 @@ void GfxVertexBuffer::Initialize(GfxContext& initContext, const InitParams& init
         InitializeBufferWithInitData(initContext, m_SizeInBytes, m_SizeInBytes, m_SizeInBytes, initParams.m_InitData, initParams.m_ResourceName.c_str());
 
         // after uploading init values, transition the vertex buffer data from copy destination state to vertex buffer state
-        Transition(initContext.GetCommandList(), initialState);
+        //Transition(initContext.GetCommandList(), initialState);
+        initContext.TransitionResource(*this, initialState, true);
     }
 }
 
@@ -278,7 +267,7 @@ void GfxIndexBuffer::Initialize(GfxContext& initContext, const InitParams& initP
         InitializeBufferWithInitData(initContext, m_SizeInBytes, m_SizeInBytes, m_SizeInBytes, initParams.m_InitData, initParams.m_ResourceName.c_str());
 
         // after uploading init values, transition the index buffer data from copy destination state to index buffer state
-        Transition(initContext.GetCommandList(), initialState);
+        initContext.TransitionResource(*this, initialState, true);
     }
 }
 
@@ -406,7 +395,7 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
         InitializeBufferWithInitData(initContext, uploadBufferSize, memoryLayout.m_RowPitch, uploadBufferSize, initParams.m_InitData, initParams.m_ResourceName.c_str());
 
         // after uploading init values, transition the texture from copy destination state to common state
-        Transition(initContext.GetCommandList(), initParams.m_InitialState);
+        initContext.TransitionResource(*this, initParams.m_InitialState, true);
     }
 
     if (initParams.m_ViewType == SRV)

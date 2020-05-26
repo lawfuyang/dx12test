@@ -14,6 +14,7 @@ class GfxVertexBuffer;
 class GfxIndexBuffer;
 class GfxDescriptorHeap;
 class GfxConstantBuffer;
+class GfxHazardTrackedResource;
 
 class GfxContext
 {
@@ -38,6 +39,8 @@ public:
     CD3DX12_RECT&           GetScissorRect() { return m_ScissorRect; }
     CD3DX12_VIEWPORT&       GetViewport()    { return m_Viewport; }
 
+    void TransitionResource(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate = false);
+
     void DrawInstanced(uint32_t VertexCountPerInstance, uint32_t InstanceCount, uint32_t StartVertexLocation, uint32_t StartInstanceLocation);
     void DrawIndexedInstanced(uint32_t IndexCountPerInstance, uint32_t InstanceCount, uint32_t StartIndexLocation, uint32_t BaseVertexLocation, uint32_t StartInstanceLocation);
 
@@ -46,6 +49,8 @@ private:
     void CompileAndSetGraphicsPipelineState();
     void CompileAndSetComputePipelineState();
     void PostDraw();
+    void FlushResourceBarriers();
+    void InsertUAVBarrier(GfxHazardTrackedResource& resource, bool flushImmediate = false);
 
     CD3DX12_VIEWPORT  m_Viewport{ 0.0f, 0.0f, (float)g_CommandLineOptions.m_WindowWidth, (float)g_CommandLineOptions.m_WindowHeight };
     CD3DX12_RECT      m_ScissorRect{ 0, 0, g_CommandLineOptions.m_WindowWidth, g_CommandLineOptions.m_WindowHeight };
@@ -60,6 +65,8 @@ private:
     std::vector<GfxTexture*> m_SRVsToBind;
 
     GfxPipelineStateObject m_PSO;
+
+    std::vector<D3D12_RESOURCE_BARRIER> m_ResourceBarriers;
 
     bool m_DirtyPSO        = true;
     bool m_DirtyRasterizer = true;

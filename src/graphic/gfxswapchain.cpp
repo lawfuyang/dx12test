@@ -67,7 +67,7 @@ void GfxSwapChain::TransitionBackBufferForPresent(GfxContext& context)
 {
     bbeProfileFunction();
 
-    m_RenderTargets[m_FrameIndex].Transition(context.GetCommandList(), D3D12_RESOURCE_STATE_PRESENT);
+    context.TransitionResource(m_RenderTargets[m_FrameIndex], D3D12_RESOURCE_STATE_PRESENT, true);
 }
 
 void GfxSwapChain::Present()

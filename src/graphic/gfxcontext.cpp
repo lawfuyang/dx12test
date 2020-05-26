@@ -14,7 +14,7 @@ void GfxContext::ClearRenderTargetView(GfxTexture& tex, const bbeVector4& clearC
     bbeProfileGPUFunction(gfxContext);
 
     // TODO: merge all required resource barriers and run them all at once just before GfxDevice::ExecuteAllActiveCommandLists or something
-    tex.Transition(*m_CommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    TransitionResource(tex, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
 
     const UINT numRects = 0;
     const D3D12_RECT* pRects = nullptr;
@@ -120,7 +120,7 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
         {
             rtvHandles[i] = m_RTVs[i]->GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart();
 
-            m_RTVs[i]->Transition(*m_CommandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+            TransitionResource(*m_RTVs[i], D3D12_RESOURCE_STATE_RENDER_TARGET);
         }
 
         D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = {};
@@ -190,10 +190,75 @@ void GfxContext::PostDraw()
     m_DirtyDescTables = false;
 }
 
+void GfxContext::FlushResourceBarriers()
+{
+    assert(m_CommandList);
+
+    if (m_ResourceBarriers.size() > 0)
+    {
+        m_CommandList->Dev()->ResourceBarrier(m_ResourceBarriers.size(), m_ResourceBarriers.data());
+        m_ResourceBarriers.clear();
+    }
+}
+
+void GfxContext::TransitionResource(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate)
+{
+    assert(m_CommandList);
+
+    const D3D12_RESOURCE_STATES oldState = resource.GetCurrentState();
+
+    if (m_CommandList->GetType() == D3D12_COMMAND_LIST_TYPE_COMPUTE)
+    {
+        const uint32_t VALID_COMPUTE_QUEUE_RESOURCE_STATES = D3D12_RESOURCE_STATE_UNORDERED_ACCESS | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_COPY_DEST | D3D12_RESOURCE_STATE_COPY_SOURCE;
+
+        assert((oldState & VALID_COMPUTE_QUEUE_RESOURCE_STATES) == oldState);
+        assert((newState & VALID_COMPUTE_QUEUE_RESOURCE_STATES) == newState);
+    }
+
+    if (oldState != newState)
+    {
+        D3D12_RESOURCE_BARRIER& BarrierDesc = m_ResourceBarriers.emplace_back(D3D12_RESOURCE_BARRIER{});
+
+        BarrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        BarrierDesc.Transition.pResource = resource.GetD3D12Resource();
+        BarrierDesc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+        BarrierDesc.Transition.StateBefore = oldState;
+        BarrierDesc.Transition.StateAfter = newState;
+        BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+
+        // Check to see if we already started the transition
+        //if (NewState == Resource.m_TransitioningState)
+        //{
+        //    BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
+        //    Resource.m_TransitioningState = (D3D12_RESOURCE_STATES)-1;
+        //}
+
+        resource.SetHazardTrackedState(newState);
+    }
+    else if (newState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+        InsertUAVBarrier(resource, flushImmediate);
+
+    if (flushImmediate)
+        FlushResourceBarriers();
+}
+
+void GfxContext::InsertUAVBarrier(GfxHazardTrackedResource& resource, bool flushImmediate)
+{
+    D3D12_RESOURCE_BARRIER& BarrierDesc = m_ResourceBarriers.emplace_back(D3D12_RESOURCE_BARRIER{});
+
+    BarrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+    BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    BarrierDesc.UAV.pResource = resource.GetD3D12Resource();
+
+    if (flushImmediate)
+        FlushResourceBarriers();
+}
+
 void GfxContext::DrawInstanced(uint32_t vertexCountPerInstance, uint32_t instanceCount, uint32_t startVertexLocation, uint32_t startInstanceLocation)
 {
     bbeProfileFunction();
 
+    FlushResourceBarriers();
     CompileAndSetGraphicsPipelineState();
 
     m_CommandList->Dev()->DrawInstanced(vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
@@ -207,6 +272,7 @@ void GfxContext::DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t i
 
     assert(m_IndexBuffer);
 
+    FlushResourceBarriers();
     CompileAndSetGraphicsPipelineState();
 
     m_CommandList->Dev()->DrawIndexedInstanced(indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);

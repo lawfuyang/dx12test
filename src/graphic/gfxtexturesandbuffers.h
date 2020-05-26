@@ -21,8 +21,6 @@ public:
     void SetD3D12Resource(ID3D12Resource* resource) { m_Resource = resource; }
     ID3D12Resource* GetD3D12Resource() const { return m_Resource.Get(); }
 
-    void Transition(GfxCommandList&, D3D12_RESOURCE_STATES newState);
-
     void SetHazardTrackedState(D3D12_RESOURCE_STATES newState) { m_CurrentResourceState = newState; }
     D3D12_RESOURCE_STATES GetCurrentState() const { return m_CurrentResourceState; }
 
