@@ -1,13 +1,13 @@
-#include <graphic/gfxmanager.h>
+#include <graphic/gfx/gfxmanager.h>
 
 #include <graphic/dx12utils.h>
-#include <graphic/gfxadapter.h>
-#include <graphic/gfxcontext.h>
-#include <graphic/gfxrootsignature.h>
-#include <graphic/gfxshadermanager.h>
-#include <graphic/gfxvertexformat.h>
-#include <graphic/gfxdefaultassets.h>
-#include <graphic/gfxtexturesandbuffers.h>
+#include <graphic/gfx/gfxadapter.h>
+#include <graphic/gfx/gfxcontext.h>
+#include <graphic/gfx/gfxrootsignature.h>
+#include <graphic/gfx/gfxshadermanager.h>
+#include <graphic/gfx/gfxvertexformat.h>
+#include <graphic/gfx/gfxdefaultassets.h>
+#include <graphic/gfx/gfxtexturesandbuffers.h>
 
 #include <system/imguimanager.h>
 

@@ -1,8 +1,8 @@
-#include "graphic/gfxdescriptorheap.h"
+#include "graphic/gfx/gfxdescriptorheap.h"
 
-#include "graphic/gfxmanager.h"
+#include "graphic/gfx/gfxmanager.h"
 #include "graphic/dx12utils.h"
-#include "graphic/gfxdevice.h"
+#include "graphic/gfx/gfxdevice.h"
 
 void GfxDescriptorHeap::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags)
 {

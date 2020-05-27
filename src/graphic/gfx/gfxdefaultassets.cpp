@@ -1,8 +1,8 @@
-#include <graphic/gfxdefaultassets.h>
+#include <graphic/gfx/gfxdefaultassets.h>
 
 #include <graphic/dx12utils.h>
-#include <graphic/gfxdevice.h>
-#include <graphic/gfxmanager.h>
+#include <graphic/gfx/gfxdevice.h>
+#include <graphic/gfx/gfxmanager.h>
 
 #include <defaultassets/occcity.h>
 #include <defaultassets/SquidRoom.h>

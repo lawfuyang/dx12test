@@ -1,4 +1,4 @@
-#include "graphic/gfxadapter.h"
+#include "graphic/gfx/gfxadapter.h"
 
 #include "graphic/dx12utils.h"
 

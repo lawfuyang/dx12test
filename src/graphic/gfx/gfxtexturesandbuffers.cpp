@@ -1,8 +1,8 @@
-#include <graphic/gfxtexturesandbuffers.h>
+#include <graphic/gfx/gfxtexturesandbuffers.h>
 
-#include <graphic/gfxmanager.h>
-#include <graphic/gfxdevice.h>
-#include <graphic/gfxcontext.h>
+#include <graphic/gfx/gfxmanager.h>
+#include <graphic/gfx/gfxdevice.h>
+#include <graphic/gfx/gfxcontext.h>
 #include <graphic/dx12utils.h>
 
 struct ID3D12ResourceMemoryLayout

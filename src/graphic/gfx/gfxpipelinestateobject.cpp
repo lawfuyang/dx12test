@@ -1,11 +1,11 @@
-#include "graphic/gfxpipelinestateobject.h"
+#include "graphic/gfx/gfxpipelinestateobject.h"
 
 #include "graphic/dx12utils.h"
-#include "graphic/gfxmanager.h"
-#include "graphic/gfxdevice.h"
-#include "graphic/gfxrootsignature.h"
-#include "graphic/gfxvertexformat.h"
-#include "graphic/gfxshadermanager.h"
+#include "graphic/gfx/gfxmanager.h"
+#include "graphic/gfx/gfxdevice.h"
+#include "graphic/gfx/gfxrootsignature.h"
+#include "graphic/gfx/gfxvertexformat.h"
+#include "graphic/gfx/gfxshadermanager.h"
 
 void GfxPSOManager::Initialize()
 {

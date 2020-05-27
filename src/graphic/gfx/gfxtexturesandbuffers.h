@@ -2,7 +2,7 @@
 
 #include <extern/d3d12/D3D12MemAlloc.h>
 
-#include <graphic/gfxdescriptorheap.h>
+#include <graphic/gfx/gfxdescriptorheap.h>
 #include <graphic/dx12utils.h>
 
 namespace D3D12MA

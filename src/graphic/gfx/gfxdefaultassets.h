@@ -1,7 +1,7 @@
 #pragma once
 
-#include <graphic/gfxtexturesandbuffers.h>
-#include <graphic/gfxmesh.h>
+#include <graphic/gfx/gfxtexturesandbuffers.h>
+#include <graphic/gfx/gfxmesh.h>
 
 class GfxContext;
 

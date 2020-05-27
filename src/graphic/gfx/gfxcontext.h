@@ -2,7 +2,7 @@
 
 #include "system/profiler.h"
 
-#include "graphic/gfxpipelinestateobject.h"
+#include "graphic/gfx/gfxpipelinestateobject.h"
 
 class GfxManager;
 class GfxDevice;

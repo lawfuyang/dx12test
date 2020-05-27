@@ -3,10 +3,10 @@
 #include <system/memorymappedfile.h>
 
 #include <graphic/dx12utils.h>
-#include <graphic/gfxrootsignature.h>
-#include <graphic/gfxvertexformat.h>
-#include <graphic/gfxshadermanager.h>
-#include <graphic/gfxcommonstates.h>
+#include <graphic/gfx/gfxrootsignature.h>
+#include <graphic/gfx/gfxvertexformat.h>
+#include <graphic/gfx/gfxshadermanager.h>
+#include <graphic/gfx/gfxcommonstates.h>
 
 class GfxRootSignature;
 class GfxShader;
@@ -67,4 +67,4 @@ private:
 };
 #define g_GfxPSOManager GfxPSOManager::GetInstance()
 
-#include "graphic/gfxpipelinestateobject.hpp"
+#include "graphic/gfx/gfxpipelinestateobject.hpp"

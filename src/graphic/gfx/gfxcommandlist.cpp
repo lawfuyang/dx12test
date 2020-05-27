@@ -1,8 +1,8 @@
-#include "graphic/gfxcommandlist.h"
+#include "graphic/gfx/gfxcommandlist.h"
 
-#include "graphic/gfxmanager.h"
+#include "graphic/gfx/gfxmanager.h"
 #include "graphic/dx12utils.h"
-#include "graphic/gfxdevice.h"
+#include "graphic/gfx/gfxdevice.h"
 
 static const uint32_t gs_MaxCmdLists = 128;
 

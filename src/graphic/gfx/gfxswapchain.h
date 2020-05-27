@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graphic/gfxtexturesandbuffers.h"
+#include "graphic/gfx/gfxtexturesandbuffers.h"
 
 class GfxContext;
 

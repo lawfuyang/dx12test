@@ -1,14 +1,14 @@
-#include <graphic/gfxdevice.h>
+#include <graphic/gfx/gfxdevice.h>
 
-#include <graphic/gfxmanager.h>
+#include <graphic/gfx/gfxmanager.h>
 #include <graphic/dx12utils.h>
-#include <graphic/gfxadapter.h>
-#include <graphic/gfxcontext.h>
-#include <graphic/gfxdescriptorheap.h>
-#include <graphic/gfxrootsignature.h>
-#include <graphic/gfxpipelinestateobject.h>
-#include <graphic/gfxshadermanager.h>
-#include <graphic/gfxtexturesandbuffers.h>
+#include <graphic/gfx/gfxadapter.h>
+#include <graphic/gfx/gfxcontext.h>
+#include <graphic/gfx/gfxdescriptorheap.h>
+#include <graphic/gfx/gfxrootsignature.h>
+#include <graphic/gfx/gfxpipelinestateobject.h>
+#include <graphic/gfx/gfxshadermanager.h>
+#include <graphic/gfx/gfxtexturesandbuffers.h>
 
 const bool g_BreakOnWarnings                         = true;
 const bool g_BreakOnErrors                           = true;

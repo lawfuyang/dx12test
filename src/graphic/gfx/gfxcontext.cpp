@@ -1,10 +1,10 @@
-#include "graphic/gfxcontext.h"
+#include "graphic/gfx/gfxcontext.h"
 
 #include "graphic/dx12utils.h"
-#include "graphic/gfxmanager.h"
-#include "graphic/gfxcommandlist.h"
-#include "graphic/gfxtexturesandbuffers.h"
-#include "graphic/gfxrootsignature.h"
+#include "graphic/gfx/gfxmanager.h"
+#include "graphic/gfx/gfxcommandlist.h"
+#include "graphic/gfx/gfxtexturesandbuffers.h"
+#include "graphic/gfx/gfxrootsignature.h"
 
 void GfxContext::ClearRenderTargetView(GfxTexture& tex, const bbeVector4& clearColor)
 {

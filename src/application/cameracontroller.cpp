@@ -1,7 +1,7 @@
 #include <application/cameracontroller.h>
 
 #include <system/imguimanager.h>
-#include <graphic/gfxview.h>
+#include <graphic/gfx/gfxview.h>
 
 void CameraController::Initialize()
 {

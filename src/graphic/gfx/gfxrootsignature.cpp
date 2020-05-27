@@ -1,8 +1,8 @@
-#include "graphic/gfxrootsignature.h"
+#include "graphic/gfx/gfxrootsignature.h"
 
-#include "graphic/gfxmanager.h"
+#include "graphic/gfx/gfxmanager.h"
 #include "graphic/dx12utils.h"
-#include "graphic/gfxdevice.h"
+#include "graphic/gfx/gfxdevice.h"
 
 static constexpr D3D12_STATIC_SAMPLER_DESC CreateStaticSampler(D3D12_FILTER filter, D3D12_TEXTURE_ADDRESS_MODE addressMode, uint32_t shaderRegister)
 {

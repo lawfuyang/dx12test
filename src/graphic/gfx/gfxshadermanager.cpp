@@ -1,4 +1,4 @@
-#include <graphic/gfxshadermanager.h>
+#include <graphic/gfx/gfxshadermanager.h>
 
 #include <d3dcompiler.h>
 

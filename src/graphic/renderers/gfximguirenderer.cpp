@@ -2,8 +2,8 @@
 
 #include <system/imguimanager.h>
 
-#include <graphic/gfxmanager.h>
-#include <graphic/gfxcontext.h>
+#include <graphic/gfx/gfxmanager.h>
+#include <graphic/gfx/gfxcontext.h>
 
 #include <tmp/shaders/IMGUICBuffer.h>
 

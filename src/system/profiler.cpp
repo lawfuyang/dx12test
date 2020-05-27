@@ -2,8 +2,8 @@
 
 #include <system/logger.h>
 
-#include <graphic/gfxcontext.h>
-#include <graphic/gfxcommandlist.h>
+#include <graphic/gfx/gfxcontext.h>
+#include <graphic/gfx/gfxcommandlist.h>
 
 void SystemProfiler::Initialize()
 {

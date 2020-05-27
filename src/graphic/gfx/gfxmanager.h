@@ -2,9 +2,9 @@
 
 #include <system/commandmanager.h>
 
-#include <graphic/gfxdevice.h>
-#include <graphic/gfxswapchain.h>
-#include <graphic/gfxtexturesandbuffers.h>
+#include <graphic/gfx/gfxdevice.h>
+#include <graphic/gfx/gfxswapchain.h>
+#include <graphic/gfx/gfxtexturesandbuffers.h>
 
 class GfxManager
 {

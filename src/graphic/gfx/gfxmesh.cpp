@@ -1,6 +1,6 @@
-#include <graphic/gfxmesh.h>
+#include <graphic/gfx/gfxmesh.h>
 
-#include <graphic/gfxmanager.h>
+#include <graphic/gfx/gfxmanager.h>
 
 void GfxMesh::Initialize(const GfxMesh::InitParams& initParams)
 {

@@ -7,7 +7,7 @@
 // http://go.microsoft.com/fwlink/?LinkID=615561
 //--------------------------------------------------------------------------------------
 
-#include <graphic/gfxcommonstates.h>
+#include <graphic/gfx/gfxcommonstates.h>
 
 // --------------------------------------------------------------------------
 // Blend States

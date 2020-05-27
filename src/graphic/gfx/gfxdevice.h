@@ -1,12 +1,12 @@
 #pragma once
 
-#include <graphic/gfxcommandlist.h>
-#include <graphic/gfxcontext.h>
-#include <graphic/gfxfence.h>
-#include <graphic/gfxpipelinestateobject.h>
-#include <graphic/gfxswapchain.h>
-#include <graphic/gfxdescriptorheap.h>
-#include <graphic/gfxpipelinestateobject.h>
+#include <graphic/gfx/gfxcommandlist.h>
+#include <graphic/gfx/gfxcontext.h>
+#include <graphic/gfx/gfxfence.h>
+#include <graphic/gfx/gfxpipelinestateobject.h>
+#include <graphic/gfx/gfxswapchain.h>
+#include <graphic/gfx/gfxdescriptorheap.h>
+#include <graphic/gfx/gfxpipelinestateobject.h>
 
 namespace D3D12MA
 {

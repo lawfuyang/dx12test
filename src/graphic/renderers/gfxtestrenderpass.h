@@ -2,7 +2,7 @@
 
 #include <graphic/renderers/gfxrendererbase.h>
 
-#include <graphic/gfxtexturesandbuffers.h>
+#include <graphic/gfx/gfxtexturesandbuffers.h>
 
 class GfxContext;
 

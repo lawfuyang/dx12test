@@ -1,10 +1,11 @@
-#include "graphic/gfxswapchain.h"
+#include "graphic/gfx/gfxswapchain.h"
 
-#include "graphic/gfxmanager.h"
-#include "graphic/gfxadapter.h"
 #include "graphic/dx12utils.h"
-#include "graphic/gfxdevice.h"
-#include "graphic/gfxcontext.h"
+
+#include "graphic/gfx/gfxmanager.h"
+#include "graphic/gfx/gfxadapter.h"
+#include "graphic/gfx/gfxdevice.h"
+#include "graphic/gfx/gfxcontext.h"
 
 void GfxSwapChain::Initialize()
 {
