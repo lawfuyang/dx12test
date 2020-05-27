@@ -1,11 +1,11 @@
-#include "graphic/gfx/gfxpipelinestateobject.h"
+#include <graphic/gfx/gfxpipelinestateobject.h>
 
-#include "graphic/dx12utils.h"
-#include "graphic/gfx/gfxmanager.h"
-#include "graphic/gfx/gfxdevice.h"
-#include "graphic/gfx/gfxrootsignature.h"
-#include "graphic/gfx/gfxvertexformat.h"
-#include "graphic/gfx/gfxshadermanager.h"
+#include <graphic/dx12utils.h>
+#include <graphic/gfx/gfxmanager.h>
+#include <graphic/gfx/gfxdevice.h>
+#include <graphic/gfx/gfxrootsignature.h>
+#include <graphic/gfx/gfxvertexformat.h>
+#include <graphic/gfx/gfxshadermanager.h>
 
 void GfxPSOManager::Initialize()
 {
@@ -100,11 +100,10 @@ ID3D12PipelineState* GfxPSOManager::GetGraphicsPSO(const GfxPipelineStateObject&
     assert(m_PipelineLibrary);
     assert(pso.m_RootSig);
     assert(pso.m_VertexFormat);
-    assert(pso.m_VS);
-    assert(pso.m_VS->GetBlob());
+    assert(pso.m_VS && pso.m_VS->GetBlob());
     assert(pso.m_PS ? pso.m_PS->GetBlob() != nullptr : true);
+    assert(pso.m_PS ? pso.m_RenderTargets.NumRenderTargets > 0 : true);
     assert(pso.m_PrimitiveTopology != D3D_PRIMITIVE_TOPOLOGY_UNDEFINED);
-    assert(pso.m_RenderTargets.NumRenderTargets > 0);
 
     const std::size_t psoHash = std::hash<GfxPipelineStateObject>{}(pso);
     const std::wstring psoHashStr = std::to_wstring(psoHash);
@@ -182,8 +181,9 @@ ID3D12PipelineState* GfxPSOManager::GetComputePSO(const GfxPipelineStateObject& 
 
 void GfxPSOManager::SavePSOToPipelineLibrary(ID3D12PipelineState* pso, const std::wstring& psoHashStr)
 {
-    bbeMultiThreadDetector();
     bbeProfileFunction();
+
+    bbeAutoLock(m_PipelineLibraryLock);
 
     g_Log.info("Storing new PSO '{0:X}' into PipelineLibrary", std::stoull(psoHashStr));
     DX12_CALL(m_PipelineLibrary->StorePipeline(psoHashStr.c_str(), pso));

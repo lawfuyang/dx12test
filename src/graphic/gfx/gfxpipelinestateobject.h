@@ -59,6 +59,7 @@ public:
 private:
     void SavePSOToPipelineLibrary(ID3D12PipelineState* pso, const std::wstring& psoHashStr);
 
+    std::mutex m_PipelineLibraryLock;
     ComPtr<ID3D12PipelineLibrary> m_PipelineLibrary;
 
     MemoryMappedFile m_MemoryMappedCacheFile;
