@@ -23,14 +23,13 @@ public:
     void ClearDepthStencilView(GfxTexture&, float depth, uint8_t stencil);
     void SetRenderTarget(uint32_t idx, GfxTexture&);
     void SetDepthStencil(GfxTexture& tex);
-    void SetVertexBuffer(GfxVertexBuffer& vBuffer) { m_VertexBuffer = &vBuffer; }
-    void SetIndexBuffer(GfxIndexBuffer& iBuffer) { m_IndexBuffer = &iBuffer; }
+    void SetVertexBuffer(GfxVertexBuffer& vBuffer);
+    void SetIndexBuffer(GfxIndexBuffer& iBuffer);
     void BindConstantBuffer(GfxConstantBuffer& cBuffer);
     void BindSRV(uint32_t textureRegister, GfxTexture&);
 
     void DirtyPSO() { m_DirtyPSO = true; }
     void DirtyRasterizer() { m_DirtyRasterizer = true; }
-    void DirtyBuffers() { m_DirtyBuffers = true; }
     void DirtyDescTables() { m_DirtyDescTables = true; }
 
     GfxCommandList&         GetCommandList() { return *m_CommandList; }

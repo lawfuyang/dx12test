@@ -50,6 +50,24 @@ void GfxContext::SetDepthStencil(GfxTexture& tex)
     m_DSV = &tex;
 }
 
+void GfxContext::SetVertexBuffer(GfxVertexBuffer& vBuffer)
+{
+    if (m_VertexBuffer != &vBuffer)
+    {
+        m_VertexBuffer = &vBuffer;
+        m_DirtyBuffers = true;
+    }
+}
+
+void GfxContext::SetIndexBuffer(GfxIndexBuffer& iBuffer)
+{
+    if (m_IndexBuffer != &iBuffer)
+    {
+        m_IndexBuffer = &iBuffer;
+        m_DirtyBuffers = true;
+    }
+}
+
 void GfxContext::BindConstantBuffer(GfxConstantBuffer& cBuffer)
 {
     m_CBVToBind = &cBuffer.GetDescriptorHeap();
