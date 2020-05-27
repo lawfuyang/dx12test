@@ -24,10 +24,10 @@ public:
 
     GfxContext& GenerateNewContext(D3D12_COMMAND_LIST_TYPE, const std::string& name);
 
-    GfxDevice&         GetGfxDevice()   { return m_GfxDevice; }
-    GfxSwapChain&      GetSwapChain()   { return m_SwapChain; }
-    GfxConstantBuffer& GetFrameParams() { return m_FrameParamsCB; }
-    GfxTexture&        GetDepthBuffer() { return m_DepthBuffer; }
+    GfxDevice&         GetGfxDevice()        { return m_GfxDevice; }
+    GfxSwapChain&      GetSwapChain()        { return m_SwapChain; }
+    GfxConstantBuffer& GetFrameParams()      { return m_FrameParamsCB; }
+    GfxTexture&        GetSceneDepthBuffer() { return m_SceneDepthBuffer; }
 
 private:
     void ScheduleRenderPasses(tf::Subflow& sf);
@@ -35,7 +35,7 @@ private:
     void TransitionBackBufferForPresent();
     void UpdateFrameParamsCB();
     void UpdateIMGUIPropertyGrid();
-    void InitDepthBuffer();
+    void InitSceneDepthBuffer();
 
     std::mutex m_ContextsLock;
     std::vector<GfxContext> m_AllContexts;
@@ -43,7 +43,7 @@ private:
     GfxDevice         m_GfxDevice;
     GfxSwapChain      m_SwapChain;
     GfxConstantBuffer m_FrameParamsCB;
-    GfxTexture        m_DepthBuffer;
+    GfxTexture        m_SceneDepthBuffer;
 
     CommandManager m_GfxCommandManager;
 };

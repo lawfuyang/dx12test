@@ -74,7 +74,7 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
             allTasks.push_back(ADD_TF_TASK(subFlow, g_GfxTestRenderPass.Initialize()));
             allTasks.push_back(ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer.Initialize()));
             allTasks.push_back(ADD_TF_TASK(subFlow, g_ZPrePassRenderer.Initialize()));
-            allTasks.push_back(ADD_TF_TASK(subFlow, InitDepthBuffer()));
+            allTasks.push_back(ADD_TF_TASK(subFlow, InitSceneDepthBuffer()));
 
             // HUGE assumption that all of the above gfx tasks queued their command lists to be executed
             tf::Task flushAndWaitTask = ADD_TF_TASK(subFlow, m_GfxDevice.Flush(true /* andWait */));
@@ -101,7 +101,7 @@ void GfxManager::ShutDown()
     if (fs)
         m_SwapChain.Dev()->SetFullscreenState(false, NULL);
 
-    m_DepthBuffer.Release();
+    m_SceneDepthBuffer.Release();
     g_GfxPSOManager.ShutDown();
     g_ZPrePassRenderer.ShutDown();
     g_GfxTestRenderPass.ShutDown();
@@ -179,7 +179,7 @@ void GfxManager::BeginFrame()
     {
         GfxContext& clearBackBufferContext = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "ClearBackBuffer");
         clearBackBufferContext.ClearRenderTargetView(g_GfxManager.GetSwapChain().GetCurrentBackBuffer(), bbeVector4{ 0.0f, 0.2f, 0.4f, 1.0f });
-        clearBackBufferContext.ClearDepthStencilView(m_DepthBuffer, 1.0f, 0);
+        clearBackBufferContext.ClearDepthStencilView(m_SceneDepthBuffer, 1.0f, 0);
         m_GfxDevice.GetCommandListsManager().QueueCommandListToExecute(clearBackBufferContext.GetCommandList(), clearBackBufferContext.GetCommandList().GetType());
 
         m_GfxDevice.Flush();
@@ -288,7 +288,7 @@ void GfxManager::UpdateIMGUIPropertyGrid()
     }
 }
 
-void GfxManager::InitDepthBuffer()
+void GfxManager::InitSceneDepthBuffer()
 {
     GfxContext& initContext = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "GfxManager::InitDepthBuffer");
 
@@ -305,5 +305,5 @@ void GfxManager::InitDepthBuffer()
     depthBufferInitParams.m_ClearValue.DepthStencil.Depth = 1.0f;
     depthBufferInitParams.m_ClearValue.DepthStencil.Stencil = 0;
 
-    m_DepthBuffer.Initialize(initContext, depthBufferInitParams);
+    m_SceneDepthBuffer.Initialize(initContext, depthBufferInitParams);
 }

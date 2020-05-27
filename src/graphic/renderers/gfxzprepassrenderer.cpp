@@ -42,7 +42,7 @@ void GfxZPrePassRenderer::PopulateCommandList(GfxContext& context)
 
     pso.SetVertexShader(g_GfxShaderManager.GetShader(ShaderPermutation::VS_TestTriangle));
 
-    context.SetDepthStencil(g_GfxManager.GetDepthBuffer());
+    context.SetDepthStencil(g_GfxManager.GetSceneDepthBuffer());
 
     GfxDefaultAssets::DrawSquidRoom(context, false);
 }

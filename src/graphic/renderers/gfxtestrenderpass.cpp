@@ -46,7 +46,7 @@ void GfxTestRenderPass::PopulateCommandList(GfxContext& context)
     pso.SetPixelShader(g_GfxShaderManager.GetShader(ShaderPermutation::PS_TestTriangle));
 
     context.SetRenderTarget(0, g_GfxManager.GetSwapChain().GetCurrentBackBuffer());
-    context.SetDepthStencil(g_GfxManager.GetDepthBuffer());
+    context.SetDepthStencil(g_GfxManager.GetSceneDepthBuffer());
 
     GfxDefaultAssets::DrawSquidRoom(context, true);
 }
