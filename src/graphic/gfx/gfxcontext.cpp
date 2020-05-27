@@ -13,7 +13,6 @@ void GfxContext::ClearRenderTargetView(GfxTexture& tex, const bbeVector4& clearC
     GfxContext& gfxContext = *this;
     bbeProfileGPUFunction(gfxContext);
 
-    // TODO: merge all required resource barriers and run them all at once just before GfxDevice::ExecuteAllActiveCommandLists or something
     TransitionResource(tex, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
 
     const UINT numRects = 0;
@@ -23,17 +22,25 @@ void GfxContext::ClearRenderTargetView(GfxTexture& tex, const bbeVector4& clearC
     m_CommandList->Dev()->ClearRenderTargetView(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), colorInFloat, numRects, pRects);
 }
 
-void GfxContext::ClearDepthStencilView(GfxTexture& tex, float depth, uint8_t stencil)
+static void ClearDepthStencilInternal(GfxContext& gfxContext, GfxTexture& tex, float depth, uint8_t stencil, D3D12_CLEAR_FLAGS flags)
 {
     bbeProfileFunction();
-
-    GfxContext& gfxContext = *this;
     bbeProfileGPUFunction(gfxContext);
 
     const UINT numRects = 0;
     const D3D12_RECT* pRects = nullptr;
 
-    m_CommandList->Dev()->ClearDepthStencilView(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, depth, stencil, numRects, pRects);
+    gfxContext.GetCommandList().Dev()->ClearDepthStencilView(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), flags, depth, stencil, numRects, pRects);
+}
+
+void GfxContext::ClearDepth(GfxTexture& tex, float depth)
+{
+    ClearDepthStencilInternal(*this, tex, depth, 0, D3D12_CLEAR_FLAG_DEPTH);
+}
+
+void GfxContext::ClearDepthStencil(GfxTexture& tex, float depth, uint8_t stencil)
+{
+    ClearDepthStencilInternal(*this, tex, depth, stencil, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL);
 }
 
 void GfxContext::SetRenderTarget(uint32_t idx, GfxTexture& tex)

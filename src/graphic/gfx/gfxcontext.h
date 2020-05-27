@@ -20,7 +20,8 @@ class GfxContext
 {
 public:
     void ClearRenderTargetView(GfxTexture&, const bbeVector4& clearColor);
-    void ClearDepthStencilView(GfxTexture&, float depth, uint8_t stencil);
+    void ClearDepth(GfxTexture&, float depth);
+    void ClearDepthStencil(GfxTexture&, float depth, uint8_t stencil);
     void SetRenderTarget(uint32_t idx, GfxTexture&);
     void SetDepthStencil(GfxTexture& tex);
     void SetVertexBuffer(GfxVertexBuffer& vBuffer);

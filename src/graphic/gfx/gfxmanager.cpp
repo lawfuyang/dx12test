@@ -179,7 +179,7 @@ void GfxManager::BeginFrame()
     {
         GfxContext& clearBackBufferContext = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "ClearBackBuffer");
         clearBackBufferContext.ClearRenderTargetView(g_GfxManager.GetSwapChain().GetCurrentBackBuffer(), bbeVector4{ 0.0f, 0.2f, 0.4f, 1.0f });
-        clearBackBufferContext.ClearDepthStencilView(m_SceneDepthBuffer, 1.0f, 0);
+        clearBackBufferContext.ClearDepth(m_SceneDepthBuffer, 1.0f);
         m_GfxDevice.GetCommandListsManager().QueueCommandListToExecute(clearBackBufferContext.GetCommandList(), clearBackBufferContext.GetCommandList().GetType());
 
         m_GfxDevice.Flush();
