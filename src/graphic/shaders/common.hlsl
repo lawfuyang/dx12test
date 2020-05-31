@@ -1,10 +1,3 @@
-cbuffer FrameParams : register(b0)
-{
-    uint g_FrameNumber;
-    float g_CurrentFrameTime;
-    float g_PreviousFrameTime;
-};
-// EndShaderDeclarations
 
 // Root Signature Samplers
 SamplerState g_PointClampSampler       : register(s0, space99);

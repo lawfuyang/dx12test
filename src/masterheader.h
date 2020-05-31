@@ -43,6 +43,7 @@
 #include <mutex>
 #include <functional>
 #include <fstream>
+#include <bitset>
 
 // windows
 #include <inttypes.h>
@@ -71,7 +72,7 @@
 #include <cereal/types/vector.hpp> // allow Cereal to serialize std::vector
 #include <cereal/types/string.hpp> // allow Cereal to serialize std::string
 #include <cereal/archives/binary.hpp> // Binary I/O
-#include <cereal/archives/json.hpp> // Binary I/O
+#include <cereal/archives/json.hpp> // JSON I/O
 
 // typedefs
 using WindowHandle = uint64_t;

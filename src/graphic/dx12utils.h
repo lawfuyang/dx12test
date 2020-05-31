@@ -15,6 +15,8 @@
         assert(!FAILED(result));                                                                                   \
     }
 
+#define D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN ((D3D12_GPU_VIRTUAL_ADDRESS)-1)
+
 const char* GetD3DFeatureLevelName(D3D_FEATURE_LEVEL FeatureLevel);
 const char* GetD3DShaderModelName(D3D_SHADER_MODEL shaderModel);
 const std::string GetD3DDebugName(ID3D12Object* resource);
@@ -46,4 +48,34 @@ public:
 
 private:
     ID3D12GraphicsCommandList* m_CommandList;
+};
+
+struct CD3D12_RENDER_TARGET_VIEW_DESC : public D3D12_RENDER_TARGET_VIEW_DESC
+{
+    explicit CD3D12_RENDER_TARGET_VIEW_DESC(D3D12_RTV_DIMENSION viewDimension,
+                                            DXGI_FORMAT format   = DXGI_FORMAT_UNKNOWN,
+                                            UINT mipSlice        = 0,   // FirstElement for BUFFER
+                                            UINT firstArraySlice = 0,   // NumElements for BUFFER, FirstWSlice for TEXTURE3D
+                                            UINT arraySize       = -1); // WSize for TEXTURE3D
+};
+
+struct CD3D12_SHADER_RESOURCE_VIEW_DESC : public D3D12_SHADER_RESOURCE_VIEW_DESC
+{
+    explicit CD3D12_SHADER_RESOURCE_VIEW_DESC(D3D12_SRV_DIMENSION viewDimension,
+                                              DXGI_FORMAT format   = DXGI_FORMAT_UNKNOWN,
+                                              UINT mostDetailedMip = 0,    // FirstElement for BUFFER
+                                              UINT mipLevels       = -1,   // NumElements for BUFFER
+                                              UINT firstArraySlice = 0,    // First2DArrayFace for TEXTURECUBEARRAY
+                                              UINT arraySize       = -1,   // NumCubes for TEXTURECUBEARRAY
+                                              UINT flags           = 0);   // BUFFEREX only
+};
+
+struct CD3D12_UNORDERED_ACCESS_VIEW_DESC : public D3D12_UNORDERED_ACCESS_VIEW_DESC
+{
+    explicit CD3D12_UNORDERED_ACCESS_VIEW_DESC(D3D12_UAV_DIMENSION viewDimension,
+                                               DXGI_FORMAT format   = DXGI_FORMAT_UNKNOWN,
+                                               UINT mipSlice        = 0,  // FirstElement for BUFFER
+                                               UINT firstArraySlice = 0,  // NumElements for BUFFER, FirstWSlice for TEXTURE3D
+                                               UINT arraySize       = -1, // WSize for TEXTURE3D
+                                               UINT flags           = 0); // BUFFER only
 };

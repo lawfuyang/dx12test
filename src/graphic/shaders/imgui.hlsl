@@ -1,7 +1,7 @@
 // ShaderDeclaration:VS_IMGUI EntryPoint:VSMain
 // ShaderDeclaration:PS_IMGUI EntryPoint:PSMain
 
-cbuffer IMGUICBuffer : register(b1)
+cbuffer IMGUICBuffer : register(b0)
 {
     float4x4 g_ProjMatrix;
 };

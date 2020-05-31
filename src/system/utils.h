@@ -228,3 +228,14 @@ static std::size_t GenericTypeHash(const T& s)
 }
 
 void ReadDataFromFile(const char* filename, std::vector<std::byte>& data);
+
+template <typename Functor>
+static void RunOnAllBits(uint32_t mask, Functor&& func)
+{
+    unsigned long idx;
+    while (_BitScanForward(&idx, mask))
+    {
+        mask ^= (1 << idx);
+        func(idx);
+    }
+}

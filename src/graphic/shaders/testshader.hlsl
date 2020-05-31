@@ -1,7 +1,7 @@
 // ShaderDeclaration:VS_TestTriangle EntryPoint:VSMain
 // ShaderDeclaration:PS_TestTriangle EntryPoint:PSMain
 
-cbuffer TestShaderConsts : register(b1)
+cbuffer TestShaderConsts : register(b0)
 {
     float4x4 g_ViewProjMatrix;
 };

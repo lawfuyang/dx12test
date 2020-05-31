@@ -3,31 +3,26 @@
 class GfxRootSignature
 {
 public:
+    static const uint32_t MaxRootParams = 8;
+
     ID3D12RootSignature* Dev() const { return m_RootSignature.Get(); }
 
-    void AddDescriptorTable(D3D12_DESCRIPTOR_RANGE_TYPE, uint32_t numDescriptors, uint32_t baseShaderRegister);
-    void Compile(const std::string& rootSigName);
+    static void InitDefaultRootSignatures();
 
     std::size_t GetHash() const { return m_Hash; }
 
 private:
-    ComPtr<ID3D12RootSignature>            m_RootSignature;
-    std::vector<CD3DX12_DESCRIPTOR_RANGE1> m_DescRanges;
-    std::size_t                            m_Hash = 0;
+    template <uint32_t NumRootParams>
+    void Compile(const CD3DX12_ROOT_PARAMETER1 (&rootParams)[NumRootParams], D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags);
 
-    friend class GfxRootSignatureManager;
+    InplaceArray<CD3DX12_ROOT_PARAMETER1, MaxRootParams> m_RootParams;
+    ComPtr<ID3D12RootSignature> m_RootSignature;
+    std::size_t m_Hash = 0;
+
+    friend class GfxContext;
 };
 
-struct DefaultRootSignatures
+namespace GfxDefaultRootSignatures
 {
-    inline static GfxRootSignature DefaultGraphicsRootSignature;
+    extern GfxRootSignature CBV1_SRV1_IA;
 };
-
-class GfxRootSignatureManager
-{
-public:
-    DeclareSingletonFunctions(GfxRootSignatureManager);
-
-    void Initialize();
-};
-#define g_GfxRootSignatureManager GfxRootSignatureManager::GetInstance()

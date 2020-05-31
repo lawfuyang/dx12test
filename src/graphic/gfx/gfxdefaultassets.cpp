@@ -50,7 +50,7 @@ void GfxDefaultAssets::ShutDown()
     }
 }
 
-void GfxDefaultAssets::DrawSquidRoom(GfxContext& context, bool bindTextures)
+void GfxDefaultAssets::DrawSquidRoom(GfxContext& context, bool bindTextures, uint32_t SRVRootIndex)
 {
     using namespace SampleAssets;
 
@@ -67,10 +67,10 @@ void GfxDefaultAssets::DrawSquidRoom(GfxContext& context, bool bindTextures)
     {
         GfxTexture& thisDrawCallTex = GfxDefaultAssets::SquidRoomTextures[drawParams.DiffuseTextureIndex];
 
-        if (bindTextures && (lastDrawCallTex != &thisDrawCallTex))
+        if (bindTextures)// && (lastDrawCallTex != &thisDrawCallTex))
         {
-            context.BindSRV(0, thisDrawCallTex);
-            context.DirtyDescTables();
+            assert(SRVRootIndex != UINT32_MAX);
+            context.StageSRV(thisDrawCallTex, SRVRootIndex, 0);
         }
 
         context.DrawIndexedInstanced(drawParams.IndexCount, 1, drawParams.IndexStart, drawParams.VertexBase, 0);

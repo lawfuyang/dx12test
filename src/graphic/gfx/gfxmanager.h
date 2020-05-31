@@ -26,14 +26,12 @@ public:
 
     GfxDevice&         GetGfxDevice()        { return m_GfxDevice; }
     GfxSwapChain&      GetSwapChain()        { return m_SwapChain; }
-    GfxConstantBuffer& GetFrameParams()      { return m_FrameParamsCB; }
     GfxTexture&        GetSceneDepthBuffer() { return m_SceneDepthBuffer; }
 
 private:
     void ScheduleRenderPasses(tf::Subflow& sf);
     void ScheduleCommandListsExecution();
     void TransitionBackBufferForPresent();
-    void UpdateFrameParamsCB();
     void UpdateIMGUIPropertyGrid();
     void InitSceneDepthBuffer();
 
@@ -42,7 +40,6 @@ private:
 
     GfxDevice         m_GfxDevice;
     GfxSwapChain      m_SwapChain;
-    GfxConstantBuffer m_FrameParamsCB;
     GfxTexture        m_SceneDepthBuffer;
 
     CommandManager m_GfxCommandManager;

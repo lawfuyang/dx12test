@@ -1,10 +1,30 @@
-#include "graphic/gfx/gfxcontext.h"
+#include <graphic/gfx/gfxcontext.h>
 
-#include "graphic/dx12utils.h"
-#include "graphic/gfx/gfxmanager.h"
-#include "graphic/gfx/gfxcommandlist.h"
-#include "graphic/gfx/gfxtexturesandbuffers.h"
-#include "graphic/gfx/gfxrootsignature.h"
+#include <graphic/dx12utils.h>
+#include <graphic/gfx/gfxmanager.h>
+#include <graphic/gfx/gfxcommandlist.h>
+#include <graphic/gfx/gfxtexturesandbuffers.h>
+#include <graphic/gfx/gfxrootsignature.h>
+
+void GfxContext::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, const std::string& name)
+{
+    m_CommandList = g_GfxManager.GetGfxDevice().GetCommandListsManager().Allocate(cmdListType, name);
+
+    // Just set default viewport/scissor vals that make sense
+    const CD3DX12_VIEWPORT viewport{ 0.0f, 0.0f, (float)g_CommandLineOptions.m_WindowWidth, (float)g_CommandLineOptions.m_WindowHeight };
+    const CD3DX12_RECT scissorRect{ 0, 0, (LONG)g_CommandLineOptions.m_WindowWidth, (LONG)g_CommandLineOptions.m_WindowHeight };
+    m_CommandList->Dev()->RSSetViewports(1, &viewport);
+    m_CommandList->Dev()->RSSetScissorRects(1, &scissorRect);
+
+    // set descriptor heap for this commandlist from the shader visible descriptor heap allocator
+    ID3D12DescriptorHeap* ppHeaps[] = { g_GfxGPUDescriptorAllocator.GetInternalHeap().Dev() };
+    m_CommandList->Dev()->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
+    static const D3D12_VERTEX_BUFFER_VIEW NullVertexBufferView = {};
+    static const D3D12_INDEX_BUFFER_VIEW NullIndexBufferView = {};
+    m_CommandList->Dev()->IASetVertexBuffers(0, 1, &NullVertexBufferView);
+    m_CommandList->Dev()->IASetIndexBuffer(&NullIndexBufferView);
+}
 
 void GfxContext::ClearRenderTargetView(GfxTexture& tex, const bbeVector4& clearColor)
 {
@@ -75,28 +95,77 @@ void GfxContext::SetIndexBuffer(GfxIndexBuffer& iBuffer)
     }
 }
 
-void GfxContext::BindConstantBuffer(GfxConstantBuffer& cBuffer)
+void GfxContext::SetRootSignature(GfxRootSignature& rootSig)
 {
-    m_CBVToBind = &cBuffer.GetDescriptorHeap();
+    // do check to prevent needless descriptor heap allocation
+    if (m_PSO.m_RootSig == &rootSig)
+        return;
+
+    // Upon setting a new Root Signature, ALL staged resources will be set to null views!
+    // Make sure you double check after setting a new root sig
+    m_StagedResources.clear();
+
+    m_PSO.SetRootSignature(rootSig);
+    m_CommandList->Dev()->SetGraphicsRootSignature(rootSig.Dev());
+    
+    // parse root sig to prepare container of staged resources' descriptors
+    for (const CD3DX12_ROOT_PARAMETER1& rootParam : rootSig.m_RootParams)
+    {
+        m_StagedResources.emplace_back();
+
+        if (rootParam.DescriptorTable.pDescriptorRanges[0].RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_CBV)
+        {
+            // we dont support descriptor tables that mixes CBVs and others
+            for (uint32_t i = 1; i < rootParam.DescriptorTable.NumDescriptorRanges; ++i)
+            {
+                if (rootParam.DescriptorTable.pDescriptorRanges[i].RangeType != D3D12_DESCRIPTOR_RANGE_TYPE_CBV)
+                {
+                    assert(0); 
+                }
+            }
+            continue;
+        }
+
+        const D3D12_DESCRIPTOR_RANGE1* descRange = rootParam.DescriptorTable.pDescriptorRanges;
+
+        for (uint32_t i = 0; i < rootParam.DescriptorTable.NumDescriptorRanges; ++i)
+        {
+            m_StagedResources.back().m_SrcDescriptorTypes.push_back(rootParam.DescriptorTable.pDescriptorRanges[i].RangeType);
+            m_StagedResources.back().m_SrcDescriptors.emplace_back(CD3DX12_DEFAULT{});
+        }
+    }
 }
 
-void GfxContext::BindSRV(uint32_t textureRegister, GfxTexture& tex)
+void GfxContext::CheckStagingResourceInputs(uint32_t rootIndex, uint32_t offset, D3D12_DESCRIPTOR_RANGE_TYPE type)
 {
-    m_SRVsToBind.resize(textureRegister + 1, nullptr);
-    m_SRVsToBind[textureRegister] = &tex;
+    assert(rootIndex < GfxRootSignature::MaxRootParams);
+    assert(rootIndex < m_StagedResources.size());
+    assert(m_PSO.m_RootSig->m_RootParams[rootIndex].DescriptorTable.pDescriptorRanges[offset].RangeType == type);
+    assert(offset < m_StagedResources[rootIndex].m_SrcDescriptors.size());
 }
 
-void GfxContext::SetRootSigDescTable(uint32_t rootParamIdx, const GfxDescriptorHeap& heap)
+void GfxContext::StageSRV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
 {
-    ID3D12DescriptorHeap* ppHeaps[] = { heap.Dev() };
-    m_CommandList->Dev()->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-    m_CommandList->Dev()->SetGraphicsRootDescriptorTable(rootParamIdx, heap.Dev()->GetGPUDescriptorHandleForHeapStart());
+    CheckStagingResourceInputs(rootIndex, offset, D3D12_DESCRIPTOR_RANGE_TYPE_SRV);
+    StageDescriptor(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), rootIndex, offset);
+}
+
+void GfxContext::StageDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptor, uint32_t rootIndex, uint32_t offset)
+{
+    StagedResourceDescriptor& resourceDesc = m_StagedResources[rootIndex];
+
+    if (resourceDesc.m_SrcDescriptors[offset].ptr == srcDescriptor.ptr)
+        return;
+
+    resourceDesc.m_SrcDescriptors[offset] = srcDescriptor;
+    m_StaleResourcesBitMap.set(rootIndex);
 }
 
 void GfxContext::CompileAndSetGraphicsPipelineState()
 {
-    bbeProfileFunction();
+    //bbeProfileFunction();
 
+    assert(m_PSO.m_RootSig && m_PSO.m_RootSig->Dev());
     assert(m_CommandList);
 
     if (m_VertexBuffer)
@@ -113,25 +182,9 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
         assert(m_PSO.m_RenderTargets.RTFormats[i] != DXGI_FORMAT_UNKNOWN);
     }
 
-    // Rasterizer
-    if (m_DirtyRasterizer)
-    {
-        bbeProfile("Set Rasterizer Params");
-
-        m_CommandList->Dev()->RSSetViewports(1, &m_Viewport);
-        m_CommandList->Dev()->RSSetScissorRects(1, &m_ScissorRect);
-    }
-
     if (m_DirtyPSO)
     {
         bbeProfile("Set PSO Params");
-
-        // first, set Root Sig. use Default if nothing is specified
-        if (!m_PSO.m_RootSig)
-        {
-            m_PSO.m_RootSig = &DefaultRootSignatures::DefaultGraphicsRootSignature;
-        }
-        m_CommandList->Dev()->SetGraphicsRootSignature(m_PSO.m_RootSig->Dev());
 
         // PSO
         m_CommandList->Dev()->SetPipelineState(g_GfxPSOManager.GetGraphicsPSO(m_PSO));
@@ -179,44 +232,12 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
             m_CommandList->Dev()->IASetIndexBuffer(&indexBufferView);
         }
     }
-
-    if (m_DirtyDescTables)
-    {
-        bbeProfile("Set Descriptor Table Params");
-
-        uint32_t numDescTablesBound = 0;
-
-        // Constant Buffers
-        SetRootSigDescTable(numDescTablesBound++, g_GfxManager.GetFrameParams().GetDescriptorHeap());
-        if (m_CBVToBind)
-        {
-            SetRootSigDescTable(numDescTablesBound++, *m_CBVToBind);
-        }
-
-        // SRVs
-        for (GfxTexture* tex : m_SRVsToBind)
-        {
-            SetRootSigDescTable(numDescTablesBound++, tex->GetDescriptorHeap());
-        }
-    }
-}
-
-void GfxContext::CompileAndSetComputePipelineState()
-{
-    assert(m_CommandList);
-}
-
-void GfxContext::PostDraw()
-{
-    // Assume user will manually dirty the flags after each draw
-    m_DirtyPSO        = false;
-    m_DirtyRasterizer = false;
-    m_DirtyBuffers    = false;
-    m_DirtyDescTables = false;
 }
 
 void GfxContext::FlushResourceBarriers()
 {
+    //bbeProfileFunction();
+
     assert(m_CommandList);
 
     if (m_ResourceBarriers.size() > 0)
@@ -230,7 +251,7 @@ void GfxContext::TransitionResource(GfxHazardTrackedResource& resource, D3D12_RE
 {
     assert(m_CommandList);
 
-    const D3D12_RESOURCE_STATES oldState = resource.GetCurrentState();
+    const D3D12_RESOURCE_STATES oldState = resource.m_CurrentResourceState;
 
     if (m_CommandList->GetType() == D3D12_COMMAND_LIST_TYPE_COMPUTE)
     {
@@ -245,20 +266,22 @@ void GfxContext::TransitionResource(GfxHazardTrackedResource& resource, D3D12_RE
         D3D12_RESOURCE_BARRIER& BarrierDesc = m_ResourceBarriers.emplace_back(D3D12_RESOURCE_BARRIER{});
 
         BarrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        BarrierDesc.Transition.pResource = resource.GetD3D12Resource();
+        BarrierDesc.Transition.pResource = resource.m_HazardTrackedResource;
         BarrierDesc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
         BarrierDesc.Transition.StateBefore = oldState;
         BarrierDesc.Transition.StateAfter = newState;
         BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 
-        // Check to see if we already started the transition
-        //if (NewState == Resource.m_TransitioningState)
-        //{
-        //    BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
-        //    Resource.m_TransitioningState = (D3D12_RESOURCE_STATES)-1;
-        //}
+        // Check to see if we already started the transition for this resource from another GfxContext
+        if (newState == resource.m_TransitioningState)
+        {
+            assert(resource.m_TransitioningState != (D3D12_RESOURCE_STATES)-1);
 
-        resource.SetHazardTrackedState(newState);
+            BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
+            resource.m_TransitioningState = (D3D12_RESOURCE_STATES)-1;
+        }
+
+        resource.m_CurrentResourceState = newState;
     }
     else if (newState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
         InsertUAVBarrier(resource, flushImmediate);
@@ -273,34 +296,116 @@ void GfxContext::InsertUAVBarrier(GfxHazardTrackedResource& resource, bool flush
 
     BarrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
     BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    BarrierDesc.UAV.pResource = resource.GetD3D12Resource();
+    BarrierDesc.UAV.pResource = resource.m_HazardTrackedResource;
 
     if (flushImmediate)
         FlushResourceBarriers();
 }
 
-void GfxContext::DrawInstanced(uint32_t vertexCountPerInstance, uint32_t instanceCount, uint32_t startVertexLocation, uint32_t startInstanceLocation)
+void GfxContext::CommitStagedResources()
 {
-    bbeProfileFunction();
+    //bbeProfileFunction();
 
-    FlushResourceBarriers();
-    CompileAndSetGraphicsPipelineState();
+    uint32_t numHeapsNeeded = 0;
+    RunOnAllBits(m_StaleResourcesBitMap.to_ulong(), [&](uint32_t rootIndex) { numHeapsNeeded += m_StagedResources[rootIndex].m_SrcDescriptors.size(); });
 
-    m_CommandList->Dev()->DrawInstanced(vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
+    // we dont need to stage anything if only CBVs are updated in this draw call
+    if (numHeapsNeeded == 0)
+        return;
 
-    PostDraw();
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+
+    // allocate shader visible heaps
+    GfxDescriptorHeapHandle destHandleStart = g_GfxGPUDescriptorAllocator.Allocate(numHeapsNeeded);
+
+    const uint32_t descriptorSize = gfxDevice.Dev()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    RunOnAllBits(m_StaleResourcesBitMap.to_ulong(), [&](uint32_t rootIndex)
+        {
+            // set desc heap for this table
+            m_CommandList->Dev()->SetGraphicsRootDescriptorTable(rootIndex, destHandleStart.m_GPUHandle);
+
+            // copy descriptors to shader visible heaps 1 by 1
+            for (uint32_t i = 0; i < m_StagedResources[rootIndex].m_SrcDescriptors.size(); ++i)
+            {
+                D3D12_CPU_DESCRIPTOR_HANDLE srcDesc = m_StagedResources[rootIndex].m_SrcDescriptors[i];
+                D3D12_DESCRIPTOR_RANGE_TYPE srcDescType = m_StagedResources[rootIndex].m_SrcDescriptorTypes[i];
+
+                if (srcDesc.ptr == 0)
+                {
+                    CreateNullView(srcDescType, destHandleStart.m_CPUHandle);
+                }
+                else
+                {
+                    gfxDevice.Dev()->CopyDescriptorsSimple(1, destHandleStart.m_CPUHandle, srcDesc, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+                }
+
+                destHandleStart.Offset(1, descriptorSize);
+            }
+        });
+}
+
+void GfxContext::CreateNullCBV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc)
+{
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+
+    D3D12_CONSTANT_BUFFER_VIEW_DESC nullCBDesc = {};
+    gfxDevice.Dev()->CreateConstantBufferView(&nullCBDesc, destDesc);
+}
+
+void GfxContext::CreateNullSRV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc)
+{
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+
+    CD3D12_SHADER_RESOURCE_VIEW_DESC desc{ D3D12_SRV_DIMENSION_TEXTURE2D, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 1 };
+    gfxDevice.Dev()->CreateShaderResourceView(nullptr, &desc, destDesc);
+}
+
+void GfxContext::CreateNullUAV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc)
+{
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+
+    CD3D12_UNORDERED_ACCESS_VIEW_DESC desc{ D3D12_UAV_DIMENSION_BUFFER, DXGI_FORMAT_R8G8B8A8_UNORM };
+    gfxDevice.Dev()->CreateUnorderedAccessView(nullptr, nullptr, &desc, destDesc);
+}
+
+void GfxContext::CreateNullView(D3D12_DESCRIPTOR_RANGE_TYPE type, D3D12_CPU_DESCRIPTOR_HANDLE destHandle)
+{
+    switch (type)
+    {
+    case D3D12_DESCRIPTOR_RANGE_TYPE_SRV: CreateNullSRV(destHandle); break;
+    case D3D12_DESCRIPTOR_RANGE_TYPE_UAV: CreateNullUAV(destHandle); break;
+    case D3D12_DESCRIPTOR_RANGE_TYPE_CBV: CreateNullCBV(destHandle); break;
+
+    default: assert(0);
+    }
 }
 
 void GfxContext::DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation, uint32_t baseVertexLocation, uint32_t startInstanceLocation)
 {
-    bbeProfileFunction();
+    //bbeProfileFunction();
 
     assert(m_IndexBuffer);
 
+    PreDraw();
+    m_CommandList->Dev()->DrawIndexedInstanced(indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
+    PostDraw();
+}
+
+void GfxContext::PreDraw()
+{
     FlushResourceBarriers();
     CompileAndSetGraphicsPipelineState();
+    CommitStagedResources();
+}
 
-    m_CommandList->Dev()->DrawIndexedInstanced(indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
+void GfxContext::PostDraw()
+{
+    // Assume user will manually dirty the flags after each draw
+    m_DirtyPSO = false;
 
-    PostDraw();
+    // reset dirty flag for Vertex/Index buffers
+    m_DirtyBuffers = false;
+
+    m_StaleResourcesBitMap.reset();
 }

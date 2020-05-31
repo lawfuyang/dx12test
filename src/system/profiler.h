@@ -2,7 +2,7 @@
 
 #define MICROPROFILE_ENABLED 1
 #define MICROPROFILE_GPU_TIMERS_D3D12 1
-#define MICROPROFILE_WEBSERVER_MAXFRAMES 100
+#define MICROPROFILE_WEBSERVER_MAXFRAMES 50
 #include "extern/microprofile/microprofile.h"
 
 struct MicroProfileThreadLogGpu;

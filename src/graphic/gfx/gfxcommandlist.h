@@ -27,6 +27,8 @@ private:
 class GfxCommandListsManager
 {
 public:
+    static const uint32_t MaxCmdLists = 128;
+
     void Initialize();
     void ShutDown();
 
@@ -46,7 +48,7 @@ private:
         std::mutex m_ListsLock;
 
         CircularBuffer<GfxCommandList*> m_FreeCommandLists;
-        CircularBuffer<GfxCommandList*> m_PendingExecuteCommandLists;
+        InplaceArray<GfxCommandList*, MaxCmdLists> m_PendingExecuteCommandLists;
     };
     CommandListPool& GetPoolFromType(D3D12_COMMAND_LIST_TYPE);
 
