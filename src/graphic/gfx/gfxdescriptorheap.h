@@ -39,7 +39,7 @@ public:
     void CleanupUsedHeaps();
 
 private:
-    std::mutex m_Lock;
+    std::mutex m_GfxGPUDescriptorAllocatorLock;
     CircularBuffer<GfxDescriptorHeapHandle> m_FreeHeaps;
     InplaceArray<GfxDescriptorHeapHandle, NumDynamicDescriptors> m_UsedHeaps;
 

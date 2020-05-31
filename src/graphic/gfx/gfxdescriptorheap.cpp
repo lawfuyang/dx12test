@@ -41,7 +41,7 @@ GfxDescriptorHeapHandle GfxGPUDescriptorAllocator::Allocate(uint32_t numHeaps, G
 {
     assert(numHeaps > 0);
 
-    bbeAutoLock(m_Lock);
+    bbeAutoLock(m_GfxGPUDescriptorAllocatorLock);
 
     assert(m_FreeHeaps.size() >= numHeaps);
 
