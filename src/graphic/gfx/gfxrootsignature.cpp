@@ -55,7 +55,7 @@ void GfxRootSignature::InitDefaultRootSignatures()
     static const uint32_t GlobalRegisterSpace = 0;
 
     {
-        const char* rootSigName = "CBV1_SRV1_IA Default Root Sig";
+        const char* rootSigName = "CBV1_SRV1_IA";
 
         // Keep ranges static so GfxContext can parse through them
         static CD3DX12_DESCRIPTOR_RANGE1 ranges[2];
@@ -64,7 +64,6 @@ void GfxRootSignature::InitDefaultRootSignatures()
 
         // Perfomance TIP: Order from most frequent to least frequent.
         CD3DX12_ROOT_PARAMETER1 rootParams[2];
-
         rootParams[0].InitAsDescriptorTable(1, &ranges[0]); // 1 CBV in c0
         rootParams[1].InitAsDescriptorTable(1, &ranges[1]); // 1 SRV in t0
 
