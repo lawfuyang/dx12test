@@ -138,9 +138,9 @@ void GfxManager::ScheduleRenderPasses(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
 
-    ADD_TF_TASK(subFlow, g_ZPrePassRenderer.PopulateCommandList(GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "ZPrePassRenderer")));
-    ADD_TF_TASK(subFlow, g_GfxTestRenderPass.PopulateCommandList(GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "TestRenderPass")));
-    ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer.PopulateCommandList(GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "GfxIMGUIRenderer")));
+    ADD_TF_TASK(subFlow, g_ZPrePassRenderer.PopulateCommandList());
+    ADD_TF_TASK(subFlow, g_GfxTestRenderPass.PopulateCommandList());
+    ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer.PopulateCommandList());
 }
 
 void GfxManager::ScheduleCommandListsExecution()

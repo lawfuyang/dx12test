@@ -15,7 +15,7 @@ public:
 
     void Initialize();
     void ShutDown() override;
-    void PopulateCommandList(GfxContext&) override;
+    void PopulateCommandList() override;
 
 private:
     void InitFontsTexture(GfxContext&);

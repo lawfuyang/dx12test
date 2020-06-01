@@ -188,13 +188,15 @@ void GfxIMGUIRenderer::ShutDown()
     m_FontsTexture.Release();
 }
 
-void GfxIMGUIRenderer::PopulateCommandList(GfxContext& context)
+void GfxIMGUIRenderer::PopulateCommandList()
 {
     bbeProfileFunction();
-    bbeProfileGPUFunction(context);
 
+    GfxContext& context = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "GfxIMGUIRenderer");
     m_Context = &context;
     context.SetRootSignature(m_RootSignature);
+
+    bbeProfileGPUFunction(context);
 
     static_assert(sizeof(ImDrawVert) == sizeof(float) * 2 + sizeof(float) * 2 + sizeof(uint32_t)); // Position2f_TexCoord2f_Color4ub
     static_assert(sizeof(ImDrawIdx) == sizeof(uint16_t)); // 2 byte index size
