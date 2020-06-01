@@ -66,7 +66,6 @@
   <ItemGroup>
     <ClInclude Include="..\extern\microprofile\microprofile.h" />
     <ClInclude Include="..\src\graphic\dx12utils.h" />
-    <ClInclude Include="..\src\system\locks.h" />
     <ClInclude Include="..\src\system\utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -38,9 +38,6 @@
     <ClInclude Include="..\src\system\utils.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\system\locks.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\graphic\dx12utils.h">
       <Filter>Source Files</Filter>
     </ClInclude>

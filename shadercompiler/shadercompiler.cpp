@@ -6,7 +6,6 @@ struct ConstantBufferDesc;
 
 std::string g_AppDir;
 std::string g_ShadersTmpDir;
-std::string g_SettingsFileDir;
 std::string g_ShadersDir;
 std::string g_DXCDir;
 std::string g_ShadersEnumsAutoGenDir;
@@ -21,7 +20,7 @@ std::vector<ConstantBufferDesc>              g_AllConstantBuffers;
 std::unordered_map<std::string, std::string> g_HLSLTypeToCPPTypeMap;
 std::unordered_map<std::string, uint32_t>    g_CPPTypeSizeMap;
 
-D3D_SHADER_MODEL g_HighestShaderModel = D3D_SHADER_MODEL_5_1;
+static D3D_SHADER_MODEL g_HighestShaderModel;
 
 enum class ShaderType { VS, PS, GS, HS, DS, CS };
 
@@ -176,27 +175,9 @@ struct ConstantBufferDesc
     std::vector<CPPTypeVarNamePair> m_Variables;
 };
 
-static bool ReadShaderModelFromFile()
-{
-    const bool IsReadMode = true;
-    CFileWrapper settingsFile{ g_SettingsFileDir.c_str(), IsReadMode };
-    if (!settingsFile)
-        return false;
-
-    char highestShaderModelStr[MAX_PATH] = {};
-    for (int i = 0; i < 2; ++i)
-    {
-        fscanf_s(settingsFile, "%s", highestShaderModelStr, (unsigned int)sizeof(highestShaderModelStr));
-    }
-    g_HighestShaderModel = (D3D_SHADER_MODEL)std::atoi(highestShaderModelStr);
-    assert(g_HighestShaderModel >= D3D_SHADER_MODEL_6_0);
-
-    return true;
-}
-
 static void GetD3D12ShaderModels()
 {
-    if (ReadShaderModelFromFile())
+    if (g_HighestShaderModel != 0)
         return;
 
     ComPtr<IDXGIFactory7> DXGIFactory;
@@ -244,10 +225,7 @@ static void GetD3D12ShaderModels()
         }
         assert(g_HighestShaderModel >= D3D_SHADER_MODEL_6_0);
 
-        const bool IsReadMode = false;
-        CFileWrapper shaderModelFile{ g_SettingsFileDir.c_str(), IsReadMode };
-        assert(shaderModelFile);
-        fprintf(shaderModelFile, "HighestShaderModel: %i\n", (int)g_HighestShaderModel);
+        g_Serializer.Write(Serializer::JSON, "ShaderCompilerValues", g_HighestShaderModel);
 
         break;
     }
@@ -359,11 +337,6 @@ static void GetD3D12ShaderModelsAndPopulateJobs()
                 HandleShaderDeclaration(newJob, fullPath, token);
                 HandleShaderEntryPoint(newJob, token);
                 HandleConstantBuffer(shaderFile, line, token);
-
-                // TODO: handle structs
-                // TODO: handle buffers
-                // TODO: handle textures
-                // TODO: handle samplers
 
                 token = strtok(NULL, " \n");
             }
@@ -545,11 +518,12 @@ struct GlobalsInitializer
         // init dirs
         g_AppDir                  = GetApplicationDirectory();
         g_ShadersTmpDir           = g_AppDir + "..\\tmp\\shaders\\";
-        g_SettingsFileDir         = g_ShadersTmpDir + "shadercompilersettings.ini";
         g_ShadersDir              = g_AppDir + "..\\src\\graphic\\shaders";
         g_ShadersEnumsAutoGenDir  = g_ShadersTmpDir + "shadersenumsautogen.h";
         g_ShadersHeaderAutoGenDir = g_ShadersTmpDir + "shaderheadersautogen.h";
         g_DXCDir                  = g_AppDir + "..\\extern\\dxc\\dxc.exe";
+
+        g_Serializer.Read(Serializer::JSON, "ShaderCompilerValues", *this);
 
         // init misc traits
     #define ADD_TYPE(hlslType, CPPType, TypeSize)   \
@@ -570,6 +544,12 @@ struct GlobalsInitializer
         ADD_TYPE("float4", "bbeVector4", 16);
         ADD_TYPE("float4x4", "bbeMatrix", 64);
     #undef ADD_TYPE
+    }
+
+    template<typename Archive>
+    void Serialize(Archive& ar)
+    {
+        ar(CEREAL_NVP(g_HighestShaderModel));
     }
 };
 static const GlobalsInitializer g_GlobalsInitializer;
