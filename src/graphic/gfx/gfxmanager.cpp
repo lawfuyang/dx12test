@@ -15,8 +15,6 @@
 #include <graphic/renderers/gfxtestrenderpass.h>
 #include <graphic/renderers/gfximguirenderer.h>
 
-#include <tmp/shaders/FrameParams.h>
-
 void InitializeGraphic(tf::Subflow& subFlow)
 {
     bbeProfileFunction();

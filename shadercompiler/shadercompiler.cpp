@@ -32,53 +32,89 @@ const std::string g_EntryPointStr           = "EntryPoint:";
 const std::string g_CBufferStr              = "cbuffer";
 const std::string g_EndShaderDeclarationStr = "EndShaderDeclaration";
 
+bool g_CompileFailureDetected;
+
+static void PrintToConsoleAndLogFile(const std::string& str)
+{
+    printf("%s\n", str.c_str());
+    g_Log.info("{}", str.c_str());
+}
+
 struct DXCProcessWrapper
 {
-    explicit DXCProcessWrapper(const std::string& inputCommandLine)
+    DXCProcessWrapper(const std::string& inputCommandLine, const std::string& fileName)
+        : m_FileName(GetFileNameFromPath(fileName))
     {
-        m_StartupInfo.cb = sizeof(::STARTUPINFO);
+        ::SECURITY_ATTRIBUTES saAttr;
+
+        saAttr.nLength = sizeof(::SECURITY_ATTRIBUTES);
+        saAttr.bInheritHandle = TRUE;
+        saAttr.lpSecurityDescriptor = NULL;
+
+        ::HANDLE hChildStd_OUT_Rd = NULL;
+        ::HANDLE hChildStd_OUT_Wr = NULL;
+
+        // Create a pipe for the child process's STDOUT. 
+        bool success = ::CreatePipe(&hChildStd_OUT_Rd, &hChildStd_OUT_Wr, &saAttr, 0);
+        assert(success);
+
+        // Ensure the read handle to the pipe for STDOUT is not inherited.
+        success = ::SetHandleInformation(hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0);
+        assert(success);
+
+        ::STARTUPINFO startupInfo = {};
+        startupInfo.cb = sizeof(::STARTUPINFO);
+        startupInfo.hStdError = hChildStd_OUT_Wr;
+        startupInfo.hStdOutput = hChildStd_OUT_Wr;
+        startupInfo.dwFlags |= STARTF_USESTDHANDLES;
+
+        ::PROCESS_INFORMATION processInfo = {};
 
         std::string commandLine = g_DXCDir.c_str();
         commandLine += " " + inputCommandLine;
 
         g_Log.info("ShaderCompileJob: " + commandLine);
 
-        if (::CreateProcess(nullptr,    // No module name (use command line).
+        if (!::CreateProcess(nullptr,   // No module name (use command line).
             (LPSTR)commandLine.c_str(), // Command line.
             nullptr,                    // Process handle not inheritable.
             nullptr,                    // Thread handle not inheritable.
-            FALSE,                      // Set handle inheritance to FALSE.
+            TRUE,                       // handles are inherited
             0,                          // No creation flags.
             nullptr,                    // Use parent's environment block.
             nullptr,                    // Use parent's starting directory.
-            &m_StartupInfo,             // Pointer to STARTUPINFO structure.
-            &m_ProcessInfo))            // Pointer to PROCESS_INFORMATION structure.
+            &startupInfo,               // Pointer to STARTUPINFO structure.
+            &processInfo))              // Pointer to PROCESS_INFORMATION structure.
         {
-            ::WaitForSingleObject(m_ProcessInfo.hProcess, INFINITE);
-            CloseAllHandles();
-        }
-        else
-        {
-            g_Log.error("{}", GetLastErrorAsString());
-
-            CloseAllHandles();
+            PrintToConsoleAndLogFile(GetLastErrorAsString());
             assert(false);
         }
+
+        ::CloseHandle(processInfo.hProcess);
+        ::CloseHandle(processInfo.hThread);
+        ::CloseHandle(hChildStd_OUT_Wr);
+
+        uint32_t numCharsRead = 0;
+        std::string buffer;
+        buffer.resize(BBE_MB(1)); // Up to 1 MB of output
+        for (;;)
+        {
+            ::Sleep(1); // Sleep every loop iteration so the thread does not read 4/5 chars per "::ReadFile"
+
+            DWORD dwRead = 0;
+            const bool success = ::ReadFile(hChildStd_OUT_Rd, buffer.data(), 1024, &dwRead, NULL);
+            numCharsRead += dwRead;
+            if (!success || dwRead == 0) break;
+        }
+
+        if (numCharsRead)
+        {
+            g_Log.info("{}: {}", m_FileName.c_str(), buffer.c_str());
+            g_CompileFailureDetected = true;
+        }
     }
 
-    void CloseAllHandles()
-    {
-        auto SafeCloseHandle = [](::HANDLE& hdl) { if (hdl) ::CloseHandle(hdl); hdl = nullptr; };
-
-        SafeCloseHandle(m_StartupInfo.hStdInput);
-        SafeCloseHandle(m_StartupInfo.hStdOutput);
-        SafeCloseHandle(m_StartupInfo.hStdError);
-        SafeCloseHandle(m_ProcessInfo.hProcess);
-        SafeCloseHandle(m_ProcessInfo.hThread);
-    }
-
-    ::STARTUPINFO         m_StartupInfo = {};
-    ::PROCESS_INFORMATION m_ProcessInfo = {};
+    std::string m_FileName;
 };
 
 struct ShaderCompileJob
@@ -113,7 +149,12 @@ struct ShaderCompileJob
         // debugging stuff
         //commandLine += " -Zi -Qembed_debug -Fd " + g_ShadersTmpDir + m_ShaderName + ".pdb";
 
-        DXCProcessWrapper compilerProcess{ commandLine };
+        DXCProcessWrapper compilerProcess{ commandLine, m_ShaderFilePath };
+
+        if (!g_CompileFailureDetected)
+        {
+            PrintToConsoleAndLogFile(StringFormat("Compiled %s", GetFileNameFromPath(m_ShaderFilePath).c_str()));
+        }
     }
 
     ShaderType  m_ShaderType;
@@ -177,9 +218,6 @@ struct ConstantBufferDesc
 
 static void GetD3D12ShaderModels()
 {
-    if (g_HighestShaderModel != 0)
-        return;
-
     ComPtr<IDXGIFactory7> DXGIFactory;
     DX12_CALL(CreateDXGIFactory2(0, IID_PPV_ARGS(&DXGIFactory)));
 
@@ -199,7 +237,7 @@ static void GetD3D12ShaderModels()
         ComPtr<ID3D12Device6> D3DDevice;
         if (SUCCEEDED(D3D12CreateDevice(hardwareAdapter.Get(), D3D_FEATURE_LEVEL_1_0_CORE, IID_PPV_ARGS(&D3DDevice))))
         {
-            g_Log.info("Created ID3D12Device. D3D_FEATURE_LEVEL: %s", GetD3DFeatureLevelName(D3D_FEATURE_LEVEL_1_0_CORE));
+            g_Log.info("Created ID3D12Device. D3D_FEATURE_LEVEL: {}", GetD3DFeatureLevelName(D3D_FEATURE_LEVEL_1_0_CORE));
         }
         assert(D3DDevice);
 
@@ -307,7 +345,10 @@ static void GetD3D12ShaderModelsAndPopulateJobs()
 {
     tf::Taskflow tf;
 
-    ADD_TF_TASK(tf, GetD3D12ShaderModels());
+    if (g_HighestShaderModel == 0)
+    {
+        ADD_TF_TASK(tf, GetD3D12ShaderModels());
+    }
 
     tf.parallel_for(g_AllShaderFiles.begin(), g_AllShaderFiles.end(), [&](const std::string& fullPath)
     {
@@ -352,7 +393,7 @@ static void GetD3D12ShaderModelsAndPopulateJobs()
     
     g_TasksExecutor.run(tf).wait();
 
-    g_Log.info("{} Permutations to compile", g_AllShaderCompileJobs.size());
+    PrintToConsoleAndLogFile(StringFormat("%u Permutations to compile", g_AllShaderCompileJobs.size()));
 
     // sort shader names to maintain consistent hash
     std::sort(g_AllShaderCompileJobs.begin(), g_AllShaderCompileJobs.end(), [](const ShaderCompileJob& lhs, const ShaderCompileJob& rhs)
@@ -572,7 +613,14 @@ int main()
 
     RunAllJobs();
 
-    PrintGeneratedFiles();
+    if (g_CompileFailureDetected)
+    {
+        printf("Compile failure(s) detected! Check log output for more information.\n\n");
+    }
+    else
+    {
+        PrintGeneratedFiles();
+    }
 
     system("pause");
     return 0;
