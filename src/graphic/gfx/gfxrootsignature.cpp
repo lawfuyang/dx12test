@@ -55,8 +55,6 @@ void GfxRootSignature::InitDefaultRootSignatures()
     static const uint32_t GlobalRegisterSpace = 0;
 
     {
-        const char* rootSigName = "CBV1_SRV1_IA";
-
         // Keep ranges static so GfxContext can parse through them
         static CD3DX12_DESCRIPTOR_RANGE1 ranges[2];
         ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, GlobalRegisterSpace, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
@@ -67,14 +65,12 @@ void GfxRootSignature::InitDefaultRootSignatures()
         rootParams[0].InitAsDescriptorTable(1, &ranges[0]); // 1 CBV in c0
         rootParams[1].InitAsDescriptorTable(1, &ranges[1]); // 1 SRV in t0
 
-        GfxDefaultRootSignatures::CBV1_SRV1_IA.Compile(rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-        GfxDefaultRootSignatures::CBV1_SRV1_IA.m_RootSignature->SetName(MakeWStrFromStr(rootSigName).c_str());
-        GfxDefaultRootSignatures::CBV1_SRV1_IA.m_Hash = std::hash<std::string_view>{}(rootSigName);
+        GfxDefaultRootSignatures::CBV1_SRV1_IA.Compile(rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT, "CBV1_SRV1_IA");
     }
 }
 
 template <uint32_t NumRootParams>
-void GfxRootSignature::Compile(const CD3DX12_ROOT_PARAMETER1 (&rootParams)[NumRootParams], D3D12_ROOT_SIGNATURE_FLAGS flags)
+void GfxRootSignature::Compile(const CD3DX12_ROOT_PARAMETER1 (&rootParams)[NumRootParams], D3D12_ROOT_SIGNATURE_FLAGS flags, const char* rootSigName)
 {
     static_assert(NumRootParams < MaxRootParams);
     assert(m_RootSignature.Get() == nullptr);
@@ -96,4 +92,7 @@ void GfxRootSignature::Compile(const CD3DX12_ROOT_PARAMETER1 (&rootParams)[NumRo
     // copy root params to an internal array so GfxContext can parse through them
     m_RootParams.resize(NumRootParams);
     memcpy(m_RootParams.data(), rootParams, sizeof(CD3DX12_ROOT_PARAMETER1) * NumRootParams);
+
+    GfxDefaultRootSignatures::CBV1_SRV1_IA.m_RootSignature->SetName(MakeWStrFromStr(rootSigName).c_str());
+    GfxDefaultRootSignatures::CBV1_SRV1_IA.m_Hash = std::hash<std::string_view>{}(rootSigName);
 }

@@ -273,7 +273,7 @@ void GfxIndexBuffer::Initialize(GfxContext& initContext, const InitParams& initP
     }
 }
 
-void GfxConstantBuffer::Initialize(uint32_t bufferSize, const std::string& resourceName)
+void GfxConstantBuffer::Initialize(uint32_t bufferSize, bool shaderVisibleDescriptorHeap, const std::string& resourceName)
 {
     bbeProfileFunction();
 
@@ -285,7 +285,7 @@ void GfxConstantBuffer::Initialize(uint32_t bufferSize, const std::string& resou
     m_ResourceName = resourceName;
 
     // init desc heap for cbuffer
-    m_GfxDescriptorHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
+    m_GfxDescriptorHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderVisibleDescriptorHeap ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
 
     // Create upload heap for constant buffer
     GfxBufferCommon::HeapDesc heapDesc;
@@ -336,6 +336,7 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     assert(initParams.m_Format != DXGI_FORMAT_UNKNOWN);
     assert(initParams.m_Width > 0);
     assert(initParams.m_Height > 0);
+    assert(initParams.m_ShaderVisibleDescriptorHeap ? initParams.m_ViewType == UAV : true);
 
     m_ResourceName = initParams.m_ResourceName;
     m_Format = initParams.m_Format;
@@ -350,7 +351,7 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     case DSV: heapType = D3D12_DESCRIPTOR_HEAP_TYPE_DSV; break;
     case RTV: heapType = D3D12_DESCRIPTOR_HEAP_TYPE_RTV; break;
     }
-    m_GfxDescriptorHeap.Initialize(heapType, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
+    m_GfxDescriptorHeap.Initialize(heapType, initParams.m_ShaderVisibleDescriptorHeap ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
 
     D3D12_RESOURCE_DESC desc = {};
     desc.Dimension = initParams.m_Dimension;
@@ -375,6 +376,7 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     heapDesc.m_ResourceDesc = desc;
     heapDesc.m_InitialState = hasInitData ? D3D12_RESOURCE_STATE_COPY_DEST : initParams.m_InitialState;
     heapDesc.m_ClearValue = initParams.m_ClearValue;
+    heapDesc.m_AllocationFlags = initParams.m_ShaderVisibleDescriptorHeap ? D3D12MA::ALLOCATION_FLAG_COMMITTED : heapDesc.m_AllocationFlags;
     heapDesc.m_ResourceName = initParams.m_ResourceName.c_str();
 
     m_D3D12MABufferAllocation = CreateHeap(heapDesc);

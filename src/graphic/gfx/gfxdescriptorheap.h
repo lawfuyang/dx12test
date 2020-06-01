@@ -9,6 +9,8 @@ public:
 
     void Initialize(D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags, uint32_t numHeaps);
 
+    bool IsShaderVisible() const { return m_DescriptorHeap->GetGPUDescriptorHandleForHeapStart().ptr != 0; }
+
 private:
     ComPtr<ID3D12DescriptorHeap> m_DescriptorHeap;
 };

@@ -2,6 +2,7 @@
 
 #include <graphic/renderers/gfxrendererbase.h>
 
+#include <graphic/gfx/gfxrootsignature.h>
 #include <graphic/gfx/gfxtexturesandbuffers.h>
 
 class GfxContext;
@@ -22,6 +23,7 @@ private:
     void UploadBufferData(const IMGUIDrawData& imguiDrawData);
     void SetupRenderStates(GfxContext&, const IMGUIDrawData& imguiDrawData);
 
+    GfxRootSignature  m_RootSignature;
     GfxVertexBuffer   m_VertexBuffer;
     GfxIndexBuffer    m_IndexBuffer;
     GfxConstantBuffer m_ConstantBuffer;

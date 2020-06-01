@@ -33,6 +33,8 @@ public:
     void SetRootSignature(GfxRootSignature&);
     void StageSRV(GfxTexture&, uint32_t rootIndex, uint32_t offset);
     void StageCBV(GfxConstantBuffer&, uint32_t rootIndex, uint32_t offset);
+    void SetRootSRV(GfxTexture&, uint32_t rootIndex);
+    void SetRootCBV(GfxConstantBuffer&, uint32_t rootIndex);
 
     void DirtyPSO() { m_DirtyPSO = true; }
 
@@ -58,6 +60,7 @@ private:
     void StageDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptor, uint32_t rootIndex, uint32_t offset);
     void CommitStagedResources();
     void CheckStagingResourceInputs(uint32_t rootIndex, uint32_t offset, D3D12_DESCRIPTOR_RANGE_TYPE);
+    void CheckRootResourceInputs(uint32_t rootIndex, D3D12_ROOT_PARAMETER_TYPE, const GfxDescriptorHeap&);
 
     void CreateNullCBV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc);
     void CreateNullSRV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc);

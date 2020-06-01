@@ -11,10 +11,10 @@ public:
 
     std::size_t GetHash() const { return m_Hash; }
 
-private:
     template <uint32_t NumRootParams>
-    void Compile(const CD3DX12_ROOT_PARAMETER1 (&rootParams)[NumRootParams], D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags);
+    void Compile(const CD3DX12_ROOT_PARAMETER1 (&rootParams)[NumRootParams], D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags, const char* rootSigName);
 
+private:
     InplaceArray<CD3DX12_ROOT_PARAMETER1, MaxRootParams> m_RootParams;
     ComPtr<ID3D12RootSignature> m_RootSignature;
     std::size_t m_Hash = 0;

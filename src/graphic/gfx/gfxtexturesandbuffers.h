@@ -45,11 +45,12 @@ public:
 
     struct HeapDesc
     {
-        D3D12_HEAP_TYPE       m_HeapType = D3D12_HEAP_TYPE_DEFAULT;
-        D3D12_RESOURCE_DESC   m_ResourceDesc = {};
-        D3D12_RESOURCE_STATES m_InitialState = D3D12_RESOURCE_STATE_COMMON;
-        D3D12_CLEAR_VALUE     m_ClearValue = {};
-        const char* m_ResourceName = "";
+        D3D12_HEAP_TYPE           m_HeapType            = D3D12_HEAP_TYPE_DEFAULT;
+        D3D12_RESOURCE_DESC       m_ResourceDesc        = {};
+        D3D12_RESOURCE_STATES     m_InitialState        = D3D12_RESOURCE_STATE_COMMON;
+        D3D12_CLEAR_VALUE         m_ClearValue          = {};
+        D3D12MA::ALLOCATION_FLAGS m_AllocationFlags     = D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET;
+        const char*               m_ResourceName        = "";
     };
     static D3D12MA::Allocation* CreateHeap(const HeapDesc&);
 
@@ -116,15 +117,15 @@ class GfxConstantBuffer : public GfxBufferCommon
 {
 public:
     template <typename BufferStruct>
-    void Initialize() { Initialize(sizeof(BufferStruct), BufferStruct::ms_Name); }
-
-    void Initialize(uint32_t bufferSize, const std::string& resourceName = "");
+    void Initialize(bool shaderVisibleDescriptorHeap = false) { Initialize(sizeof(BufferStruct), shaderVisibleDescriptorHeap, BufferStruct::ms_Name); }
 
     void Update(const void* data) const;
 
     GfxDescriptorHeap& GetDescriptorHeap() { return m_GfxDescriptorHeap; }
 
 private:
+    void Initialize(uint32_t bufferSize, bool shaderVisibleDescriptorHeap, const std::string& resourceName = "");
+
     GfxDescriptorHeap m_GfxDescriptorHeap;
     void* m_MappedMemory = nullptr;
 };
@@ -134,20 +135,21 @@ class GfxTexture : public GfxHazardTrackedResource,
 {
 public:
 
-    enum ViewType { RTV, SRV, DSV };
+    enum ViewType { RTV, SRV, DSV, UAV };
 
     struct InitParams
     {
-        DXGI_FORMAT           m_Format       = DXGI_FORMAT_UNKNOWN;
-        uint32_t              m_Width        = 0;
-        uint32_t              m_Height       = 0;
-        D3D12_RESOURCE_DIMENSION m_Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        D3D12_RESOURCE_FLAGS  m_Flags        = D3D12_RESOURCE_FLAG_NONE;
-        const void*           m_InitData     = nullptr;
-        std::string           m_ResourceName = "";
-        D3D12_RESOURCE_STATES m_InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
-        D3D12_CLEAR_VALUE     m_ClearValue   = {};
-        ViewType              m_ViewType     = SRV;
+        DXGI_FORMAT              m_Format                      = DXGI_FORMAT_UNKNOWN;
+        uint32_t                 m_Width                       = 0;
+        uint32_t                 m_Height                      = 0;
+        D3D12_RESOURCE_DIMENSION m_Dimension                   = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        D3D12_RESOURCE_FLAGS     m_Flags                       = D3D12_RESOURCE_FLAG_NONE;
+        const void*              m_InitData                    = nullptr;
+        std::string              m_ResourceName                = "";
+        D3D12_RESOURCE_STATES    m_InitialState                = D3D12_RESOURCE_STATE_GENERIC_READ;
+        D3D12_CLEAR_VALUE        m_ClearValue                  = {};
+        ViewType                 m_ViewType                    = SRV;
+        bool                     m_ShaderVisibleDescriptorHeap = false;
     };
 
     void Initialize(GfxContext& initContext, const InitParams&);
