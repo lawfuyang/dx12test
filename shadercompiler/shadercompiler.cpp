@@ -225,8 +225,6 @@ static void GetD3D12ShaderModels()
         }
         assert(g_HighestShaderModel >= D3D_SHADER_MODEL_6_0);
 
-        g_Serializer.Write(Serializer::JSON, "ShaderCompilerValues", g_HighestShaderModel);
-
         break;
     }
 }
@@ -353,6 +351,8 @@ static void GetD3D12ShaderModelsAndPopulateJobs()
     });
     
     g_TasksExecutor.run(tf).wait();
+
+    g_Log.info("{} Permutations to compile", g_AllShaderCompileJobs.size());
 
     // sort shader names to maintain consistent hash
     std::sort(g_AllShaderCompileJobs.begin(), g_AllShaderCompileJobs.end(), [](const ShaderCompileJob& lhs, const ShaderCompileJob& rhs)
@@ -523,6 +523,8 @@ struct GlobalsInitializer
         g_ShadersHeaderAutoGenDir = g_ShadersTmpDir + "shaderheadersautogen.h";
         g_DXCDir                  = g_AppDir + "..\\extern\\dxc\\dxc.exe";
 
+        g_AllShaderCompileJobs.reserve(1024);
+
         g_Serializer.Read(Serializer::JSON, "ShaderCompilerValues", *this);
 
         // init misc traits
@@ -544,6 +546,11 @@ struct GlobalsInitializer
         ADD_TYPE("float4", "bbeVector4", 16);
         ADD_TYPE("float4x4", "bbeMatrix", 64);
     #undef ADD_TYPE
+    }
+
+    ~GlobalsInitializer()
+    {
+        g_Serializer.Write(Serializer::JSON, "ShaderCompilerValues", *this);
     }
 
     template<typename Archive>
