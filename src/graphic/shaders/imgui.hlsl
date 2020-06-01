@@ -9,27 +9,16 @@ cbuffer IMGUICBuffer : register(b0)
 
 Texture2D<float4> g_IMGUITexture : register(t0);
 
+// Temporary until I get the ShaderCompiler to generate the proper UberShader permutations
+#define VERTEX_FORMAT_Position2f_TexCoord2f_Color4ub
+
 #include "common.hlsl"
-
-struct VS_IN
-{
-    float4 m_Position : POSITION;
-    float2 m_TexCoord : TEXCOORD;
-    float4 m_Color : COLOR;
-};
-
-struct VS_OUT
-{
-    float4 m_Position : SV_POSITION;
-    float2 m_TexCoord : TEXCOORD;
-    float4 m_Color : COLOR;
-};
 
 VS_OUT VSMain(VS_IN input)
 {
     VS_OUT result;
 
-    result.m_Position = mul(input.m_Position, g_ProjMatrix);
+    result.m_Position = mul(float4(input.m_Position, 0, 1), g_ProjMatrix);
     result.m_TexCoord = input.m_TexCoord;
     result.m_Color = input.m_Color;
 
