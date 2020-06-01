@@ -120,7 +120,13 @@ public:
 
     void Initialize(uint32_t bufferSize, const std::string& resourceName = "");
 
-    void UploadToGPU(GfxContext& context, uint32_t rootIndex, const void* data) const;
+    void Update(const void* data) const;
+
+    GfxDescriptorHeap& GetDescriptorHeap() { return m_GfxDescriptorHeap; }
+
+private:
+    GfxDescriptorHeap m_GfxDescriptorHeap;
+    void* m_MappedMemory = nullptr;
 };
 
 class GfxTexture : public GfxHazardTrackedResource,

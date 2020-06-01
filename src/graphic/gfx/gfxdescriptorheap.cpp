@@ -43,6 +43,19 @@ GfxDescriptorHeapHandle GfxGPUDescriptorAllocator::Allocate(uint32_t numHeaps, G
 
     bbeAutoLock(m_GfxGPUDescriptorAllocatorLock);
 
+    // Requested shader visible heaps are assumed to be needed to be contiguous
+    // In the event that we do a full circle around the CircularBuffer, and the number of requested heaps overflows back into the start, simply allocate and discard the tail heaps
+    if (const int32_t allocationOverflow = (int32_t)(m_AllocationCounter + numHeaps) - NumDynamicDescriptors;
+        allocationOverflow > 0)
+    {
+        AllocateInternal(allocationOverflow, nullptr);
+    }
+
+    return AllocateInternal(numHeaps, out);
+}
+
+GfxDescriptorHeapHandle GfxGPUDescriptorAllocator::AllocateInternal(uint32_t numHeaps, GfxDescriptorHeapHandle* out)
+{
     assert(m_FreeHeaps.size() >= numHeaps);
 
     // return only the first descriptor
@@ -54,6 +67,7 @@ GfxDescriptorHeapHandle GfxGPUDescriptorAllocator::Allocate(uint32_t numHeaps, G
         assert(nextDesc.m_CPUHandle.ptr != D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN);
         assert(nextDesc.m_GPUHandle.ptr != D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN);
 
+        m_AllocationCounter = ++m_AllocationCounter % NumDynamicDescriptors;
         m_UsedHeaps.push_back(nextDesc);
         m_FreeHeaps.pop_front();
 
@@ -68,8 +82,6 @@ GfxDescriptorHeapHandle GfxGPUDescriptorAllocator::Allocate(uint32_t numHeaps, G
 
 void GfxGPUDescriptorAllocator::CleanupUsedHeaps()
 {
-    bbeProfileFunction();
-
     bbeMultiThreadDetector();
 
     std::for_each(m_UsedHeaps.begin(), m_UsedHeaps.end(), [&](const GfxDescriptorHeapHandle& handle)

@@ -50,7 +50,7 @@ void GfxDefaultAssets::ShutDown()
     }
 }
 
-void GfxDefaultAssets::DrawSquidRoom(GfxContext& context, bool bindTextures, uint32_t SRVRootIndex)
+void GfxDefaultAssets::DrawSquidRoom(GfxContext& context, bool bindTextures, uint32_t rootIndex, uint32_t offset)
 {
     using namespace SampleAssets;
 
@@ -69,8 +69,8 @@ void GfxDefaultAssets::DrawSquidRoom(GfxContext& context, bool bindTextures, uin
 
         if (bindTextures)// && (lastDrawCallTex != &thisDrawCallTex))
         {
-            assert(SRVRootIndex != UINT32_MAX);
-            context.StageSRV(thisDrawCallTex, SRVRootIndex, 0);
+            assert(rootIndex != UINT32_MAX && offset != UINT32_MAX);
+            context.StageSRV(thisDrawCallTex, rootIndex, offset);
         }
 
         context.DrawIndexedInstanced(drawParams.IndexCount, 1, drawParams.IndexStart, drawParams.VertexBase, 0);

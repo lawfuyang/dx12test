@@ -32,6 +32,7 @@ public:
     void SetIndexBuffer(GfxIndexBuffer& iBuffer);
     void SetRootSignature(GfxRootSignature&);
     void StageSRV(GfxTexture&, uint32_t rootIndex, uint32_t offset);
+    void StageCBV(GfxConstantBuffer&, uint32_t rootIndex, uint32_t offset);
 
     void DirtyPSO() { m_DirtyPSO = true; }
 
@@ -45,11 +46,8 @@ public:
 private:
     struct StagedResourceDescriptor
     {
-        // Change array size accordingly to fit descriptor counts per table
-        static const uint32_t NumDescriptors = 4;
-
-        InplaceArray<D3D12_DESCRIPTOR_RANGE_TYPE, NumDescriptors> m_SrcDescriptorTypes;
-        InplaceArray<CD3DX12_CPU_DESCRIPTOR_HANDLE, NumDescriptors> m_SrcDescriptors;
+        std::vector<D3D12_DESCRIPTOR_RANGE_TYPE> m_SrcDescriptorTypes;
+        std::vector<CD3DX12_CPU_DESCRIPTOR_HANDLE> m_SrcDescriptors;
     };
 
     void CompileAndSetGraphicsPipelineState();

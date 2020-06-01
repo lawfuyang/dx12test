@@ -111,27 +111,17 @@ void GfxContext::SetRootSignature(GfxRootSignature& rootSig)
     // parse root sig to prepare container of staged resources' descriptors
     for (const CD3DX12_ROOT_PARAMETER1& rootParam : rootSig.m_RootParams)
     {
-        m_StagedResources.emplace_back();
+        StagedResourceDescriptor& newDesc = m_StagedResources.emplace_back();
 
-        if (rootParam.DescriptorTable.pDescriptorRanges[0].RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_CBV)
+        const D3D12_ROOT_DESCRIPTOR_TABLE1& rootTable = rootParam.DescriptorTable;
+        for (uint32_t rangeIdx = 0; rangeIdx < rootTable.NumDescriptorRanges; ++rangeIdx)
         {
-            // we dont support descriptor tables that mixes CBVs and others
-            for (uint32_t i = 1; i < rootParam.DescriptorTable.NumDescriptorRanges; ++i)
+            const D3D12_DESCRIPTOR_RANGE1& range = rootTable.pDescriptorRanges[rangeIdx];
+            for (uint32_t i = 0; i < range.NumDescriptors; ++i)
             {
-                if (rootParam.DescriptorTable.pDescriptorRanges[i].RangeType != D3D12_DESCRIPTOR_RANGE_TYPE_CBV)
-                {
-                    assert(0); 
-                }
+                newDesc.m_SrcDescriptorTypes.push_back(range.RangeType);
+                newDesc.m_SrcDescriptors.emplace_back(CD3DX12_DEFAULT{});
             }
-            continue;
-        }
-
-        const D3D12_DESCRIPTOR_RANGE1* descRange = rootParam.DescriptorTable.pDescriptorRanges;
-
-        for (uint32_t i = 0; i < rootParam.DescriptorTable.NumDescriptorRanges; ++i)
-        {
-            m_StagedResources.back().m_SrcDescriptorTypes.push_back(rootParam.DescriptorTable.pDescriptorRanges[i].RangeType);
-            m_StagedResources.back().m_SrcDescriptors.emplace_back(CD3DX12_DEFAULT{});
         }
     }
 }
@@ -140,8 +130,8 @@ void GfxContext::CheckStagingResourceInputs(uint32_t rootIndex, uint32_t offset,
 {
     assert(rootIndex < GfxRootSignature::MaxRootParams);
     assert(rootIndex < m_StagedResources.size());
-    assert(m_PSO.m_RootSig->m_RootParams[rootIndex].DescriptorTable.pDescriptorRanges[offset].RangeType == type);
     assert(offset < m_StagedResources[rootIndex].m_SrcDescriptors.size());
+    assert(m_StagedResources[rootIndex].m_SrcDescriptorTypes[offset] == type);
 }
 
 void GfxContext::StageSRV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
@@ -150,14 +140,20 @@ void GfxContext::StageSRV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
     StageDescriptor(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), rootIndex, offset);
 }
 
+void GfxContext::StageCBV(GfxConstantBuffer& cb, uint32_t rootIndex, uint32_t offset)
+{
+    CheckStagingResourceInputs(rootIndex, offset, D3D12_DESCRIPTOR_RANGE_TYPE_CBV);
+    StageDescriptor(cb.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), rootIndex, offset);
+}
+
 void GfxContext::StageDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptor, uint32_t rootIndex, uint32_t offset)
 {
-    StagedResourceDescriptor& resourceDesc = m_StagedResources[rootIndex];
+    D3D12_CPU_DESCRIPTOR_HANDLE& destDesc = m_StagedResources[rootIndex].m_SrcDescriptors[offset];
 
-    if (resourceDesc.m_SrcDescriptors[offset].ptr == srcDescriptor.ptr)
+    if (destDesc.ptr == srcDescriptor.ptr)
         return;
 
-    resourceDesc.m_SrcDescriptors[offset] = srcDescriptor;
+    destDesc = srcDescriptor;
     m_StaleResourcesBitMap.set(rootIndex);
 }
 
@@ -306,41 +302,44 @@ void GfxContext::CommitStagedResources()
 {
     //bbeProfileFunction();
 
+    // no dirty root params. return
+    if (m_StaleResourcesBitMap.none())
+        return;
+
     uint32_t numHeapsNeeded = 0;
     RunOnAllBits(m_StaleResourcesBitMap.to_ulong(), [&](uint32_t rootIndex) { numHeapsNeeded += m_StagedResources[rootIndex].m_SrcDescriptors.size(); });
-
-    // we dont need to stage anything if only CBVs are updated in this draw call
-    if (numHeapsNeeded == 0)
-        return;
+    assert(numHeapsNeeded > 0);
 
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
     // allocate shader visible heaps
-    GfxDescriptorHeapHandle destHandleStart = g_GfxGPUDescriptorAllocator.Allocate(numHeapsNeeded);
+    GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.Allocate(numHeapsNeeded);
 
     const uint32_t descriptorSize = gfxDevice.Dev()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     RunOnAllBits(m_StaleResourcesBitMap.to_ulong(), [&](uint32_t rootIndex)
         {
             // set desc heap for this table
-            m_CommandList->Dev()->SetGraphicsRootDescriptorTable(rootIndex, destHandleStart.m_GPUHandle);
+            m_CommandList->Dev()->SetGraphicsRootDescriptorTable(rootIndex, destHandle.m_GPUHandle);
+
+            const StagedResourceDescriptor& resourceDesc = m_StagedResources[rootIndex];
 
             // copy descriptors to shader visible heaps 1 by 1
-            for (uint32_t i = 0; i < m_StagedResources[rootIndex].m_SrcDescriptors.size(); ++i)
+            for (uint32_t i = 0; i < resourceDesc.m_SrcDescriptors.size(); ++i)
             {
-                D3D12_CPU_DESCRIPTOR_HANDLE srcDesc = m_StagedResources[rootIndex].m_SrcDescriptors[i];
-                D3D12_DESCRIPTOR_RANGE_TYPE srcDescType = m_StagedResources[rootIndex].m_SrcDescriptorTypes[i];
+                D3D12_CPU_DESCRIPTOR_HANDLE srcDesc = resourceDesc.m_SrcDescriptors[i];
 
                 if (srcDesc.ptr == 0)
                 {
-                    CreateNullView(srcDescType, destHandleStart.m_CPUHandle);
+                    D3D12_DESCRIPTOR_RANGE_TYPE srcDescType = resourceDesc.m_SrcDescriptorTypes[i];
+                    CreateNullView(srcDescType, destHandle.m_CPUHandle);
                 }
                 else
                 {
-                    gfxDevice.Dev()->CopyDescriptorsSimple(1, destHandleStart.m_CPUHandle, srcDesc, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+                    gfxDevice.Dev()->CopyDescriptorsSimple(1, destHandle.m_CPUHandle, srcDesc, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
                 }
 
-                destHandleStart.Offset(1, descriptorSize);
+                destHandle.Offset(1, descriptorSize);
             }
         });
 }

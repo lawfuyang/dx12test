@@ -14,7 +14,7 @@ public:
     void Initialize(tf::Subflow& sf);
     void ShutDown();
 
-    static void DrawSquidRoom(GfxContext& context, bool bindTextures, uint32_t SRVRootIndex = UINT32_MAX);
+    static void DrawSquidRoom(GfxContext& context, bool bindTextures, uint32_t rootIndex = UINT32_MAX, uint32_t offset = UINT32_MAX);
 
     inline static GfxTexture White2D;
     inline static GfxTexture Black2D;

@@ -282,50 +282,39 @@ void GfxConstantBuffer::Initialize(uint32_t bufferSize, const std::string& resou
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
     m_SizeInBytes = AlignUp(bufferSize, 256); // CB size is required to be 256-byte aligned.
-
     m_ResourceName = resourceName;
-}
-
-void GfxConstantBuffer::UploadToGPU(GfxContext& context, uint32_t rootIndex, const void* data) const
-{
-    assert(data);
-
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
     // init desc heap for cbuffer
-    GfxDescriptorHeapHandle descHandle = g_GfxGPUDescriptorAllocator.Allocate(1);
+    m_GfxDescriptorHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
 
     // Create upload heap for constant buffer
     GfxBufferCommon::HeapDesc heapDesc;
     heapDesc.m_HeapType = D3D12_HEAP_TYPE_UPLOAD;
     heapDesc.m_ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes);
     heapDesc.m_InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
-    heapDesc.m_ResourceName = "GfxConstantBuffer::Update";// GetD3DDebugName(GetD3D12Resource()).c_str();
-    D3D12MA::Allocation* allocation = CreateHeap(heapDesc);
-    assert(allocation);
+    heapDesc.m_ResourceName = resourceName.c_str();
+
+    m_D3D12MABufferAllocation = CreateHeap(heapDesc);
+    assert(m_D3D12MABufferAllocation);
 
     // Describe and create a constant buffer view.
     D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-    cbvDesc.BufferLocation = allocation->GetResource()->GetGPUVirtualAddress();
+    cbvDesc.BufferLocation = m_D3D12MABufferAllocation->GetResource()->GetGPUVirtualAddress();
     cbvDesc.SizeInBytes = m_SizeInBytes;
-    gfxDevice.Dev()->CreateConstantBufferView(&cbvDesc, descHandle.m_CPUHandle);
+    gfxDevice.Dev()->CreateConstantBufferView(&cbvDesc, m_GfxDescriptorHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
 
-    CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
-    void* mappedMemory;
-    DX12_CALL(allocation->GetResource()->Map(0, &readRange, reinterpret_cast<void**>(&mappedMemory)));
+    DX12_CALL(m_D3D12MABufferAllocation->GetResource()->Map(0, nullptr, reinterpret_cast<void**>(&m_MappedMemory)));
 
-    SIMDMemCopy(mappedMemory, data, DivideByMultiple(m_SizeInBytes, 16));
+    // zero-init memory for constant buffer
+    memset(m_MappedMemory, 0, m_SizeInBytes);
+}
 
-    allocation->GetResource()->Unmap(0, &readRange);
+void GfxConstantBuffer::Update(const void* data) const
+{
+    assert(data);
+    assert(m_MappedMemory);
 
-    context.GetCommandList().Dev()->SetGraphicsRootDescriptorTable(rootIndex, descHandle.m_GPUHandle);
-
-    // we don't need this upload heap anymore... release it next frame
-    g_GfxManager.AddGraphicCommand([allocation]()
-        {
-            D3D12MA::Allocation* copy = allocation;
-            GfxBufferCommon::ReleaseAllocation(copy);
-        });
+    memcpy(m_MappedMemory, data, m_SizeInBytes);
 }
 
 void GfxTexture::Initialize(const InitParams& initParams)
