@@ -16,9 +16,9 @@ class GfxPipelineStateObject
 public:
     void SetRootSignature(GfxRootSignature& rootSig) { m_RootSig = &rootSig; }
     void SetVertexFormat(GfxVertexFormat& inputLayout) { m_VertexFormat = &inputLayout; }
-    void SetVertexShader(GfxShader& shader) { m_VS = &shader; }
-    void SetPixelShader(GfxShader& shader) { m_PS = &shader; }
-    void SetComputeShader(GfxShader& shader) { m_CS = &shader; }
+    void SetVertexShader(const GfxShader& shader) { m_VS = &shader; }
+    void SetPixelShader(const GfxShader& shader) { m_PS = &shader; }
+    void SetComputeShader(const GfxShader& shader) { m_CS = &shader; }
     void SetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY topology) { m_PrimitiveTopology = topology; }
     void SetRenderTargetFormat(uint32_t idx, DXGI_FORMAT format);
     void SetDepthStencilFormat(DXGI_FORMAT format) { m_DepthStencilFormat = format; };
@@ -30,9 +30,9 @@ private:
     GfxRootSignature*           m_RootSig = nullptr;
     GfxVertexFormat*            m_VertexFormat = nullptr;
     D3D12_PRIMITIVE_TOPOLOGY    m_PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-    GfxShader*                  m_VS = nullptr;
-    GfxShader*                  m_PS = nullptr;
-    GfxShader*                  m_CS = nullptr;
+    const GfxShader*            m_VS = nullptr;
+    const GfxShader*            m_PS = nullptr;
+    const GfxShader*            m_CS = nullptr;
     CD3DX12_BLEND_DESC          m_BlendStates{ GfxCommonStates::Opaque };
     CD3DX12_DEPTH_STENCIL_DESC1 m_DepthStencilStates{ GfxCommonStates::DepthDefault };
     DXGI_FORMAT                 m_DepthStencilFormat = DXGI_FORMAT_UNKNOWN;

@@ -1,220 +1,41 @@
 
 #include <graphic/dx12utils.h>
 
-struct ShaderCompileJob;
-struct ConstantBufferDesc;
+#include "shadercompilejob.h"
+#include "constantbuffer.h"
+#include "shaderpermutationsprintjob.h"
+
+tf::Executor g_Executor;
 
 std::string g_AppDir;
 std::string g_ShadersTmpDir;
+std::string g_ShadersTmpHLSLAutogenDir;
+std::string g_ShadersTmpCPPAutogenDir;
 std::string g_ShadersDir;
 std::string g_DXCDir;
-std::string g_ShadersEnumsAutoGenDir;
-std::string g_ShadersHeaderAutoGenDir;
+std::string g_ShadersByteCodesDir;
+
+std::vector<std::function<void()>> g_JobsPopulators;
 
 std::mutex g_AllShaderCompileJobsLock;
 std::mutex g_AllConstantBuffersLock;
+std::mutex g_AllShaderPermutationsPrintJobsLock;
 
-std::vector<std::string>                     g_AllShaderFiles;
 std::vector<ShaderCompileJob>                g_AllShaderCompileJobs;
-std::vector<ConstantBufferDesc>              g_AllConstantBuffers;
+std::vector<ConstantBuffer>                  g_AllConstantBuffers;
+std::vector<ShaderPermutationsPrintJob>      g_AllShaderPermutationsPrintJobs;
 std::unordered_map<std::string, std::string> g_HLSLTypeToCPPTypeMap;
 std::unordered_map<std::string, uint32_t>    g_CPPTypeSizeMap;
 
-static D3D_SHADER_MODEL g_HighestShaderModel;
-
-enum class ShaderType { VS, PS, GS, HS, DS, CS };
-
-const char* g_ShaderTypeStrings[] = { "VS", "PS", "GS", "HS", "DS", "CS" };
-const char* g_TargetProfileVersionStrings[] = { "_6_0", "_6_1", "_6_2", "_6_3", "_6_4", "_6_5" };
-
-const std::string g_ShaderDeclarationStr    = "ShaderDeclaration:";
-const std::string g_EntryPointStr           = "EntryPoint:";
-const std::string g_CBufferStr              = "cbuffer";
-const std::string g_EndShaderDeclarationStr = "EndShaderDeclaration";
+D3D_SHADER_MODEL g_HighestShaderModel;
 
 bool g_CompileFailureDetected;
 
-static void PrintToConsoleAndLogFile(const std::string& str)
+void PrintToConsoleAndLogFile(const std::string& str)
 {
     printf("%s\n", str.c_str());
     g_Log.info("{}", str.c_str());
 }
-
-struct DXCProcessWrapper
-{
-    DXCProcessWrapper(const std::string& inputCommandLine, const std::string& fileName)
-        : m_FileName(GetFileNameFromPath(fileName))
-    {
-        ::SECURITY_ATTRIBUTES saAttr;
-
-        saAttr.nLength = sizeof(::SECURITY_ATTRIBUTES);
-        saAttr.bInheritHandle = TRUE;
-        saAttr.lpSecurityDescriptor = NULL;
-
-        ::HANDLE hChildStd_OUT_Rd = NULL;
-        ::HANDLE hChildStd_OUT_Wr = NULL;
-
-        // Create a pipe for the child process's STDOUT. 
-        bool success = ::CreatePipe(&hChildStd_OUT_Rd, &hChildStd_OUT_Wr, &saAttr, 0);
-        assert(success);
-
-        // Ensure the read handle to the pipe for STDOUT is not inherited.
-        success = ::SetHandleInformation(hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0);
-        assert(success);
-
-        ::STARTUPINFO startupInfo = {};
-        startupInfo.cb = sizeof(::STARTUPINFO);
-        startupInfo.hStdError = hChildStd_OUT_Wr;
-        startupInfo.hStdOutput = hChildStd_OUT_Wr;
-        startupInfo.dwFlags |= STARTF_USESTDHANDLES;
-
-        ::PROCESS_INFORMATION processInfo = {};
-
-        std::string commandLine = g_DXCDir.c_str();
-        commandLine += " " + inputCommandLine;
-
-        g_Log.info("ShaderCompileJob: " + commandLine);
-
-        if (!::CreateProcess(nullptr,   // No module name (use command line).
-            (LPSTR)commandLine.c_str(), // Command line.
-            nullptr,                    // Process handle not inheritable.
-            nullptr,                    // Thread handle not inheritable.
-            TRUE,                       // handles are inherited
-            0,                          // No creation flags.
-            nullptr,                    // Use parent's environment block.
-            nullptr,                    // Use parent's starting directory.
-            &startupInfo,               // Pointer to STARTUPINFO structure.
-            &processInfo))              // Pointer to PROCESS_INFORMATION structure.
-        {
-            PrintToConsoleAndLogFile(GetLastErrorAsString());
-            assert(false);
-        }
-
-        ::CloseHandle(processInfo.hProcess);
-        ::CloseHandle(processInfo.hThread);
-        ::CloseHandle(hChildStd_OUT_Wr);
-
-        uint32_t numCharsRead = 0;
-        std::string buffer;
-        buffer.resize(BBE_MB(1)); // Up to 1 MB of output
-        for (;;)
-        {
-            ::Sleep(1); // Sleep every loop iteration so the thread does not read 4/5 chars per "::ReadFile"
-
-            DWORD dwRead = 0;
-            const bool success = ::ReadFile(hChildStd_OUT_Rd, buffer.data(), 1024, &dwRead, NULL);
-            numCharsRead += dwRead;
-            if (!success || dwRead == 0) break;
-        }
-
-        if (numCharsRead)
-        {
-            g_Log.info("{}: {}", m_FileName.c_str(), buffer.c_str());
-            g_CompileFailureDetected = true;
-        }
-    }
-
-    std::string m_FileName;
-};
-
-struct ShaderCompileJob
-{
-    const std::string GetTargetProfileString() const
-    {
-        std::string result = std::string{ g_ShaderTypeStrings[(int)m_ShaderType] };
-        result += g_TargetProfileVersionStrings[g_HighestShaderModel - D3D_SHADER_MODEL_6_0];
-
-        std::transform(result.begin(), result.end(), result.begin(), [](char c) { return std::tolower(c); });
-
-        return result;
-    }
-
-    void StartJob()
-    {
-        m_ShaderObjCodeFileDir = g_ShadersTmpDir + m_ShaderName + ".h";
-        m_ShaderObjCodeVarName = m_ShaderName + "_ObjCode";
-
-        std::string commandLine = m_ShaderFilePath;
-        commandLine += " -E " + m_EntryPoint;
-        commandLine += " -T " + GetTargetProfileString();
-        commandLine += " -Fh " + m_ShaderObjCodeFileDir;
-        commandLine += " -Vn " + m_ShaderObjCodeVarName;
-        commandLine += " -nologo";
-        commandLine += " -Qunused-arguments ";
-        commandLine += " -Qstrip_debug ";
-        commandLine += " -Qstrip_priv ";
-        commandLine += " -Qstrip_reflect ";
-        commandLine += " -Qstrip_rootsignature ";
-
-        // debugging stuff
-        //commandLine += " -Zi -Qembed_debug -Fd " + g_ShadersTmpDir + m_ShaderName + ".pdb";
-
-        DXCProcessWrapper compilerProcess{ commandLine, m_ShaderFilePath };
-
-        if (!g_CompileFailureDetected)
-        {
-            PrintToConsoleAndLogFile(StringFormat("Compiled %s", GetFileNameFromPath(m_ShaderFilePath).c_str()));
-        }
-    }
-
-    ShaderType  m_ShaderType;
-    std::string m_ShaderFilePath;
-    std::string m_EntryPoint;
-    std::string m_ShaderName;
-    std::string m_ShaderObjCodeVarName;
-    std::string m_ShaderObjCodeFileDir;
-};
-
-struct ConstantBufferDesc
-{
-    struct CPPTypeVarNamePair
-    {
-        std::string m_CPPVarType;
-        std::string m_VarName;
-    };
-
-    void AddVariable(const std::string& hlslType, const std::string& varName)
-    {
-        assert(varName[0] == 'm' && varName[1] == '_');
-
-        CPPTypeVarNamePair newVar;
-
-        newVar.m_CPPVarType = g_HLSLTypeToCPPTypeMap.at(hlslType);
-        newVar.m_VarName = varName;
-
-        m_Variables.push_back(newVar);
-    }
-
-    void SanityCheck()
-    {
-        // check buffer name
-        for (char c : m_BufferName)
-        {
-            assert(std::isalpha(c));
-        }
-
-        // check size alignment
-        uint32_t bufferSize = 0;
-        for (const CPPTypeVarNamePair& var : m_Variables)
-        {
-            bufferSize += g_CPPTypeSizeMap.at(var.m_CPPVarType);
-        }
-        
-        // add dummy padding vars to align to 16 byte
-        uint32_t paddingVarCount = 0;
-        while (!bbeIsAligned(bufferSize, 16))
-        {
-            AddVariable("uint", StringFormat("m_%s_DummyPaddingVar%d;", m_BufferName.c_str(), paddingVarCount++));
-            bufferSize += 4;
-        }
-    }
-
-    std::string m_OutputFileName;
-    std::string m_BufferName;
-    uint32_t    m_Register = 99;
-
-    std::vector<CPPTypeVarNamePair> m_Variables;
-};
 
 static void GetD3D12ShaderModels()
 {
@@ -267,152 +88,6 @@ static void GetD3D12ShaderModels()
     }
 }
 
-static void HandleShaderDeclaration(ShaderCompileJob& newJob, const std::string& fullPath, char* token)
-{
-    if (std::strncmp(token, g_ShaderDeclarationStr.c_str(), g_ShaderDeclarationStr.size()) == 0)
-    {
-        assert(newJob.m_ShaderName.size() == 0);
-        newJob.m_ShaderName = token + g_ShaderDeclarationStr.size();
-        newJob.m_ShaderFilePath = fullPath;
-
-        for (int i = 0; i < _countof(g_ShaderTypeStrings); ++i)
-        {
-            if (newJob.m_ShaderName[0] == g_ShaderTypeStrings[i][0])
-            {
-                newJob.m_ShaderType = (ShaderType)i;
-                break;
-            }
-        }
-    }
-}
-
-static void HandleShaderEntryPoint(ShaderCompileJob& newJob, char* token)
-{
-    if (std::strncmp(token, g_EntryPointStr.c_str(), g_EntryPointStr.size()) == 0)
-    {
-        assert(newJob.m_ShaderName.size() > 0);
-        newJob.m_EntryPoint = token + g_EntryPointStr.size();
-    }
-}
-
-static void HandleConstantBuffer(CFileWrapper& shaderFile, char (&line)[MAX_PATH], char* token)
-{
-    if (std::strncmp(token, g_CBufferStr.c_str(), g_CBufferStr.size()) == 0)
-    {
-        // assume CBuffer declaration line format == "cbuffer BufferName : register(b0)"
-        // assume no comments in the whole declaration
-        // assume all variables prefix with 'g_', as we will rename it to 'm_' in the engine
-
-        ConstantBufferDesc newCBuffer;
-
-        // get cbuffer name and register
-        char* bufferName = std::strtok(NULL, " ");
-        char* colon = std::strtok(NULL, " ");
-        char* registerStr = std::strtok(NULL, " ");
-        newCBuffer.m_BufferName = bufferName;
-        sscanf(registerStr, "%*10c%u", &newCBuffer.m_Register);
-
-        g_Log.info("Found constant buffer: '{}', bound at register: {}", bufferName, newCBuffer.m_Register);
-        newCBuffer.m_OutputFileName = g_ShadersTmpDir + bufferName + ".h";
-
-        while (fgets(line, sizeof(line), shaderFile))
-        {
-            // beginning of CBuffer declaration
-            if (std::strncmp(line, "{", 1) == 0)
-                continue;
-
-            // end of CBuffer declaration
-            if (std::strncmp(line, "};", 2) == 0)
-                break;
-
-            // add variable type and name. Conveniently scan semi-colon as well
-            char typeStr[10] = {};
-            char varName[MAX_PATH] = {};
-            sscanf(line, "%s %s", typeStr, varName);
-
-            varName[0] = 'm';
-            newCBuffer.AddVariable(typeStr, varName);
-        }
-
-        newCBuffer.SanityCheck();
-
-        bbeAutoLock(g_AllConstantBuffersLock);
-        g_AllConstantBuffers.push_back(newCBuffer);
-    }
-}
-
-static void GetD3D12ShaderModelsAndPopulateJobs()
-{
-    tf::Taskflow tf;
-
-    if (g_HighestShaderModel == 0)
-    {
-        ADD_TF_TASK(tf, GetD3D12ShaderModels());
-    }
-
-    tf.parallel_for(g_AllShaderFiles.begin(), g_AllShaderFiles.end(), [&](const std::string& fullPath)
-    {
-        g_Log.info("Found shader file: {}", GetFileNameFromPath(fullPath).c_str());
-
-        const bool IsReadMode = true;
-        CFileWrapper shaderFile{ fullPath, IsReadMode };
-        assert(shaderFile);
-
-        char line[MAX_PATH] = {};
-        bool endOfShaderDeclarations = false;
-        while (fgets(line, sizeof(line), shaderFile) && endOfShaderDeclarations == false)
-        {
-            ShaderCompileJob newJob;
-            char* token = std::strtok(line, " \n");
-            while (token)
-            {
-                // reached end of all shader declarations. Stop
-                if (strcmp(token, g_EndShaderDeclarationStr.c_str()) == 0)
-                {
-                    endOfShaderDeclarations = true;
-                    break;
-                }
-
-                HandleShaderDeclaration(newJob, fullPath, token);
-                HandleShaderEntryPoint(newJob, token);
-                HandleConstantBuffer(shaderFile, line, token);
-
-                token = strtok(NULL, " \n");
-            }
-
-            // insert new shader entry to be compiled
-            if (newJob.m_ShaderName.size() > 0)
-            {
-                g_Log.info("Found shader: {}", newJob.m_ShaderName.c_str());
-
-                bbeAutoLock(g_AllShaderCompileJobsLock);
-                g_AllShaderCompileJobs.push_back(std::move(newJob));
-            }
-        }
-    });
-    
-    g_TasksExecutor.run(tf).wait();
-
-    PrintToConsoleAndLogFile(StringFormat("%u Permutations to compile", g_AllShaderCompileJobs.size()));
-
-    // sort shader names to maintain consistent hash
-    std::sort(g_AllShaderCompileJobs.begin(), g_AllShaderCompileJobs.end(), [](const ShaderCompileJob& lhs, const ShaderCompileJob& rhs)
-        {
-            return lhs.m_ShaderName < rhs.m_ShaderName;
-        });
-}
-
-static void RunAllJobs()
-{
-    tf::Taskflow tf;
-    tf.parallel_for(g_AllShaderCompileJobs.begin(), g_AllShaderCompileJobs.end(), [&](ShaderCompileJob& shaderJob)
-        {
-            shaderJob.StartJob();
-        });
-
-    g_TasksExecutor.run(tf).wait();
-}
-
 static std::size_t GetFileContentsHash(const std::string& dir)
 {
     const bool IsReadMode = true;
@@ -424,11 +99,11 @@ static std::size_t GetFileContentsHash(const std::string& dir)
 
     // read each line and hash the entire file contents
     std::string fileContents;
-    char buffer[BBE_KB(1)] = {};
-    while (fgets(buffer, sizeof(buffer), file))
+    StaticString<BBE_KB(1)> buffer;
+    while (fgets(buffer.data(), sizeof(buffer), file))
     {
-        fileContents += buffer;
-        memset(buffer, 0, sizeof(buffer));
+        fileContents += buffer.c_str();
+        buffer.clear();
     }
     return std::hash<std::string>{} (fileContents);
 }
@@ -438,12 +113,11 @@ static void OverrideExistingFileIfNecessary(const std::string& generatedString, 
     // hash both existing and newly generated contents
     const std::size_t existingHash = GetFileContentsHash(dirFull);
     const std::size_t newHash = std::hash<std::string>{}(generatedString);
-    const std::string dirShort = std::string{ dirFull, dirFull.find_last_of('\\') + 1 };
 
     // if hashes are different, over ride with new contents
     if (existingHash != newHash)
     {
-        g_Log.info("hash different for '{}'... over-riding with new contents", dirShort);
+        g_Log.info("hash different for '{}'... over-riding with new contents", dirFull.c_str());
         const bool IsReadMode = false;
         CFileWrapper file{ dirFull, IsReadMode };
         assert(file);
@@ -451,25 +125,8 @@ static void OverrideExistingFileIfNecessary(const std::string& generatedString, 
     }
     else
     {
-        g_Log.info("No change detected for '{}'", dirShort);
+        g_Log.info("No change detected for '{}'", dirFull);
     }
-}
-
-static void PrintGeneratedEnumFile()
-{
-    // populate the string with the generated shaders
-    std::string generatedString;
-    generatedString += "#pragma once\n\n";
-    generatedString += "enum class ShaderPermutation\n";
-    generatedString += "{\n";
-    for (const ShaderCompileJob& shaderJob : g_AllShaderCompileJobs)
-    {
-        generatedString += StringFormat("    %s,\n", shaderJob.m_ShaderName.c_str());
-    }
-    generatedString += "};\n";
-    generatedString += StringFormat("const uint32_t g_NumShaders = %" PRIu64 ";\n", g_AllShaderCompileJobs.size());
-
-    OverrideExistingFileIfNecessary(generatedString, g_ShadersEnumsAutoGenDir);
 }
 
 static void PrintGeneratedByteCodeHeadersFile()
@@ -485,51 +142,111 @@ static void PrintGeneratedByteCodeHeadersFile()
     }
 
     generatedString += "\n";
-    generatedString += "struct AutoGeneratedShaderData\n";
+    generatedString += "struct ShaderData\n";
     generatedString += "{\n";
-    generatedString += "    ShaderPermutation m_ShaderPermutation = (ShaderPermutation)0xDEADBEEF;\n";
-    generatedString += "    const unsigned char* m_ByteCodeArray = nullptr;\n";
-    generatedString += "    uint32_t m_ByteCodeSize = 0;\n";
-    generatedString += "    std::size_t m_Hash = 0;\n";
+    generatedString += "    const unsigned char* m_ByteCodeArray;\n";
+    generatedString += "    uint32_t m_ByteCodeSize;\n";
+    generatedString += "    std::size_t m_Hash;\n";
+    generatedString += "    const uint32_t m_ShaderKey;\n";
+    generatedString += "    const uint32_t m_BaseShaderID;\n";
+    generatedString += "    const uint32_t m_ShaderType;\n";
     generatedString += "};\n";
 
     generatedString += "\n";
-    generatedString += "static constexpr AutoGeneratedShaderData gs_AllShadersData[] = \n";
+    generatedString += "static constexpr ShaderData gs_AllShadersData[] = \n";
     generatedString += "{\n";
     for (const ShaderCompileJob& shaderJob : g_AllShaderCompileJobs)
     {
         generatedString += "    {\n";
-        generatedString += StringFormat("        ShaderPermutation::%s,\n", shaderJob.m_ShaderName.c_str());
         generatedString += StringFormat("        %s,\n", shaderJob.m_ShaderObjCodeVarName.c_str());
         generatedString += StringFormat("        _countof(%s),\n", shaderJob.m_ShaderObjCodeVarName.c_str());
-        generatedString += StringFormat("        %" PRIu64 "\n", GetFileContentsHash(shaderJob.m_ShaderObjCodeFileDir));
+        generatedString += StringFormat("        %" PRIu64 ",\n", GetFileContentsHash(shaderJob.m_ShaderObjCodeFileDir));
+        generatedString += StringFormat("        %u,\n", shaderJob.m_ShaderKey);
+        generatedString += StringFormat("        %u,\n", shaderJob.m_BaseShaderID);
+        generatedString += StringFormat("        %u,\n", (uint32_t)shaderJob.m_ShaderType);
         generatedString += "    },\n";
         generatedString += "\n";
     }
     generatedString += "};\n";
 
+    const uint32_t totalVS = (uint32_t)std::count_if(g_AllShaderCompileJobs.begin(), g_AllShaderCompileJobs.end(), [&](const ShaderCompileJob& job) { return job.m_ShaderType == GfxShaderType::VS; });
+    const uint32_t totalPS = (uint32_t)std::count_if(g_AllShaderCompileJobs.begin(), g_AllShaderCompileJobs.end(), [&](const ShaderCompileJob& job) { return job.m_ShaderType == GfxShaderType::PS; });
+
+    generatedString += StringFormat("static const uint32_t gs_TotalVertexShaders = %u;\n", totalVS);
+    generatedString += StringFormat("static const uint32_t gs_TotalPixelShaders = %u;\n", totalPS);
+
     generatedString += "\n";
     generatedString += "}\n";
 
-    OverrideExistingFileIfNecessary(generatedString, g_ShadersHeaderAutoGenDir);
+    OverrideExistingFileIfNecessary(generatedString, g_ShadersByteCodesDir);
 }
 
-static void PrintGeneratedConstantBuffersFile()
+static void PrintShaderPermutationStructs()
 {
-    for (const ConstantBufferDesc& cBuffer : g_AllConstantBuffers)
+    for (const ShaderPermutationsPrintJob& job : g_AllShaderPermutationsPrintJobs)
+    {
+        std::string generatedString;
+        generatedString += "#pragma once\n\n";
+        generatedString += "namespace Shaders\n";
+        generatedString += "{\n\n";
+
+        generatedString += StringFormat("struct %sPermutations\n", job.m_BaseShaderName.c_str());
+        generatedString += "{\n";
+
+        generatedString += "    union\n";
+        generatedString += "    {\n";
+        generatedString += "        struct\n";
+        generatedString += "        {\n";
+        for (const std::string& permutationString : job.m_Defines)
+        {
+            generatedString += StringFormat("           bool %s : 1;\n", permutationString.c_str());
+        }
+        generatedString += "        };\n";
+        generatedString += "        uint32_t m_ShaderKey = 0;\n";
+        generatedString += "    };\n\n";
+        generatedString += "private:\n";
+        generatedString += StringFormat("    static const uint32_t BaseShaderID = %u;\n", job.m_BaseShaderID);
+        generatedString += StringFormat("    static const uint32_t ShaderType = %u;\n", (uint32_t)job.m_ShaderType);
+        generatedString += "\n";
+        generatedString += "    friend class GfxShaderManager;\n";
+
+        generatedString += "};\n";
+
+        generatedString += "\n";
+        generatedString += "}\n";
+
+
+        const std::string outputDir = g_ShadersTmpCPPAutogenDir + job.m_BaseShaderName + ".h";
+        OverrideExistingFileIfNecessary(generatedString, outputDir);
+    }
+}
+
+static void PrintAutogenFilesForShaders()
+{
+    PrintGeneratedByteCodeHeadersFile();
+    PrintShaderPermutationStructs();
+}
+
+static void PrintAutogenFilesForCBs(ConstantBuffer& cb)
+{
+    cb.SanityCheck();
+
+    PrintToConsoleAndLogFile(StringFormat("ConstantBuffer: %s, register: %u", cb.m_Name, cb.m_Register));
+
+    // CPP
     {
         std::string generatedString;
         generatedString += "#pragma once\n\n";
         generatedString += "namespace AutoGenerated\n";
         generatedString += "{\n\n";
 
-        generatedString += StringFormat("struct alignas(16) %s\n", cBuffer.m_BufferName.c_str());
+        generatedString += StringFormat("struct alignas(16) %s\n", cb.m_Name);
         generatedString += "{\n";
-        generatedString += StringFormat("    inline static const char* ms_Name = \"%s GfxConstantBuffer\";\n\n", cBuffer.m_BufferName.c_str());
+        generatedString += StringFormat("    inline static const char* ms_Name = \"%s GfxConstantBuffer\";\n\n", cb.m_Name);
 
-        for (const ConstantBufferDesc::CPPTypeVarNamePair& var : cBuffer.m_Variables)
+        for (const ConstantBuffer::CPPTypeVarNamePair& var : cb.m_Variables)
         {
-            generatedString += StringFormat("    %s %s\n", var.m_CPPVarType.c_str(), var.m_VarName.c_str());
+            generatedString += StringFormat("    %s m_%s;\n", var.m_CPPVarType.c_str(), var.m_VarName.c_str());
         }
 
         generatedString += "};\n\n";
@@ -537,19 +254,27 @@ static void PrintGeneratedConstantBuffersFile()
         generatedString += "\n";
         generatedString += "}\n";
 
-        OverrideExistingFileIfNecessary(generatedString, cBuffer.m_OutputFileName);
+        const std::string outputDir = g_ShadersTmpCPPAutogenDir + cb.m_Name + ".h";
+        OverrideExistingFileIfNecessary(generatedString, outputDir);
     }
-}
 
-static void PrintGeneratedFiles()
-{
-    tf::Taskflow tf;
+    // HLSL
+    {
+        std::string generatedString;
 
-    ADD_TF_TASK(tf, PrintGeneratedEnumFile()           );
-    ADD_TF_TASK(tf, PrintGeneratedByteCodeHeadersFile());
-    ADD_TF_TASK(tf, PrintGeneratedConstantBuffersFile());
+        generatedString += StringFormat("cbuffer %s : register(b%u)\n", cb.m_Name, cb.m_Register);
+        generatedString += "{\n";
 
-    g_TasksExecutor.run(tf).wait();
+        for (const ConstantBuffer::CPPTypeVarNamePair& var : cb.m_Variables)
+        {
+            generatedString += StringFormat("    %s g_%s;\n", var.m_HLLSVarType, var.m_VarName);
+        }
+
+        generatedString += "};\n";
+
+        const std::string outputDir = g_ShadersTmpHLSLAutogenDir + cb.m_Name + ".h";
+        OverrideExistingFileIfNecessary(generatedString, outputDir);
+    }
 }
 
 struct GlobalsInitializer
@@ -557,12 +282,18 @@ struct GlobalsInitializer
     GlobalsInitializer()
     {
         // init dirs
-        g_AppDir                  = GetApplicationDirectory();
-        g_ShadersTmpDir           = g_AppDir + "..\\tmp\\shaders\\";
-        g_ShadersDir              = g_AppDir + "..\\src\\graphic\\shaders";
-        g_ShadersEnumsAutoGenDir  = g_ShadersTmpDir + "shadersenumsautogen.h";
-        g_ShadersHeaderAutoGenDir = g_ShadersTmpDir + "shaderheadersautogen.h";
-        g_DXCDir                  = g_AppDir + "..\\extern\\dxc\\dxc.exe";
+        g_AppDir                   = GetApplicationDirectory();
+        g_ShadersTmpDir            = g_AppDir + "..\\tmp\\shaders\\";
+        g_ShadersTmpHLSLAutogenDir = g_ShadersTmpDir + "autogen\\hlsl\\";
+        g_ShadersTmpCPPAutogenDir  = g_ShadersTmpDir + "autogen\\cpp\\";
+        g_ShadersDir               = g_AppDir + "..\\src\\graphic\\shaders\\";
+        g_ShadersByteCodesDir      = g_ShadersTmpDir + "shaderbytecodes.h";
+        g_DXCDir                   = g_AppDir + "..\\extern\\dxc\\dxc.exe";
+
+        CreateDirectory(g_ShadersTmpDir.c_str(), nullptr);
+        CreateDirectory((g_ShadersTmpDir + "autogen\\").c_str(), nullptr);
+        CreateDirectory(g_ShadersTmpHLSLAutogenDir.c_str(), nullptr);
+        CreateDirectory(g_ShadersTmpCPPAutogenDir.c_str(), nullptr);
 
         g_AllShaderCompileJobs.reserve(1024);
 
@@ -607,11 +338,53 @@ int main()
     // first, Init the logger
     Logger::GetInstance().Initialize("../bin/shadercompiler_output.txt");
 
-    GetFilesInDirectory(g_AllShaderFiles, g_ShadersDir);
+    // get each shader to populate g_AllShaderCompileJobs
+    {
+        tf::Taskflow tf;
 
-    GetD3D12ShaderModelsAndPopulateJobs();
+        for (const auto& func : g_JobsPopulators)
+        {
+            tf.emplace([&]() { func(); });
+        }
+        g_Executor.run(tf).wait();
+    }
 
-    RunAllJobs();
+    // print auto-gen constant buffer headers
+    {
+        tf::Taskflow tf;
+        tf.parallel_for(g_AllConstantBuffers.begin(), g_AllConstantBuffers.end(), [&](ConstantBuffer& cb)
+            {
+                PrintAutogenFilesForCBs(cb);
+            });
+
+        // sort the container, so that it always produces consistent auto-gen files
+        tf.emplace([&]()
+            {
+                std::sort(g_AllShaderCompileJobs.begin(), g_AllShaderCompileJobs.end(), [&](const ShaderCompileJob& lhs, ShaderCompileJob& rhs)
+                    {
+                        return lhs.m_BaseShaderName < rhs.m_BaseShaderName;
+                    });
+            });
+
+        g_Executor.run(tf).wait();
+    }
+
+    // run all jobs in g_AllShaderCompileJobs
+    {
+        tf::Taskflow tf;
+
+        if (g_HighestShaderModel == 0)
+        {
+            tf.emplace([&]() { GetD3D12ShaderModels(); });
+        }
+
+        tf.parallel_for(g_AllShaderCompileJobs.begin(), g_AllShaderCompileJobs.end(), [&](ShaderCompileJob& shaderJob)
+            {
+                shaderJob.StartJob();
+            });
+
+        g_Executor.run(tf).wait();
+    }
 
     if (g_CompileFailureDetected)
     {
@@ -619,7 +392,12 @@ int main()
     }
     else
     {
-        PrintGeneratedFiles();
+        PrintAutogenFilesForShaders();
+    }
+
+    if (g_AllShaderCompileJobs.size() > 1024)
+    {
+        PrintToConsoleAndLogFile("g_AllShaderCompileJobs has more than 1024 jobs! Increase reserve count");
     }
 
     system("pause");

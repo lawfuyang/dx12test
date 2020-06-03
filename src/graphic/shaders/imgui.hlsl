@@ -1,18 +1,23 @@
-// ShaderDeclaration:VS_IMGUI EntryPoint:VSMain
-// ShaderDeclaration:PS_IMGUI EntryPoint:PSMain
 
-cbuffer IMGUICBuffer : register(b0)
-{
-    float4x4 g_ProjMatrix;
-};
-// EndShaderDeclaration
+#include "staticsamplers.hlsl"
+
+#include "autogen/hlsl/IMGUICbuffer.h"
 
 Texture2D<float4> g_IMGUITexture : register(t0);
 
-// Temporary until I get the ShaderCompiler to generate the proper UberShader permutations
-#define VERTEX_FORMAT_Position2f_TexCoord2f_Color4ub
+struct VS_IN
+{
+    float2 m_Position : POSITION;
+    float2 m_TexCoord : TEXCOORD;
+    float4 m_Color    : COLOR;
+};
 
-#include "common.hlsl"
+struct VS_OUT
+{
+    float4 m_Position : SV_POSITION;
+    float2 m_TexCoord : TEXCOORD;
+    float4 m_Color : COLOR;
+};
 
 VS_OUT VSMain(VS_IN input)
 {

@@ -61,12 +61,20 @@
     <ClCompile Include="..\extern\microprofile\microprofile.cpp" />
     <ClCompile Include="..\src\graphic\dx12utils.cpp" />
     <ClCompile Include="..\src\system\utils.cpp" />
+    <ClCompile Include="constantbuffer.cpp" />
+    <ClCompile Include="imgui.cpp" />
+    <ClCompile Include="shadercompilejob.cpp" />
     <ClCompile Include="shadercompiler.cpp" />
+    <ClCompile Include="ubershader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\extern\microprofile\microprofile.h" />
     <ClInclude Include="..\src\graphic\dx12utils.h" />
     <ClInclude Include="..\src\system\utils.h" />
+    <ClInclude Include="constantbuffer.h" />
+    <ClInclude Include="shadercompilejob.h" />
+    <ClInclude Include="shaderkeyhelper.h" />
+    <ClInclude Include="shaderpermutationsprintjob.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

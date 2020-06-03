@@ -5,7 +5,9 @@
 #include <graphic/gfx/gfxview.h>
 #include <graphic/gfx/gfxdefaultassets.h>
 
-#include <tmp/shaders/PerFrameConsts.h>
+#include <tmp/shaders/autogen/cpp/PerFrameConsts.h>
+#include <tmp/shaders/autogen/cpp/VS_UberShader.h>
+#include <tmp/shaders/autogen/cpp/PS_UberShader.h>
 
 void GfxZPrePassRenderer::Initialize()
 {
@@ -43,8 +45,11 @@ void GfxZPrePassRenderer::PopulateCommandList()
 
     GfxPipelineStateObject& pso = context.GetPSO();
 
-    // TODO convert to UberShader
-    pso.SetVertexShader(g_GfxShaderManager.GetShader(ShaderPermutation::VS_UberShader));
+    Shaders::VS_UberShaderPermutations vsPerms;
+    vsPerms.VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f = true;
+
+    const GfxShader& vShader = g_GfxShaderManager.GetShader(vsPerms);
+    pso.SetVertexShader(vShader);
 
     context.SetDepthStencil(g_GfxManager.GetSceneDepthBuffer());
 

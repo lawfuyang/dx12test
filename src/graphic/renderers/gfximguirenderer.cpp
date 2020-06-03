@@ -5,7 +5,9 @@
 #include <graphic/gfx/gfxmanager.h>
 #include <graphic/gfx/gfxcontext.h>
 
-#include <tmp/shaders/IMGUICBuffer.h>
+#include <tmp/shaders/autogen/cpp/IMGUICBuffer.h>
+#include <tmp/shaders/autogen/cpp/VS_IMGUI.h>
+#include <tmp/shaders/autogen/cpp/PS_IMGUI.h>
 
 static const uint32_t gs_VBufferGrowSize = 5000;
 static const uint32_t gs_IBufferGrowSize = 10000;
@@ -242,8 +244,8 @@ void GfxIMGUIRenderer::PopulateCommandList()
     }
 
     GfxPipelineStateObject& pso = context.GetPSO();
-    pso.SetVertexShader(g_GfxShaderManager.GetShader(ShaderPermutation::VS_IMGUI));
-    pso.SetPixelShader(g_GfxShaderManager.GetShader(ShaderPermutation::PS_IMGUI));
+    pso.SetVertexShader(g_GfxShaderManager.GetShader(Shaders::VS_IMGUIPermutations{}));
+    pso.SetPixelShader(g_GfxShaderManager.GetShader(Shaders::PS_IMGUIPermutations{}));
     pso.SetVertexFormat(GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub);
 
     context.SetRootCBV(m_ConstantBuffer, 0);

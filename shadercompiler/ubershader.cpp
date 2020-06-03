@@ -1,0 +1,107 @@
+#include "shadercompilejob.h"
+#include "constantbuffer.h"
+#include "shaderkeyhelper.h"
+#include "shaderpermutationsprintjob.h"
+
+void PrintToConsoleAndLogFile(const std::string& str);
+
+extern std::string g_ShadersDir;
+extern std::mutex g_AllConstantBuffersLock;
+extern std::mutex g_AllShaderPermutationsPrintJobsLock;
+extern std::vector<ConstantBuffer> g_AllConstantBuffers;
+extern std::vector<ShaderPermutationsPrintJob> g_AllShaderPermutationsPrintJobs;
+extern std::unordered_map<std::string, std::vector<std::string>> g_AllShaderPermutationsStrings;
+
+struct UberShader
+{
+    DEFINE_ENUM_WITH_STRING_CONVERSIONS(VSPermutations,
+        (VERTEX_FORMAT_Position2f_TexCoord2f_Color4ub)
+        (VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f)
+        (VSPermutations_Count)
+    );
+
+    DEFINE_ENUM_WITH_STRING_CONVERSIONS(PSPermutations,
+        (PSPermutations_Count)
+    );
+
+    static bool FilterVSKeys(uint32_t key)
+    {
+        bool isValid = true;
+        isValid &= OnlyOneBitSet(key, 1 << VERTEX_FORMAT_Position2f_TexCoord2f_Color4ub, 1 << VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f);
+
+        //g_Log.info("key: {}, {}", std::bitset<4>{key}.to_string().c_str(), isValid);
+
+        return isValid;
+    }
+
+    static void InitConstantBuffers()
+    {
+        //cbuffer PerFrameConsts : register(b0)
+        //{
+        //    float4x4 g_ViewProjMatrix;
+        //};
+        ConstantBuffer cb;
+        cb.m_Name = "PerFrameConsts";
+        cb.m_Register = 0;
+        cb.AddVariable("float4x4", "ViewProjMatrix");
+
+        bbeAutoLock(g_AllConstantBuffersLock);
+        g_AllConstantBuffers.push_back(cb);
+    }
+
+    static void PopulateJobs()
+    {
+        InitConstantBuffers();
+
+        bool validVSKeys[1 << VSPermutations_Count];
+        GetValidShaderKeys(validVSKeys, FilterVSKeys);
+
+        bool validPSKeys[1];
+        GetValidShaderKeys(validPSKeys, NoFilterForKeys);
+
+        std::vector<std::string> allVSPerms(VSPermutations_Count);
+        for (uint32_t i = 0; i < VSPermutations_Count; ++i)
+        {
+            allVSPerms[i] = EnumToString((VSPermutations)i);
+        }
+
+        PopulateJobParams params;
+        params.m_ShaderFilePath = g_ShadersDir + "ubershader.hlsl";
+        params.m_ShaderName = "UberShader";
+        params.m_EntryPoint = "VSMain";
+        params.m_ShaderType = GfxShaderType::VS;
+        params.m_DefineStrings = allVSPerms;
+        params.m_KeysArray = validVSKeys;
+        params.m_KeysArraySz = _countof(validVSKeys);
+        params.m_ShaderID = GetCompileTimeCRC32(ms_ShaderName);
+        PopulateJobsArray(params);
+
+        params.m_EntryPoint = "PSMain";
+        params.m_ShaderType = GfxShaderType::PS;
+        params.m_DefineStrings.clear();
+        params.m_KeysArray = validPSKeys;
+        params.m_KeysArraySz = _countof(validPSKeys);
+        PopulateJobsArray(params);
+
+
+        bbeAutoLock(g_AllShaderPermutationsPrintJobsLock);
+        {
+            ShaderPermutationsPrintJob& printJob = g_AllShaderPermutationsPrintJobs.emplace_back();
+            printJob.m_ShaderType = GfxShaderType::VS;
+            printJob.m_BaseShaderID = GetCompileTimeCRC32(ms_ShaderName);
+            printJob.m_BaseShaderName = StringFormat("VS_%s", ms_ShaderName);
+            printJob.m_Defines = allVSPerms;
+        }
+
+        {
+            ShaderPermutationsPrintJob& printJob = g_AllShaderPermutationsPrintJobs.emplace_back();
+            printJob.m_ShaderType = GfxShaderType::PS;
+            printJob.m_BaseShaderID = GetCompileTimeCRC32(ms_ShaderName);
+            printJob.m_BaseShaderName = StringFormat("PS_%s", ms_ShaderName);
+        }
+    }
+
+    static inline const char* ms_ShaderName = "UberShader";
+};
+
+RegisterJobPopulator(UberShader, UberShader::PopulateJobs);

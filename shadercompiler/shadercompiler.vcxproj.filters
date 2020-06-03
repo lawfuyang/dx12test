@@ -19,6 +19,9 @@
     <Filter Include="extern\microprofile">
       <UniqueIdentifier>{61d84db5-cc64-47b0-8c55-c5e6cc2d1c32}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\shaders">
+      <UniqueIdentifier>{f8fb1d05-281f-4e3c-9968-3f03de9a8bbd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="shadercompiler.cpp">
@@ -33,6 +36,18 @@
     <ClCompile Include="..\extern\microprofile\microprofile.cpp">
       <Filter>extern\microprofile</Filter>
     </ClCompile>
+    <ClCompile Include="ubershader.cpp">
+      <Filter>Source Files\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui.cpp">
+      <Filter>Source Files\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="shadercompilejob.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="constantbuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\utils.h">
@@ -43,6 +58,18 @@
     </ClInclude>
     <ClInclude Include="..\extern\microprofile\microprofile.h">
       <Filter>extern\microprofile</Filter>
+    </ClInclude>
+    <ClInclude Include="shadercompilejob.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="constantbuffer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="shaderkeyhelper.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="shaderpermutationsprintjob.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

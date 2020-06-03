@@ -124,7 +124,6 @@
     <ClInclude Include="..\src\graphic\gfx\gfxdefaultassets.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxdescriptorheap.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxdevice.h" />
-    <ClInclude Include="..\src\graphic\gfx\gfxenums.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxfence.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxmanager.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxmesh.h" />

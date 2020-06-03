@@ -66,6 +66,7 @@
 #include <extern/boost/pool/object_pool.hpp>
 #include <extern/boost/container_hash/hash.hpp>
 #include <extern/boost/static_string.hpp>
+#include <extern/boost/preprocessor.hpp>
 
 // Cereal serialization lib
 #define CEREAL_SERIALIZE_FUNCTION_NAME Serialize

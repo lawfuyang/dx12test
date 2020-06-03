@@ -226,9 +226,6 @@
     <ClInclude Include="..\src\graphic\gfx\gfxdevice.h">
       <Filter>graphic\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\gfx\gfxenums.h">
-      <Filter>graphic\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\graphic\gfx\gfxfence.h">
       <Filter>graphic\gfx</Filter>
     </ClInclude>
