@@ -45,9 +45,9 @@ GfxDescriptorHeapHandle GfxGPUDescriptorAllocator::Allocate(uint32_t numHeaps, G
 
     // Requested shader visible heaps are assumed to be needed to be contiguous
     // In the event that we do a full circle around the CircularBuffer, and the number of requested heaps overflows back into the start, simply allocate and discard the tail heaps
-    if (const int32_t allocationOverflow = (int32_t)(m_AllocationCounter + numHeaps) - NumDynamicDescriptors;
-        allocationOverflow > 0)
+    if ((m_AllocationCounter + numHeaps) > NumDynamicDescriptors)
     {
+        const int32_t allocationOverflow = NumDynamicDescriptors - m_AllocationCounter;
         AllocateInternal(allocationOverflow, nullptr);
     }
 
