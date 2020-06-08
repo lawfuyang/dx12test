@@ -44,8 +44,8 @@ private:
     template <GfxShaderType ShaderType>
     ShaderContainer& GetShaderContainer();
 
-    template <> ShaderContainer& GetShaderContainer<(uint32_t)VS>(){ return m_AllVSShaders; };
-    template <> ShaderContainer& GetShaderContainer<(uint32_t)PS>(){ return m_AllPSShaders; };
+    template <> ShaderContainer& GetShaderContainer<VS>(){ return m_AllVSShaders; };
+    template <> ShaderContainer& GetShaderContainer<PS>(){ return m_AllPSShaders; };
 
     ShaderContainer m_AllVSShaders;
     ShaderContainer m_AllPSShaders;

@@ -42,33 +42,6 @@ static constexpr D3D12_STATIC_SAMPLER_DESC gs_StaticSamplers[] =
     gs_AnisotropicWrapSamplerDesc,
 };
 
-namespace GfxDefaultRootSignatures
-{
-    GfxRootSignature CBV1_SRV1_IA;
-};
-
-void GfxRootSignature::InitDefaultRootSignatures()
-{
-    bbeProfileFunction();
-
-    // TODO: remove this if we want to explicitly specify resource spaces in hlsl
-    static const uint32_t GlobalRegisterSpace = 0;
-
-    {
-        // Keep ranges static so GfxContext can parse through them
-        static CD3DX12_DESCRIPTOR_RANGE1 ranges[2];
-        ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, GlobalRegisterSpace, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
-        ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, GlobalRegisterSpace, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
-
-        // Perfomance TIP: Order from most frequent to least frequent.
-        CD3DX12_ROOT_PARAMETER1 rootParams[2];
-        rootParams[0].InitAsDescriptorTable(1, &ranges[0]); // 1 CBV in c0
-        rootParams[1].InitAsDescriptorTable(1, &ranges[1]); // 1 SRV in t0
-
-        GfxDefaultRootSignatures::CBV1_SRV1_IA.Compile(rootParams, _countof(rootParams), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT, "CBV1_SRV1_IA");
-    }
-}
-
 void GfxRootSignature::Compile(CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t numRootParams, D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags, const char* rootSigName)
 {
     assert(numRootParams < MaxRootParams);
@@ -92,6 +65,6 @@ void GfxRootSignature::Compile(CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t num
     m_RootParams.resize(numRootParams);
     memcpy(m_RootParams.data(), rootParams, sizeof(CD3DX12_ROOT_PARAMETER1) * numRootParams);
 
-    GfxDefaultRootSignatures::CBV1_SRV1_IA.m_RootSignature->SetName(MakeWStrFromStr(rootSigName).c_str());
-    GfxDefaultRootSignatures::CBV1_SRV1_IA.m_Hash = std::hash<std::string_view>{}(rootSigName);
+    m_RootSignature->SetName(MakeWStrFromStr(rootSigName).c_str());
+    m_Hash = std::hash<std::string_view>{}(rootSigName);
 }

@@ -6,9 +6,6 @@ public:
     static const uint32_t MaxRootParams = 8;
 
     ID3D12RootSignature* Dev() const { return m_RootSignature.Get(); }
-
-    static void InitDefaultRootSignatures();
-
     std::size_t GetHash() const { return m_Hash; }
 
     void Compile(CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t numRootParams, D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags, const char* rootSigName);
@@ -19,9 +16,4 @@ private:
     std::size_t m_Hash = 0;
 
     friend class GfxContext;
-};
-
-namespace GfxDefaultRootSignatures
-{
-    extern GfxRootSignature CBV1_SRV1_IA;
 };

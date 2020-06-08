@@ -2,6 +2,7 @@
 
 #include <graphic/renderers/gfxrendererbase.h>
 
+#include <graphic/gfx/gfxrootsignature.h>
 #include <graphic/gfx/gfxtexturesandbuffers.h>
 
 class GfxContext;
@@ -16,6 +17,7 @@ public:
     void PopulateCommandList() override;
 
 private:
+    GfxRootSignature m_RootSignature;
     GfxConstantBuffer m_RenderPassCB;
 };
 #define g_GfxTestRenderPass GfxTestRenderPass::GetInstance()
