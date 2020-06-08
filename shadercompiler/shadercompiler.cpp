@@ -145,15 +145,15 @@ static void PrintGeneratedByteCodeHeadersFile()
     generatedString += "struct ShaderData\n";
     generatedString += "{\n";
     generatedString += "    const unsigned char* m_ByteCodeArray;\n";
-    generatedString += "    uint32_t m_ByteCodeSize;\n";
-    generatedString += "    std::size_t m_Hash;\n";
+    generatedString += "    const uint32_t m_ByteCodeSize;\n";
+    generatedString += "    const std::size_t m_Hash;\n";
     generatedString += "    const uint32_t m_ShaderKey;\n";
     generatedString += "    const uint32_t m_BaseShaderID;\n";
-    generatedString += "    const uint32_t m_ShaderType;\n";
+    generatedString += "    const GfxShaderType m_ShaderType;\n";
     generatedString += "};\n";
 
     generatedString += "\n";
-    generatedString += "static constexpr ShaderData gs_AllShadersData[] = \n";
+    generatedString += "static const ShaderData gs_AllShadersData[] = \n";
     generatedString += "{\n";
     for (const ShaderCompileJob& shaderJob : g_AllShaderCompileJobs)
     {
@@ -163,17 +163,11 @@ static void PrintGeneratedByteCodeHeadersFile()
         generatedString += StringFormat("        %" PRIu64 ",\n", GetFileContentsHash(shaderJob.m_ShaderObjCodeFileDir));
         generatedString += StringFormat("        %u,\n", shaderJob.m_ShaderKey);
         generatedString += StringFormat("        %u,\n", shaderJob.m_BaseShaderID);
-        generatedString += StringFormat("        %u,\n", (uint32_t)shaderJob.m_ShaderType);
+        generatedString += StringFormat("        %s,\n", gs_GfxShaderTypeStrings[(uint32_t)shaderJob.m_ShaderType]);
         generatedString += "    },\n";
         generatedString += "\n";
     }
-    generatedString += "};\n";
-
-    const uint32_t totalVS = (uint32_t)std::count_if(g_AllShaderCompileJobs.begin(), g_AllShaderCompileJobs.end(), [&](const ShaderCompileJob& job) { return job.m_ShaderType == GfxShaderType::VS; });
-    const uint32_t totalPS = (uint32_t)std::count_if(g_AllShaderCompileJobs.begin(), g_AllShaderCompileJobs.end(), [&](const ShaderCompileJob& job) { return job.m_ShaderType == GfxShaderType::PS; });
-
-    generatedString += StringFormat("static const uint32_t gs_TotalVertexShaders = %u;\n", totalVS);
-    generatedString += StringFormat("static const uint32_t gs_TotalPixelShaders = %u;\n", totalPS);
+    generatedString += "};\n\n";
 
     generatedString += "\n";
     generatedString += "}\n";
@@ -206,7 +200,7 @@ static void PrintShaderPermutationStructs()
         generatedString += "    };\n\n";
         generatedString += "private:\n";
         generatedString += StringFormat("    static const uint32_t BaseShaderID = %u;\n", job.m_BaseShaderID);
-        generatedString += StringFormat("    static const uint32_t ShaderType = %u;\n", (uint32_t)job.m_ShaderType);
+        generatedString += StringFormat("    static const GfxShaderType ShaderType = %s;\n", gs_GfxShaderTypeStrings[(uint32_t)job.m_ShaderType]);
         generatedString += "\n";
         generatedString += "    friend class GfxShaderManager;\n";
 

@@ -13,6 +13,12 @@ static const __Name__Init gs__Name__Init;
 
 
 enum class GfxShaderType : uint32_t { VS, PS, CS };
+static const char* gs_GfxShaderTypeStrings[] =
+{
+    "GfxShaderType::VS",
+    "GfxShaderType::PS",
+    "GfxShaderType::CS",
+};
 
 struct ShaderCompileJob
 {
