@@ -65,14 +65,13 @@ void GfxRootSignature::InitDefaultRootSignatures()
         rootParams[0].InitAsDescriptorTable(1, &ranges[0]); // 1 CBV in c0
         rootParams[1].InitAsDescriptorTable(1, &ranges[1]); // 1 SRV in t0
 
-        GfxDefaultRootSignatures::CBV1_SRV1_IA.Compile(rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT, "CBV1_SRV1_IA");
+        GfxDefaultRootSignatures::CBV1_SRV1_IA.Compile(rootParams, _countof(rootParams), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT, "CBV1_SRV1_IA");
     }
 }
 
-template <uint32_t NumRootParams>
-void GfxRootSignature::Compile(const CD3DX12_ROOT_PARAMETER1 (&rootParams)[NumRootParams], D3D12_ROOT_SIGNATURE_FLAGS flags, const char* rootSigName)
+void GfxRootSignature::Compile(CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t numRootParams, D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags, const char* rootSigName)
 {
-    static_assert(NumRootParams < MaxRootParams);
+    assert(numRootParams < MaxRootParams);
     assert(m_RootSignature.Get() == nullptr);
     assert(m_RootParams.empty());
 
@@ -82,7 +81,7 @@ void GfxRootSignature::Compile(const CD3DX12_ROOT_PARAMETER1 (&rootParams)[NumRo
     assert(highestRootSigVer == D3D_ROOT_SIGNATURE_VERSION_1_1);
 
     CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    rootSignatureDesc.Init_1_1(NumRootParams, rootParams, _countof(gs_StaticSamplers), gs_StaticSamplers, flags);
+    rootSignatureDesc.Init_1_1(numRootParams, rootParams, _countof(gs_StaticSamplers), gs_StaticSamplers, rootSigFlags);
 
     ComPtr<ID3DBlob> signature;
     ComPtr<ID3DBlob> error;
@@ -90,8 +89,8 @@ void GfxRootSignature::Compile(const CD3DX12_ROOT_PARAMETER1 (&rootParams)[NumRo
     DX12_CALL(gfxDevice.Dev()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature)));
 
     // copy root params to an internal array so GfxContext can parse through them
-    m_RootParams.resize(NumRootParams);
-    memcpy(m_RootParams.data(), rootParams, sizeof(CD3DX12_ROOT_PARAMETER1) * NumRootParams);
+    m_RootParams.resize(numRootParams);
+    memcpy(m_RootParams.data(), rootParams, sizeof(CD3DX12_ROOT_PARAMETER1) * numRootParams);
 
     GfxDefaultRootSignatures::CBV1_SRV1_IA.m_RootSignature->SetName(MakeWStrFromStr(rootSigName).c_str());
     GfxDefaultRootSignatures::CBV1_SRV1_IA.m_Hash = std::hash<std::string_view>{}(rootSigName);

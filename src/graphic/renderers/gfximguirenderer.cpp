@@ -42,7 +42,7 @@ void GfxIMGUIRenderer::Initialize()
     rootParams[0].InitAsConstantBufferView(0);
     rootParams[1].InitAsDescriptorTable(1, ranges);
 
-    m_RootSignature.Compile(rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT, "GfxIMGUIRenderer_RootSignature");
+    m_RootSignature.Compile(rootParams, _countof(rootParams), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT, "GfxIMGUIRenderer_RootSignature");
 }
 
 void GfxIMGUIRenderer::InitFontsTexture(GfxContext& context)

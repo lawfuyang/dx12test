@@ -11,8 +11,7 @@ public:
 
     std::size_t GetHash() const { return m_Hash; }
 
-    template <uint32_t NumRootParams>
-    void Compile(const CD3DX12_ROOT_PARAMETER1 (&rootParams)[NumRootParams], D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags, const char* rootSigName);
+    void Compile(CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t numRootParams, D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags, const char* rootSigName);
 
 private:
     InplaceArray<CD3DX12_ROOT_PARAMETER1, MaxRootParams> m_RootParams;
