@@ -261,7 +261,7 @@ static void PrintAutogenFilesForCBs(ConstantBuffer& cb)
 
         for (const ConstantBuffer::CPPTypeVarNamePair& var : cb.m_Variables)
         {
-            generatedString += StringFormat("    %s g_%s;\n", var.m_HLLSVarType, var.m_VarName);
+            generatedString += StringFormat("    %s g_%s;\n", var.m_HLLSVarType.c_str(), var.m_VarName.c_str());
         }
 
         generatedString += "};\n";

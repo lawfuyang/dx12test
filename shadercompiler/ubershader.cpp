@@ -39,11 +39,13 @@ struct UberShader
         //cbuffer PerFrameConsts : register(b0)
         //{
         //    float4x4 g_ViewProjMatrix;
+        //    float3 g_SceneLightDir;
         //};
         ConstantBuffer cb;
         cb.m_Name = "PerFrameConsts";
         cb.m_Register = 0;
         cb.AddVariable("float4x4", "ViewProjMatrix");
+        cb.AddVariable("float3", "SceneLightDir");
 
         bbeAutoLock(g_AllConstantBuffersLock);
         g_AllConstantBuffers.push_back(cb);

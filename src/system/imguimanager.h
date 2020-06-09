@@ -39,6 +39,7 @@ public:
     void ProcessWindowsMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
     void Update();
     void RegisterWindowUpdateCB(const std::function<void()>&);
+    void RegisterTopMenu(const std::string& mainCategory, const std::string& buttonName, bool* windowToggle);
 
     bool m_ShowCameraControllerWindow = false;
     bool m_ShowGfxManagerWindow = false;
@@ -50,8 +51,9 @@ private:
     template <typename Archive>
     void Serialize(Archive&);
 
-    std::mutex m_UpdateCBsLock;
+    std::mutex m_Lock;
     std::vector<std::function<void()>> m_UpdateCBs;
+    std::unordered_map<std::string, std::vector<std::pair<std::string, bool*>>> m_TopMenusCBs;
 
     Timer m_Timer;
 

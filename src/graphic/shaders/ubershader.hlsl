@@ -7,7 +7,7 @@
 Texture2D<float4> g_Texture : register(t0);
 
 #if defined(VERTEX_SHADER)
-VS_OUT VSMain(VS_IN input, uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
+VS_OUT VSMain(VS_IN input)
 {
     VS_OUT result = (VS_OUT)0;
 
@@ -29,9 +29,20 @@ VS_OUT VSMain(VS_IN input, uint vertexID : SV_VertexID, uint instanceID : SV_Ins
 #endif
 
 #if defined(PIXEL_SHADER)
+
+float4 CalcDirLightColor(float3 lightDir, float3 normal)
+{
+    float fNDotL = saturate(dot(lightDir, normal));
+    return fNDotL;
+}
+
 float4 PSMain(VS_OUT input) : SV_TARGET
 {
     float4 diffuse = g_Texture.Sample(g_AnisotropicWrapSampler, input.m_TexCoord);
-    return diffuse;
+    float4 finalLight = CalcDirLightColor(g_SceneLightDir, input.m_Normal); // dir light
+    finalLight = max(0.25f, finalLight); // some ambient
+
+    float4 color = diffuse * finalLight;
+    return color;
 }
 #endif

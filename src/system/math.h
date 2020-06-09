@@ -142,6 +142,9 @@ bbeMatrix CreatePerspectiveFieldOfViewLH(float fov, float aspectRatio, float nea
 #define bbe7PIBy8       2.7488935718910690836548129603696f
 #define bbe1ByPI        0.31830988618379067153776752674508f
 
+constexpr float ConvertToRadians(float fDegrees) { return fDegrees * (bbePI / 180.0f); }
+constexpr float ConvertToDegrees(float fRadians) { return fRadians * (180.0f / bbePI); }
+
 #define bbeCos0         1.0f
 #define bbeCos1         0.99984769515639123915701155881391f
 #define bbeCos2         0.99939082701909573000624344004393f

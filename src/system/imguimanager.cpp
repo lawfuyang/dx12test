@@ -181,12 +181,31 @@ void IMGUIManager::Update()
         {
             ImGui::EndMenu();
         }
+
         if (ImGui::BeginMenu("IMGUI Windows"))
         {
             MenuItemBoolToggle("Demo Window", showDemoWindow);
             MenuItemBoolToggle("Camera Controller", m_ShowCameraControllerWindow);
             MenuItemBoolToggle("GfxManager", m_ShowGfxManagerWindow);
             ImGui::EndMenu();
+        }
+
+        for (auto& menus : m_TopMenusCBs)
+        {
+            const char* menuCategory = menus.first.c_str();
+            if (ImGui::BeginMenu(menuCategory))
+            {
+                std::vector<std::pair<std::string, bool*>>& menuButtons = menus.second;
+                for (auto& button : menuButtons)
+                {
+                    const char* buttonName = button.first.c_str();
+                    bool* menuToggle = button.second;
+
+                    MenuItemBoolToggle(buttonName, *menuToggle);
+                }
+
+                ImGui::EndMenu();
+            }
         }
 
         ImGui::Text("\t\tFrame Time: %.3f ms", 1000.0f / ImGui::GetIO().Framerate);
@@ -199,7 +218,7 @@ void IMGUIManager::Update()
     // swap and update the rest
     InplaceArray<std::function<void()>, 128> windowUpdateCBs;
     {
-        bbeAutoLock(m_UpdateCBsLock);
+        bbeAutoLock(m_Lock);
         std::copy(m_UpdateCBs.begin(), m_UpdateCBs.end(), std::back_inserter(windowUpdateCBs));
     }
 
@@ -217,8 +236,14 @@ void IMGUIManager::Update()
 
 void IMGUIManager::RegisterWindowUpdateCB(const std::function<void()>& cb)
 {
-    bbeAutoLock(m_UpdateCBsLock);
+    bbeAutoLock(m_Lock);
     m_UpdateCBs.push_back(cb);
+}
+
+void IMGUIManager::RegisterTopMenu(const std::string& mainCategory, const std::string& buttonName, bool* windowToggle)
+{
+    bbeAutoLock(m_Lock);
+    m_TopMenusCBs[mainCategory].push_back(std::make_pair(buttonName, windowToggle));
 }
 
 void IMGUIManager::SaveDrawData()

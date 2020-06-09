@@ -17,6 +17,8 @@ public:
     void PopulateCommandList() override;
 
 private:
+    void UpdateIMGUI();
+
     GfxRootSignature m_RootSignature;
     GfxConstantBuffer m_RenderPassCB;
 };
