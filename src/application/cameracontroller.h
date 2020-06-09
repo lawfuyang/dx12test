@@ -18,6 +18,8 @@ private:
     template <typename Archive>
     void Serialize(Archive&);
 
+    bool m_ShowIMGUIWindow = false;
+
     float m_Near = 1.0f;
     float m_Far = 2000.0f;
     float m_FOV = bbeRad45;;

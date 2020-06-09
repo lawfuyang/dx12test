@@ -35,6 +35,8 @@ private:
     void UpdateIMGUIPropertyGrid();
     void InitSceneDepthBuffer();
 
+    bool m_ShowIMGUIWindow = false;
+
     std::mutex m_ContextsLock;
     std::vector<GfxContext> m_AllContexts;
 

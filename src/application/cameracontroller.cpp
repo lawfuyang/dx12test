@@ -9,6 +9,7 @@ void CameraController::Initialize()
 
     m_CurrentMousePos = m_MouseLastPos = { Mouse::GetX(), Mouse::GetY() };
 
+    g_IMGUIManager.RegisterTopMenu("Graphic", "Camera Controller", &m_ShowIMGUIWindow);
     g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUIPropertyGrid(); });
 }
 
@@ -82,7 +83,7 @@ void CameraController::UpdateCameraRotation()
 
 void CameraController::UpdateIMGUIPropertyGrid()
 {
-    if (!g_IMGUIManager.m_ShowCameraControllerWindow)
+    if (!m_ShowIMGUIWindow)
         return;
 
     bool doUpdate = false;

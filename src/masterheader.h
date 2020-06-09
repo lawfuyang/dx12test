@@ -44,6 +44,7 @@
 #include <functional>
 #include <fstream>
 #include <bitset>
+#include <map>
 
 // windows
 #include <inttypes.h>

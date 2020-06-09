@@ -41,7 +41,7 @@ void IMGUIManager::Initialize()
 
     ImGui::StyleColorsDark();
 
-    g_Serializer.Read(Serializer::JSON, "IMGUIManagerValues", *this);
+    RegisterTopMenu("Others", "Show IMGUI Demo Window", &m_ShowDemoWindow);
 }
 
 void IMGUIManager::ShutDown()
@@ -49,8 +49,6 @@ void IMGUIManager::ShutDown()
     bbeProfileFunction();
 
     ImGui::DestroyContext();
-
-    g_Serializer.Write(Serializer::JSON, "IMGUIManagerValues", *this);
 }
 
 void IMGUIManager::ProcessWindowsMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -167,8 +165,7 @@ void IMGUIManager::Update()
     ImGui::NewFrame();
 
     // Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-    static bool showDemoWindow = false;
-    if (showDemoWindow)
+    if (m_ShowDemoWindow)
     {
         ImGui::ShowDemoWindow();
     }
@@ -177,19 +174,6 @@ void IMGUIManager::Update()
 
     if (ImGui::BeginMainMenuBar())
     {
-        if (ImGui::BeginMenu("Engine"))
-        {
-            ImGui::EndMenu();
-        }
-
-        if (ImGui::BeginMenu("IMGUI Windows"))
-        {
-            MenuItemBoolToggle("Demo Window", showDemoWindow);
-            MenuItemBoolToggle("Camera Controller", m_ShowCameraControllerWindow);
-            MenuItemBoolToggle("GfxManager", m_ShowGfxManagerWindow);
-            ImGui::EndMenu();
-        }
-
         for (auto& menus : m_TopMenusCBs)
         {
             const char* menuCategory = menus.first.c_str();
@@ -278,11 +262,4 @@ void IMGUIManager::SaveDrawData()
     }
 
     m_DrawData[1 - m_DrawDataIdx] = std::move(newDrawData);
-}
-
-template <typename Archive>
-void IMGUIManager::Serialize(Archive& ar)
-{
-    ar(CEREAL_NVP(m_ShowCameraControllerWindow));
-    ar(CEREAL_NVP(m_ShowGfxManagerWindow));
 }

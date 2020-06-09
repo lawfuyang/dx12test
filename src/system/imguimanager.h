@@ -41,9 +41,6 @@ public:
     void RegisterWindowUpdateCB(const std::function<void()>&);
     void RegisterTopMenu(const std::string& mainCategory, const std::string& buttonName, bool* windowToggle);
 
-    bool m_ShowCameraControllerWindow = false;
-    bool m_ShowGfxManagerWindow = false;
-
 private:
     void SaveDrawData();
     IMGUIDrawData GetDrawData() const { return m_DrawData[m_DrawDataIdx]; }
@@ -51,9 +48,11 @@ private:
     template <typename Archive>
     void Serialize(Archive&);
 
+    bool m_ShowDemoWindow = false;
+
     std::mutex m_Lock;
     std::vector<std::function<void()>> m_UpdateCBs;
-    std::unordered_map<std::string, std::vector<std::pair<std::string, bool*>>> m_TopMenusCBs;
+    std::map<std::string, std::vector<std::pair<std::string, bool*>>> m_TopMenusCBs; // not unordered_map, because i want the menu buttons to be sorted alphabetically
 
     Timer m_Timer;
 

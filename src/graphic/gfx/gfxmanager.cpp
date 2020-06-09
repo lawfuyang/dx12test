@@ -42,6 +42,7 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
 
     m_GfxCommandManager.Initialize();
 
+    g_IMGUIManager.RegisterTopMenu("Graphic", "GfxManager", &m_ShowIMGUIWindow);
     g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUIPropertyGrid(); });
 
     // independent tasks
@@ -229,7 +230,7 @@ void GfxManager::TransitionBackBufferForPresent()
 
 void GfxManager::UpdateIMGUIPropertyGrid()
 {
-    if (!g_IMGUIManager.m_ShowGfxManagerWindow)
+    if (!m_ShowIMGUIWindow)
         return;
 
     bbeProfileFunction();
