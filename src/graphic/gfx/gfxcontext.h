@@ -38,6 +38,11 @@ public:
 
     void DirtyPSO() { m_DirtyPSO = true; }
 
+    static void CreateNullCBV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc);
+    static void CreateNullSRV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc);
+    static void CreateNullUAV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc);
+    static void CreateNullView(D3D12_DESCRIPTOR_RANGE_TYPE, D3D12_CPU_DESCRIPTOR_HANDLE destDesc);
+
     GfxCommandList&         GetCommandList() { return *m_CommandList; }
     GfxPipelineStateObject& GetPSO()         { return m_PSO; }
 
@@ -61,11 +66,6 @@ private:
     void CommitStagedResources();
     void CheckStagingResourceInputs(uint32_t rootIndex, uint32_t offset, D3D12_DESCRIPTOR_RANGE_TYPE);
     void CheckRootResourceInputs(uint32_t rootIndex, D3D12_ROOT_PARAMETER_TYPE, const GfxDescriptorHeap&);
-
-    void CreateNullCBV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc);
-    void CreateNullSRV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc);
-    void CreateNullUAV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc);
-    void CreateNullView(D3D12_DESCRIPTOR_RANGE_TYPE, D3D12_CPU_DESCRIPTOR_HANDLE);
 
     GfxCommandList*   m_CommandList                                      = nullptr;
     GfxVertexBuffer*  m_VertexBuffer                                     = nullptr;

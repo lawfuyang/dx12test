@@ -6,6 +6,42 @@
 #include <graphic/gfx/gfxtexturesandbuffers.h>
 #include <graphic/gfx/gfxrootsignature.h>
 
+void GfxContext::CreateNullCBV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc)
+{
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+
+    D3D12_CONSTANT_BUFFER_VIEW_DESC nullCBDesc = {};
+    gfxDevice.Dev()->CreateConstantBufferView(&nullCBDesc, destDesc);
+}
+
+void GfxContext::CreateNullSRV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc)
+{
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+
+    CD3D12_SHADER_RESOURCE_VIEW_DESC desc{ D3D12_SRV_DIMENSION_TEXTURE2D, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 1 };
+    gfxDevice.Dev()->CreateShaderResourceView(nullptr, &desc, destDesc);
+}
+
+void GfxContext::CreateNullUAV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc)
+{
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+
+    CD3D12_UNORDERED_ACCESS_VIEW_DESC desc{ D3D12_UAV_DIMENSION_BUFFER, DXGI_FORMAT_R8G8B8A8_UNORM };
+    gfxDevice.Dev()->CreateUnorderedAccessView(nullptr, nullptr, &desc, destDesc);
+}
+
+void GfxContext::CreateNullView(D3D12_DESCRIPTOR_RANGE_TYPE type, D3D12_CPU_DESCRIPTOR_HANDLE destHandle)
+{
+    switch (type)
+    {
+    case D3D12_DESCRIPTOR_RANGE_TYPE_SRV: CreateNullSRV(destHandle); break;
+    case D3D12_DESCRIPTOR_RANGE_TYPE_UAV: CreateNullUAV(destHandle); break;
+    case D3D12_DESCRIPTOR_RANGE_TYPE_CBV: CreateNullCBV(destHandle); break;
+
+    default: assert(0);
+    }
+}
+
 void GfxContext::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, const std::string& name)
 {
     m_CommandList = g_GfxManager.GetGfxDevice().GetCommandListsManager().Allocate(cmdListType, name);
@@ -365,42 +401,6 @@ void GfxContext::CommitStagedResources()
                 destHandle.Offset(1, descriptorSize);
             }
         });
-}
-
-void GfxContext::CreateNullCBV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc)
-{
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-
-    D3D12_CONSTANT_BUFFER_VIEW_DESC nullCBDesc = {};
-    gfxDevice.Dev()->CreateConstantBufferView(&nullCBDesc, destDesc);
-}
-
-void GfxContext::CreateNullSRV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc)
-{
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-
-    CD3D12_SHADER_RESOURCE_VIEW_DESC desc{ D3D12_SRV_DIMENSION_TEXTURE2D, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 1 };
-    gfxDevice.Dev()->CreateShaderResourceView(nullptr, &desc, destDesc);
-}
-
-void GfxContext::CreateNullUAV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc)
-{
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-
-    CD3D12_UNORDERED_ACCESS_VIEW_DESC desc{ D3D12_UAV_DIMENSION_BUFFER, DXGI_FORMAT_R8G8B8A8_UNORM };
-    gfxDevice.Dev()->CreateUnorderedAccessView(nullptr, nullptr, &desc, destDesc);
-}
-
-void GfxContext::CreateNullView(D3D12_DESCRIPTOR_RANGE_TYPE type, D3D12_CPU_DESCRIPTOR_HANDLE destHandle)
-{
-    switch (type)
-    {
-    case D3D12_DESCRIPTOR_RANGE_TYPE_SRV: CreateNullSRV(destHandle); break;
-    case D3D12_DESCRIPTOR_RANGE_TYPE_UAV: CreateNullUAV(destHandle); break;
-    case D3D12_DESCRIPTOR_RANGE_TYPE_CBV: CreateNullCBV(destHandle); break;
-
-    default: assert(0);
-    }
 }
 
 void GfxContext::DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation, uint32_t baseVertexLocation, uint32_t startInstanceLocation)
