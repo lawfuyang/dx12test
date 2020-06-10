@@ -29,12 +29,12 @@ void GfxTestRenderPass::Initialize()
 
     // Keep ranges static so GfxContext can parse through them
     static CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
-    ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
+    ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 
     // Perfomance TIP: Order from most frequent to least frequent.
     CD3DX12_ROOT_PARAMETER1 rootParams[2];
     rootParams[0].InitAsConstantBufferView(0); // 1 CBV in c0
-    rootParams[1].InitAsDescriptorTable(1, &ranges[0]); // 1 SRV in t0
+    rootParams[1].InitAsDescriptorTable(1, &ranges[0]); // 2 SRVs in t0-t1
 
     m_RootSignature.Compile(rootParams, _countof(rootParams), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT, "GfxTestRenderPass_RootSignature");
 
@@ -81,7 +81,9 @@ void GfxTestRenderPass::PopulateCommandList()
     context.SetRenderTarget(0, g_GfxManager.GetSwapChain().GetCurrentBackBuffer());
     context.SetDepthStencil(g_GfxManager.GetSceneDepthBuffer());
 
-    GfxDefaultAssets::DrawSquidRoom(context, true, 1, 0);
+    const uint32_t diffuseTexRootOffset = 0;
+    const uint32_t normalTexRootOffset = 1;
+    GfxDefaultAssets::DrawSquidRoom(context, true, 1, diffuseTexRootOffset, normalTexRootOffset);
 }
 
 void GfxTestRenderPass::UpdateIMGUI()

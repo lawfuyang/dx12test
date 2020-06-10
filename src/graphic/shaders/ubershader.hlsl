@@ -4,7 +4,8 @@
 
 #include "autogen/hlsl/PerFrameConsts.h"
 
-Texture2D<float4> g_Texture : register(t0);
+Texture2D<float4> g_DiffuseTexture : register(t0);
+Texture2D<float4> g_NormalTexture : register(t1);
 
 #if defined(VERTEX_SHADER)
 VS_OUT VSMain(VS_IN input)
@@ -30,19 +31,39 @@ VS_OUT VSMain(VS_IN input)
 
 #if defined(PIXEL_SHADER)
 
+//--------------------------------------------------------------------------------------
+// Diffuse lighting calculation for main Directional Light
+//--------------------------------------------------------------------------------------
 float4 CalcDirLightColor(float3 lightDir, float3 normal)
 {
     float fNDotL = saturate(dot(lightDir, normal));
     return fNDotL;
 }
 
+//--------------------------------------------------------------------------------------
+// Sample normal map, convert to signed, apply tangent-to-world space transform.
+//--------------------------------------------------------------------------------------
+float3 CalcPerPixelNormal(float2 vTexcoord, float3 vVertNormal, float3 vVertTangent)
+{
+    float3 vVertBinormal = cross(vVertTangent, vVertNormal);
+    float3x3 mTangentSpaceToWorldSpace = float3x3(vVertTangent, vVertBinormal, vVertNormal);
+
+    // Compute per-pixel normal.
+    float3 vBumpNormal = (float3)g_NormalTexture.Sample(g_AnisotropicWrapSampler, vTexcoord);
+    vBumpNormal = 2.0f * vBumpNormal - 1.0f;
+
+    return mul(vBumpNormal, mTangentSpaceToWorldSpace);
+}
+
 float4 PSMain(VS_OUT input) : SV_TARGET
 {
-    float4 diffuse = g_Texture.Sample(g_AnisotropicWrapSampler, input.m_TexCoord);
-    float4 finalLight = CalcDirLightColor(g_SceneLightDir, input.m_Normal); // dir light
+    float4 diffuse = g_DiffuseTexture.Sample(g_AnisotropicWrapSampler, input.m_TexCoord);
+    float3 normal = CalcPerPixelNormal(input.m_TexCoord, input.m_Normal, input.m_Tangent);
+    float4 finalLight = CalcDirLightColor(g_SceneLightDir, normal); // dir light
     finalLight = max(0.25f, finalLight); // some ambient
 
     float4 color = diffuse * finalLight;
     return color;
 }
+
 #endif

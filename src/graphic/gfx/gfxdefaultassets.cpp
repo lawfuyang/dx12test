@@ -50,7 +50,7 @@ void GfxDefaultAssets::ShutDown()
     }
 }
 
-void GfxDefaultAssets::DrawSquidRoom(GfxContext& context, bool bindTextures, uint32_t rootIndex, uint32_t offset)
+void GfxDefaultAssets::DrawSquidRoom(GfxContext& context, bool bindTextures, uint32_t rootIndex, uint32_t diffuseOffset, uint32_t normalOffset)
 {
     using namespace SampleAssets;
 
@@ -62,20 +62,20 @@ void GfxDefaultAssets::DrawSquidRoom(GfxContext& context, bool bindTextures, uin
     context.SetVertexBuffer(GfxDefaultAssets::SquidRoom.GetVertexBuffer());
     context.SetIndexBuffer(GfxDefaultAssets::SquidRoom.GetIndexBuffer());
 
-    GfxTexture* lastDrawCallTex = nullptr;
     for (const SquidRoom::DrawParameters& drawParams : SquidRoom::Draws)
     {
-        GfxTexture& thisDrawCallTex = GfxDefaultAssets::SquidRoomTextures[drawParams.DiffuseTextureIndex];
-
-        if (bindTextures)// && (lastDrawCallTex != &thisDrawCallTex))
+        if (bindTextures)
         {
-            assert(rootIndex != UINT32_MAX && offset != UINT32_MAX);
-            context.StageSRV(thisDrawCallTex, rootIndex, offset);
+            assert(rootIndex != UINT32_MAX && diffuseOffset != UINT32_MAX && normalOffset != UINT32_MAX);
+
+            GfxTexture& diffuseTex = GfxDefaultAssets::SquidRoomTextures[drawParams.DiffuseTextureIndex];
+            GfxTexture& normalTex = GfxDefaultAssets::SquidRoomTextures[drawParams.NormalTextureIndex];
+
+            context.StageSRV(diffuseTex, rootIndex, diffuseOffset);
+            context.StageSRV(normalTex, rootIndex, normalOffset);
         }
 
         context.DrawIndexedInstanced(drawParams.IndexCount, 1, drawParams.IndexStart, drawParams.VertexBase, 0);
-
-        lastDrawCallTex = &thisDrawCallTex;
     }
 }
 
