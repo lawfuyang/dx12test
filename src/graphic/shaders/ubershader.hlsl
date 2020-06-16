@@ -34,10 +34,10 @@ VS_OUT VSMain(VS_IN input)
 //--------------------------------------------------------------------------------------
 // Diffuse lighting calculation for main Directional Light
 //--------------------------------------------------------------------------------------
-float4 CalcDirLightColor(float3 lightDir, float3 normal)
+float4 CalcDirLightColor(float4 lightDir, float3 normal)
 {
-    float fNDotL = saturate(dot(lightDir, normal));
-    return fNDotL;
+    float fNDotL = saturate(dot(lightDir.xyz, normal));
+    return fNDotL * g_SceneLightIntensity;
 }
 
 //--------------------------------------------------------------------------------------

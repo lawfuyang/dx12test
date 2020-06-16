@@ -8,12 +8,14 @@
 #include <graphic/gfx/gfxvertexformat.h>
 #include <graphic/gfx/gfxdefaultassets.h>
 #include <graphic/gfx/gfxtexturesandbuffers.h>
+#include <graphic/gfx/gfxlightsmanager.h>
 
 #include <system/imguimanager.h>
 
 #include <graphic/renderers/gfxzprepassrenderer.h>
 #include <graphic/renderers/gfxtestrenderpass.h>
 #include <graphic/renderers/gfximguirenderer.h>
+#include <graphic/renderers/gfxshadowmaprenderer.h>
 
 void InitializeGraphic(tf::Subflow& subFlow)
 {
@@ -55,6 +57,7 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
     tf::Task PSOManagerInitTask           = ADD_TF_TASK(subFlow, g_GfxPSOManager.Initialize());
     tf::Task defaultsAssetsPreInit        = ADD_SF_TASK(subFlow, g_GfxDefaultAssets.PreInitialize(sf));
     tf::Task dynamicDescHeapAllocatorInit = ADD_TF_TASK(subFlow, g_GfxGPUDescriptorAllocator.Initialize());
+    tf::Task lightsManagerInit            = ADD_TF_TASK(subFlow, g_GfxLightsManager.Initialize());
 
     tf::Task adapterAndDeviceInit = subFlow.emplace([&](tf::Subflow& sf)
         {
@@ -72,6 +75,7 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
             allTasks.push_back(ADD_TF_TASK(subFlow, g_GfxTestRenderPass.Initialize()));
             allTasks.push_back(ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer.Initialize()));
             allTasks.push_back(ADD_TF_TASK(subFlow, g_ZPrePassRenderer.Initialize()));
+            allTasks.push_back(ADD_TF_TASK(subFlow, g_GfxShadowMapRenderer.Initialize()));
             allTasks.push_back(ADD_TF_TASK(subFlow, InitSceneDepthBuffer()));
 
             // HUGE assumption that all of the above gfx tasks queued their command lists to be executed
@@ -110,6 +114,7 @@ void GfxManager::ShutDown()
     g_ZPrePassRenderer.ShutDown();
     g_GfxTestRenderPass.ShutDown();
     g_GfxIMGUIRenderer.ShutDown();
+    g_GfxShadowMapRenderer.ShutDown();
     g_GfxDefaultAssets.ShutDown();
 
     // we must complete the previous GPU frame before exiting the app

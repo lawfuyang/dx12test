@@ -127,6 +127,12 @@
     <ClCompile Include="..\src\graphic\gfx\gfxview.cpp">
       <Filter>graphic\gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\renderers\gfxshadowmaprenderer.cpp">
+      <Filter>graphic\renderers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\gfx\gfxlightsmanager.cpp">
+      <Filter>graphic\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -266,6 +272,12 @@
       <Filter>graphic\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\src\graphic\gfx\gfxview.h">
+      <Filter>graphic\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\renderers\gfxshadowmaprenderer.h">
+      <Filter>graphic\renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfx\gfxlightsmanager.h">
       <Filter>graphic\gfx</Filter>
     </ClInclude>
   </ItemGroup>

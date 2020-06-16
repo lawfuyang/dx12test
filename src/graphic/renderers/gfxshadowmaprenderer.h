@@ -7,17 +7,18 @@
 
 class GfxContext;
 
-class GfxTestRenderPass : public GfxRendererBase
+class GfxShadowMapRenderer : public GfxRendererBase
 {
 public:
-    DeclareSingletonFunctions(GfxTestRenderPass);
+    DeclareSingletonFunctions(GfxShadowMapRenderer);
 
     void Initialize();
     void ShutDown() override;
     void PopulateCommandList() override;
 
 private:
+    void UpdateIMGUI();
+
     GfxRootSignature m_RootSignature;
-    GfxConstantBuffer m_RenderPassCB;
 };
-#define g_GfxTestRenderPass GfxTestRenderPass::GetInstance()
+#define g_GfxShadowMapRenderer GfxShadowMapRenderer::GetInstance()
