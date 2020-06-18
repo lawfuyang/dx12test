@@ -19,27 +19,12 @@ static float ComputeSunTime(float timeOfDay)
     return normalizedTime;
 }
 
-void GfxLightsManager::UpdateDirLight()
-{
-    m_SunLightIntensity = bbeSmoothStep(0.0f, 4.5f, m_TimeOfDay) * bbeSmoothStep(24.0f, 19.5f, m_TimeOfDay);
-    m_SunLightIntensity = std::max(m_SunLightIntensity, 0.25f); // some minimum sunlight light
-
-    const float normalizedTime = ComputeSunTime(m_TimeOfDay);
-    const bbeMatrix timeOfDayMatrixSun = bbeMatrix::CreateRotationY(normalizedTime * -bbe2PI);
-    const bbeMatrix latitudeMatrix = bbeMatrix::CreateRotationX(ConvertToRadians(m_WorldLatitude));
-    const bbeMatrix sunMatrix = latitudeMatrix * timeOfDayMatrixSun;
-
-    m_SunLightDir = bbeVector4::Transform(bbeVector4::UnitY, sunMatrix);
-    m_SunLightDir.z = std::clamp(m_SunLightDir.z, ConvertToRadians(m_SunMinElevation), ConvertToRadians(m_SunMaxElevation));
-    m_SunLightDir.Normalize();
-}
-
 void GfxLightsManager::Initialize()
 {
     g_IMGUIManager.RegisterTopMenu("Graphic", "GfxLightsManager", &gs_ShowGfxLightsManagerIMGUIWindow);
     g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUI(); });
 
-    UpdateDirLight();
+    m_DirectionalLight.Update();
 }
 
 void GfxLightsManager::UpdateIMGUI()
@@ -51,15 +36,35 @@ void GfxLightsManager::UpdateIMGUI()
 
     if (ImGui::CollapsingHeader("Sun Light"))
     {
-        bool updateDirLight = false;
-        updateDirLight |= ImGui::SliderFloat("Time (24h)", &m_TimeOfDay, 0.0f, 24.0f);
-        updateDirLight |= ImGui::SliderFloat("World Latitude", &m_WorldLatitude, -90.0f, 90.0f);
-        updateDirLight |= ImGui::SliderFloat("Min Sun Elevation", &m_SunMinElevation, -90.0f, 90.0f);
-        updateDirLight |= ImGui::SliderFloat("Max SunElevation", &m_SunMaxElevation, -90.0f, 90.0f);
+        m_DirectionalLight.UpdateIMGUI();
+    }
+}
 
-        if (updateDirLight)
-        {
-            UpdateDirLight();
-        }
+void DirectionalLight::Update()
+{
+    m_Intensity = bbeSmoothStep(0.0f, 4.5f, m_TimeOfDay) * bbeSmoothStep(24.0f, 19.5f, m_TimeOfDay);
+    m_Intensity = std::max(m_Intensity, 0.25f); // some minimum sunlight light
+
+    const float normalizedTime = ComputeSunTime(m_TimeOfDay);
+    const bbeMatrix timeOfDayMatrixSun = bbeMatrix::CreateRotationY(normalizedTime * -bbe2PI);
+    const bbeMatrix latitudeMatrix = bbeMatrix::CreateRotationX(ConvertToRadians(m_WorldLatitude));
+    const bbeMatrix sunMatrix = latitudeMatrix * timeOfDayMatrixSun;
+
+    m_Direction = bbeVector4::Transform(bbeVector4::UnitY, sunMatrix);
+    m_Direction.z = std::clamp(m_Direction.z, ConvertToRadians(m_MinElevation), ConvertToRadians(m_MaxElevation));
+    m_Direction.Normalize();
+}
+
+void DirectionalLight::UpdateIMGUI()
+{
+    bool updateDirLight = false;
+    updateDirLight |= ImGui::SliderFloat("Time (24h)", &m_TimeOfDay, 0.0f, 24.0f);
+    updateDirLight |= ImGui::SliderFloat("World Latitude", &m_WorldLatitude, -90.0f, 90.0f);
+    updateDirLight |= ImGui::SliderFloat("Min Sun Elevation", &m_MinElevation, -90.0f, 90.0f);
+    updateDirLight |= ImGui::SliderFloat("Max SunElevation", &m_MaxElevation, -90.0f, 90.0f);
+
+    if (updateDirLight)
+    {
+        Update();
     }
 }
