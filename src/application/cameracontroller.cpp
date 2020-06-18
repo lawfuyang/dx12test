@@ -1,7 +1,10 @@
 #include <application/cameracontroller.h>
 
 #include <system/imguimanager.h>
-#include <graphic/gfx/gfxview.h>
+
+#include <graphic/gfx/gfxmanager.h>
+
+static bool gs_ShowCameraControllerIMGUIWindow = false;
 
 void CameraController::Initialize()
 {
@@ -9,53 +12,46 @@ void CameraController::Initialize()
 
     m_CurrentMousePos = m_MouseLastPos = { Mouse::GetX(), Mouse::GetY() };
 
-    g_IMGUIManager.RegisterTopMenu("Graphic", "Camera Controller", &m_ShowIMGUIWindow);
+    g_IMGUIManager.RegisterTopMenu("Graphic", "Camera Controller", &gs_ShowCameraControllerIMGUIWindow);
     g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUIPropertyGrid(); });
-}
-
-bbeMatrix CameraController::Get3DViewProjMatrix()
-{
-    const float aspectRatio = (float)g_CommandLineOptions.m_WindowWidth / (float)g_CommandLineOptions.m_WindowHeight;
-
-    const bbeVector3 focusPosition = m_EyePosition + m_Dir;
-    const bbeMatrix viewMatrix = CreateLookAtLH(m_EyePosition, focusPosition, m_UpDirection).Transpose();
-    const bbeMatrix projMatrix = CreatePerspectiveFieldOfViewLH(m_FOV, aspectRatio, m_Near, m_Far).Transpose();
-
-    return projMatrix * viewMatrix;
 }
 
 void CameraController::UpdateEyePosition()
 {
+    View& view = g_GfxManager.GetMainView();
+
     // Calculate the move vector in camera space.
     bbeVector3 finalMoveVector;
 
     if (Keyboard::IsKeyPressed(Keyboard::KEY_A))
     {
-        finalMoveVector += m_RightDirection;
+        finalMoveVector += view.m_Right;
     }
     if (Keyboard::IsKeyPressed(Keyboard::KEY_D))
     {
-        finalMoveVector -= m_RightDirection;
+        finalMoveVector -= view.m_Right;
     }
     if (Keyboard::IsKeyPressed(Keyboard::KEY_W))
     {
-        finalMoveVector += m_Dir;
+        finalMoveVector += view.m_LookAt;
     }
     if (Keyboard::IsKeyPressed(Keyboard::KEY_S))
     {
-        finalMoveVector -= m_Dir;
+        finalMoveVector -= view.m_LookAt;
     }
 
     if (finalMoveVector.LengthSquared() > 0.1f)
     {
         finalMoveVector.Normalize();
+        view.m_Eye += finalMoveVector * m_CameraMoveSpeed * (float)g_System.GetFrameTimeMs();
+        view.Update();
     }
-
-    m_EyePosition += finalMoveVector * m_CameraMoveSpeed * (float)g_System.GetFrameTimeMs();
 }
 
 void CameraController::UpdateCameraRotation()
 {
+    View& view = g_GfxManager.GetMainView();
+
     const bbeVector2 mouseDeltaVec = m_CurrentMousePos - m_MouseLastPos;
 
     // compute new camera angles and vectors based off mouse delta
@@ -66,25 +62,29 @@ void CameraController::UpdateCameraRotation()
     m_Pitch = std::clamp(m_Pitch, -bbePIBy2, bbePIBy2);
 
     const float r = std::cos(m_Pitch);
-    m_Dir =
+    view.m_LookAt =
     {
         r * std::sin(m_Yaw),
         std::sin(m_Pitch),
         r * std::cos(m_Yaw),
     };
 
-    m_RightDirection =
+    view.m_Right =
     {
         std::sin(m_Yaw - bbePIBy2),
         0,
         std::cos(m_Yaw - bbePIBy2),
     };
+
+    view.Update();
 }
 
 void CameraController::UpdateIMGUIPropertyGrid()
 {
-    if (!m_ShowIMGUIWindow)
+    if (!gs_ShowCameraControllerIMGUIWindow)
         return;
+
+    View& view = g_GfxManager.GetMainView();
 
     bool doUpdate = false;
     bool doReset = false;
@@ -92,12 +92,12 @@ void CameraController::UpdateIMGUIPropertyGrid()
 
     ScopedIMGUIWindow window{ "CameraController" };
 
-    ImGui::InputFloat3("Position", (float*)&m_EyePosition);
-    ImGui::InputFloat3("Direction", (float*)&m_Dir, "%.3f", ImGuiInputTextFlags_ReadOnly);
+    doUpdate |= ImGui::InputFloat3("Position", (float*)&m_EyePosition);
+    ImGui::InputFloat3("Direction", (float*)&view.m_LookAt, "%.3f", ImGuiInputTextFlags_ReadOnly);
     doUpdate |= ImGui::SliderAngle("Yaw", &m_Yaw, -180.0f, 180.0f);
     doUpdate |= ImGui::SliderAngle("Pitch", &m_Pitch, -90.0f, 90.0f);
-    ImGui::SliderFloat("Far", &m_Far, 100.0f, 10000.0f);
-    ImGui::SliderAngle("FOV", &m_FOV, 1.0f, 179.0f);
+    doUpdate |= ImGui::SliderFloat("Far", &view.m_ZFarP, 100.0f, 10000.0f);
+    doUpdate |= ImGui::SliderAngle("FOV", &view.m_FOV, 1.0f, 179.0f);
 
     ImGui::NewLine();
     ImGui::InputFloat("Move Speed", &m_CameraMoveSpeed);
@@ -151,17 +151,15 @@ void CameraController::Update()
     {
         UpdateCameraRotation();
     }
-
-    m_UpDirection = m_RightDirection.Cross(m_Dir);
-
-    const bbeMatrix viewProjMatrix = Get3DViewProjMatrix();
-    g_GfxView.SetViewProjMatrix(viewProjMatrix);
 }
 
 void CameraController::Reset()
 {
     if (g_Serializer.Read(Serializer::JSON, "CameraControllerValues", *this))
     {
+        View& view = g_GfxManager.GetMainView();
+        view.m_Eye = m_EyePosition;
+
         UpdateCameraRotation();
     }
 }

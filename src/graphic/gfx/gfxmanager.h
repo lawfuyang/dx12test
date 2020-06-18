@@ -6,6 +6,8 @@
 #include <graphic/gfx/gfxswapchain.h>
 #include <graphic/gfx/gfxtexturesandbuffers.h>
 
+#include <graphic/view.h>
+
 class GfxManager
 {
     DeclareSingletonFunctions(GfxManager);
@@ -24,9 +26,11 @@ public:
 
     GfxContext& GenerateNewContext(D3D12_COMMAND_LIST_TYPE, const std::string& name);
 
-    GfxDevice&         GetGfxDevice()        { return m_GfxDevice; }
-    GfxSwapChain&      GetSwapChain()        { return m_SwapChain; }
-    GfxTexture&        GetSceneDepthBuffer() { return m_SceneDepthBuffer; }
+    GfxDevice& GetGfxDevice() { return m_GfxDevice; }
+    GfxSwapChain& GetSwapChain() { return m_SwapChain; }
+    GfxTexture& GetSceneDepthBuffer() { return m_SceneDepthBuffer; }
+
+    View& GetMainView() { return m_MainView; }
 
 private:
     void ScheduleRenderPasses(tf::Subflow& sf);
@@ -45,5 +49,7 @@ private:
     GfxTexture        m_SceneDepthBuffer;
 
     CommandManager m_GfxCommandManager;
+
+    View m_MainView;
 };
 #define g_GfxManager GfxManager::GetInstance()
