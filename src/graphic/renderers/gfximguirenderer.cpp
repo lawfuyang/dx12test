@@ -18,8 +18,6 @@ void GfxIMGUIRenderer::Initialize()
 {
     bbeProfileFunction();
 
-    m_Name = "GfxIMGUIRenderer";
-
     GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "GfxIMGUIRenderer::Initialize");
 
     // Build texture atlas

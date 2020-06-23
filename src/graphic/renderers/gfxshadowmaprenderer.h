@@ -16,6 +16,8 @@ public:
     void ShutDown() override;
     void PopulateCommandList() override;
 
+    const char* GetName() const override { return "GfxShadowMapRenderer"; }
+
 private:
     void UpdateIMGUI();
 

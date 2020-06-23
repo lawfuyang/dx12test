@@ -15,6 +15,8 @@ public:
     void ShutDown() override;
     void PopulateCommandList() override;
 
+    const char* GetName() const override { return "GfxZPrePassRenderer"; }
+
 private:
     GfxRootSignature m_RootSignature;
     GfxConstantBuffer m_RenderPassCB;

@@ -10,7 +10,6 @@ static bool gs_ShowGfxShadowMapRendererIMGUIWindow = false;
 void GfxShadowMapRenderer::Initialize()
 {
     bbeProfileFunction();
-    m_Name = "GfxShadowMapRenderer";
 
     g_IMGUIManager.RegisterTopMenu("Graphic", "GfxShadowMapRenderer", &gs_ShowGfxShadowMapRendererIMGUIWindow);
     g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUI(); });

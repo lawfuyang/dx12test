@@ -11,7 +11,6 @@
 void GfxZPrePassRenderer::Initialize()
 {
     bbeProfileFunction();
-    m_Name = "GfxTestRenderPass";
 
     GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "GfxZPrePassRenderer::Initialize");
 

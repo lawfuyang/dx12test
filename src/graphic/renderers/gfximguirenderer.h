@@ -17,6 +17,8 @@ public:
     void ShutDown() override;
     void PopulateCommandList() override;
 
+    const char* GetName() const override { return "GfxIMGUIRenderer"; }
+
 private:
     void InitFontsTexture(GfxContext&);
     void GrowBuffers(GfxContext&, const IMGUIDrawData& imguiDrawData);
