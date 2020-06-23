@@ -69,14 +69,15 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
         {
             bbeProfile("General Gfx Init");
 
-            InplaceArray<tf::Task, 6> allTasks;
-
-            allTasks.push_back(ADD_SF_TASK(subFlow, g_GfxDefaultAssets.Initialize(sf)));
-            allTasks.push_back(ADD_TF_TASK(subFlow, g_GfxTestRenderPass.Initialize()));
-            allTasks.push_back(ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer.Initialize()));
-            allTasks.push_back(ADD_TF_TASK(subFlow, g_ZPrePassRenderer.Initialize()));
-            allTasks.push_back(ADD_TF_TASK(subFlow, g_GfxShadowMapRenderer.Initialize()));
-            allTasks.push_back(ADD_TF_TASK(subFlow, InitSceneDepthBuffer()));
+            tf::Task allTasks[] =
+            {
+                ADD_SF_TASK(subFlow, g_GfxDefaultAssets.Initialize(sf)),
+                ADD_TF_TASK(subFlow, g_GfxTestRenderPass.Initialize()),
+                ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer.Initialize()),
+                ADD_TF_TASK(subFlow, g_ZPrePassRenderer.Initialize()),
+                ADD_TF_TASK(subFlow, g_GfxShadowMapRenderer.Initialize()),
+                ADD_TF_TASK(subFlow, InitSceneDepthBuffer()),
+            };
 
             // HUGE assumption that all of the above gfx tasks queued their command lists to be executed
             tf::Task flushAndWaitTask = ADD_TF_TASK(subFlow, m_GfxDevice.Flush(true /* andWait */));
