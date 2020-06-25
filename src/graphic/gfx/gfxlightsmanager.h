@@ -1,7 +1,11 @@
 #pragma once
 
+#include <graphic/view.h>
+
 struct DirectionalLight
 {
+    static const uint32_t ShadowMapResolution = 1024;
+
     void Update();
     void UpdateIMGUI();
     
@@ -11,6 +15,8 @@ struct DirectionalLight
     float m_TimeOfDay = 12.0f;
     float m_Intensity = 1.0f;
     bbeVector4 m_Direction;
+
+    View m_View;
 };
 
 class GfxLightsManager

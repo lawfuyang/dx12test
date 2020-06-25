@@ -16,6 +16,35 @@ using bbePlane      = DirectX::SimpleMath::Plane;
 using bbeQuaternion = DirectX::SimpleMath::Quaternion;
 using bbeColor      = DirectX::SimpleMath::Color;
 
+#define CREATE_SIMD_FUNCTIONS( TYPE ) \
+    static TYPE Sqrt( TYPE s ) { return TYPE(DirectX::XMVectorSqrt(s)); } \
+    static TYPE Reciprocal( TYPE s ) { return TYPE(DirectX::XMVectorReciprocal(s)); } \
+    static TYPE ReciprocalSqrt( TYPE s ) { return TYPE(DirectX::XMVectorReciprocalSqrt(s)); } \
+    static TYPE Floor( TYPE s ) { return TYPE(DirectX::XMVectorFloor(s)); } \
+    static TYPE Ceiling( TYPE s ) { return TYPE(DirectX::XMVectorCeiling(s)); } \
+    static TYPE Round( TYPE s ) { return TYPE(DirectX::XMVectorRound(s)); } \
+    static TYPE Exp( TYPE s ) { return TYPE(DirectX::XMVectorExp(s)); } \
+    static TYPE Pow( TYPE b, TYPE e ) { return TYPE(DirectX::XMVectorPow(b, e)); } \
+    static TYPE Log( TYPE s ) { return TYPE(DirectX::XMVectorLog(s)); } \
+    static TYPE Sin( TYPE s ) { return TYPE(DirectX::XMVectorSin(s)); } \
+    static TYPE Cos( TYPE s ) { return TYPE(DirectX::XMVectorCos(s)); } \
+    static TYPE Tan( TYPE s ) { return TYPE(DirectX::XMVectorTan(s)); } \
+    static TYPE ASin( TYPE s ) { return TYPE(DirectX::XMVectorASin(s)); } \
+    static TYPE ACos( TYPE s ) { return TYPE(DirectX::XMVectorACos(s)); } \
+    static TYPE ATan( TYPE s ) { return TYPE(DirectX::XMVectorATan(s)); } \
+    static TYPE ATan2( TYPE y, TYPE x ) { return TYPE(DirectX::XMVectorATan2(y, x)); } \
+    static TYPE Lerp( TYPE a, TYPE b, TYPE t ) { return TYPE(DirectX::XMVectorLerpV(a, b, t)); } \
+    static TYPE operator<  ( TYPE lhs, TYPE rhs ) { return DirectX::XMVectorLess(lhs, rhs); } \
+    static TYPE operator<= ( TYPE lhs, TYPE rhs ) { return DirectX::XMVectorLessOrEqual(lhs, rhs); } \
+    static TYPE operator>  ( TYPE lhs, TYPE rhs ) { return DirectX::XMVectorGreater(lhs, rhs); } \
+    static TYPE operator>= ( TYPE lhs, TYPE rhs ) { return DirectX::XMVectorGreaterOrEqual(lhs, rhs); } \
+    static TYPE operator== ( TYPE lhs, TYPE rhs ) { return DirectX::XMVectorEqual(lhs, rhs); } \
+
+CREATE_SIMD_FUNCTIONS(bbeVector3)
+CREATE_SIMD_FUNCTIONS(bbeVector4)
+
+#undef CREATE_SIMD_FUNCTIONS
+
 #define bbeBIG_Float (1e10f) // use instead of FLT_MAX when overflowing is a concern
 
 template <typename T>
