@@ -5,6 +5,14 @@
 #include <graphic/gfx/gfxcontext.h>
 #include <graphic/dx12utils.h>
 
+#define DEBUG_GFX_MEMORY_ALLOCS
+
+#if defined(DEBUG_GFX_MEMORY_ALLOCS)
+    #define bbeLogGfxAlloc(StrFormat, ...) g_Log.info(StrFormat, __VA_ARGS__);
+#else
+    #define bbeLogGfxAlloc(...) __noop
+#endif
+
 struct ID3D12ResourceMemoryLayout
 {
     uint32_t m_TotalSizeInBytes = 0;
@@ -23,9 +31,7 @@ static ID3D12ResourceMemoryLayout GetMemoryLayout(const D3D12_RESOURCE_DESC& des
     const uint32_t subResourceCount = desc.MipLevels * arraySize;
 
     const uint32_t ArraySize = 32;
-
-    if (subResourceCount > ArraySize)
-        g_Log.warn("subResourceCount = {}. Increase array sizes in {}", subResourceCount, __FUNCTION__);
+    assert(subResourceCount <= ArraySize); // If this pops, increase the number
 
     InplaceArray<D3D12_PLACED_SUBRESOURCE_FOOTPRINT, ArraySize> layouts(subResourceCount);
     InplaceArray<UINT, ArraySize> numRows(subResourceCount);
@@ -64,7 +70,7 @@ void GfxBufferCommon::ReleaseAllocation(D3D12MA::Allocation*& allocation)
 {
     bbeProfileFunction();
 
-    g_Log.info("Destroying D3D12MA::Allocation '{}'", MakeStrFromWStr(allocation->GetName()));
+    bbeLogGfxAlloc("Destroying D3D12MA::Allocation '{}'", MakeStrFromWStr(allocation->GetName()));
 
     allocation->GetResource()->Release();
     allocation->Release();
@@ -102,7 +108,7 @@ D3D12MA::Allocation* GfxBufferCommon::CreateHeap(const GfxBufferCommon::HeapDesc
     heapName += " Heap";
     SetD3DDebugName(newHeap, heapName.c_str());
 
-    g_Log.info("Created D3D12MA::Allocation '{}'", heapDesc.m_ResourceName);
+    bbeLogGfxAlloc("Created D3D12MA::Allocation '{}'", heapDesc.m_ResourceName);
 
     return allocHandle;
 }
@@ -336,7 +342,6 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     assert(initParams.m_Format != DXGI_FORMAT_UNKNOWN);
     assert(initParams.m_Width > 0);
     assert(initParams.m_Height > 0);
-    assert(initParams.m_ShaderVisibleDescriptorHeap ? initParams.m_ViewType == UAV : true);
 
     m_ResourceName = initParams.m_ResourceName;
     m_Format = initParams.m_Format;
@@ -347,11 +352,14 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     D3D12_DESCRIPTOR_HEAP_TYPE heapType;
     switch (initParams.m_ViewType)
     {
-    case SRV: heapType = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV; break;
+    case SRV:
+    case UAV:
+        heapType = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV; break;
+
     case DSV: heapType = D3D12_DESCRIPTOR_HEAP_TYPE_DSV; break;
     case RTV: heapType = D3D12_DESCRIPTOR_HEAP_TYPE_RTV; break;
     }
-    m_GfxDescriptorHeap.Initialize(heapType, initParams.m_ShaderVisibleDescriptorHeap ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
+    m_GfxDescriptorHeap.Initialize(heapType, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
 
     D3D12_RESOURCE_DESC desc = {};
     desc.Dimension = initParams.m_Dimension;
@@ -376,7 +384,7 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     heapDesc.m_ResourceDesc = desc;
     heapDesc.m_InitialState = hasInitData ? D3D12_RESOURCE_STATE_COPY_DEST : initParams.m_InitialState;
     heapDesc.m_ClearValue = initParams.m_ClearValue;
-    heapDesc.m_AllocationFlags = initParams.m_ShaderVisibleDescriptorHeap ? D3D12MA::ALLOCATION_FLAG_COMMITTED : heapDesc.m_AllocationFlags;
+    heapDesc.m_AllocationFlags = heapDesc.m_AllocationFlags;
     heapDesc.m_ResourceName = initParams.m_ResourceName.c_str();
 
     m_D3D12MABufferAllocation = CreateHeap(heapDesc);
@@ -402,6 +410,7 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     case RTV: CreateRTV(initParams); break;
     case DSV: CreateDSV(initParams); break;
     case SRV: CreateSRV(initParams); break;
+    case UAV: assert(0); break; // TODO
     }
 }
 

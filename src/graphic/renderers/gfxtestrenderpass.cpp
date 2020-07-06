@@ -12,6 +12,8 @@
 #include <tmp/shaders/autogen/cpp/VS_UberShader.h>
 #include <tmp/shaders/autogen/cpp/PS_UberShader.h>
 
+GfxTexture gs_SceneDepthBuffer;
+
 void GfxTestRenderPass::Initialize()
 {
     bbeProfileFunction();
@@ -31,6 +33,21 @@ void GfxTestRenderPass::Initialize()
 
     m_RootSignature.Compile(rootParams, _countof(rootParams), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT, "GfxTestRenderPass_RootSignature");
 
+    GfxTexture::InitParams depthBufferInitParams;
+    depthBufferInitParams.m_Format = DXGI_FORMAT_D32_FLOAT;
+    depthBufferInitParams.m_Width = g_CommandLineOptions.m_WindowWidth;
+    depthBufferInitParams.m_Height = g_CommandLineOptions.m_WindowHeight;
+    depthBufferInitParams.m_Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+    depthBufferInitParams.m_InitData = nullptr;
+    depthBufferInitParams.m_ResourceName = "GfxManager Depth Buffer";
+    depthBufferInitParams.m_InitialState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+    depthBufferInitParams.m_ViewType = GfxTexture::DSV;
+    depthBufferInitParams.m_ClearValue.Format = depthBufferInitParams.m_Format;
+    depthBufferInitParams.m_ClearValue.DepthStencil.Depth = 1.0f;
+    depthBufferInitParams.m_ClearValue.DepthStencil.Stencil = 0;
+
+    gs_SceneDepthBuffer.Initialize(initContext, depthBufferInitParams);
+
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
     gfxDevice.GetCommandListsManager().QueueCommandListToExecute(initContext.GetCommandList(), initContext.GetCommandList().GetType());
 }
@@ -38,6 +55,7 @@ void GfxTestRenderPass::Initialize()
 void GfxTestRenderPass::ShutDown()
 {
     m_RenderPassCB.Release();
+    gs_SceneDepthBuffer.Release();
 }
 
 void GfxTestRenderPass::PopulateCommandList()
@@ -70,7 +88,7 @@ void GfxTestRenderPass::PopulateCommandList()
     pso.SetPixelShader(pShader);
 
     context.SetRenderTarget(0, g_GfxManager.GetSwapChain().GetCurrentBackBuffer());
-    context.SetDepthStencil(g_GfxManager.GetSceneDepthBuffer());
+    context.SetDepthStencil(gs_SceneDepthBuffer);
 
     const uint32_t diffuseTexRootOffset = 0;
     const uint32_t normalTexRootOffset = 1;

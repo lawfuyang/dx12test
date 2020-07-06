@@ -139,17 +139,16 @@ public:
 
     struct InitParams
     {
-        DXGI_FORMAT              m_Format                      = DXGI_FORMAT_UNKNOWN;
-        uint32_t                 m_Width                       = 0;
-        uint32_t                 m_Height                      = 0;
-        D3D12_RESOURCE_DIMENSION m_Dimension                   = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        D3D12_RESOURCE_FLAGS     m_Flags                       = D3D12_RESOURCE_FLAG_NONE;
-        const void*              m_InitData                    = nullptr;
-        std::string              m_ResourceName                = "";
-        D3D12_RESOURCE_STATES    m_InitialState                = D3D12_RESOURCE_STATE_GENERIC_READ;
-        D3D12_CLEAR_VALUE        m_ClearValue                  = {};
-        ViewType                 m_ViewType                    = SRV;
-        bool                     m_ShaderVisibleDescriptorHeap = false;
+        DXGI_FORMAT              m_Format       = DXGI_FORMAT_UNKNOWN;
+        uint32_t                 m_Width        = 0;
+        uint32_t                 m_Height       = 0;
+        D3D12_RESOURCE_DIMENSION m_Dimension    = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        D3D12_RESOURCE_FLAGS     m_Flags        = D3D12_RESOURCE_FLAG_NONE;
+        const void*              m_InitData     = nullptr;
+        std::string              m_ResourceName = "";
+        D3D12_RESOURCE_STATES    m_InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
+        D3D12_CLEAR_VALUE        m_ClearValue   = {};
+        ViewType                 m_ViewType     = SRV;
     };
 
     void Initialize(GfxContext& initContext, const InitParams&);

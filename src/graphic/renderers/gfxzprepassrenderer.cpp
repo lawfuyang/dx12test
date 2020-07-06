@@ -8,6 +8,8 @@
 #include <tmp/shaders/autogen/cpp/VS_UberShader.h>
 #include <tmp/shaders/autogen/cpp/PS_UberShader.h>
 
+extern GfxTexture gs_SceneDepthBuffer;
+
 void GfxZPrePassRenderer::Initialize()
 {
     bbeProfileFunction();
@@ -55,7 +57,7 @@ void GfxZPrePassRenderer::PopulateCommandList()
     const GfxShader& vShader = g_GfxShaderManager.GetShader(vsPerms);
     pso.SetVertexShader(vShader);
 
-    context.SetDepthStencil(g_GfxManager.GetSceneDepthBuffer());
+    context.SetDepthStencil(gs_SceneDepthBuffer);
 
     GfxDefaultAssets::DrawSquidRoom(context, false);
 }

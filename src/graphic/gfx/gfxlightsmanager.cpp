@@ -36,7 +36,7 @@ void GfxLightsManager::UpdateIMGUI()
 
     ScopedIMGUIWindow window{ "GfxLightsManager" };
 
-    if (ImGui::CollapsingHeader("Sun Light"))
+    if (ImGui::CollapsingHeader("Sun Light", nullptr, ImGuiTreeNodeFlags_DefaultOpen))
     {
         m_DirectionalLight.UpdateIMGUI();
     }
@@ -97,20 +97,15 @@ void DirectionalLight::Update()
         bbeVector3::Transform(bbeVector3::Lerp(frustumCorners[6], frustumCorners[7], splitFar), lightView),
     };
 
-    // Compute cascade bounding sphere center:
+    // Compute cascade bounding sphere center & radius:
     bbeVector3 center;
-    for (const bbeVector3& corner : corners)
-    {
-        center += corner;
-    }
-    center /= _countof(corners);
-
-    // Compute cascade bounding sphere radius:
     float radius = 0.0f;
     for (const bbeVector3& corner : corners)
     {
+        center += corner;
         radius = std::max(radius, (corner - center).Length());
     }
+    center /= _countof(corners);
 
     // Fit AABB onto bounding sphere:
     bbeVector3 vMin = center - bbeVector3{ radius };

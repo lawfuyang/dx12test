@@ -28,7 +28,6 @@ public:
 
     GfxDevice& GetGfxDevice() { return m_GfxDevice; }
     GfxSwapChain& GetSwapChain() { return m_SwapChain; }
-    GfxTexture& GetSceneDepthBuffer() { return m_SceneDepthBuffer; }
 
     View& GetMainView() { return m_MainView; }
 
@@ -37,7 +36,6 @@ private:
     void ScheduleCommandListsExecution();
     void TransitionBackBufferForPresent();
     void UpdateIMGUIPropertyGrid();
-    void InitSceneDepthBuffer();
 
     bool m_ShowIMGUIWindow = false;
 
@@ -46,7 +44,6 @@ private:
 
     GfxDevice         m_GfxDevice;
     GfxSwapChain      m_SwapChain;
-    GfxTexture        m_SceneDepthBuffer;
 
     CommandManager m_GfxCommandManager;
 

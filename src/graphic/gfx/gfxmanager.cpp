@@ -17,6 +17,8 @@
 #include <graphic/renderers/gfximguirenderer.h>
 #include <graphic/renderers/gfxshadowmaprenderer.h>
 
+extern GfxTexture gs_SceneDepthBuffer;
+
 void InitializeGraphic(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
@@ -76,7 +78,6 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
                 ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer.Initialize()),
                 ADD_TF_TASK(subFlow, g_ZPrePassRenderer.Initialize()),
                 ADD_TF_TASK(subFlow, g_GfxShadowMapRenderer.Initialize()),
-                ADD_TF_TASK(subFlow, InitSceneDepthBuffer()),
             };
 
             // HUGE assumption that all of the above gfx tasks queued their command lists to be executed
@@ -110,7 +111,6 @@ void GfxManager::ShutDown()
     if (fs)
         m_SwapChain.Dev()->SetFullscreenState(false, NULL);
 
-    m_SceneDepthBuffer.Release();
     g_GfxPSOManager.ShutDown();
     g_ZPrePassRenderer.ShutDown();
     g_GfxTestRenderPass.ShutDown();
@@ -188,7 +188,7 @@ void GfxManager::BeginFrame()
     {
         GfxContext& clearBackBufferContext = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "ClearBackBuffer");
         clearBackBufferContext.ClearRenderTargetView(g_GfxManager.GetSwapChain().GetCurrentBackBuffer(), bbeVector4{ 0.0f, 0.2f, 0.4f, 1.0f });
-        clearBackBufferContext.ClearDepth(m_SceneDepthBuffer, 1.0f);
+        clearBackBufferContext.ClearDepth(gs_SceneDepthBuffer, 1.0f);
         m_GfxDevice.GetCommandListsManager().QueueCommandListToExecute(clearBackBufferContext.GetCommandList(), clearBackBufferContext.GetCommandList().GetType());
 
         m_GfxDevice.Flush();
@@ -285,24 +285,4 @@ void GfxManager::UpdateIMGUIPropertyGrid()
         ScopedIMGUIWindow window{ "Detailed Gfx Stats" };
         ImGui::Text("%s", statsString.c_str());
     }
-}
-
-void GfxManager::InitSceneDepthBuffer()
-{
-    GfxContext& initContext = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "GfxManager::InitDepthBuffer");
-
-    GfxTexture::InitParams depthBufferInitParams;
-    depthBufferInitParams.m_Format = DXGI_FORMAT_D32_FLOAT;
-    depthBufferInitParams.m_Width = g_CommandLineOptions.m_WindowWidth;
-    depthBufferInitParams.m_Height = g_CommandLineOptions.m_WindowHeight;
-    depthBufferInitParams.m_Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-    depthBufferInitParams.m_InitData = nullptr;
-    depthBufferInitParams.m_ResourceName = "GfxManager Depth Buffer";
-    depthBufferInitParams.m_InitialState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-    depthBufferInitParams.m_ViewType = GfxTexture::DSV;
-    depthBufferInitParams.m_ClearValue.Format = depthBufferInitParams.m_Format;
-    depthBufferInitParams.m_ClearValue.DepthStencil.Depth = 1.0f;
-    depthBufferInitParams.m_ClearValue.DepthStencil.Stencil = 0;
-
-    m_SceneDepthBuffer.Initialize(initContext, depthBufferInitParams);
 }
