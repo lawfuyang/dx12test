@@ -9,12 +9,8 @@ struct DirectionalLight
     void Update();
     void UpdateIMGUI();
     
-    float m_MaxElevation = 90.0f;
-    float m_MinElevation = 0.0f;
-    float m_WorldLatitude = -30.0f;
-    float m_TimeOfDay = 12.0f;
     float m_Intensity = 1.0f;
-    bbeVector4 m_Direction;
+    bbeVector4 m_Direction = { 0.577f, 0.577f, 0.577f, 1.0f };
 
     View m_View;
 };
