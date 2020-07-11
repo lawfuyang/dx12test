@@ -29,7 +29,7 @@ void GfxShadowMapRenderer::Initialize()
     sunShadowMapInitParams.m_InitialState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
     sunShadowMapInitParams.m_ViewType = GfxTexture::DSV;
 
-    gs_SunShadowMap.Initialize(initContext, sunShadowMapInitParams);
+    //gs_SunShadowMap.Initialize(initContext, sunShadowMapInitParams);
 }
 
 void GfxShadowMapRenderer::ShutDown()

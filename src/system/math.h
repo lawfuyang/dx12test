@@ -45,6 +45,13 @@ CREATE_SIMD_FUNCTIONS(bbeVector4)
 
 #undef CREATE_SIMD_FUNCTIONS
 
+static bbeVector4 Normalize3(const bbeVector4& v4)
+{
+    bbeVector3 v3 = v4;
+    v3.Normalize();
+    return bbeVector4{ v3.x, v3.y, v3.z, 1.0f };
+}
+
 #define bbeBIG_Float (1e10f) // use instead of FLT_MAX when overflowing is a concern
 
 template <typename T>

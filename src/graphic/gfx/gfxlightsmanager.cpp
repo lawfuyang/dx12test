@@ -32,7 +32,7 @@ void DirectionalLight::Update()
     m_View.m_ZNearP = 1.0f;
     m_View.m_ZFarP = 2000.0f;
 
-    m_Direction.Normalize();
+    m_Direction = Normalize3(m_Direction);
 
     const bbeMatrix lightRotation = bbeMatrix::CreateFromQuaternion(bbeQuaternion{ m_Direction });
     const bbeVector3 to = bbeVector3::TransformNormal(-bbeVector3::UnitY, lightRotation);
