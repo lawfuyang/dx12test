@@ -5,7 +5,7 @@
 #include <graphic/gfx/gfxcontext.h>
 #include <graphic/dx12utils.h>
 
-#define DEBUG_GFX_MEMORY_ALLOCS
+//#define DEBUG_GFX_MEMORY_ALLOCS
 
 #if defined(DEBUG_GFX_MEMORY_ALLOCS)
     #define bbeLogGfxAlloc(StrFormat, ...) g_Log.info(StrFormat, __VA_ARGS__);

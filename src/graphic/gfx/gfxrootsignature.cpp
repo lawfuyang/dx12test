@@ -67,4 +67,10 @@ void GfxRootSignature::Compile(CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t num
 
     m_RootSignature->SetName(MakeWStrFromStr(rootSigName).c_str());
     m_Hash = std::hash<std::string_view>{}(rootSigName);
+
+    for (uint32_t i = 0; i < numRootParams; ++i)
+    {
+        boost::hash_combine(m_Hash, rootParams[i].ParameterType);
+        boost::hash_combine(m_Hash, rootParams[i].ShaderVisibility);
+    }
 }
