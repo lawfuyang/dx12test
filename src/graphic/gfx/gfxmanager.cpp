@@ -13,7 +13,7 @@
 #include <system/imguimanager.h>
 
 #include <graphic/renderers/gfxzprepassrenderer.h>
-#include <graphic/renderers/gfxtestrenderpass.h>
+#include <graphic/renderers/gfxforwardlighting.h>
 #include <graphic/renderers/gfximguirenderer.h>
 #include <graphic/renderers/gfxshadowmaprenderer.h>
 
@@ -74,7 +74,7 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
             tf::Task allTasks[] =
             {
                 ADD_SF_TASK(subFlow, g_GfxDefaultAssets.Initialize(sf)),
-                ADD_TF_TASK(subFlow, g_GfxTestRenderPass.Initialize()),
+                ADD_TF_TASK(subFlow, g_GfxForwardLightingPass.Initialize()),
                 ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer.Initialize()),
                 ADD_TF_TASK(subFlow, g_ZPrePassRenderer.Initialize()),
                 ADD_TF_TASK(subFlow, g_GfxShadowMapRenderer.Initialize()),
@@ -113,7 +113,7 @@ void GfxManager::ShutDown()
 
     g_GfxPSOManager.ShutDown();
     g_ZPrePassRenderer.ShutDown();
-    g_GfxTestRenderPass.ShutDown();
+    g_GfxForwardLightingPass.ShutDown();
     g_GfxIMGUIRenderer.ShutDown();
     g_GfxShadowMapRenderer.ShutDown();
     g_GfxDefaultAssets.ShutDown();
@@ -146,7 +146,7 @@ void GfxManager::ScheduleRenderPasses(tf::Subflow& subFlow)
     bbeProfileFunction();
 
     ADD_TF_TASK(subFlow, g_ZPrePassRenderer.PopulateCommandList());
-    ADD_TF_TASK(subFlow, g_GfxTestRenderPass.PopulateCommandList());
+    ADD_TF_TASK(subFlow, g_GfxForwardLightingPass.PopulateCommandList());
     ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer.PopulateCommandList());
 }
 
@@ -162,7 +162,7 @@ void GfxManager::ScheduleCommandListsExecution()
 
     // queue all render passes
     QueueRenderPass(&g_ZPrePassRenderer);
-    QueueRenderPass(&g_GfxTestRenderPass);
+    QueueRenderPass(&g_GfxForwardLightingPass);
     QueueRenderPass(&g_GfxIMGUIRenderer);
 
     // No more draw calls directly to the Back Buffer beyond this point!

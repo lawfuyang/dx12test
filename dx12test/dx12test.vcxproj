@@ -10,7 +10,7 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{9E787AE2-DBF1-4408-8CEB-6BBEF1D8C43F}</ProjectGuid>
     <RootNamespace>dx12test</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Unity|x64'" Label="Configuration">
@@ -89,9 +89,9 @@
     <ClCompile Include="..\src\graphic\gfx\gfxswapchain.cpp" />
     <ClCompile Include="..\src\graphic\gfx\gfxtexturesandbuffers.cpp" />
     <ClCompile Include="..\src\graphic\gfx\gfxvertexformat.cpp" />
+    <ClCompile Include="..\src\graphic\renderers\gfxforwardlighting.cpp" />
     <ClCompile Include="..\src\graphic\renderers\gfximguirenderer.cpp" />
     <ClCompile Include="..\src\graphic\renderers\gfxshadowmaprenderer.cpp" />
-    <ClCompile Include="..\src\graphic\renderers\gfxtestrenderpass.cpp" />
     <ClCompile Include="..\src\graphic\renderers\gfxzprepassrenderer.cpp" />
     <ClCompile Include="..\src\graphic\shapes.cpp" />
     <ClCompile Include="..\src\graphic\view.cpp" />
@@ -138,10 +138,10 @@
     <ClInclude Include="..\src\graphic\gfx\gfxswapchain.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxtexturesandbuffers.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxvertexformat.h" />
+    <ClInclude Include="..\src\graphic\renderers\gfxforwardlighting.h" />
     <ClInclude Include="..\src\graphic\renderers\gfximguirenderer.h" />
     <ClInclude Include="..\src\graphic\renderers\gfxrendererbase.h" />
     <ClInclude Include="..\src\graphic\renderers\gfxshadowmaprenderer.h" />
-    <ClInclude Include="..\src\graphic\renderers\gfxtestrenderpass.h" />
     <ClInclude Include="..\src\graphic\renderers\gfxzprepassrenderer.h" />
     <ClInclude Include="..\src\graphic\shapes.h" />
     <ClInclude Include="..\src\graphic\view.h" />

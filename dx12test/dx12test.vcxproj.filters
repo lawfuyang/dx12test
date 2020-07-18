@@ -67,9 +67,6 @@
     <ClCompile Include="..\src\graphic\dx12utils.cpp">
       <Filter>graphic\dx12</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\graphic\renderers\gfxtestrenderpass.cpp">
-      <Filter>graphic\renderers</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\graphic\renderers\gfximguirenderer.cpp">
       <Filter>graphic\renderers</Filter>
     </ClCompile>
@@ -135,6 +132,9 @@
     </ClCompile>
     <ClCompile Include="..\src\graphic\shapes.cpp">
       <Filter>graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\renderers\gfxforwardlighting.cpp">
+      <Filter>graphic\renderers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -211,9 +211,6 @@
     <ClInclude Include="..\src\system\serializer.h">
       <Filter>system</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\renderers\gfxtestrenderpass.h">
-      <Filter>graphic\renderers</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\graphic\renderers\gfximguirenderer.h">
       <Filter>graphic\renderers</Filter>
     </ClInclude>
@@ -285,6 +282,9 @@
     </ClInclude>
     <ClInclude Include="..\src\graphic\shapes.h">
       <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\renderers\gfxforwardlighting.h">
+      <Filter>graphic\renderers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

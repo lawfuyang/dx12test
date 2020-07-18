@@ -7,19 +7,19 @@
 
 class GfxContext;
 
-class GfxTestRenderPass : public GfxRendererBase
+class GfxForwardLightingPass : public GfxRendererBase
 {
 public:
-    DeclareSingletonFunctions(GfxTestRenderPass);
+    DeclareSingletonFunctions(GfxForwardLightingPass);
 
     void Initialize();
     void ShutDown() override;
     void PopulateCommandList() override;
 
-    const char* GetName() const override { return "GfxTestRenderPass"; }
+    const char* GetName() const override { return "GfxForwardLightingPass"; }
 
 private:
     GfxRootSignature m_RootSignature;
     GfxConstantBuffer m_RenderPassCB;
 };
-#define g_GfxTestRenderPass GfxTestRenderPass::GetInstance()
+#define g_GfxForwardLightingPass GfxForwardLightingPass::GetInstance()
