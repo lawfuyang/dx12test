@@ -1,4 +1,7 @@
 
+#ifndef __COMMONVERTEXFORMATS_HLSL__
+#define __COMMONVERTEXFORMATS_HLSL__
+
 struct VS_IN
 {
 #if defined(VERTEX_FORMAT_Position2f_TexCoord2f_Color4ub)
@@ -22,3 +25,5 @@ struct VS_OUT
     float2 m_TexCoord : TEXCOORD;
     float3 m_Tangent  : TANGENT;
 };
+
+#endif // #define __COMMONVERTEXFORMATS_HLSL__

@@ -1,6 +1,7 @@
 
-#include "staticsamplers.hlsl"
+#include "common.hlsl"
 #include "commonvertexformats.hlsl"
+#include "brdf.hlsl"
 
 #include "autogen/hlsl/PerFrameConsts.h"
 
