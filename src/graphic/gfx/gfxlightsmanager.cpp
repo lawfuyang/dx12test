@@ -110,7 +110,7 @@ void DirectionalLight::UpdateIMGUI()
 {
     bool updateDirLight = false;
     updateDirLight |= ImGui::SliderFloat3("Direction", &m_Direction.x, 0.0f, 1.0f);
-    updateDirLight |= ImGui::SliderFloat("Intensity", &m_Intensity, 0.0f, 1.0f);
+    updateDirLight |= ImGui::SliderFloat("Intensity", &m_Intensity, 0.0f, 5.0f);
 
     if (updateDirLight)
     {
