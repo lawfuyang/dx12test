@@ -12,7 +12,7 @@ extern std::vector<ConstantBuffer> g_AllConstantBuffers;
 extern std::vector<ShaderPermutationsPrintJob> g_AllShaderPermutationsPrintJobs;
 extern std::unordered_map<std::string, std::vector<std::string>> g_AllShaderPermutationsStrings;
 
-struct UberShader
+struct ForwardLighting
 {
     DEFINE_ENUM_WITH_STRING_CONVERSIONS(VSPermutations,
         (VERTEX_FORMAT_Position2f_TexCoord2f_Color4ub)
@@ -46,8 +46,9 @@ struct UberShader
         cb.m_Name = "PerFrameConsts";
         cb.m_Register = 0;
         cb.AddVariable("float4x4", "ViewProjMatrix");
+        cb.AddVariable("float4", "CameraPosition");
         cb.AddVariable("float4", "SceneLightDir");
-        cb.AddVariable("float", "SceneLightIntensity");
+        cb.AddVariable("float4", "SceneLightIntensity");
 
         bbeAutoLock(g_AllConstantBuffersLock);
         g_AllConstantBuffers.push_back(cb);
@@ -70,8 +71,8 @@ struct UberShader
         }
 
         PopulateJobParams params;
-        params.m_ShaderFilePath = g_ShadersDir + "ubershader.hlsl";
-        params.m_ShaderName = "UberShader";
+        params.m_ShaderFilePath = g_ShadersDir + "forwardlighting.hlsl";
+        params.m_ShaderName = ms_ShaderName;
         params.m_EntryPoint = "VSMain";
         params.m_ShaderType = GfxShaderType::VS;
         params.m_DefineStrings = allVSPerms;
@@ -105,7 +106,7 @@ struct UberShader
         }
     }
 
-    static inline const char* ms_ShaderName = "UberShader";
+    static inline const char* ms_ShaderName = "ForwardLighting";
 };
 
-RegisterJobPopulator(UberShader, UberShader::PopulateJobs);
+RegisterJobPopulator(ForwardLighting, ForwardLighting::PopulateJobs);

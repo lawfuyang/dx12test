@@ -6,6 +6,8 @@ static const uint32_t MAX_SHADER_KEY_BITS = 4;
 
 void PrintToConsoleAndLogFile(const std::string& str);
 
+extern std::mutex g_AllShaderCompileJobsLock;
+extern std::vector<ShaderCompileJob> g_AllShaderCompileJobs;
 extern D3D_SHADER_MODEL g_HighestShaderModel;
 extern std::string g_DXCDir;
 extern std::string g_ShadersTmpDir;

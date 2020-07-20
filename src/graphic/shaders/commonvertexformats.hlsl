@@ -18,12 +18,4 @@ struct VS_IN
 #endif
 };
 
-struct VS_OUT
-{
-    float4 m_Position : SV_POSITION;
-    float3 m_Normal   : NORMAL;
-    float2 m_TexCoord : TEXCOORD;
-    float3 m_Tangent  : TANGENT;
-};
-
 #endif // #define __COMMONVERTEXFORMATS_HLSL__

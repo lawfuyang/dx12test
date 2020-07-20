@@ -36,9 +36,6 @@
     <ClCompile Include="..\extern\microprofile\microprofile.cpp">
       <Filter>extern\microprofile</Filter>
     </ClCompile>
-    <ClCompile Include="ubershader.cpp">
-      <Filter>Source Files\shaders</Filter>
-    </ClCompile>
     <ClCompile Include="imgui.cpp">
       <Filter>Source Files\shaders</Filter>
     </ClCompile>
@@ -47,6 +44,9 @@
     </ClCompile>
     <ClCompile Include="constantbuffer.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="forwardlighting.cpp">
+      <Filter>Source Files\shaders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

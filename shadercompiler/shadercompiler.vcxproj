@@ -62,10 +62,10 @@
     <ClCompile Include="..\src\graphic\dx12utils.cpp" />
     <ClCompile Include="..\src\system\utils.cpp" />
     <ClCompile Include="constantbuffer.cpp" />
+    <ClCompile Include="forwardlighting.cpp" />
     <ClCompile Include="imgui.cpp" />
     <ClCompile Include="shadercompilejob.cpp" />
     <ClCompile Include="shadercompiler.cpp" />
-    <ClCompile Include="ubershader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\extern\microprofile\microprofile.h" />

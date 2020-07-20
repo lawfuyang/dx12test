@@ -145,7 +145,7 @@ void GfxManager::ScheduleRenderPasses(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
 
-    ADD_TF_TASK(subFlow, g_ZPrePassRenderer.PopulateCommandList());
+    //ADD_TF_TASK(subFlow, g_ZPrePassRenderer.PopulateCommandList());
     ADD_TF_TASK(subFlow, g_GfxForwardLightingPass.PopulateCommandList());
     ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer.PopulateCommandList());
 }
@@ -161,7 +161,7 @@ void GfxManager::ScheduleCommandListsExecution()
     };
 
     // queue all render passes
-    QueueRenderPass(&g_ZPrePassRenderer);
+    //QueueRenderPass(&g_ZPrePassRenderer);
     QueueRenderPass(&g_GfxForwardLightingPass);
     QueueRenderPass(&g_GfxIMGUIRenderer);
 

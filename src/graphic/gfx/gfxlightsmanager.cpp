@@ -32,7 +32,7 @@ void DirectionalLight::Update()
     m_View.m_ZNearP = 1.0f;
     m_View.m_ZFarP = 2000.0f;
 
-    m_Direction = Normalize3(m_Direction);
+    m_Direction.Normalize();
 
     const bbeMatrix lightRotation = bbeMatrix::CreateFromQuaternion(bbeQuaternion{ m_Direction });
     const bbeVector3 to = bbeVector3::TransformNormal(-bbeVector3::UnitY, lightRotation);
@@ -110,7 +110,7 @@ void DirectionalLight::UpdateIMGUI()
 {
     bool updateDirLight = false;
     updateDirLight |= ImGui::SliderFloat3("Direction", &m_Direction.x, 0.0f, 1.0f);
-    updateDirLight |= ImGui::SliderFloat("Intensity", &m_Intensity, 0.0f, 5.0f);
+    ImGui::SliderFloat3("Intensity", &m_Intensity.x, 0.0f, 5.0f);
 
     if (updateDirLight)
     {

@@ -5,8 +5,8 @@
 #include <graphic/gfx/gfxdefaultassets.h>
 
 #include <tmp/shaders/autogen/cpp/PerFrameConsts.h>
-#include <tmp/shaders/autogen/cpp/VS_UberShader.h>
-#include <tmp/shaders/autogen/cpp/PS_UberShader.h>
+#include <tmp/shaders/autogen/cpp/VS_ForwardLighting.h>
+#include <tmp/shaders/autogen/cpp/PS_ForwardLighting.h>
 
 extern GfxTexture gs_SceneDepthBuffer;
 
@@ -51,7 +51,7 @@ void GfxZPrePassRenderer::PopulateCommandList()
 
     GfxPipelineStateObject& pso = context.GetPSO();
 
-    Shaders::VS_UberShaderPermutations vsPerms;
+    Shaders::VS_ForwardLightingPermutations vsPerms;
     vsPerms.VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f = true;
 
     const GfxShader& vShader = g_GfxShaderManager.GetShader(vsPerms);

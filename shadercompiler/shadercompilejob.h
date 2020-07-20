@@ -2,14 +2,14 @@
 
 #define RegisterJobPopulator(Name, Func)                    \
 extern std::vector<std::function<void()>> g_JobsPopulators; \
-struct __Name__Init                                         \
+struct __##Name##__Init                                     \
 {                                                           \
-    __Name__Init::__Name__Init()                            \
+    __##Name##__Init::__##Name##__Init()                    \
     {                                                       \
         g_JobsPopulators.push_back(Func);                   \
     }                                                       \
 };                                                          \
-static const __Name__Init gs__Name__Init;
+static const __##Name##__Init gs__##Name##__Init;
 
 
 enum class GfxShaderType : uint32_t { VS, PS, CS };
