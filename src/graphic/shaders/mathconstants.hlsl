@@ -2,6 +2,8 @@
 #ifndef __MATHCONSTANTS_HLSL__
 #define __MATHCONSTANTS_HLSL__
 
+#define M_TOLERANCE         0.00001
+
 // Constants from <math.h>
 #define M_E                 2.71828182845904523536  // e
 #define M_LOG2E             1.44269504088896340736  // log2(e)

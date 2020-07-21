@@ -1,6 +1,7 @@
 
 #include "common.hlsl"
 #include "commonvertexformats.hlsl"
+#include "pbr.hlsl"
 
 #include "autogen/hlsl/PerFrameConsts.h"
 

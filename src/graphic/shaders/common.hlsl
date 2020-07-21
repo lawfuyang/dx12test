@@ -5,5 +5,6 @@
 #include "staticsamplers.hlsl"
 #include "mathconstants.hlsl"
 #include "mathhelpers.hlsl"
+#include "utils.hlsl"
 
 #endif // #define __COMMON_HLSL__
