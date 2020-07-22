@@ -19,7 +19,12 @@ public:
     const char* GetName() const override { return "GfxForwardLightingPass"; }
 
 private:
+    void UpdateIMGUI();
+
     GfxRootSignature m_RootSignature;
     GfxConstantBuffer m_RenderPassCB;
+
+    float m_ConstPBRRoughness = 0.75f;
+    float m_ConstPBRMetallic = 0.1f;
 };
 #define g_GfxForwardLightingPass GfxForwardLightingPass::GetInstance()

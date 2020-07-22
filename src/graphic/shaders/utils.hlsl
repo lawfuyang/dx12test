@@ -1,15 +1,16 @@
-
 #ifndef __UTILS_HLSL__
 #define __UTILS_HLSL__
 
-float3 BiasX2(float3 x)
+// Sample normal map, convert to signed, apply tangent-to-world space transform.
+float3 CalcPerPixelNormal(in Texture2D<float4> normalTexture, float2 vTexcoord, float3 vVertNormal, float3 vVertBinormal, float3 vVertTangent)
 {
-    return 2.0f * x - 1.0f;
-}
+    float3x3 mTangentSpaceToWorldSpace = float3x3(vVertTangent, vVertBinormal, vVertNormal);
 
-float3 BiasD2(float3 x)
-{
-    return 0.5f * x + 0.5f;
+    // Compute per-pixel normal.
+    float3 vBumpNormal = (float3)normalTexture.Sample(g_AnisotropicWrapSampler, vTexcoord);
+    vBumpNormal = 2.0f * vBumpNormal - 1.0f;
+
+    return mul(vBumpNormal, mTangentSpaceToWorldSpace);
 }
 
 // Christian Schuler, "Normal Mapping without Precomputed Tangents", ShaderX 5, Chapter 2.6, pp. 131-140

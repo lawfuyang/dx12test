@@ -12,11 +12,15 @@
 #include <tmp/shaders/autogen/cpp/VS_ForwardLighting.h>
 #include <tmp/shaders/autogen/cpp/PS_ForwardLighting.h>
 
+static bool gs_ShowForwardLightingIMGUIWindow = false;
 GfxTexture gs_SceneDepthBuffer;
 
 void GfxForwardLightingPass::Initialize()
 {
     bbeProfileFunction();
+
+    g_IMGUIManager.RegisterTopMenu("Graphic", "GfxForwardLightingPass", &gs_ShowForwardLightingIMGUIWindow);
+    g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUI(); });
 
     GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "GfxForwardLightingPass::Initialize");
 
@@ -76,6 +80,8 @@ void GfxForwardLightingPass::PopulateCommandList()
     consts.m_CameraPosition = bbeVector4{ view.m_Eye };
     consts.m_SceneLightDir = bbeVector4{ g_GfxLightsManager.GetDirectionalLight().m_Direction };
     consts.m_SceneLightIntensity = bbeVector4{ g_GfxLightsManager.GetDirectionalLight().m_Intensity };
+    consts.m_ConstPBRMetallic = m_ConstPBRMetallic;
+    consts.m_ConstPBRRoughness = m_ConstPBRRoughness;
     m_RenderPassCB.Update(&consts);
 
     context.StageCBV(m_RenderPassCB, 0, 0);
@@ -97,4 +103,18 @@ void GfxForwardLightingPass::PopulateCommandList()
     const uint32_t diffuseTexRootOffset = 0;
     const uint32_t normalTexRootOffset = 1;
     GfxDefaultAssets::DrawSquidRoom(context, true, 1, diffuseTexRootOffset, normalTexRootOffset);
+}
+
+void GfxForwardLightingPass::UpdateIMGUI()
+{
+    if (!gs_ShowForwardLightingIMGUIWindow)
+        return;
+
+    ScopedIMGUIWindow window{ "GfxForwardLightingPass" };
+
+    if (ImGui::CollapsingHeader("PBR Consts", nullptr, ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        ImGui::SliderFloat("PBR Roughness", &m_ConstPBRRoughness, 0.0f, 1.0f);
+        ImGui::SliderFloat("PBR Metallic", &m_ConstPBRMetallic, 0.0f, 1.0f);
+    }
 }

@@ -9,7 +9,7 @@ struct DirectionalLight
     void Update();
     void UpdateIMGUI();
     
-    bbeVector3 m_Intensity = { 2.0f, 2.0f, 2.0f };
+    bbeVector3 m_Intensity = bbeVector3::One;
     bbeVector3 m_Direction = { 0.577f, 0.577f, 0.577f };
 
     View m_View;

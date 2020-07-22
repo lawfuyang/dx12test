@@ -49,6 +49,8 @@ struct ForwardLighting
         cb.AddVariable("float4", "CameraPosition");
         cb.AddVariable("float4", "SceneLightDir");
         cb.AddVariable("float4", "SceneLightIntensity");
+        cb.AddVariable("float", "ConstPBRRoughness");
+        cb.AddVariable("float", "ConstPBRMetallic");
 
         bbeAutoLock(g_AllConstantBuffersLock);
         g_AllConstantBuffers.push_back(cb);
