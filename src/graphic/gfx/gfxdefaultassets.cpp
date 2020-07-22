@@ -7,6 +7,9 @@
 #include <defaultassets/occcity.h>
 #include <defaultassets/SquidRoom.h>
 
+#include <tmp/shaders/autogen/cpp/VS_ForwardLighting.h>
+#include <tmp/shaders/autogen/cpp/PS_ForwardLighting.h>
+
 void GfxDefaultAssets::PreInitialize(tf::Subflow& sf)
 {
     bbeProfileFunction();
@@ -61,6 +64,18 @@ void GfxDefaultAssets::DrawSquidRoom(GfxContext& context, bool bindTextures, uin
     pso.SetVertexFormat(GfxDefaultAssets::SquidRoom.GetVertexFormat());
     context.SetVertexBuffer(GfxDefaultAssets::SquidRoom.GetVertexBuffer());
     context.SetIndexBuffer(GfxDefaultAssets::SquidRoom.GetIndexBuffer());
+
+    Shaders::VS_ForwardLightingPermutations vPerms;
+    vPerms.VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f = true;
+
+    Shaders::PS_ForwardLightingPermutations pPerms;
+    pPerms.USE_PBR_CONSTS = true;
+
+    const GfxShader& vShader = g_GfxShaderManager.GetShader(vPerms);
+    const GfxShader& pShader = g_GfxShaderManager.GetShader(pPerms);
+
+    pso.SetVertexShader(vShader);
+    pso.SetPixelShader(pShader);
 
     for (const SquidRoom::DrawParameters& drawParams : SquidRoom::Draws)
     {

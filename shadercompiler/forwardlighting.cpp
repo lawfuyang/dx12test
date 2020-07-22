@@ -21,6 +21,8 @@ struct ForwardLighting
     );
 
     DEFINE_ENUM_WITH_STRING_CONVERSIONS(PSPermutations,
+        (PERTURBED_NORMALS)
+        (USE_PBR_CONSTS)
         (PSPermutations_Count)
     );
 
@@ -63,7 +65,7 @@ struct ForwardLighting
         bool validVSKeys[1 << VSPermutations_Count];
         GetValidShaderKeys(validVSKeys, FilterVSKeys);
 
-        bool validPSKeys[1];
+        bool validPSKeys[1 << PSPermutations_Count];
         GetValidShaderKeys(validPSKeys, NoFilterForKeys);
 
         std::vector<std::string> allVSPerms(VSPermutations_Count);
@@ -72,20 +74,27 @@ struct ForwardLighting
             allVSPerms[i] = EnumToString((VSPermutations)i);
         }
 
+        std::vector<std::string> allPSPerms(PSPermutations_Count);
+        for (uint32_t i = 0; i < PSPermutations_Count; ++i)
+        {
+            allPSPerms[i] = EnumToString((PSPermutations)i);
+        }
+
         PopulateJobParams params;
         params.m_ShaderFilePath = g_ShadersDir + "forwardlighting.hlsl";
         params.m_ShaderName = ms_ShaderName;
+        params.m_ShaderID = GetCompileTimeCRC32(ms_ShaderName);
+
         params.m_EntryPoint = "VSMain";
         params.m_ShaderType = GfxShaderType::VS;
         params.m_DefineStrings = allVSPerms;
         params.m_KeysArray = validVSKeys;
         params.m_KeysArraySz = _countof(validVSKeys);
-        params.m_ShaderID = GetCompileTimeCRC32(ms_ShaderName);
         PopulateJobsArray(params);
 
         params.m_EntryPoint = "PSMain";
         params.m_ShaderType = GfxShaderType::PS;
-        params.m_DefineStrings.clear();
+        params.m_DefineStrings = allPSPerms;
         params.m_KeysArray = validPSKeys;
         params.m_KeysArraySz = _countof(validPSKeys);
         PopulateJobsArray(params);
@@ -105,6 +114,7 @@ struct ForwardLighting
             printJob.m_ShaderType = GfxShaderType::PS;
             printJob.m_BaseShaderID = GetCompileTimeCRC32(ms_ShaderName);
             printJob.m_BaseShaderName = StringFormat("PS_%s", ms_ShaderName);
+            printJob.m_Defines = allPSPerms;
         }
     }
 

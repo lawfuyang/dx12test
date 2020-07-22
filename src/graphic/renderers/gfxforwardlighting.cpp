@@ -86,17 +86,6 @@ void GfxForwardLightingPass::PopulateCommandList()
 
     context.StageCBV(m_RenderPassCB, 0, 0);
 
-    GfxPipelineStateObject& pso = context.GetPSO();
-
-    Shaders::VS_ForwardLightingPermutations vPerms;
-    vPerms.VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f = true;
-
-    const GfxShader& vShader = g_GfxShaderManager.GetShader(vPerms);
-    const GfxShader& pShader = g_GfxShaderManager.GetShader(Shaders::PS_ForwardLightingPermutations{});
-
-    pso.SetVertexShader(vShader);
-    pso.SetPixelShader(pShader);
-
     context.SetRenderTarget(0, g_GfxManager.GetSwapChain().GetCurrentBackBuffer());
     context.SetDepthStencil(gs_SceneDepthBuffer);
 

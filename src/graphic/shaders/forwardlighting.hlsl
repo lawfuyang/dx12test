@@ -7,6 +7,7 @@
 
 Texture2D<float4> g_DiffuseTexture : register(t0);
 Texture2D<float4> g_NormalTexture : register(t1);
+Texture2D<float4> g_ORMTexture : register(t2);
 
 struct VS_OUT
 {
@@ -55,17 +56,35 @@ float4 PSMain(VS_OUT input) : SV_TARGET
     // Specular coefficiant - fixed reflectance value for non-metals
     static const float kSpecularCoefficient = 0.04;
 
-    // TODO: texture input for these
-    float ambientOcclusion = 1.0f;
-
     float4 baseAlbedo = g_DiffuseTexture.Sample(g_AnisotropicWrapSampler, input.m_TexCoord);
 
+    // Init per-pixel normal
+    float3 normal;
+#if defined(PERTURBED_NORMALS)
+    normal = CalcPerPixelNormal(g_NormalTexture, input.m_TexCoord, input.m_Normal, input.m_Bitangent, input.m_Tangent);
+#else
+    float3 localNormal = TwoChannelNormalX2(g_NormalTexture.Sample(g_AnisotropicWrapSampler, input.m_TexCoord).xy);
+    normal = PeturbNormal(localNormal, input.m_PositionW.xyz, input.m_Normal, input.m_TexCoord);
+#endif
+
+    // Init per-pixel PBR properties
+    float ambientOcclusion = 1.0f;
+    float roughness = 0.75;
+    float metallic = 0.1;
+#if !defined(USE_PBR_CONSTS)
+    // R = Occlusion, G = Roughness, B = Metalness
+    float3 ORM = g_ORMTexture.Sample(g_AnisotropicClampSampler, input.m_TexCoord).rgb;
+    ambientOcclusion = ORM.r;
+    roughness = ORM.g;
+    metallic = ORM.b;
+#endif
+
     CommonPBRParams commonPBRParams;
-    commonPBRParams.N = CalcPerPixelNormal(g_NormalTexture, input.m_TexCoord, input.m_Normal, input.m_Bitangent, input.m_Tangent);
+    commonPBRParams.N = normal;
     commonPBRParams.V = normalize(g_CameraPosition.xyz - input.m_PositionW.xyz);
-    commonPBRParams.roughness = g_ConstPBRRoughness;
-    commonPBRParams.baseDiffuse = lerp(baseAlbedo.rgb, float3(0, 0, 0), g_ConstPBRMetallic) * ambientOcclusion;
-    commonPBRParams.baseSpecular = lerp(kSpecularCoefficient, baseAlbedo.rgb, g_ConstPBRMetallic) * ambientOcclusion;
+    commonPBRParams.roughness = roughness;
+    commonPBRParams.baseDiffuse = lerp(baseAlbedo.rgb, float3(0, 0, 0), metallic) * ambientOcclusion;
+    commonPBRParams.baseSpecular = lerp(kSpecularCoefficient, baseAlbedo.rgb, metallic) * ambientOcclusion;
 
     EvaluateLightPBRParams dirLightPBRParams;
     dirLightPBRParams.Common = commonPBRParams;
