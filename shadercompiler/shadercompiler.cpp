@@ -256,15 +256,39 @@ static void PrintAutogenFilesForCBs(ConstantBuffer& cb)
     {
         std::string generatedString;
 
-        generatedString += StringFormat("cbuffer %s : register(b%u)\n", cb.m_Name, cb.m_Register);
-        generatedString += "{\n";
+        generatedString += StringFormat("#ifndef __%s_H__\n", cb.m_Name);
+        generatedString += StringFormat("#define __%s_H__\n\n", cb.m_Name);
 
+        // cbuffer definition
+        generatedString += StringFormat("cbuffer %s_CB : register(b%u)\n", cb.m_Name, cb.m_Register);
+        generatedString += "{\n";
         for (const ConstantBuffer::CPPTypeVarNamePair& var : cb.m_Variables)
         {
-            generatedString += StringFormat("    %s g_%s;\n", var.m_HLLSVarType.c_str(), var.m_VarName.c_str());
+            generatedString += StringFormat("    %s g_%s_%s;\n", var.m_HLLSVarType.c_str(), cb.m_Name, var.m_VarName.c_str());
         }
+        generatedString += "};\n\n";
 
-        generatedString += "};\n";
+        // struct for cbuffer definition
+        generatedString += StringFormat("struct %s\n", cb.m_Name, cb.m_Register);
+        generatedString += "{\n";
+        for (const ConstantBuffer::CPPTypeVarNamePair& var : cb.m_Variables)
+        {
+            generatedString += StringFormat("    %s m_%s;\n", var.m_HLLSVarType.c_str(), var.m_VarName.c_str());
+        }
+        generatedString += "};\n\n";
+
+        // Helper creater function for struct
+        generatedString += StringFormat("%s Create%s()\n", cb.m_Name, cb.m_Name);
+        generatedString += "{\n";
+        generatedString += StringFormat("    %s consts;\n", cb.m_Name);
+        for (const ConstantBuffer::CPPTypeVarNamePair& var : cb.m_Variables)
+        {
+            generatedString += StringFormat("    consts.m_%s = g_%s_%s;\n", var.m_VarName.c_str(), cb.m_Name, var.m_VarName.c_str());
+        }
+        generatedString += "    return consts;\n";
+        generatedString += "}\n\n";
+
+        generatedString += StringFormat("#endif // #define __%s_H__\n", cb.m_Name);
 
         const std::string outputDir = g_ShadersTmpHLSLAutogenDir + cb.m_Name + ".h";
         OverrideExistingFileIfNecessary(generatedString, outputDir);

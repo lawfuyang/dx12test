@@ -5,6 +5,8 @@
 
 #include "autogen/hlsl/PerFrameConsts.h"
 
+static const PerFrameConsts g_PerFrameConsts = CreatePerFrameConsts();
+
 Texture2D<float4> g_DiffuseTexture : register(t0);
 Texture2D<float4> g_NormalTexture : register(t1);
 Texture2D<float4> g_ORMTexture : register(t2);
@@ -32,7 +34,7 @@ VS_OUT VSMain(VS_IN input)
     position = float4(input.m_Position, 1);
 #endif
 
-    result.m_Position = mul(position, g_ViewProjMatrix);
+    result.m_Position = mul(position, g_PerFrameConsts.m_ViewProjMatrix);
     result.m_TexCoord = input.m_TexCoord;
     result.m_Bitangent = 0;
 
@@ -81,15 +83,15 @@ float4 PSMain(VS_OUT input) : SV_TARGET
 
     CommonPBRParams commonPBRParams;
     commonPBRParams.N = normal;
-    commonPBRParams.V = normalize(g_CameraPosition.xyz - input.m_PositionW.xyz);
+    commonPBRParams.V = normalize(g_PerFrameConsts.m_CameraPosition.xyz - input.m_PositionW.xyz);
     commonPBRParams.roughness = roughness;
     commonPBRParams.baseDiffuse = lerp(baseAlbedo.rgb, float3(0, 0, 0), metallic) * ambientOcclusion;
     commonPBRParams.baseSpecular = lerp(kSpecularCoefficient, baseAlbedo.rgb, metallic) * ambientOcclusion;
 
     EvaluateLightPBRParams dirLightPBRParams;
     dirLightPBRParams.Common = commonPBRParams;
-    dirLightPBRParams.lightColor = g_SceneLightIntensity.xyz;
-    dirLightPBRParams.L = g_SceneLightDir.xyz;
+    dirLightPBRParams.lightColor = g_PerFrameConsts.m_SceneLightIntensity.xyz;
+    dirLightPBRParams.L = g_PerFrameConsts.m_SceneLightDir.xyz;
 
     float3 finalColor = EvaluateLightPBR(dirLightPBRParams);
 

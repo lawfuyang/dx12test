@@ -23,7 +23,7 @@ struct IMGUI
         //    float4x4 g_ProjMatrix;
         //};
         ConstantBuffer cb;
-        cb.m_Name = "IMGUICBuffer";
+        cb.m_Name = "IMGUIConsts";
         cb.m_Register = 0;
         cb.AddVariable("float4x4", "ProjMatrix");
 
