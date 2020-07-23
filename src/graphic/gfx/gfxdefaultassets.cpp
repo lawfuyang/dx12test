@@ -14,7 +14,6 @@ void GfxDefaultAssets::PreInitialize(tf::Subflow& sf)
 {
     bbeProfileFunction();
 
-    ADD_TF_TASK(sf, PreInitOcccity());
     ADD_TF_TASK(sf, PreInitSquidRoom());
 }
 
@@ -27,7 +26,6 @@ void GfxDefaultAssets::Initialize(tf::Subflow& sf)
     tasks.push_back(ADD_TF_TASK(sf, CreateSolidColorTexture(White2D, bbeColor{ 1.0f, 1.0f, 1.0f }, "Default White2D Texture")));
     tasks.push_back(ADD_TF_TASK(sf, CreateSolidColorTexture(Black2D, bbeColor{ 0.0f, 0.0f, 0.0f }, "Default Black2D Texture")));
     tasks.push_back(ADD_TF_TASK(sf, CreateUnitCubeMesh()));
-    tasks.push_back(ADD_TF_TASK(sf, CreateOcccityMesh()));
     tasks.push_back(ADD_TF_TASK(sf, CreateSquidRoomMesh()));
     tasks.push_back(ADD_SF_TASK(sf, CreateSquidRoomTextures(sf)));
 
@@ -44,7 +42,6 @@ void GfxDefaultAssets::ShutDown()
     GfxDefaultAssets::Black2D.Release();
     GfxDefaultAssets::Checkerboard.Release();
     GfxDefaultAssets::UnitCube.Release();
-    GfxDefaultAssets::Occcity.Release();
     GfxDefaultAssets::SquidRoom.Release();
 
     for (GfxTexture& tex : GfxDefaultAssets::SquidRoomTextures)
@@ -92,18 +89,6 @@ void GfxDefaultAssets::DrawSquidRoom(GfxContext& context, bool bindTextures, uin
 
         context.DrawIndexedInstanced(drawParams.IndexCount, 1, drawParams.IndexStart, drawParams.VertexBase, 0);
     }
-}
-
-void GfxDefaultAssets::PreInitOcccity()
-{
-    bbeProfileFunction();
-
-    using namespace SampleAssets;
-
-    StaticString<FILENAME_MAX> dataFileName = "..\\bin\\assets\\";
-    dataFileName += Occcity::DataFileName;
-
-    ReadDataFromFile(dataFileName.c_str(), m_OcccityData);
 }
 
 void GfxDefaultAssets::PreInitSquidRoom()
@@ -295,33 +280,6 @@ void GfxDefaultAssets::CreateUnitCubeMesh()
     GfxDefaultAssets::UnitCube.Initialize(meshInitParams);
 }
 
-void GfxDefaultAssets::CreateOcccityMesh()
-{
-    bbeProfileFunction();
-
-    assert(m_OcccityData.size());
-
-    using namespace SampleAssets;
-
-    GfxMesh::InitParams meshInitParams;
-    meshInitParams.MeshName = "Occcity Mesh";
-    meshInitParams.m_VertexFormat = &GfxDefaultVertexFormats::Position3f_Normal3f_Texcoord2f_Tangent3f;
-
-    GfxVertexBuffer::InitParams& VBInitParams = meshInitParams.m_VBInitParams;
-    VBInitParams.m_ResourceName = "Occcity Mesh Vertex Buffer";
-    VBInitParams.m_InitData = m_OcccityData.data() + Occcity::VertexDataOffset;
-    VBInitParams.m_NumVertices = Occcity::VertexDataSize / Occcity::StandardVertexStride;
-    VBInitParams.m_VertexSize = Occcity::StandardVertexStride;
-
-    GfxIndexBuffer::InitParams& IBInitParams = meshInitParams.m_IBInitParams;
-    IBInitParams.m_ResourceName = "Occcity Mesh Index Buffer";
-    IBInitParams.m_InitData = m_OcccityData.data() + Occcity::IndexDataOffset;
-    IBInitParams.m_NumIndices = Occcity::IndexDataSize / 4; // R32_UINT (SampleAssets::StandardIndexFormat) = 4 bytes each.
-    IBInitParams.m_IndexSize = 4;
-
-    GfxDefaultAssets::Occcity.Initialize(meshInitParams);
-}
-
 void GfxDefaultAssets::CreateSquidRoomMesh()
 {
     bbeProfileFunction();
@@ -381,9 +339,6 @@ void GfxDefaultAssets::CreateSquidRoomTextures(tf::Subflow& subFlow)
 
 void GfxDefaultAssets::ClearPreloadedSampleAssetsMemory()
 {
-    m_OcccityData.clear();
-    m_OcccityData.shrink_to_fit();
-
     m_SquidRoomData.clear();
     m_SquidRoomData.shrink_to_fit();
 }
