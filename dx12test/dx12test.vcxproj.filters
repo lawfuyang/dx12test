@@ -136,6 +136,9 @@
     <ClCompile Include="..\src\graphic\renderers\gfxforwardlighting.cpp">
       <Filter>graphic\renderers</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\application\scene.cpp">
+      <Filter>application</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -285,6 +288,9 @@
     </ClInclude>
     <ClInclude Include="..\src\graphic\renderers\gfxforwardlighting.h">
       <Filter>graphic\renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\application\scene.h">
+      <Filter>application</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

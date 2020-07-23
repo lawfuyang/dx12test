@@ -17,6 +17,7 @@
 #include <graphic/renderers/gfximguirenderer.h>
 #include <graphic/renderers/gfxshadowmaprenderer.h>
 
+static bool gs_ShowGfxManagerIMGUIWindow = false;
 extern GfxTexture gs_SceneDepthBuffer;
 
 void InitializeGraphic(tf::Subflow& subFlow)
@@ -46,7 +47,7 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
 
     m_GfxCommandManager.Initialize();
 
-    g_IMGUIManager.RegisterTopMenu("Graphic", "GfxManager", &m_ShowIMGUIWindow);
+    g_IMGUIManager.RegisterTopMenu("Graphic", "GfxManager", &gs_ShowGfxManagerIMGUIWindow);
     g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUIPropertyGrid(); });
 
     // independent tasks
@@ -236,7 +237,7 @@ void GfxManager::TransitionBackBufferForPresent()
 
 void GfxManager::UpdateIMGUIPropertyGrid()
 {
-    if (!m_ShowIMGUIWindow)
+    if (!gs_ShowGfxManagerIMGUIWindow)
         return;
 
     bbeProfileFunction();

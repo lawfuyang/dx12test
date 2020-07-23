@@ -7,8 +7,8 @@
 extern void InitializeGraphic(tf::Subflow& subFlow);
 extern void UpdateGraphic(tf::Subflow& subFlow);
 extern void ShutdownGraphic();
-extern void InitializeApplicationLayer();
-extern void UpdateApplicationLayer();
+extern void InitializeApplicationLayer(tf::Subflow& subFlow);
+extern void UpdateApplicationLayer(tf::Subflow& subFlow);
 extern void ShutdownApplicationLayer();
 
 void System::ProcessWindowsMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -92,7 +92,7 @@ void System::Loop()
 
         InplaceArray<tf::Task, 4> allSystemTasks;
         allSystemTasks.push_back(ADD_SF_TASK(tf, UpdateGraphic(sf)));
-        allSystemTasks.push_back(ADD_TF_TASK(tf, UpdateApplicationLayer()));
+        allSystemTasks.push_back(ADD_SF_TASK(tf, UpdateApplicationLayer(sf)));
         allSystemTasks.push_back(ADD_TF_TASK(tf, g_IMGUIManager.Update()));
 
         for (tf::Task task : allSystemTasks)
@@ -152,7 +152,7 @@ void System::Initialize()
 
         ADD_TF_TASK(tf, g_IMGUIManager.Initialize());
         ADD_SF_TASK(tf, InitializeGraphic(sf));
-        ADD_TF_TASK(tf, InitializeApplicationLayer());
+        ADD_SF_TASK(tf, InitializeApplicationLayer(sf));
 
         m_Executor.run(tf).wait();
     }

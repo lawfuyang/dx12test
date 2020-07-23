@@ -37,8 +37,6 @@ private:
     void TransitionBackBufferForPresent();
     void UpdateIMGUIPropertyGrid();
 
-    bool m_ShowIMGUIWindow = false;
-
     std::mutex m_ContextsLock;
     std::vector<GfxContext> m_AllContexts;
 
