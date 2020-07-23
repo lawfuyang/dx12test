@@ -63,10 +63,11 @@ void GfxBufferCommon::Release()
     if (m_D3D12MABufferAllocation)
     {
         ReleaseAllocation(m_D3D12MABufferAllocation);
+        m_D3D12MABufferAllocation = nullptr;
     }
 }
 
-void GfxBufferCommon::ReleaseAllocation(D3D12MA::Allocation*& allocation)
+void GfxBufferCommon::ReleaseAllocation(D3D12MA::Allocation* allocation)
 {
     bbeProfileFunction();
 
@@ -74,7 +75,6 @@ void GfxBufferCommon::ReleaseAllocation(D3D12MA::Allocation*& allocation)
 
     allocation->GetResource()->Release();
     allocation->Release();
-    allocation = nullptr;
 }
 
 D3D12MA::Allocation* GfxBufferCommon::CreateHeap(const GfxBufferCommon::HeapDesc& heapDesc)
@@ -156,8 +156,7 @@ void GfxBufferCommon::InitializeBufferWithInitData(GfxContext& context, uint32_t
     // we don't need this upload heap anymore... release it next frame
     g_GfxManager.AddGraphicCommand([uploadHeapAlloc]()
         {
-            D3D12MA::Allocation* copy = uploadHeapAlloc;
-            GfxBufferCommon::ReleaseAllocation(copy);
+            GfxBufferCommon::ReleaseAllocation(uploadHeapAlloc);
         });
 }
 
@@ -180,7 +179,6 @@ void GfxVertexBuffer::Initialize(GfxContext& initContext, const InitParams& init
     assert(initParams.m_NumVertices > 0);
     assert(initParams.m_VertexSize > 0);
 
-    m_ResourceName = initParams.m_ResourceName;
     m_NumVertices = initParams.m_NumVertices;
     m_StrideInBytes = initParams.m_VertexSize;
     m_SizeInBytes = initParams.m_VertexSize * initParams.m_NumVertices;
@@ -241,7 +239,6 @@ void GfxIndexBuffer::Initialize(GfxContext& initContext, const InitParams& initP
     assert(initParams.m_NumIndices);
     assert(initParams.m_IndexSize == 2 || initParams.m_IndexSize == 4);
 
-    m_ResourceName = initParams.m_ResourceName;
     m_NumIndices = initParams.m_NumIndices;
     m_Format = initParams.m_IndexSize == 2 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
     m_SizeInBytes = initParams.m_NumIndices * initParams.m_IndexSize;
@@ -279,48 +276,53 @@ void GfxIndexBuffer::Initialize(GfxContext& initContext, const InitParams& initP
     }
 }
 
-void GfxConstantBuffer::Initialize(uint32_t bufferSize, bool shaderVisibleDescriptorHeap, const std::string& resourceName)
+void GfxConstantBuffer::UploadToGPU(GfxContext& context, const void* data, uint32_t bufferSize, const char* CBName)
 {
     bbeProfileFunction();
 
     assert((bbeIsAligned(bufferSize, 16))); // CBuffers are 16 bytes aligned
 
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-
     m_SizeInBytes = AlignUp(bufferSize, 256); // CB size is required to be 256-byte aligned.
-    m_ResourceName = resourceName;
-
-    // init desc heap for cbuffer
-    m_GfxDescriptorHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderVisibleDescriptorHeap ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
 
     // Create upload heap for constant buffer
     GfxBufferCommon::HeapDesc heapDesc;
     heapDesc.m_HeapType = D3D12_HEAP_TYPE_UPLOAD;
     heapDesc.m_ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes);
     heapDesc.m_InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
-    heapDesc.m_ResourceName = resourceName.c_str();
+    heapDesc.m_ResourceName = CBName;
 
     m_D3D12MABufferAllocation = CreateHeap(heapDesc);
     assert(m_D3D12MABufferAllocation);
+
+    // init desc heap for cbuffer
+    GfxDescriptorHeap descHeap;
+    descHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
 
     // Describe and create a constant buffer view.
     D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
     cbvDesc.BufferLocation = m_D3D12MABufferAllocation->GetResource()->GetGPUVirtualAddress();
     cbvDesc.SizeInBytes = m_SizeInBytes;
-    gfxDevice.Dev()->CreateConstantBufferView(&cbvDesc, m_GfxDescriptorHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
 
-    DX12_CALL(m_D3D12MABufferAllocation->GetResource()->Map(0, nullptr, reinterpret_cast<void**>(&m_MappedMemory)));
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+    gfxDevice.Dev()->CreateConstantBufferView(&cbvDesc, descHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
 
-    // zero-init memory for constant buffer
-    memset(m_MappedMemory, 0, m_SizeInBytes);
-}
+    void* mappedMemory = nullptr;
+    DX12_CALL(m_D3D12MABufferAllocation->GetResource()->Map(0, nullptr, reinterpret_cast<void**>(&mappedMemory)));
+    memcpy(mappedMemory, data, m_SizeInBytes);
+    m_D3D12MABufferAllocation->GetResource()->Unmap(0, nullptr);
 
-void GfxConstantBuffer::Update(const void* data) const
-{
-    assert(data);
-    assert(m_MappedMemory);
+    context.StageCBV(descHeap, m_RootIndex, m_RootOffset);
 
-    memcpy(m_MappedMemory, data, m_SizeInBytes);
+    // free desc heap next gpu frame
+    D3D12MA::Allocation* allocCopy = m_D3D12MABufferAllocation;
+    m_D3D12MABufferAllocation = nullptr;
+    g_GfxManager.AddGraphicCommand([descHeap, allocCopy]()
+        {
+            // release CB heap
+            GfxBufferCommon::ReleaseAllocation(allocCopy);
+
+            // descHeap then goes out of scope and decrements the last ref count of ComPtr<ID3D12DescriptorHeap>, destroying it
+        });
 }
 
 void GfxTexture::Initialize(const InitParams& initParams)
@@ -343,7 +345,6 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     assert(initParams.m_Width > 0);
     assert(initParams.m_Height > 0);
 
-    m_ResourceName = initParams.m_ResourceName;
     m_Format = initParams.m_Format;
     m_ArraySize = 1; // TODO: Texture2DArray
     m_NumMips = 1; // TODO: Mips

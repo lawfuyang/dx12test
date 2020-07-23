@@ -19,6 +19,5 @@ public:
 
 private:
     GfxRootSignature m_RootSignature;
-    GfxConstantBuffer m_RenderPassCB;
 };
 #define g_ZPrePassRenderer GfxZPrePassRenderer::GetInstance()

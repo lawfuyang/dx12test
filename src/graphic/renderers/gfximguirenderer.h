@@ -28,7 +28,6 @@ private:
     GfxRootSignature  m_RootSignature;
     GfxVertexBuffer   m_VertexBuffer;
     GfxIndexBuffer    m_IndexBuffer;
-    GfxConstantBuffer m_ConstantBuffer;
     GfxTexture        m_FontsTexture;
 };
 #define g_GfxIMGUIRenderer GfxIMGUIRenderer::GetInstance()

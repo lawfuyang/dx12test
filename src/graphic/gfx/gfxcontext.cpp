@@ -180,29 +180,10 @@ void GfxContext::StageSRV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
     StageDescriptor(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), rootIndex, offset);
 }
 
-void GfxContext::StageCBV(GfxConstantBuffer& cb, uint32_t rootIndex, uint32_t offset)
+void GfxContext::StageCBV(GfxDescriptorHeap& descHeap, uint32_t rootIndex, uint32_t offset)
 {
     CheckStagingResourceInputs(rootIndex, offset, D3D12_DESCRIPTOR_RANGE_TYPE_CBV);
-    StageDescriptor(cb.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), rootIndex, offset);
-}
-
-void GfxContext::CheckRootResourceInputs(uint32_t rootIndex, D3D12_ROOT_PARAMETER_TYPE type, const GfxDescriptorHeap& srcHeap)
-{
-    assert(rootIndex < GfxRootSignature::MaxRootParams);
-    assert(m_PSO.m_RootSig->m_RootParams[rootIndex].ParameterType == type);
-    assert(srcHeap.IsShaderVisible());
-}
-
-void GfxContext::SetRootSRV(GfxTexture& tex, uint32_t rootIndex)
-{
-    CheckRootResourceInputs(rootIndex, D3D12_ROOT_PARAMETER_TYPE_SRV, tex.GetDescriptorHeap());
-    m_CommandList->Dev()->SetGraphicsRootShaderResourceView(rootIndex, tex.GetD3D12Resource()->GetGPUVirtualAddress());
-}
-
-void GfxContext::SetRootCBV(GfxConstantBuffer& cb, uint32_t rootIndex)
-{
-    CheckRootResourceInputs(rootIndex, D3D12_ROOT_PARAMETER_TYPE_CBV, cb.GetDescriptorHeap());
-    m_CommandList->Dev()->SetGraphicsRootConstantBufferView(rootIndex, cb.GetD3D12Resource()->GetGPUVirtualAddress());
+    StageDescriptor(descHeap.Dev()->GetCPUDescriptorHandleForHeapStart(), rootIndex, offset);
 }
 
 void GfxContext::StageDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptor, uint32_t rootIndex, uint32_t offset)

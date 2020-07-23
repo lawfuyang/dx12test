@@ -38,8 +38,7 @@ public:
     ID3D12Resource* GetD3D12Resource() const { return m_D3D12MABufferAllocation->GetResource(); }
 
     void Release();
-    static void ReleaseAllocation(D3D12MA::Allocation*&);
-
+    static void ReleaseAllocation(D3D12MA::Allocation*);
 
     uint32_t GetSizeInBytes() const { return m_SizeInBytes; }
 
@@ -59,7 +58,6 @@ protected:
     void InitializeBufferWithInitData(GfxContext& context, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* initData, const char* resourceName);
     void UploadInitData(GfxContext& context, const void* dataSrc, uint32_t rowPitch, uint32_t slicePitch, ID3D12Resource* dest, ID3D12Resource* src);
 
-    std::string          m_ResourceName;
     D3D12MA::Allocation* m_D3D12MABufferAllocation = nullptr;
     uint32_t             m_SizeInBytes = 0;
 };
@@ -116,18 +114,19 @@ private:
 class GfxConstantBuffer : public GfxBufferCommon
 {
 public:
-    template <typename BufferStruct>
-    void Initialize(bool shaderVisibleDescriptorHeap = false) { Initialize(sizeof(BufferStruct), shaderVisibleDescriptorHeap, BufferStruct::ms_Name); }
+    GfxConstantBuffer(uint32_t rootIndex, uint32_t rootOffset = 0)
+        : m_RootIndex(rootIndex)
+        , m_RootOffset(rootOffset)
+    {}
 
-    void Update(const void* data) const;
-
-    GfxDescriptorHeap& GetDescriptorHeap() { return m_GfxDescriptorHeap; }
+    template <typename CBStruct>
+    void UploadToGPU(GfxContext& context, const CBStruct& cb) { UploadToGPU(context, (const void*)&cb, sizeof(CBStruct), CBStruct::ms_Name); }
 
 private:
-    void Initialize(uint32_t bufferSize, bool shaderVisibleDescriptorHeap, const std::string& resourceName = "");
+    void UploadToGPU(GfxContext& context, const void* data, uint32_t bufferSize, const char* CBName);
 
-    GfxDescriptorHeap m_GfxDescriptorHeap;
-    void* m_MappedMemory = nullptr;
+    uint32_t m_RootIndex;
+    uint32_t m_RootOffset;
 };
 
 class GfxTexture : public GfxHazardTrackedResource,
