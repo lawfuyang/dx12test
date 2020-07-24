@@ -76,6 +76,9 @@
 #include <cereal/archives/binary.hpp> // Binary I/O
 #include <cereal/archives/json.hpp> // JSON I/O
 
+// Portable File Dialog
+#include <extern/portablefiledialogs/portable-file-dialogs.h>
+
 // typedefs
 using WindowHandle = uint64_t;
 

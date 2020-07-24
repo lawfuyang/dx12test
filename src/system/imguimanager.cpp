@@ -183,9 +183,9 @@ void IMGUIManager::Update()
                 for (auto& button : menuButtons)
                 {
                     const char* buttonName = button.first.c_str();
-                    bool* menuToggle = button.second;
 
-                    MenuItemBoolToggle(buttonName, *menuToggle);
+                    if (bool* menuToggle = button.second)
+                        MenuItemBoolToggle(buttonName, *menuToggle);
                 }
 
                 ImGui::EndMenu();

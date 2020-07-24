@@ -130,7 +130,11 @@ void System::BGAsyncThreadLoop()
 
     while (!m_BGAsyncThreadExit)
     {
-        m_BGAsyncCommandManager.ConsumeOneCommand();
+        bool hasCommands = true;
+        do
+        {
+            hasCommands = m_BGAsyncCommandManager.ConsumeOneCommand();
+        } while (hasCommands);
 
         ::Sleep(1);
     }

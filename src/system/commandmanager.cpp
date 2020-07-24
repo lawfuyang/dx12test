@@ -49,7 +49,7 @@ void CommandManager::ConsumeAllCommandsST()
     }
 }
 
-void CommandManager::ConsumeOneCommand()
+bool CommandManager::ConsumeOneCommand()
 {
     bbeProfileFunction();
 
@@ -58,11 +58,13 @@ void CommandManager::ConsumeOneCommand()
         bbeAutoLock(m_CommandsLock);
 
         if (m_PendingCommands.empty())
-            return;
+            return false;
 
         cmd = m_PendingCommands.front();
         m_PendingCommands.pop_front();
     }
 
     cmd();
+
+    return true;
 }

@@ -8,7 +8,7 @@ public:
     void AddCommand(const std::function<void()>& newCmd);
     void ConsumeAllCommandsMT(tf::Subflow& sf);
     void ConsumeAllCommandsST();
-    void ConsumeOneCommand();
+    bool ConsumeOneCommand();
 
 private:
     std::mutex m_CommandsLock;

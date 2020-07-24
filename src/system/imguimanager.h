@@ -39,7 +39,7 @@ public:
     void ProcessWindowsMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
     void Update();
     void RegisterWindowUpdateCB(const std::function<void()>&);
-    void RegisterTopMenu(const std::string& mainCategory, const std::string& buttonName, bool* windowToggle);
+    void RegisterTopMenu(const std::string& mainCategory, const std::string& buttonName, bool* windowToggle = nullptr);
 
 private:
     void SaveDrawData();
