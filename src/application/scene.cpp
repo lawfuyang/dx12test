@@ -19,6 +19,10 @@ void Scene::Update()
 
 }
 
+void Scene::ShutDown()
+{
+}
+
 void Scene::OpenSceneWindow()
 {
     if (!gs_ShowOpenSceneIMGUIWindow)

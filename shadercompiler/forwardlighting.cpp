@@ -21,7 +21,6 @@ struct ForwardLighting
     );
 
     DEFINE_ENUM_WITH_STRING_CONVERSIONS(PSPermutations,
-        (PERTURBED_NORMALS)
         (USE_PBR_CONSTS)
         (PSPermutations_Count)
     );

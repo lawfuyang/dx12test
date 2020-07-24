@@ -7,6 +7,7 @@ class Scene
 public:
     void Initialize();
     void Update();
+    void ShutDown();
 
 private:
     void OpenSceneWindow();

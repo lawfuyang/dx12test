@@ -55,22 +55,15 @@ VS_OUT VSMain(VS_IN input)
 
 float4 PSMain(VS_OUT input) : SV_TARGET
 {
-    // Specular coefficiant - fixed reflectance value for non-metals
-    static const float kSpecularCoefficient = 0.04;
-
-    float4 baseAlbedo = g_DiffuseTexture.Sample(g_AnisotropicWrapSampler, input.m_TexCoord);
-
     // Init per-pixel normal
-    float3 normal;
-#if defined(PERTURBED_NORMALS)
-    normal = CalcPerPixelNormal(g_NormalTexture, input.m_TexCoord, input.m_Normal, input.m_Bitangent, input.m_Tangent);
-#else
     float3 localNormal = TwoChannelNormalX2(g_NormalTexture.Sample(g_AnisotropicWrapSampler, input.m_TexCoord).xy);
-    normal = PeturbNormal(localNormal, input.m_PositionW.xyz, input.m_Normal, input.m_TexCoord);
-#endif
+    float3 normal = PeturbNormal(localNormal, input.m_PositionW.xyz, input.m_Normal, input.m_TexCoord);
+
+    // View vector
+    float3 V = normalize(g_PerFrameConsts.m_CameraPosition.xyz - input.m_PositionW.xyz);
 
     // Init per-pixel PBR properties
-    float ambientOcclusion = 1.0f;
+    float ambientOcclusion = 1.0;
     float roughness = 0.75;
     float metallic = 0.1;
 #if !defined(USE_PBR_CONSTS)
@@ -81,12 +74,20 @@ float4 PSMain(VS_OUT input) : SV_TARGET
     metallic = ORM.b;
 #endif
 
+    // blended base diffuse
+    float4 baseAlbedo = g_DiffuseTexture.Sample(g_AnisotropicWrapSampler, input.m_TexCoord);
+    float3 baseDiffuse = lerp(baseAlbedo.rgb, float3(0, 0, 0), metallic) * ambientOcclusion;
+
+    // Specular coefficiant - fixed reflectance value for non-metals
+    static const float kSpecularCoefficient = 0.04;
+    float3 baseSpecular = lerp(kSpecularCoefficient, baseAlbedo.rgb, metallic) * ambientOcclusion;
+
     CommonPBRParams commonPBRParams;
     commonPBRParams.N = normal;
-    commonPBRParams.V = normalize(g_PerFrameConsts.m_CameraPosition.xyz - input.m_PositionW.xyz);
+    commonPBRParams.V = V;
     commonPBRParams.roughness = roughness;
-    commonPBRParams.baseDiffuse = lerp(baseAlbedo.rgb, float3(0, 0, 0), metallic) * ambientOcclusion;
-    commonPBRParams.baseSpecular = lerp(kSpecularCoefficient, baseAlbedo.rgb, metallic) * ambientOcclusion;
+    commonPBRParams.baseDiffuse = baseDiffuse;
+    commonPBRParams.baseSpecular = baseSpecular;
 
     EvaluateLightPBRParams dirLightPBRParams;
     dirLightPBRParams.Common = commonPBRParams;
@@ -95,7 +96,7 @@ float4 PSMain(VS_OUT input) : SV_TARGET
 
     float3 finalColor = EvaluateLightPBR(dirLightPBRParams);
 
-    return float4(finalColor, 1.0f);
+    return float4(finalColor, 1.0);
 }
 
 #endif

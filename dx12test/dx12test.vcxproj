@@ -96,6 +96,7 @@
     <ClCompile Include="..\src\graphic\renderers\gfxzprepassrenderer.cpp" />
     <ClCompile Include="..\src\graphic\shapes.cpp" />
     <ClCompile Include="..\src\graphic\view.cpp" />
+    <ClCompile Include="..\src\graphic\visual.cpp" />
     <ClCompile Include="..\src\system\commandmanager.cpp" />
     <ClCompile Include="..\src\system\imguimanager.cpp" />
     <ClCompile Include="..\src\system\keyboard.cpp" />
@@ -147,6 +148,7 @@
     <ClInclude Include="..\src\graphic\renderers\gfxzprepassrenderer.h" />
     <ClInclude Include="..\src\graphic\shapes.h" />
     <ClInclude Include="..\src\graphic\view.h" />
+    <ClInclude Include="..\src\graphic\visual.h" />
     <ClInclude Include="..\src\masterheader.h" />
     <ClInclude Include="..\src\system\commandmanager.h" />
     <ClInclude Include="..\src\system\imguimanager.h" />

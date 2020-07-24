@@ -20,4 +20,5 @@ void UpdateApplicationLayer(tf::Subflow& subFlow)
 void ShutdownApplicationLayer()
 {
     bbeProfileFunction();
+    g_Scene.ShutDown();
 }

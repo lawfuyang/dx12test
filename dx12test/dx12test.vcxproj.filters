@@ -139,6 +139,9 @@
     <ClCompile Include="..\src\application\scene.cpp">
       <Filter>application</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\visual.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -291,6 +294,9 @@
     </ClInclude>
     <ClInclude Include="..\src\application\scene.h">
       <Filter>application</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\visual.h">
+      <Filter>graphic</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
