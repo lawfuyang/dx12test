@@ -10,13 +10,6 @@
 #include <tmp/shaders/autogen/cpp/VS_ForwardLighting.h>
 #include <tmp/shaders/autogen/cpp/PS_ForwardLighting.h>
 
-void GfxDefaultAssets::PreInitialize(tf::Subflow& sf)
-{
-    bbeProfileFunction();
-
-    ADD_TF_TASK(sf, PreInitSquidRoom());
-}
-
 void GfxDefaultAssets::Initialize(tf::Subflow& sf)
 {
     bbeProfileFunction();
@@ -26,14 +19,6 @@ void GfxDefaultAssets::Initialize(tf::Subflow& sf)
     tasks.push_back(ADD_TF_TASK(sf, CreateSolidColorTexture(White2D, bbeColor{ 1.0f, 1.0f, 1.0f }, "Default White2D Texture")));
     tasks.push_back(ADD_TF_TASK(sf, CreateSolidColorTexture(Black2D, bbeColor{ 0.0f, 0.0f, 0.0f }, "Default Black2D Texture")));
     tasks.push_back(ADD_TF_TASK(sf, CreateUnitCubeMesh()));
-    tasks.push_back(ADD_TF_TASK(sf, CreateSquidRoomMesh()));
-    tasks.push_back(ADD_SF_TASK(sf, CreateSquidRoomTextures(sf)));
-
-    tf::Task clearPreloadedSampleAssetsMemoryTask = ADD_TF_TASK(sf, ClearPreloadedSampleAssetsMemory());
-    for (tf::Task& t : tasks)
-    {
-        clearPreloadedSampleAssetsMemoryTask.succeed(t);
-    }
 }
 
 void GfxDefaultAssets::ShutDown()
@@ -42,65 +27,6 @@ void GfxDefaultAssets::ShutDown()
     GfxDefaultAssets::Black2D.Release();
     GfxDefaultAssets::Checkerboard.Release();
     GfxDefaultAssets::UnitCube.Release();
-    GfxDefaultAssets::SquidRoom.Release();
-
-    for (GfxTexture& tex : GfxDefaultAssets::SquidRoomTextures)
-    {
-        tex.Release();
-    }
-}
-
-void GfxDefaultAssets::DrawSquidRoom(GfxContext& context, bool bindTextures, uint32_t rootIndex, uint32_t diffuseOffset, uint32_t normalOffset)
-{
-    using namespace SampleAssets;
-
-    GfxPipelineStateObject& pso = context.GetPSO();
-
-    pso.GetRasterizerStates().FrontCounterClockwise = true;
-
-    pso.SetVertexFormat(GfxDefaultAssets::SquidRoom.GetVertexFormat());
-    context.SetVertexBuffer(GfxDefaultAssets::SquidRoom.GetVertexBuffer());
-    context.SetIndexBuffer(GfxDefaultAssets::SquidRoom.GetIndexBuffer());
-
-    Shaders::VS_ForwardLightingPermutations vPerms;
-    vPerms.VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f = true;
-
-    Shaders::PS_ForwardLightingPermutations pPerms;
-    pPerms.USE_PBR_CONSTS = true;
-
-    const GfxShader& vShader = g_GfxShaderManager.GetShader(vPerms);
-    const GfxShader& pShader = g_GfxShaderManager.GetShader(pPerms);
-
-    pso.SetVertexShader(vShader);
-    pso.SetPixelShader(pShader);
-
-    for (const SquidRoom::DrawParameters& drawParams : SquidRoom::Draws)
-    {
-        if (bindTextures)
-        {
-            assert(rootIndex != UINT32_MAX && diffuseOffset != UINT32_MAX && normalOffset != UINT32_MAX);
-
-            GfxTexture& diffuseTex = GfxDefaultAssets::SquidRoomTextures[drawParams.DiffuseTextureIndex];
-            GfxTexture& normalTex = GfxDefaultAssets::SquidRoomTextures[drawParams.NormalTextureIndex];
-
-            context.StageSRV(diffuseTex, rootIndex, diffuseOffset);
-            context.StageSRV(normalTex, rootIndex, normalOffset);
-        }
-
-        context.DrawIndexedInstanced(drawParams.IndexCount, 1, drawParams.IndexStart, drawParams.VertexBase, 0);
-    }
-}
-
-void GfxDefaultAssets::PreInitSquidRoom()
-{
-    bbeProfileFunction();
-
-    using namespace SampleAssets;
-
-    StaticString<FILENAME_MAX> dataFileName = "..\\bin\\assets\\";
-    dataFileName += SquidRoom::DataFileName;
-
-    ReadDataFromFile(dataFileName.c_str(), m_SquidRoomData);
 }
 
 void GfxDefaultAssets::CreateCheckerboardTexture()
@@ -278,67 +204,4 @@ void GfxDefaultAssets::CreateUnitCubeMesh()
     IBInitParams.m_ResourceName = "GfxDefaultGeometry::UnitCube Index Buffer";
 
     GfxDefaultAssets::UnitCube.Initialize(meshInitParams);
-}
-
-void GfxDefaultAssets::CreateSquidRoomMesh()
-{
-    bbeProfileFunction();
-
-    assert(m_SquidRoomData.size());
-
-    using namespace SampleAssets;
-
-    GfxMesh::InitParams meshInitParams;
-    meshInitParams.MeshName = "SquidRoom Mesh";
-    meshInitParams.m_VertexFormat = &GfxDefaultVertexFormats::Position3f_Normal3f_Texcoord2f_Tangent3f;
-
-    GfxVertexBuffer::InitParams& VBInitParams = meshInitParams.m_VBInitParams;
-    VBInitParams.m_ResourceName = "SquidRoom Mesh Vertex Buffer";
-    VBInitParams.m_InitData = m_SquidRoomData.data() + SquidRoom::VertexDataOffset;
-    VBInitParams.m_NumVertices = SquidRoom::VertexDataSize / SquidRoom::StandardVertexStride;
-    VBInitParams.m_VertexSize = SquidRoom::StandardVertexStride;
-
-    GfxIndexBuffer::InitParams& IBInitParams = meshInitParams.m_IBInitParams;
-    IBInitParams.m_ResourceName = "SquidRoom Mesh Index Buffer";
-    IBInitParams.m_InitData = m_SquidRoomData.data() + SquidRoom::IndexDataOffset;
-    IBInitParams.m_NumIndices = SquidRoom::IndexDataSize / 4; // R32_UINT (SampleAssets::StandardIndexFormat) = 4 bytes each.
-    IBInitParams.m_IndexSize = 4;
-
-    GfxDefaultAssets::SquidRoom.Initialize(meshInitParams);
-}
-
-void GfxDefaultAssets::CreateSquidRoomTextures(tf::Subflow& subFlow)
-{
-    bbeProfileFunction();
-
-    assert(m_SquidRoomData.size());
-
-    using namespace SampleAssets;
-
-    const uint32_t srvCount = _countof(SquidRoom::Textures);
-    GfxDefaultAssets::SquidRoomTextures.resize(srvCount);
-
-    for (uint32_t i = 0; i < srvCount; i++)
-    {
-        GfxTexture& tex = GfxDefaultAssets::SquidRoomTextures[i];
-        const SquidRoom::TextureResource& texResource = SquidRoom::Textures[i];
-
-        subFlow.emplace([&]()
-            {
-                GfxTexture::InitParams initParams;
-                initParams.m_Format = texResource.Format;
-                initParams.m_Width = texResource.Width;
-                initParams.m_Height = texResource.Height;
-                initParams.m_InitData = m_SquidRoomData.data() + texResource.Data->Offset;
-                initParams.m_ResourceName = texResource.Name;
-
-                tex.Initialize(initParams);
-            });
-    }
-}
-
-void GfxDefaultAssets::ClearPreloadedSampleAssetsMemory()
-{
-    m_SquidRoomData.clear();
-    m_SquidRoomData.shrink_to_fit();
 }

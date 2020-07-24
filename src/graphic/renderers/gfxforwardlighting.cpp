@@ -85,10 +85,6 @@ void GfxForwardLightingPass::PopulateCommandList()
 
     context.SetRenderTarget(0, g_GfxManager.GetSwapChain().GetCurrentBackBuffer());
     context.SetDepthStencil(gs_SceneDepthBuffer);
-
-    const uint32_t diffuseTexRootOffset = 0;
-    const uint32_t normalTexRootOffset = 1;
-    GfxDefaultAssets::DrawSquidRoom(context, true, 1, diffuseTexRootOffset, normalTexRootOffset);
 }
 
 void GfxForwardLightingPass::UpdateIMGUI()

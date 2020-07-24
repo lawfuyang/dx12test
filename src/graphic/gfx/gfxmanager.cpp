@@ -58,7 +58,6 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
     tf::Task cmdListInitTask              = ADD_TF_TASK(subFlow, m_GfxDevice.GetCommandListsManager().Initialize());
     tf::Task swapChainInitTask            = ADD_TF_TASK(subFlow, m_SwapChain.Initialize());
     tf::Task PSOManagerInitTask           = ADD_TF_TASK(subFlow, g_GfxPSOManager.Initialize());
-    tf::Task defaultsAssetsPreInit        = ADD_SF_TASK(subFlow, g_GfxDefaultAssets.PreInitialize(sf));
     tf::Task dynamicDescHeapAllocatorInit = ADD_TF_TASK(subFlow, g_GfxGPUDescriptorAllocator.Initialize());
     tf::Task lightsManagerInit            = ADD_TF_TASK(subFlow, g_GfxLightsManager.Initialize());
 
@@ -90,7 +89,7 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
         }).name("generalGfxInitTask");
 
     adapterAndDeviceInit.precede(cmdListInitTask, PSOManagerInitTask, miscGfxInitTask, swapChainInitTask, dynamicDescHeapAllocatorInit);
-    miscGfxInitTask.succeed(cmdListInitTask, defaultsAssetsPreInit);
+    miscGfxInitTask.succeed(cmdListInitTask);
     swapChainInitTask.succeed(cmdListInitTask);
 
     m_AllContexts.reserve(128);
@@ -146,7 +145,7 @@ void GfxManager::ScheduleRenderPasses(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
 
-    //ADD_TF_TASK(subFlow, g_ZPrePassRenderer.PopulateCommandList());
+    ADD_TF_TASK(subFlow, g_ZPrePassRenderer.PopulateCommandList());
     ADD_TF_TASK(subFlow, g_GfxForwardLightingPass.PopulateCommandList());
     ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer.PopulateCommandList());
 }
@@ -158,11 +157,14 @@ void GfxManager::ScheduleCommandListsExecution()
     // helper lambda
     auto QueueRenderPass = [&](GfxRendererBase* pass)
     {
-        m_GfxDevice.GetCommandListsManager().QueueCommandListToExecute(pass->GetGfxContext()->GetCommandList(), pass->GetGfxContext()->GetCommandList().GetType());
+        if (GfxContext* context = pass->GetGfxContext())
+        {
+            m_GfxDevice.GetCommandListsManager().QueueCommandListToExecute(context->GetCommandList(), context->GetCommandList().GetType());
+        }
     };
 
     // queue all render passes
-    //QueueRenderPass(&g_ZPrePassRenderer);
+    QueueRenderPass(&g_ZPrePassRenderer);
     QueueRenderPass(&g_GfxForwardLightingPass);
     QueueRenderPass(&g_GfxIMGUIRenderer);
 
