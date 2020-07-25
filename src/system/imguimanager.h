@@ -41,6 +41,7 @@ public:
     void ProcessWindowsMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
     void Update();
     void RegisterWindowUpdateCB(const std::function<void()>&);
+    void RegisterGeneralButtonCB(const std::function<void()>&, bool* triggerBool);
     void RegisterTopMenu(const std::string& mainCategory, const std::string& buttonName, bool* windowToggle = nullptr);
     void RegisterFileDialog(const std::string& vName, const char* vFilters, const FileDialogResultFinalizer&);
 
@@ -52,6 +53,7 @@ private:
 
     std::mutex m_WindowCBsLock;
     std::vector<std::function<void()>> m_UpdateCBs;
+    std::unordered_map<bool*, std::function<void()>> m_TriggerCBs;
     std::map<std::string, std::vector<std::pair<std::string, bool*>>> m_TopMenusCBs; // not unordered_map, because i want the menu buttons to be sorted alphabetically
     std::pair<std::string, FileDialogResultFinalizer> m_ActiveFileDialog;
 

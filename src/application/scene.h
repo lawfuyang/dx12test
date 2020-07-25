@@ -13,6 +13,7 @@ private:
     void OpenSceneWindow();
     void SaveSceneWindow();
     void SaveSceneAsWindow();
+    void AddVisual();
 
     std::string m_CurrentSceneFile;
 };

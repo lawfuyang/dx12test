@@ -7,7 +7,7 @@ static bool g_SceneOpenSceneWindow = false;
 void Scene::Initialize()
 {
     g_IMGUIManager.RegisterTopMenu("Scene", "Open Scene", &g_SceneOpenSceneWindow);
-    g_IMGUIManager.RegisterWindowUpdateCB([&]() { OpenSceneWindow(); });
+    g_IMGUIManager.RegisterGeneralButtonCB([&]() { OpenSceneWindow(); }, &g_SceneOpenSceneWindow);
 
     //g_IMGUIManager.RegisterTopMenu("Scene", "Save Scene");
     //g_IMGUIManager.RegisterWindowUpdateCB([&]() { SaveSceneWindow(); });
@@ -28,9 +28,7 @@ void Scene::ShutDown()
 
 void Scene::OpenSceneWindow()
 {
-    if (!g_SceneOpenSceneWindow)
-        return;
-    g_SceneOpenSceneWindow = false;
+    g_IMGUIManager.RegisterFileDialog("Scene::OpenSceneWindow", ".scene", [](const std::string&) {}); // TODO: Finalizer for scenes
 }
 
 void Scene::SaveSceneWindow()
@@ -41,4 +39,8 @@ void Scene::SaveSceneWindow()
 void Scene::SaveSceneAsWindow()
 {
 
+}
+
+void Scene::AddVisual()
+{
 }

@@ -188,7 +188,15 @@ void IMGUIManager::Update()
                     const char* buttonName = button.first.c_str();
 
                     if (bool* menuToggle = button.second)
+                    {
                         MenuItemBoolToggle(buttonName, *menuToggle);
+
+                        if (*menuToggle && m_TriggerCBs.count(menuToggle))
+                        {
+                            m_TriggerCBs[menuToggle]();
+                            *menuToggle = false;
+                        }
+                    }
                 }
 
                 ImGui::EndMenu();
@@ -244,6 +252,14 @@ void IMGUIManager::RegisterWindowUpdateCB(const std::function<void()>& cb)
 {
     bbeAutoLock(m_WindowCBsLock);
     m_UpdateCBs.push_back(cb);
+}
+
+void IMGUIManager::RegisterGeneralButtonCB(const std::function<void()>& cb, bool* triggerBool)
+{
+    assert(triggerBool);
+
+    bbeAutoLock(m_WindowCBsLock);
+    m_TriggerCBs[triggerBool] = cb;
 }
 
 void IMGUIManager::RegisterTopMenu(const std::string& mainCategory, const std::string& buttonName, bool* windowToggle)
