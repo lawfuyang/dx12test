@@ -1,4 +1,7 @@
-#include "system/imguimanager.h"
+#include <system/imguimanager.h>
+
+#include <extern/imgui/ImGuiFileDialog.h>
+#define g_IMGUIFileDialog igfd::ImGuiFileDialog::Instance()
 
 void IMGUIManager::Initialize()
 {
@@ -202,7 +205,7 @@ void IMGUIManager::Update()
     // swap and update the rest
     InplaceArray<std::function<void()>, 128> windowUpdateCBs;
     {
-        bbeAutoLock(m_Lock);
+        bbeAutoLock(m_WindowCBsLock);
         std::copy(m_UpdateCBs.begin(), m_UpdateCBs.end(), std::back_inserter(windowUpdateCBs));
     }
 
@@ -210,6 +213,25 @@ void IMGUIManager::Update()
     {
         bbeProfile("Update IMGUI Window");
         cb();
+    }
+
+    if (m_ActiveFileDialog.second)
+    {
+        // display
+        if (g_IMGUIFileDialog->FileDialog(m_ActiveFileDialog.first))
+        {
+            // action if OK
+            if (g_IMGUIFileDialog->IsOk)
+            {
+                m_ActiveFileDialog.second(g_IMGUIFileDialog->GetFilepathName());
+            }
+
+            // close
+            g_IMGUIFileDialog->CloseDialog(m_ActiveFileDialog.first);
+
+            m_ActiveFileDialog.first.clear();
+            m_ActiveFileDialog.second = nullptr;
+        }
     }
 
     // This will back up the render data until the next frame.
@@ -220,14 +242,25 @@ void IMGUIManager::Update()
 
 void IMGUIManager::RegisterWindowUpdateCB(const std::function<void()>& cb)
 {
-    bbeAutoLock(m_Lock);
+    bbeAutoLock(m_WindowCBsLock);
     m_UpdateCBs.push_back(cb);
 }
 
 void IMGUIManager::RegisterTopMenu(const std::string& mainCategory, const std::string& buttonName, bool* windowToggle)
 {
-    bbeAutoLock(m_Lock);
+    bbeAutoLock(m_WindowCBsLock);
     m_TopMenusCBs[mainCategory].push_back(std::make_pair(buttonName, windowToggle));
+}
+
+void IMGUIManager::RegisterFileDialog(const std::string& vName, const char* vFilters, const FileDialogResultFinalizer& finalizer)
+{
+    // only support 1 active file dialog
+    assert(m_ActiveFileDialog.first.empty() && !m_ActiveFileDialog.second);
+
+    g_IMGUIFileDialog->OpenDialog(vName, vName.c_str(), vFilters, "..\\bin\\assets\\");
+
+    m_ActiveFileDialog.first = vName;
+    m_ActiveFileDialog.second = finalizer;
 }
 
 void IMGUIManager::SaveDrawData()
@@ -262,4 +295,15 @@ void IMGUIManager::SaveDrawData()
     }
 
     m_DrawData[1 - m_DrawDataIdx] = std::move(newDrawData);
+}
+
+ScopedIMGUIWindow::ScopedIMGUIWindow(const char* windowName)
+{
+    bool* pOpen = nullptr;
+    ImGui::Begin(windowName, pOpen, ImGuiWindowFlags_AlwaysAutoResize);
+}
+
+ScopedIMGUIWindow::~ScopedIMGUIWindow()
+{
+    ImGui::End();
 }

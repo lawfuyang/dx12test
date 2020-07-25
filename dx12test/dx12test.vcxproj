@@ -43,7 +43,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>false</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\;$(SolutionDir)..\src\;$(SolutionDir)..\extern\;$(SolutionDir)..\extern\spdlog\;$(SolutionDir)..\extern\tbb\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\;$(SolutionDir)..\src\;$(SolutionDir)..\extern\;$(SolutionDir)..\extern\spdlog\;$(SolutionDir)..\extern\tbb\;$(SolutionDir)..\extern\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
@@ -64,6 +64,7 @@
   <ItemGroup>
     <ClCompile Include="..\extern\d3d12\D3D12MemAlloc.cpp" />
     <ClCompile Include="..\extern\imgui\imgui.cpp" />
+    <ClCompile Include="..\extern\imgui\ImGuiFileDialog.cpp" />
     <ClCompile Include="..\extern\imgui\imgui_demo.cpp" />
     <ClCompile Include="..\extern\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\extern\imgui\imgui_widgets.cpp" />

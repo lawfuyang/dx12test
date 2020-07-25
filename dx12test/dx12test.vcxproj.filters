@@ -142,6 +142,9 @@
     <ClCompile Include="..\src\graphic\visual.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
+    <ClCompile Include="..\extern\imgui\ImGuiFileDialog.cpp">
+      <Filter>extern\imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
