@@ -260,3 +260,7 @@ static void RunOnAllBits(uint32_t mask, Functor&& func)
             default: return "[Unknown " BOOST_PP_STRINGIZE(name) "]";         \
         }                                                                     \
     }
+
+static ObjectID GenerateObjectID() { return boost::uuids::random_generator{}(); }
+static ObjectID ID_InvalidObject = boost::uuids::nil_generator{}();
+static std::string ToString(ObjectID id) { return boost::uuids::to_string(id); }

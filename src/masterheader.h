@@ -68,6 +68,9 @@
 #include <extern/boost/container_hash/hash.hpp>
 #include <extern/boost/static_string.hpp>
 #include <extern/boost/preprocessor.hpp>
+#include <extern/boost/uuid/uuid.hpp>
+#include <extern/boost/uuid/uuid_generators.hpp>
+#include <extern/boost/uuid/uuid_io.hpp>
 
 // Cereal serialization lib
 #define CEREAL_SERIALIZE_FUNCTION_NAME Serialize
@@ -89,7 +92,12 @@ template<std::size_t N>
 using StaticWString = boost::static_strings::static_wstring<N>;
 
 template <typename T>
+using ObjectPool = boost::object_pool<T>;
+
+template <typename T>
 using CircularBuffer = boost::circular_buffer<T>;
+
+using ObjectID = boost::uuids::uuid;
 
 // ComPtr namespace
 using Microsoft::WRL::ComPtr;

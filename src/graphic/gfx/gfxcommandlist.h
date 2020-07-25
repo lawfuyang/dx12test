@@ -43,7 +43,7 @@ private:
     {
         ComPtr<ID3D12CommandQueue> m_CommandQueue;
 
-        boost::object_pool<GfxCommandList> m_CommandListsPool;
+        ObjectPool<GfxCommandList> m_CommandListsPool;
 
         std::mutex m_ListsLock;
 
