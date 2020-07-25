@@ -3,6 +3,9 @@
 #include <system/imguimanager.h>
 
 #include <graphic/visual.h>
+#include <graphic/gfx/gfxdefaultassets.h>
+
+static bool gs_SceneShowSelectedVisualPropertiesWindow = true;
 
 void Scene::Initialize()
 {
@@ -22,8 +25,8 @@ void Scene::Initialize()
     g_IMGUIManager.RegisterTopMenu("Scene", "Add New Visual", &s_AddNewVisualCB);
     g_IMGUIManager.RegisterGeneralButtonCB([&]() { AddNewVisual(); }, &s_AddNewVisualCB);
 
-    // reserve a big chunk so it will never grow. For Thread safety
-    m_AllVisuals.reserve(BBE_KB(1));
+    g_IMGUIManager.RegisterTopMenu("Scene", "Show Selected Visual Properties Window", &gs_SceneShowSelectedVisualPropertiesWindow);
+    g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateSelectedVisualPropertiesWindow(); });
 }
 
 void Scene::Update()
@@ -65,5 +68,29 @@ void Scene::SaveSceneAsWindow()
 
 void Scene::AddNewVisual()
 {
+    Visual* newVisual = m_VisualsPool.construct();
+    newVisual->m_ObjectID = GenerateObjectID();
 
+    assert(m_AllVisuals.size() < BBE_KB(1)); // Ensure it doesnt grow and invalid all Visual ptrs in the engine
+    m_AllVisuals.push_back(newVisual);
+
+    m_SelectedVisual = newVisual;
+
+    g_Log.info("New Visual: {}", ToString(newVisual->m_ObjectID));
+}
+
+void Scene::UpdateSelectedVisualPropertiesWindow()
+{
+    if (!gs_SceneShowSelectedVisualPropertiesWindow)
+        return;
+
+    ScopedIMGUIWindow window("Selected Visual");
+
+    if (!m_SelectedVisual)
+    {
+        ImGui::Text("Select a Visual from the Visuals List window");
+        return;
+    }
+
+    m_SelectedVisual->UpdatePropertiesIMGUI();
 }

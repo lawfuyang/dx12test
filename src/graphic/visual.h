@@ -1,17 +1,20 @@
 #pragma once
 
-class GfxMesh;
-class GfxTexture;
+#include <graphic/gfx/gfxdefaultassets.h>
 
 class Visual
 {
 public:
+    void UpdatePropertiesIMGUI();
 
     ObjectID m_ObjectID = ID_InvalidObject;
-    std::string m_Name;
+    std::string m_Name = "Unnamed Visual";
 
-    GfxMesh* m_Mesh = nullptr;
-    GfxTexture* m_AlbedoTexture = nullptr;
-    GfxTexture* m_NormalTexture = nullptr;
-    GfxTexture* m_ORMTexture = nullptr;
+    GfxMesh* m_Mesh = &GfxDefaultAssets::UnitCube;
+    GfxTexture* m_AlbedoTexture = &GfxDefaultAssets::Checkerboard;
+    GfxTexture* m_NormalTexture = &GfxDefaultAssets::FlatNormal;
+    GfxTexture* m_ORMTexture = &GfxDefaultAssets::Black2D;
+
+    bbeVector3 m_WorldPosition;
+    bbeQuaternion m_Rotation;
 };

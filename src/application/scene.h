@@ -18,11 +18,12 @@ private:
     void SaveSceneWindow();
     void SaveSceneAsWindow();
     void AddNewVisual();
+    void UpdateSelectedVisualPropertiesWindow();
 
     std::string m_CurrentSceneFile;
 
-    ObjectID m_SelectedVisual = ID_InvalidObject;
-    std::vector<Visual*> m_AllVisuals;
+    Visual* m_SelectedVisual = nullptr;
+    InplaceArray<Visual*, BBE_KB(1)> m_AllVisuals;
     ObjectPool<Visual> m_VisualsPool;
 };
 #define g_Scene Scene::GetInstance()
