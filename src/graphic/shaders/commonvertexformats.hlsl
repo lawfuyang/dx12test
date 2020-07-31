@@ -10,6 +10,12 @@ struct VS_IN
     float4 m_Color    : COLOR;
 #endif
 
+#if defined(VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f)
+    float3 m_Position : POSITION;
+    float3 m_Normal   : NORMAL;
+    float2 m_TexCoord : TEXCOORD;
+#endif
+
 #if defined(VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f)
     float3 m_Position : POSITION;
     float3 m_Normal   : NORMAL;

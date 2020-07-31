@@ -138,6 +138,7 @@ namespace DirectX
 
             // Vector operations
             bool InBounds(const Vector2& Bounds) const noexcept;
+            bool IsValid() const noexcept;
 
             float Length() const noexcept;
             float LengthSquared() const noexcept;
@@ -251,6 +252,7 @@ namespace DirectX
 
             // Vector operations
             bool InBounds(const Vector3& Bounds) const noexcept;
+            bool IsValid() const noexcept;
 
             float Length() const noexcept;
             float LengthSquared() const noexcept;
@@ -371,6 +373,7 @@ namespace DirectX
 
             // Vector operations
             bool InBounds(const Vector4& Bounds) const noexcept;
+            bool IsValid() const noexcept;
 
             float Length() const noexcept;
             float LengthSquared() const noexcept;
@@ -705,6 +708,8 @@ namespace DirectX
             void Inverse(Quaternion& result) const noexcept;
 
             float Dot(const Quaternion& Q) const noexcept;
+
+            bool IsValid() const noexcept;
 
             // Static functions
             static Quaternion CreateFromAxisAngle(const Vector3& axis, float angle) noexcept;

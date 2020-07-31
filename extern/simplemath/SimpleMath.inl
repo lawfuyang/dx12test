@@ -310,6 +310,13 @@ inline bool Vector2::InBounds(const Vector2& Bounds) const noexcept
     return XMVector2InBounds(v1, v2);
 }
 
+inline bool Vector2::IsValid() const noexcept
+{
+    const bool xValid = !std::isnan(x) && !std::isinf(x);
+    const bool yValid = !std::isnan(y) && !std::isinf(y);
+    return xValid && yValid;
+}
+
 inline float Vector2::Length() const noexcept
 {
     using namespace DirectX;
@@ -899,6 +906,14 @@ inline bool Vector3::InBounds(const Vector3& Bounds) const noexcept
     return XMVector3InBounds(v1, v2);
 }
 
+inline bool Vector3::IsValid() const noexcept
+{
+    const bool xValid = !std::isnan(x) && !std::isinf(x);
+    const bool yValid = !std::isnan(y) && !std::isinf(y);
+    const bool zValid = !std::isnan(z) && !std::isinf(z);
+    return xValid && yValid && zValid;
+}
+
 inline float Vector3::Length() const noexcept
 {
     using namespace DirectX;
@@ -1486,6 +1501,15 @@ inline bool Vector4::InBounds(const Vector4& Bounds) const noexcept
     XMVECTOR v1 = XMLoadFloat4(this);
     XMVECTOR v2 = XMLoadFloat4(&Bounds);
     return XMVector4InBounds(v1, v2);
+}
+
+inline bool Vector4::IsValid() const noexcept
+{
+    const bool xValid = !std::isnan(x) && !std::isinf(x);
+    const bool yValid = !std::isnan(y) && !std::isinf(y);
+    const bool zValid = !std::isnan(z) && !std::isinf(z);
+    const bool wValid = !std::isnan(w) && !std::isinf(w);
+    return xValid && yValid && zValid && wValid;
 }
 
 inline float Vector4::Length() const noexcept
@@ -3091,6 +3115,15 @@ inline float Quaternion::Dot(const Quaternion& q) const noexcept
     XMVECTOR q1 = XMLoadFloat4(this);
     XMVECTOR q2 = XMLoadFloat4(&q);
     return XMVectorGetX(XMQuaternionDot(q1, q2));
+}
+
+inline bool Quaternion::IsValid() const noexcept
+{
+    const bool xValid = !std::isnan(x) && !std::isinf(x);
+    const bool yValid = !std::isnan(y) && !std::isinf(y);
+    const bool zValid = !std::isnan(z) && !std::isinf(z);
+    const bool wValid = !std::isnan(w) && !std::isinf(w);
+    return xValid && yValid && zValid && wValid;
 }
 
 //------------------------------------------------------------------------------

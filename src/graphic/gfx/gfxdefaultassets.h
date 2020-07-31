@@ -15,6 +15,7 @@ public:
 
     inline static GfxTexture White2D;
     inline static GfxTexture Black2D;
+    inline static GfxTexture Red2D;
     inline static GfxTexture FlatNormal;
     inline static GfxTexture Checkerboard;
 

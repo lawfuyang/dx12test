@@ -169,6 +169,8 @@ void System::Shutdown()
     {
         bbeConditionalProfile(g_CommandLineOptions.m_ProfileShutdown, "System::Shutdown");
 
+        m_SystemCommandManager.ConsumeAllCommandsST();
+
         g_IMGUIManager.ShutDown();
         ShutdownApplicationLayer();
         ShutdownGraphic();

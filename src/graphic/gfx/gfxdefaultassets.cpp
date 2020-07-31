@@ -14,18 +14,19 @@ void GfxDefaultAssets::Initialize(tf::Subflow& sf)
 {
     bbeProfileFunction();
 
-    InplaceArray<tf::Task, 7> tasks;
-    tasks.push_back(ADD_TF_TASK(sf, CreateCheckerboardTexture()));
-    tasks.push_back(ADD_TF_TASK(sf, CreateSolidColorTexture(White2D, bbeColor{ 1.0f, 1.0f, 1.0f }, "Default White2D Texture")));
-    tasks.push_back(ADD_TF_TASK(sf, CreateSolidColorTexture(Black2D, bbeColor{ 0.0f, 0.0f, 0.0f }, "Default Black2D Texture")));
-    tasks.push_back(ADD_TF_TASK(sf, CreateSolidColorTexture(FlatNormal, bbeColor{ 80.0f / 255.0f, 80.0f / 255.0f, 1.0f }, "Flat Normal Texture")));
-    tasks.push_back(ADD_TF_TASK(sf, CreateUnitCubeMesh()));
+    ADD_TF_TASK(sf, CreateCheckerboardTexture());
+    ADD_TF_TASK(sf, CreateSolidColorTexture(White2D, bbeColor{ 1.0f, 1.0f, 1.0f }, "Default White2D Texture"));
+    ADD_TF_TASK(sf, CreateSolidColorTexture(Black2D, bbeColor{ 0.0f, 0.0f, 0.0f }, "Default Black2D Texture"));
+    ADD_TF_TASK(sf, CreateSolidColorTexture(Red2D, bbeColor{ 1.0f, 0.0f, 0.0f }, "Default Red2D Texture"));
+    ADD_TF_TASK(sf, CreateSolidColorTexture(FlatNormal, bbeColor{ 0.5f, 0.5f, 0.0f }, "Flat Normal Texture"));
+    ADD_TF_TASK(sf, CreateUnitCubeMesh());
 }
 
 void GfxDefaultAssets::ShutDown()
 {
     GfxDefaultAssets::White2D.Release();
     GfxDefaultAssets::Black2D.Release();
+    GfxDefaultAssets::Red2D.Release();
     GfxDefaultAssets::FlatNormal.Release();
     GfxDefaultAssets::Checkerboard.Release();
     GfxDefaultAssets::UnitCube.Release();
@@ -84,22 +85,29 @@ void GfxDefaultAssets::CreateSolidColorTexture(GfxTexture& result, const bbeColo
 {
     bbeProfileFunction();
 
-    static const uint32_t TextureWidth = 16;
-    static const uint32_t TextureHeight = 16;
-    static const uint32_t TexturePixelSize = GetBitsPerPixel(DXGI_FORMAT_R8G8B8A8_UNORM) / 8;    // The number of bytes used to represent a pixel in the texture.
+    static const uint32_t TextureWidth = 1;
+    static const uint32_t TextureHeight = 1;
 
+    const uint32_t TexturePixelSize = GetBitsPerPixel(DXGI_FORMAT_R8G8B8A8_UNORM) / 8;    // The number of bytes used to represent a pixel in the texture.
     const uint32_t textureSize = TextureWidth * TextureWidth * TexturePixelSize;
 
-    std::vector<uint8_t> dataVec;
-    dataVec.resize(textureSize);
+    std::vector<uint8_t> data;
+    data.resize(textureSize);
 
-    SIMDMemFill(dataVec.data(), color.ToVector4(), DivideByMultiple(textureSize, 16));
+    const auto packedColor = color.RGBA();
+    for (uint32_t n = 0; n < data.size(); n += TexturePixelSize)
+    {
+        data[n] = packedColor.x;        // R
+        data[n + 1] = packedColor.y;    // G
+        data[n + 2] = packedColor.z;    // B
+        data[n + 3] = packedColor.w;    // A
+    }
 
     GfxTexture::InitParams initParams;
     initParams.m_Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     initParams.m_Width = TextureWidth;
     initParams.m_Height = TextureHeight;
-    initParams.m_InitData = dataVec.data();
+    initParams.m_InitData = data.data();
     initParams.m_ResourceName = colorName;
 
     result.Initialize(initParams);

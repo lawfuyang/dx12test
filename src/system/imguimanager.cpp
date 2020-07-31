@@ -231,7 +231,7 @@ void IMGUIManager::Update()
             // action if OK
             if (g_IMGUIFileDialog->IsOk)
             {
-                m_ActiveFileDialog.second(g_IMGUIFileDialog->GetFilepathName());
+                m_ActiveFileDialog.second(g_IMGUIFileDialog->GetFilepathName(), g_IMGUIFileDialog->GetCurrentFilter());
             }
 
             // close

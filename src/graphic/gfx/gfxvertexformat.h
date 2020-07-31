@@ -4,10 +4,14 @@ class GfxVertexFormat
 {
 public:
     D3D12_INPUT_LAYOUT_DESC Dev() const { return m_Desc; }
+    
+    template <uint32_t NumElements>
+    void Initialize(const D3D12_INPUT_ELEMENT_DESC(&desc)[NumElements]);
 
-    void Initialize(const D3D12_INPUT_ELEMENT_DESC*, uint32_t numElements);
     std::size_t GetHash() const { return m_Hash; }
     bool IsNullLayout() const { return m_Hash == 0; }
+
+    bool operator==(const GfxVertexFormat& rhs) const { return m_Hash == rhs.m_Hash; }
 
 private:
     D3D12_INPUT_LAYOUT_DESC m_Desc = {};

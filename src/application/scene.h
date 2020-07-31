@@ -2,6 +2,9 @@
 
 class Visual;
 
+static const uint32_t C_VISUALS_ARRAY_SZ = BBE_KB(1);
+using VisualsArray = InplaceArray<Visual*, C_VISUALS_ARRAY_SZ>;
+
 class Scene
 {
     DeclareSingletonFunctions(Scene);
@@ -13,17 +16,17 @@ public:
 
     Visual* GetVisualFromID(ObjectID id);
 
-private:
     void OpenSceneWindow();
     void SaveSceneWindow();
     void SaveSceneAsWindow();
     void AddNewVisual();
     void UpdateSelectedVisualPropertiesWindow();
+    void UpdateSceneVisualsWindow();
 
     std::string m_CurrentSceneFile;
-
     Visual* m_SelectedVisual = nullptr;
-    InplaceArray<Visual*, BBE_KB(1)> m_AllVisuals;
+
+    VisualsArray m_AllVisuals;
     ObjectPool<Visual> m_VisualsPool;
 };
 #define g_Scene Scene::GetInstance()

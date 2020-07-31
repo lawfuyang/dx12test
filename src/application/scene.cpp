@@ -6,6 +6,7 @@
 #include <graphic/gfx/gfxdefaultassets.h>
 
 static bool gs_SceneShowSelectedVisualPropertiesWindow = true;
+static bool gs_SceneShowSceneVisualsWindow = true;
 
 void Scene::Initialize()
 {
@@ -27,6 +28,9 @@ void Scene::Initialize()
 
     g_IMGUIManager.RegisterTopMenu("Scene", "Show Selected Visual Properties Window", &gs_SceneShowSelectedVisualPropertiesWindow);
     g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateSelectedVisualPropertiesWindow(); });
+
+    g_IMGUIManager.RegisterTopMenu("Scene", "Show Scene Visuals Window", &gs_SceneShowSceneVisualsWindow);
+    g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateSceneVisualsWindow(); });
 }
 
 void Scene::Update()
@@ -49,7 +53,7 @@ Visual* Scene::GetVisualFromID(ObjectID id)
 
 void Scene::OpenSceneWindow()
 {
-    g_IMGUIManager.RegisterFileDialog("Scene::OpenSceneWindow", ".scene", [](const std::string&) {}); // TODO: Finalizer
+    g_IMGUIManager.RegisterFileDialog("Scene::OpenSceneWindow", ".scene", [](const std::string& filePath, const std::string& fileExt) {}); // TODO: Finalizer
 }
 
 void Scene::SaveSceneWindow()
@@ -63,7 +67,7 @@ void Scene::SaveSceneWindow()
 
 void Scene::SaveSceneAsWindow()
 {
-    g_IMGUIManager.RegisterFileDialog("Scene::OpenSceneWindow", ".scene", [](const std::string&) {}); // TODO: Finalizer
+    g_IMGUIManager.RegisterFileDialog("Scene::OpenSceneWindow", ".scene", [](const std::string& filePath, const std::string& fileExt) {}); // TODO: Finalizer
 }
 
 void Scene::AddNewVisual()
@@ -71,8 +75,13 @@ void Scene::AddNewVisual()
     Visual* newVisual = m_VisualsPool.construct();
     newVisual->m_ObjectID = GenerateObjectID();
 
-    assert(m_AllVisuals.size() < BBE_KB(1)); // Ensure it doesnt grow and invalid all Visual ptrs in the engine
-    m_AllVisuals.push_back(newVisual);
+    // add to container in the beginning of the next engine frame
+    g_System.AddSystemCommand([&, newVisual]()
+        {
+            bbeMultiThreadDetector();
+            assert(m_AllVisuals.size() < C_VISUALS_ARRAY_SZ); // Ensure it doesnt grow and invalid all Visual ptrs in the engine
+            m_AllVisuals.push_back(newVisual);
+        });
 
     m_SelectedVisual = newVisual;
 
@@ -93,4 +102,36 @@ void Scene::UpdateSelectedVisualPropertiesWindow()
     }
 
     m_SelectedVisual->UpdatePropertiesIMGUI();
+}
+
+void Scene::UpdateSceneVisualsWindow()
+{
+    if (!gs_SceneShowSceneVisualsWindow)
+        return;
+
+    ScopedIMGUIWindow window("Scene Visuals");
+
+    if (ImGui::Button("Delete Selected Visual") && m_SelectedVisual)
+    {
+        // remove from container in the beginning of the next engine frame
+        Visual* visualToDelete = m_SelectedVisual;
+        g_System.AddSystemCommand([&, visualToDelete]()
+            {
+                bbeMultiThreadDetector();
+                auto it = std::find(m_AllVisuals.begin(), m_AllVisuals.end(), visualToDelete);
+                assert(it != m_AllVisuals.end());
+                std::swap(*it, m_AllVisuals.back());
+                m_AllVisuals.pop_back();
+            });
+
+        m_SelectedVisual = nullptr;
+    }
+
+    for (Visual* visual : m_AllVisuals)
+    {
+        if (ImGui::Selectable(StringFormat("%s", visual->m_Name.c_str()).c_str()))
+        {
+            m_SelectedVisual = visual;
+        }
+    }
 }

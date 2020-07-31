@@ -4,8 +4,10 @@
 #include "pbr.hlsl"
 
 #include "autogen/hlsl/PerFrameConsts.h"
+#include "autogen/hlsl/PerInstanceConsts.h"
 
 static const PerFrameConsts g_PerFrameConsts = CreatePerFrameConsts();
+static const PerInstanceConsts g_PerInstanceConsts = CreatePerInstanceConsts();
 
 Texture2D<float4> g_DiffuseTexture : register(t0);
 Texture2D<float4> g_NormalTexture : register(t1);
@@ -30,11 +32,12 @@ VS_OUT VSMain(VS_IN input)
     float4 position;
 #if defined(VERTEX_FORMAT_Position2f_TexCoord2f_Color4ub)
     position = float4(input.m_Position, 0, 1);
-#elif defined(VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f)
+#elif defined(VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f) || defined(VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f)
     position = float4(input.m_Position, 1);
 #endif
 
-    result.m_Position = mul(position, g_PerFrameConsts.m_ViewProjMatrix);
+    result.m_Position = mul(position, g_PerInstanceConsts.m_WorldMatrix);
+    result.m_Position = mul(result.m_Position, g_PerFrameConsts.m_ViewProjMatrix);
     result.m_TexCoord = input.m_TexCoord;
     result.m_Bitangent = 0;
 

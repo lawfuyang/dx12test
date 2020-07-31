@@ -16,6 +16,7 @@ struct ForwardLighting
 {
     DEFINE_ENUM_WITH_STRING_CONVERSIONS(VSPermutations,
         (VERTEX_FORMAT_Position2f_TexCoord2f_Color4ub)
+        (VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f)
         (VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f)
         (VSPermutations_Count)
     );
@@ -28,7 +29,10 @@ struct ForwardLighting
     static bool FilterVSKeys(uint32_t key)
     {
         bool isValid = true;
-        isValid &= OnlyOneBitSet(key, 1 << VERTEX_FORMAT_Position2f_TexCoord2f_Color4ub, 1 << VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f);
+        isValid &= OnlyOneBitSet(key, 
+            1 << VERTEX_FORMAT_Position2f_TexCoord2f_Color4ub,
+            1 << VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f,
+            1 << VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f);
 
         //g_Log.info("key: {}, {}", std::bitset<4>{key}.to_string().c_str(), isValid);
 
@@ -37,24 +41,40 @@ struct ForwardLighting
 
     static void InitConstantBuffers()
     {
-        //cbuffer PerFrameConsts : register(b0)
-        //{
-        //    float4x4 g_ViewProjMatrix;
-        //    float4 g_SceneLightDir;
-        //    float4 g_SceneLightIntensity;
-        //};
-        ConstantBuffer cb;
-        cb.m_Name = "PerFrameConsts";
-        cb.m_Register = 0;
-        cb.AddVariable("float4x4", "ViewProjMatrix");
-        cb.AddVariable("float4", "CameraPosition");
-        cb.AddVariable("float4", "SceneLightDir");
-        cb.AddVariable("float4", "SceneLightIntensity");
-        cb.AddVariable("float", "ConstPBRRoughness");
-        cb.AddVariable("float", "ConstPBRMetallic");
+        {
+            //cbuffer PerFrameConsts : register(b1)
+            //{
+            //    float4x4 g_ViewProjMatrix;
+            //    float4 g_SceneLightDir;
+            //    float4 g_SceneLightIntensity;
+            //};
+            ConstantBuffer cb;
+            cb.m_Name = "PerFrameConsts";
+            cb.m_Register = 1;
+            cb.AddVariable("float4x4", "ViewProjMatrix");
+            cb.AddVariable("float4", "CameraPosition");
+            cb.AddVariable("float4", "SceneLightDir");
+            cb.AddVariable("float4", "SceneLightIntensity");
+            cb.AddVariable("float", "ConstPBRRoughness");
+            cb.AddVariable("float", "ConstPBRMetallic");
 
-        bbeAutoLock(g_AllConstantBuffersLock);
-        g_AllConstantBuffers.push_back(cb);
+            bbeAutoLock(g_AllConstantBuffersLock);
+            g_AllConstantBuffers.push_back(cb);
+        }
+
+        {
+            //cbuffer PerInstanceConsts : register(b0)
+            //{
+            //    float4x4 g_WorldMatrix;
+            //};
+            ConstantBuffer cb;
+            cb.m_Name = "PerInstanceConsts";
+            cb.m_Register = 0;
+            cb.AddVariable("float4x4", "WorldMatrix");
+
+            bbeAutoLock(g_AllConstantBuffersLock);
+            g_AllConstantBuffers.push_back(cb);
+        }
     }
 
     static void PopulateJobs()

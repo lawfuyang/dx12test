@@ -2,21 +2,22 @@
 
 #include <graphic/dx12utils.h>
 
-void GfxVertexFormat::Initialize(const D3D12_INPUT_ELEMENT_DESC* desc, uint32_t numElements)
+template <uint32_t NumElements>
+void GfxVertexFormat::Initialize(const D3D12_INPUT_ELEMENT_DESC (&desc)[NumElements])
 {
     assert(m_Hash == 0);
 
-    m_Desc.NumElements = numElements;
-    m_Desc.pInputElementDescs = desc;
+    m_Desc.NumElements = NumElements;
+    m_Desc.pInputElementDescs = (decltype(m_Desc.pInputElementDescs))&desc;
 
-    for (uint32_t i = 0; i < numElements; ++i)
+    for (uint32_t i = 0; i < NumElements; ++i)
     {
-        boost::hash_combine(m_Hash, std::string{ desc->SemanticName });
-        boost::hash_combine(m_Hash, desc->SemanticIndex);
-        boost::hash_combine(m_Hash, desc->InputSlot);
-        boost::hash_combine(m_Hash, desc->AlignedByteOffset);
-        boost::hash_combine(m_Hash, desc->InputSlotClass);
-        boost::hash_combine(m_Hash, desc->InstanceDataStepRate);
+        boost::hash_combine(m_Hash, std::string{ desc[i].SemanticName });
+        boost::hash_combine(m_Hash, desc[i].SemanticIndex);
+        boost::hash_combine(m_Hash, desc[i].InputSlot);
+        boost::hash_combine(m_Hash, desc[i].AlignedByteOffset);
+        boost::hash_combine(m_Hash, desc[i].InputSlotClass);
+        boost::hash_combine(m_Hash, desc[i].InstanceDataStepRate);
     }
 }
 
@@ -65,10 +66,10 @@ void GfxDefaultVertexFormats::Initialize()
         { "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
     };
 
-    GfxDefaultVertexFormats::Position3f_Color4ub.Initialize(s_Position3f_Color4ub_Desc, _countof(s_Position3f_Color4ub_Desc));
-    GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub.Initialize(s_Position2f_TexCoord2f_Color4ub_Desc, _countof(s_Position2f_TexCoord2f_Color4ub_Desc));
-    GfxDefaultVertexFormats::Position3f_TexCoord2f.Initialize(s_Position3f_TexCoord2f_Desc, _countof(s_Position3f_TexCoord2f_Desc));
-    GfxDefaultVertexFormats::Position3f_TexCoord2f_Color4ub.Initialize(s_Position3f_TexCoord2f_Color4ub_Desc, _countof(s_Position3f_TexCoord2f_Color4ub_Desc));
-    GfxDefaultVertexFormats::Position3f_Normal3f_Texcoord2f.Initialize(s_Position3f_Normal3f_TexCoord2f_Desc, _countof(s_Position3f_Normal3f_TexCoord2f_Desc));
-    GfxDefaultVertexFormats::Position3f_Normal3f_Texcoord2f_Tangent3f.Initialize(s_Position3f_Normal3f_Texcoord2f_Tangent3f_Desc, _countof(s_Position3f_Normal3f_Texcoord2f_Tangent3f_Desc));
+    GfxDefaultVertexFormats::Position3f_Color4ub.Initialize(s_Position3f_Color4ub_Desc);
+    GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub.Initialize(s_Position2f_TexCoord2f_Color4ub_Desc);
+    GfxDefaultVertexFormats::Position3f_TexCoord2f.Initialize(s_Position3f_TexCoord2f_Desc);
+    GfxDefaultVertexFormats::Position3f_TexCoord2f_Color4ub.Initialize(s_Position3f_TexCoord2f_Color4ub_Desc);
+    GfxDefaultVertexFormats::Position3f_Normal3f_Texcoord2f.Initialize(s_Position3f_Normal3f_TexCoord2f_Desc);
+    GfxDefaultVertexFormats::Position3f_Normal3f_Texcoord2f_Tangent3f.Initialize(s_Position3f_Normal3f_Texcoord2f_Tangent3f_Desc);
 }

@@ -23,6 +23,7 @@ private:
 
     GfxRootSignature m_RootSignature;
 
+    bool m_UsePBRConsts = false;
     float m_ConstPBRRoughness = 0.75f;
     float m_ConstPBRMetallic = 0.1f;
 };
