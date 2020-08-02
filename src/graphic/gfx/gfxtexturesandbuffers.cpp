@@ -13,44 +13,6 @@
     #define bbeLogGfxAlloc(...) __noop
 #endif
 
-struct ID3D12ResourceMemoryLayout
-{
-    uint32_t m_TotalSizeInBytes = 0;
-    uint32_t m_RowPitch = 0;
-    uint32_t m_SlicePitch = 0;
-    uint32_t m_Alignment = 0;
-};
-
-static ID3D12ResourceMemoryLayout GetMemoryLayout(const D3D12_RESOURCE_DESC& desc)
-{
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-
-    assert(desc.MipLevels > 0);
-
-    const uint32_t arraySize = (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D ? desc.DepthOrArraySize : 1);
-    const uint32_t subResourceCount = desc.MipLevels * arraySize;
-
-    const uint32_t ArraySize = 32;
-    assert(subResourceCount <= ArraySize); // If this pops, increase the number
-
-    InplaceArray<D3D12_PLACED_SUBRESOURCE_FOOTPRINT, ArraySize> layouts(subResourceCount);
-    InplaceArray<UINT, ArraySize> numRows(subResourceCount);
-    InplaceArray<UINT64, ArraySize> rowSizeInBytes(subResourceCount);
-    UINT64 requiredSize = 0;
-
-    gfxDevice.Dev()->GetCopyableFootprints(&desc, 0, subResourceCount, 0, layouts.data(), numRows.data(), rowSizeInBytes.data(), &requiredSize);
-
-    const D3D12_RESOURCE_ALLOCATION_INFO allocInfo = gfxDevice.Dev()->GetResourceAllocationInfo(0, 1, &desc);
-
-    ID3D12ResourceMemoryLayout memoryLayout;
-    memoryLayout.m_RowPitch = layouts[0].Footprint.RowPitch;
-    memoryLayout.m_SlicePitch = memoryLayout.m_RowPitch * desc.Height;
-    memoryLayout.m_Alignment = static_cast<uint32_t>(allocInfo.Alignment);
-    memoryLayout.m_TotalSizeInBytes = static_cast<uint32_t>(allocInfo.SizeInBytes);
-
-    return memoryLayout;
-}
-
 GfxBufferCommon::~GfxBufferCommon()
 {
     assert(m_D3D12MABufferAllocation == nullptr);
@@ -335,6 +297,8 @@ void GfxTexture::Initialize(const InitParams& initParams)
     gfxDevice.GetCommandListsManager().QueueCommandListToExecute(initContext.GetCommandList(), initContext.GetCommandList().GetType());
 }
 
+BBE_OPTIMIZE_OFF;
+
 void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParams)
 {
     bbeProfileFunction();
@@ -344,6 +308,8 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     assert(initParams.m_Format != DXGI_FORMAT_UNKNOWN);
     assert(initParams.m_Width > 0);
     assert(initParams.m_Height > 0);
+
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
     m_Format = initParams.m_Format;
     m_ArraySize = 1; // TODO: Texture2DArray
@@ -373,9 +339,16 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     desc.SampleDesc.Quality = 0;
     desc.Flags = initParams.m_Flags;
 
-    const ID3D12ResourceMemoryLayout memoryLayout = GetMemoryLayout(desc);
+    UINT FirstSubresource = 0;
+    UINT NumSubresources = 1;
+    const UINT64 BaseOffset = 0;
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT layouts = {};
+    UINT numRows = 0;
+    UINT64 rowSizeInBytes = 0;
+    UINT64 totalBytes = 0;
+    gfxDevice.Dev()->GetCopyableFootprints(&desc, FirstSubresource, NumSubresources, BaseOffset, &layouts, &numRows, &rowSizeInBytes, &totalBytes);
 
-    m_SizeInBytes = memoryLayout.m_TotalSizeInBytes;
+    m_SizeInBytes = (uint32_t)totalBytes;
 
     const bool hasInitData = initParams.m_InitData != nullptr;
 
@@ -398,9 +371,7 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
         // we will start this heap in the copy destination state since we will copy data from the upload heap to this heap
         m_CurrentResourceState = D3D12_RESOURCE_STATE_COPY_DEST;
 
-        const uint32_t uploadBufferSize = (uint32_t)GetRequiredIntermediateSize(GetD3D12Resource(), 0, 1);
-
-        InitializeBufferWithInitData(initContext, uploadBufferSize, memoryLayout.m_RowPitch, uploadBufferSize, initParams.m_InitData, initParams.m_ResourceName.c_str());
+        InitializeBufferWithInitData(initContext, m_SizeInBytes, (uint32_t)rowSizeInBytes, (uint32_t)(rowSizeInBytes * desc.Height), initParams.m_InitData, initParams.m_ResourceName.c_str());
 
         // after uploading init values, transition the texture from copy destination state to common state
         initContext.TransitionResource(*this, initParams.m_InitialState, true);

@@ -88,20 +88,10 @@ void GfxDefaultAssets::CreateSolidColorTexture(GfxTexture& result, const bbeColo
     static const uint32_t TextureWidth = 1;
     static const uint32_t TextureHeight = 1;
 
-    const uint32_t TexturePixelSize = GetBitsPerPixel(DXGI_FORMAT_R8G8B8A8_UNORM) / 8;    // The number of bytes used to represent a pixel in the texture.
-    const uint32_t textureSize = TextureWidth * TextureWidth * TexturePixelSize;
+    InplaceArray<uint32_t, TextureWidth* TextureWidth> data;
+    data.resize(TextureWidth * TextureWidth);
 
-    std::vector<uint8_t> data;
-    data.resize(textureSize);
-
-    const auto packedColor = color.RGBA();
-    for (uint32_t n = 0; n < data.size(); n += TexturePixelSize)
-    {
-        data[n] = packedColor.x;        // R
-        data[n + 1] = packedColor.y;    // G
-        data[n + 2] = packedColor.z;    // B
-        data[n + 3] = packedColor.w;    // A
-    }
+    std::fill(data.begin(), data.end(), color.RGBA().v);
 
     GfxTexture::InitParams initParams;
     initParams.m_Format = DXGI_FORMAT_R8G8B8A8_UNORM;
