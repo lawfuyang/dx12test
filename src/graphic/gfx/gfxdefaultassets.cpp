@@ -18,6 +18,7 @@ void GfxDefaultAssets::Initialize(tf::Subflow& sf)
     ADD_TF_TASK(sf, CreateSolidColorTexture(White2D, bbeColor{ 1.0f, 1.0f, 1.0f }, "Default White2D Texture"));
     ADD_TF_TASK(sf, CreateSolidColorTexture(Black2D, bbeColor{ 0.0f, 0.0f, 0.0f }, "Default Black2D Texture"));
     ADD_TF_TASK(sf, CreateSolidColorTexture(Red2D, bbeColor{ 1.0f, 0.0f, 0.0f }, "Default Red2D Texture"));
+    ADD_TF_TASK(sf, CreateSolidColorTexture(Yellow2D, bbeColor{ 1.0f, 1.0f, 0.0f }, "Default Yellow2D Texture"));
     ADD_TF_TASK(sf, CreateSolidColorTexture(FlatNormal, bbeColor{ 0.5f, 0.5f, 0.0f }, "Flat Normal Texture"));
     ADD_TF_TASK(sf, CreateUnitCubeMesh());
 }
@@ -27,6 +28,7 @@ void GfxDefaultAssets::ShutDown()
     GfxDefaultAssets::White2D.Release();
     GfxDefaultAssets::Black2D.Release();
     GfxDefaultAssets::Red2D.Release();
+    GfxDefaultAssets::Yellow2D.Release();
     GfxDefaultAssets::FlatNormal.Release();
     GfxDefaultAssets::Checkerboard.Release();
     GfxDefaultAssets::UnitCube.Release();

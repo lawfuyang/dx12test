@@ -67,8 +67,8 @@ float4 PSMain(VS_OUT input) : SV_TARGET
 
     // Init per-pixel PBR properties
     float ambientOcclusion = 1.0;
-    float roughness = 0.75;
-    float metallic = 0.1;
+    float roughness = g_PerFrameConsts.m_ConstPBRRoughness;
+    float metallic = g_PerFrameConsts.m_ConstPBRMetallic;
 #if !defined(USE_PBR_CONSTS)
     // R = Occlusion, G = Roughness, B = Metalness
     float3 ORM = g_ORMTexture.Sample(g_AnisotropicClampSampler, input.m_TexCoord).rgb;

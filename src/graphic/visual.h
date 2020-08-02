@@ -15,9 +15,9 @@ public:
     GfxMesh* m_Mesh = &GfxDefaultAssets::UnitCube;
     GfxTexture* m_AlbedoTexture = &GfxDefaultAssets::Checkerboard;
     GfxTexture* m_NormalTexture = &GfxDefaultAssets::FlatNormal;
-    GfxTexture* m_ORMTexture = &GfxDefaultAssets::Red2D;
+    GfxTexture* m_ORMTexture = &GfxDefaultAssets::Yellow2D;
 
-    float m_Scale = 1.0f;
+    bbeVector3 m_Scale = bbeVector3::One;
     bbeVector3 m_WorldPosition;
     bbeQuaternion m_Rotation;
 };

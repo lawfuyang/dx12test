@@ -17,7 +17,7 @@ void Visual::UpdatePropertiesIMGUI()
     {
         m_Rotation.Normalize();
     }
-    ImGui::InputFloat("Scale", &m_Scale);
+    ImGui::InputFloat3("Scale", (float*)&m_Scale);
 }
 
 bool Visual::IsValid()
@@ -28,7 +28,7 @@ bool Visual::IsValid()
     result &= m_AlbedoTexture != nullptr;
     result &= m_NormalTexture != nullptr;
     result &= m_ORMTexture != nullptr;
-    result &= !std::isnan(m_Scale) && !std::isinf(m_Scale);
+    result &= m_Scale.IsValid();
     result &= m_WorldPosition.IsValid();
     result &= m_Rotation.IsValid();
 
