@@ -84,8 +84,6 @@ void Scene::AddNewVisual()
         });
 
     m_SelectedVisual = newVisual;
-
-    g_Log.info("New Visual: {}", ToString(newVisual->m_ObjectID));
 }
 
 void Scene::UpdateSelectedVisualPropertiesWindow()
@@ -101,7 +99,7 @@ void Scene::UpdateSelectedVisualPropertiesWindow()
         return;
     }
 
-    m_SelectedVisual->UpdatePropertiesIMGUI();
+    m_SelectedVisual->UpdateIMGUI();
 }
 
 void Scene::UpdateSceneVisualsWindow()
@@ -129,7 +127,8 @@ void Scene::UpdateSceneVisualsWindow()
 
     for (Visual* visual : m_AllVisuals)
     {
-        if (ImGui::Selectable(StringFormat("%s", visual->m_Name.c_str()).c_str()))
+        ScopedIMGUIID scopedID{ visual };
+        if (ImGui::Selectable(visual->m_Name.c_str(), m_SelectedVisual == visual))
         {
             m_SelectedVisual = visual;
         }

@@ -2,13 +2,14 @@
 
 #include <system/imguimanager.h>
 
-void Visual::UpdatePropertiesIMGUI()
+void Visual::UpdateIMGUI()
 {
-    char tempBuffer[256]{};
-    strcpy(tempBuffer, m_Name.c_str());
+    ScopedIMGUIID scopedID{ this };
 
-    if (ImGui::InputText("Name", tempBuffer, sizeof(tempBuffer)))
-        m_Name = tempBuffer;
+    StaticString<256> nameBuffer = m_Name.c_str();
+
+    if (ImGui::InputText("Name", nameBuffer.data(), nameBuffer.capacity()))
+        m_Name = nameBuffer.c_str();
 
     StaticString<36> objectIDStr = ToString(m_ObjectID).c_str();
     ImGui::InputText("ObjectID", objectIDStr.data(), objectIDStr.size(), ImGuiInputTextFlags_ReadOnly);
@@ -18,6 +19,23 @@ void Visual::UpdatePropertiesIMGUI()
         m_Rotation.Normalize();
     }
     ImGui::InputFloat3("Scale", (float*)&m_Scale);
+
+    if (ImGui::CollapsingHeader("Diffuse Texture"))
+    {
+        if (ImGui::Button("Browse..."))
+        {
+            g_IMGUIManager.RegisterFileDialog("Visual::DiffuseTexture", ".dds", [](const std::string& filePath, const std::string& fileExt) {}); // TODO: Finalizer
+        }
+        m_DiffuseTexture->UpdateIMGUI();
+    }
+    if (ImGui::CollapsingHeader("Normal Texture"))
+    {
+
+    }
+    if (ImGui::CollapsingHeader("PBR Texture (Occlusion, Roughness, Metalness)"))
+    {
+
+    }
 }
 
 bool Visual::IsValid()
@@ -25,7 +43,7 @@ bool Visual::IsValid()
     bool result = true;
     result &= m_ObjectID != ID_InvalidObject;
     result &= m_Mesh != nullptr;
-    result &= m_AlbedoTexture != nullptr;
+    result &= m_DiffuseTexture != nullptr;
     result &= m_NormalTexture != nullptr;
     result &= m_ORMTexture != nullptr;
     result &= m_Scale.IsValid();

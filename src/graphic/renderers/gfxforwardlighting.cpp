@@ -115,7 +115,7 @@ void GfxForwardLightingPass::PopulateCommandList()
         context.SetVertexBuffer(visual->m_Mesh->GetVertexBuffer());
         context.SetIndexBuffer(visual->m_Mesh->GetIndexBuffer());
 
-        context.StageSRV(*visual->m_AlbedoTexture, 2, 0);
+        context.StageSRV(*visual->m_DiffuseTexture, 2, 0);
         context.StageSRV(*visual->m_NormalTexture, 2, 1);
         context.StageSRV(*visual->m_ORMTexture, 2, 2);
 

@@ -160,6 +160,8 @@ public:
     uint32_t GetArraySize() const { return m_ArraySize; }
     uint32_t GetNumMips() const { return m_NumMips; }
 
+    void UpdateIMGUI();
+
 private:
     void CreateRTV(const InitParams& initParams);
     void CreateDSV(const InitParams& initParams);

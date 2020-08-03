@@ -73,3 +73,9 @@ struct ScopedIMGUIWindow
     ScopedIMGUIWindow(const char* windowName);
     ~ScopedIMGUIWindow();
 };
+
+struct ScopedIMGUIID
+{
+    ScopedIMGUIID(void* ptr) { ImGui::PushID(ptr); }
+    ~ScopedIMGUIID() { ImGui::PopID(); }
+};

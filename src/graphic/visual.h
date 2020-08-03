@@ -5,7 +5,7 @@
 class Visual
 {
 public:
-    void UpdatePropertiesIMGUI();
+    void UpdateIMGUI();
 
     bool IsValid();
 
@@ -13,7 +13,7 @@ public:
     std::string m_Name = "Unnamed Visual";
 
     GfxMesh* m_Mesh = &GfxDefaultAssets::UnitCube;
-    GfxTexture* m_AlbedoTexture = &GfxDefaultAssets::Checkerboard;
+    GfxTexture* m_DiffuseTexture = &GfxDefaultAssets::Checkerboard;
     GfxTexture* m_NormalTexture = &GfxDefaultAssets::FlatNormal;
     GfxTexture* m_ORMTexture = &GfxDefaultAssets::Yellow2D;
 

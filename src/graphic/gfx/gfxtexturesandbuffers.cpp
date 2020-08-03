@@ -5,6 +5,8 @@
 #include <graphic/gfx/gfxcontext.h>
 #include <graphic/dx12utils.h>
 
+#include <system/imguimanager.h>
+
 //#define DEBUG_GFX_MEMORY_ALLOCS
 
 #if defined(DEBUG_GFX_MEMORY_ALLOCS)
@@ -398,6 +400,20 @@ void GfxTexture::CreateDSV(const InitParams& initParams)
     depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
 
     gfxDevice.Dev()->CreateDepthStencilView(GetD3D12Resource(), &depthStencilDesc, m_GfxDescriptorHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
+}
+
+void GfxTexture::UpdateIMGUI()
+{
+    ScopedIMGUIID scopedID{ this };
+
+    ID3D12Resource* gfxResource = m_D3D12MABufferAllocation->GetResource();
+    D3D12_RESOURCE_DESC desc = gfxResource->GetDesc();
+
+    StaticString<256> nameBuffer = GetD3DDebugName(gfxResource).c_str();
+    ImGui::InputText("Name", nameBuffer.data(), nameBuffer.capacity(), ImGuiInputTextFlags_ReadOnly);
+
+    const bbeVector2U dims{ (uint32_t)desc.Width, desc.Height };
+    ImGui::InputInt2("Dimensions", (int*)&dims, ImGuiInputTextFlags_ReadOnly);
 }
 
 void GfxTexture::CreateRTV(const InitParams& initParams)
