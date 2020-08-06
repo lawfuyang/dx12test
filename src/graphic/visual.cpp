@@ -2,6 +2,14 @@
 
 #include <system/imguimanager.h>
 
+ForwardDeclareSerializerFunctions(Visual);
+
+template <typename Archive>
+void Visual::Serialize(Archive& archive)
+{
+
+}
+
 void Visual::UpdateIMGUI()
 {
     ScopedIMGUIID scopedID{ this };

@@ -74,6 +74,7 @@
     <ClCompile Include="..\src\application\cameracontroller.cpp" />
     <ClCompile Include="..\src\application\scene.cpp" />
     <ClCompile Include="..\src\graphic\dx12utils.cpp" />
+    <ClCompile Include="..\src\graphic\gfxassetloaders.cpp" />
     <ClCompile Include="..\src\graphic\gfx\gfxadapter.cpp" />
     <ClCompile Include="..\src\graphic\gfx\gfxcommandlist.cpp" />
     <ClCompile Include="..\src\graphic\gfx\gfxcommonstates.cpp" />
@@ -124,6 +125,7 @@
     <ClInclude Include="..\src\application\scene.h" />
     <ClInclude Include="..\src\defaultassets\occcity.h" />
     <ClInclude Include="..\src\graphic\dx12utils.h" />
+    <ClInclude Include="..\src\graphic\gfxassetloaders.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxadapter.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxcommandlist.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxcommonstates.h" />

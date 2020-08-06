@@ -70,25 +70,41 @@ namespace UtilsPrivate
     case elem : return BOOST_PP_STRINGIZE(elem);
 }
 
-#define DeclareSingletonFunctions(ClassName)             \
-    public:                                              \
-        static ClassName& GetInstance()                  \
-        {                                                \
-            static ClassName s_Instance;                 \
-            return s_Instance;                           \
-        }                                                \
-        ~ClassName() = default;                          \
-        ClassName(const ClassName&) = delete;            \
-        ClassName(ClassName&&) = delete;                 \
-        ClassName& operator=(const ClassName&) = delete; \
-        ClassName& operator=(ClassName&&) = delete;      \
-    private:                                             \
-        ClassName()                                      \
-        {                                                \
-            ms_Instance = this;                          \
-        }                                                \
-        inline static ClassName* ms_Instance = nullptr;  \
-    public:
+
+#define DeclareSingletonFunctions(ClassName)         \
+private:                                             \
+    ClassName()                                      \
+    {                                                \
+        ms_Instance = this;                          \
+    }                                                \
+    inline static ClassName* ms_Instance = nullptr;  \
+public:                                              \
+    static ClassName& GetInstance()                  \
+    {                                                \
+        static ClassName s_Instance;                 \
+        return s_Instance;                           \
+    }                                                \
+    ~ClassName() = default;                          \
+    ClassName(const ClassName&) = delete;            \
+    ClassName(ClassName&&) = delete;                 \
+    ClassName& operator=(const ClassName&) = delete; \
+    ClassName& operator=(ClassName&&) = delete;
+
+
+#define DeclareObjectModelFunctions(ClassName)                                                    \
+private:                                                                                          \
+    friend class Scene;                                                                           \
+    ObjectID m_ObjectID = ID_InvalidObject;                                                       \
+                                                                                                  \
+public:                                                                                           \
+    static constexpr ClassID GetClassID() { return GetCompileTimeCRC32(bbeTOSTRING(ClassName)); } \
+                                                                                                  \
+    ObjectID GetObjectID() const { return m_ObjectID; }                                           \
+                                                                                                  \
+    template <typename Archive>                                                                   \
+    void Serialize(Archive&);
+
+
 
 #define BBE_OPTIMIZE_OFF __pragma(optimize("",off))
 #define BBE_OPTIMIZE_ON  __pragma(optimize("", on))

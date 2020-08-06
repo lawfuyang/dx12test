@@ -119,3 +119,9 @@ namespace cereal
         ar(mat.m);
     }
 }
+
+#define ForwardDeclareSerializerFunctions(ClassName)                                           \
+template void ClassName::Serialize<cereal::BinaryInputArchive>(cereal::BinaryInputArchive&);   \
+template void ClassName::Serialize<cereal::BinaryOutputArchive>(cereal::BinaryOutputArchive&); \
+template void ClassName::Serialize<cereal::JSONInputArchive>(cereal::JSONInputArchive&);       \
+template void ClassName::Serialize<cereal::JSONOutputArchive>(cereal::JSONOutputArchive&);

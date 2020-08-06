@@ -4,6 +4,8 @@
 
 #include <graphic/gfx/gfxmanager.h>
 
+ForwardDeclareSerializerFunctions(CameraController);
+
 static bool gs_ShowCameraControllerIMGUIWindow = false;
 
 void CameraController::Initialize()

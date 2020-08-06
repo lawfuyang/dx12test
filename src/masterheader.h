@@ -98,6 +98,7 @@ template <typename T>
 using CircularBuffer = boost::circular_buffer<T>;
 
 using ObjectID = boost::uuids::uuid;
+using ClassID = uint32_t;
 
 // ComPtr namespace
 using Microsoft::WRL::ComPtr;

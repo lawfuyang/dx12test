@@ -145,6 +145,9 @@
     <ClCompile Include="..\extern\imgui\ImGuiFileDialog.cpp">
       <Filter>extern\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\gfxassetloaders.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -299,6 +302,9 @@
       <Filter>application</Filter>
     </ClInclude>
     <ClInclude Include="..\src\graphic\visual.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfxassetloaders.h">
       <Filter>graphic</Filter>
     </ClInclude>
   </ItemGroup>

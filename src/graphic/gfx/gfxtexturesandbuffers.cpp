@@ -299,8 +299,6 @@ void GfxTexture::Initialize(const InitParams& initParams)
     gfxDevice.GetCommandListsManager().QueueCommandListToExecute(initContext.GetCommandList(), initContext.GetCommandList().GetType());
 }
 
-BBE_OPTIMIZE_OFF;
-
 void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParams)
 {
     bbeProfileFunction();

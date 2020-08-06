@@ -5,11 +5,12 @@
 class Visual
 {
 public:
+    DeclareObjectModelFunctions(Visual);
+
     void UpdateIMGUI();
 
     bool IsValid();
 
-    ObjectID m_ObjectID = ID_InvalidObject;
     std::string m_Name = "Unnamed Visual";
 
     GfxMesh* m_Mesh = &GfxDefaultAssets::UnitCube;
