@@ -33,7 +33,7 @@ class IMGUIManager
 public:
     DeclareSingletonFunctions(IMGUIManager);
 
-    using FileDialogResultFinalizer = std::function<void(const std::string&, const std::string&)>;
+    using FileDialogResultFinalizer = std::function<void(const std::string& filePath)>;
 
     void Initialize();
     void ShutDown();

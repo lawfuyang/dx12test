@@ -131,6 +131,12 @@ const std::string GetFileNameFromPath(const std::string& fullPath)
     return ret;
 }
 
+const std::string GetFileExtensionFromPath(const std::string& fullPath)
+{
+    const std::size_t found = fullPath.find_last_of('.');
+    return found == std::string::npos ? "" : fullPath.substr(found + 1);
+}
+
 CFileWrapper::CFileWrapper(const std::string& fileName, bool isReadMode)
 {
     m_File = fopen(fileName.c_str(), isReadMode ? "r" : "w");

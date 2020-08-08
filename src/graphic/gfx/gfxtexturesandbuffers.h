@@ -133,6 +133,7 @@ class GfxTexture : public GfxHazardTrackedResource,
                    public GfxBufferCommon
 {
 public:
+    DeclareObjectModelFunctions(GfxTexture);
 
     enum ViewType { RTV, SRV, DSV, UAV };
 

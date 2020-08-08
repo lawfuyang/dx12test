@@ -289,6 +289,8 @@ void GfxConstantBuffer::UploadToGPU(GfxContext& context, const void* data, uint3
         });
 }
 
+ForwardDeclareSerializerFunctions(GfxTexture);
+
 void GfxTexture::Initialize(const InitParams& initParams)
 {
     GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName);

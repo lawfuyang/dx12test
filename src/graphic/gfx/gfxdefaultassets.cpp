@@ -4,9 +4,6 @@
 #include <graphic/gfx/gfxdevice.h>
 #include <graphic/gfx/gfxmanager.h>
 
-#include <defaultassets/occcity.h>
-#include <defaultassets/SquidRoom.h>
-
 #include <tmp/shaders/autogen/cpp/VS_ForwardLighting.h>
 #include <tmp/shaders/autogen/cpp/PS_ForwardLighting.h>
 

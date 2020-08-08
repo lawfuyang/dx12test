@@ -41,6 +41,7 @@
 #include <array>
 #include <numeric>
 #include <mutex>
+#include <shared_mutex>
 #include <functional>
 #include <fstream>
 #include <bitset>

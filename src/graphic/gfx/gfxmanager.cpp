@@ -1,6 +1,7 @@
 #include <graphic/gfx/gfxmanager.h>
 
 #include <graphic/dx12utils.h>
+#include <graphic/gfxresourcemanager.h>
 #include <graphic/gfx/gfxadapter.h>
 #include <graphic/gfx/gfxcontext.h>
 #include <graphic/gfx/gfxrootsignature.h>
@@ -117,6 +118,7 @@ void GfxManager::ShutDown()
     g_GfxIMGUIRenderer.ShutDown();
     g_GfxShadowMapRenderer.ShutDown();
     g_GfxDefaultAssets.ShutDown();
+    g_GfxResourceManager.ShutDown();
 
     // we must complete the previous GPU frame before exiting the app
     m_GfxDevice.IncrementAndSignalFence();

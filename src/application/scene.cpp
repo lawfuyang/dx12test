@@ -53,7 +53,7 @@ Visual* Scene::GetVisualFromID(ObjectID id)
 
 void Scene::OpenSceneWindow()
 {
-    g_IMGUIManager.RegisterFileDialog("Scene::OpenSceneWindow", ".scene", [](const std::string& filePath, const std::string& fileExt) {}); // TODO: Finalizer
+    g_IMGUIManager.RegisterFileDialog("Scene::OpenSceneWindow", ".scene", [](const std::string& filePath) {}); // TODO: Finalizer
 }
 
 void Scene::SaveSceneWindow()
@@ -67,7 +67,7 @@ void Scene::SaveSceneWindow()
 
 void Scene::SaveSceneAsWindow()
 {
-    g_IMGUIManager.RegisterFileDialog("Scene::OpenSceneWindow", ".scene", [](const std::string& filePath, const std::string& fileExt) {}); // TODO: Finalizer
+    g_IMGUIManager.RegisterFileDialog("Scene::OpenSceneWindow", ".scene", [](const std::string& filePath) {}); // TODO: Finalizer
 }
 
 void Scene::AddNewVisual()

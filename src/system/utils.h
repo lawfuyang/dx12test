@@ -181,14 +181,11 @@ const std::string GetLastErrorAsString();
 const std::string& GetApplicationDirectory();
 const std::string& GetTempDirectory();
 const std::string& GetAssetsDirectory();
-
 const std::string GetDirectoryFromPath(const std::string& fullPath);
-
 void SplitPath(const std::string& fullPath, std::string& dir, std::string& fileName);
-
 void GetFilesInDirectory(std::vector<std::string>& out, const std::string& directory);
-
 const std::string GetFileNameFromPath(const std::string& fullPath);
+const std::string GetFileExtensionFromPath(const std::string& fullPath);
 
 struct WindowsHandleWrapper
 {

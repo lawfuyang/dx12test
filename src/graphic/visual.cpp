@@ -1,5 +1,8 @@
 #include <graphic/visual.h>
 
+#include <graphic/gfx/gfxmanager.h>
+#include <graphic/gfxresourcemanager.h>
+
 #include <system/imguimanager.h>
 
 ForwardDeclareSerializerFunctions(Visual);
@@ -32,8 +35,23 @@ void Visual::UpdateIMGUI()
     {
         if (ImGui::Button("Browse..."))
         {
-            g_IMGUIManager.RegisterFileDialog("Visual::DiffuseTexture", ".dds", [](const std::string& filePath, const std::string& fileExt) {}); // TODO: Finalizer
+            auto FileSelectionFinalizer = [&](const std::string& filePath)
+            {
+                GfxTexture* tex = g_GfxResourceManager.Get<GfxTexture>(filePath, [&](GfxTexture* tex) { m_DiffuseTexture = tex; });
+                if (tex)
+                {
+                    g_GfxManager.AddGraphicCommand([&, tex]() { m_DiffuseTexture = tex; });
+                }
+            };
+
+            g_IMGUIManager.RegisterFileDialog("Visual::DiffuseTexture", ".dds,.hdr,.png,.jpg", FileSelectionFinalizer);
         }
+        ImGui::SameLine();
+        if (ImGui::Button("Reset"))
+        {
+            g_GfxManager.AddGraphicCommand([&]() { m_DiffuseTexture = &GfxDefaultAssets::Checkerboard; });
+        }
+
         m_DiffuseTexture->UpdateIMGUI();
     }
     if (ImGui::CollapsingHeader("Normal Texture"))

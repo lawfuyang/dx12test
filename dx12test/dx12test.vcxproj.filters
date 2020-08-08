@@ -145,7 +145,7 @@
     <ClCompile Include="..\extern\imgui\ImGuiFileDialog.cpp">
       <Filter>extern\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\graphic\gfxassetloaders.cpp">
+    <ClCompile Include="..\src\graphic\gfxresourcemanager.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
   </ItemGroup>
@@ -304,7 +304,7 @@
     <ClInclude Include="..\src\graphic\visual.h">
       <Filter>graphic</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\gfxassetloaders.h">
+    <ClInclude Include="..\src\graphic\gfxresourcemanager.h">
       <Filter>graphic</Filter>
     </ClInclude>
   </ItemGroup>
