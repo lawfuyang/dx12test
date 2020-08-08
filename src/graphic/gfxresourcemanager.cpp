@@ -1,5 +1,8 @@
 #include <graphic/gfxresourcemanager.h>
 
+#include <graphic/WICTextureLoader12.h>
+#include <graphic/DDSTextureLoader12.h>
+
 #include <graphic/gfx/gfxmanager.h>
 #include <graphic/gfx/gfxdefaultassets.h>
 #include <graphic/gfx/gfxtexturesandbuffers.h>
@@ -11,11 +14,12 @@ struct ManagedGfxResources
 {
     using HashedResourceFilePath = std::size_t;
     std::unordered_map<HashedResourceFilePath, T*> m_ResourceCache;
-    std::shared_mutex m_Lock;
+    std::shared_mutex m_CacheLock;
 
-    T* m_DefaultResource = nullptr;
+    ObjectPool<T> m_Pool;
+    std::mutex m_PoolLock;
 
-    static T* Load(const std::string& filePath);
+    void Load(const std::string& filePath, const GfxResourceManager::ResourceLoadingFinalizer<T>&);
     void Release();
 
     static ManagedGfxResources<T>& Get() 
@@ -25,20 +29,24 @@ struct ManagedGfxResources
     }
 };
 
-#define RegisterResource(RESOURCE_TYPE, DEFAULT_RESOURCE)                                                                                     \
-template RESOURCE_TYPE* GfxResourceManager::Get(const std::string&, const ResourceLoadingFinalizer<RESOURCE_TYPE>&);                          \
-                                                                                                                                              \
-struct RESOURCE_TYPE_Register                                                                                                                 \
-{                                                                                                                                             \
-    RESOURCE_TYPE_Register()                                                                                                                  \
-    {                                                                                                                                         \
-        gs_AllManagedGfxResourcesReleasers.push_back([]() { ManagedGfxResources<RESOURCE_TYPE>::Get().Release(); });                          \
-        ManagedGfxResources<RESOURCE_TYPE>::Get().m_DefaultResource = DEFAULT_RESOURCE;                                                       \
-    }                                                                                                                                         \
-};                                                                                                                                            \
+#define RegisterResource(RESOURCE_TYPE)                                                                              \
+template RESOURCE_TYPE* GfxResourceManager::Get(const std::string&, const ResourceLoadingFinalizer<RESOURCE_TYPE>&); \
+                                                                                                                     \
+struct RESOURCE_TYPE_Register                                                                                        \
+{                                                                                                                    \
+    RESOURCE_TYPE_Register()                                                                                         \
+    {                                                                                                                \
+        ManagedGfxResources<RESOURCE_TYPE>& resources = ManagedGfxResources<RESOURCE_TYPE>::Get();                   \
+        gs_AllManagedGfxResourcesReleasers.push_back([&]()                                                           \
+            {                                                                                                        \
+                resources.Release();                                                                                 \
+                resources.m_ResourceCache.clear();                                                                   \
+            });                                                                                                      \
+    }                                                                                                                \
+};                                                                                                                   \
 static RESOURCE_TYPE_Register gs_RESOURCE_TYPE_Register;
 
-RegisterResource(GfxTexture, &GfxDefaultAssets::Checkerboard);
+RegisterResource(GfxTexture);
 
 #undef RegisterResource
 
@@ -51,7 +59,7 @@ T* GfxResourceManager::Get(const std::string& filePath, const ResourceLoadingFin
     {
         const std::size_t hashedFilePath = std::hash<std::string>{}(filePath);
 
-        std::shared_lock<std::shared_mutex> readLock{ resources.m_Lock };
+        std::shared_lock<std::shared_mutex> readLock{ resources.m_CacheLock };
         if (resources.m_ResourceCache.count(hashedFilePath))
         {
             return resources.m_ResourceCache[hashedFilePath];
@@ -59,33 +67,7 @@ T* GfxResourceManager::Get(const std::string& filePath, const ResourceLoadingFin
     }
 
     // resource not yet loaded in memory. Load it async in BG thread, and return nullptr
-    g_System.AddBGAsyncCommand([&, filePath, finalizer]()
-        {
-            T* loadedResource = nullptr;
-
-            {
-                std::unique_lock<std::shared_mutex> writeLock{ resources.m_Lock };
-                loadedResource = ManagedGfxResources<T>::Load(filePath);
-            }
-            
-            // unable to load for some reason. Assign default resource
-            if (!loadedResource)
-            {
-                g_Log.error("Failed to load {}!", filePath.c_str());
-
-                assert(resources.m_DefaultResource);
-                loadedResource = resources.m_DefaultResource;
-            }
-            else
-            {
-                const std::size_t hashedFilePath = std::hash<std::string>{}(filePath);
-
-                std::unique_lock<std::shared_mutex> writeLock{ resources.m_Lock };
-                resources.m_ResourceCache[hashedFilePath] = loadedResource;
-            }
-
-            g_GfxManager.AddGraphicCommand([loadedResource, finalizer]() { finalizer(loadedResource); });
-        });
+    g_System.AddBGAsyncCommand([&, filePath, finalizer]() { resources.Load(filePath, finalizer); });
 
     return nullptr;
 }
@@ -99,16 +81,37 @@ void GfxResourceManager::ShutDown()
 }
 
 template<>
-GfxTexture* ManagedGfxResources<GfxTexture>::Load(const std::string& filePath)
+void ManagedGfxResources<GfxTexture>::Load(const std::string& filePath, const GfxResourceManager::ResourceLoadingFinalizer<GfxTexture>& finalizer)
 {
     bbeProfileFunction();
 
-    return nullptr;
+    const std::string fileExt = GetFileExtensionFromPath(filePath);
+    const std::wstring filePathW = MakeWStrFromStr(filePath);
+
+    std::unique_ptr<uint8_t[]> decodedData;
+    D3D12_RESOURCE_DESC texDesc{};
+    D3D12_SUBRESOURCE_DATA subResource{};
+    if (fileExt == "dds")
+    {
+        __noop; // not implemented yet
+    }
+    else
+    {
+        DirectX::LoadWICTextureFromFileSimple(filePathW.c_str(), decodedData, subResource, texDesc);
+    }
+
+    const uint32_t imageBytes = (uint32_t)subResource.SlicePitch;
+    if (imageBytes == 0)
+    {
+        g_Log.error("Failed to load {} from disk!", filePath.c_str());
+        return;
+    }
+
+
 }
 
 template<>
 void ManagedGfxResources<GfxTexture>::Release()
 {
-    for (auto it : m_ResourceCache) { it.second->Release(); }
-    m_ResourceCache.clear();
+    for (auto& it : m_ResourceCache) { it.second->Release(); }
 }

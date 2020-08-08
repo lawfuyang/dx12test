@@ -73,7 +73,6 @@ void Scene::SaveSceneAsWindow()
 void Scene::AddNewVisual()
 {
     Visual* newVisual = m_VisualsPool.construct();
-    newVisual->m_ObjectID = GenerateObjectID();
 
     // add to container in the beginning of the next engine frame
     g_System.AddSystemCommand([&, newVisual]()

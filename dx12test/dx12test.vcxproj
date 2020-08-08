@@ -73,6 +73,7 @@
     <ClCompile Include="..\src\application\applicationlayer.cpp" />
     <ClCompile Include="..\src\application\cameracontroller.cpp" />
     <ClCompile Include="..\src\application\scene.cpp" />
+    <ClCompile Include="..\src\graphic\DDSTextureLoader12.cpp" />
     <ClCompile Include="..\src\graphic\dx12utils.cpp" />
     <ClCompile Include="..\src\graphic\gfxresourcemanager.cpp" />
     <ClCompile Include="..\src\graphic\gfx\gfxadapter.cpp" />
@@ -99,6 +100,7 @@
     <ClCompile Include="..\src\graphic\shapes.cpp" />
     <ClCompile Include="..\src\graphic\view.cpp" />
     <ClCompile Include="..\src\graphic\visual.cpp" />
+    <ClCompile Include="..\src\graphic\WICTextureLoader12.cpp" />
     <ClCompile Include="..\src\system\commandmanager.cpp" />
     <ClCompile Include="..\src\system\imguimanager.cpp" />
     <ClCompile Include="..\src\system\keyboard.cpp" />
@@ -124,6 +126,7 @@
     <ClInclude Include="..\src\application\cameracontroller.h" />
     <ClInclude Include="..\src\application\scene.h" />
     <ClInclude Include="..\src\defaultassets\occcity.h" />
+    <ClInclude Include="..\src\graphic\DDSTextureLoader12.h" />
     <ClInclude Include="..\src\graphic\dx12utils.h" />
     <ClInclude Include="..\src\graphic\gfxresourcemanager.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxadapter.h" />
@@ -152,6 +155,7 @@
     <ClInclude Include="..\src\graphic\shapes.h" />
     <ClInclude Include="..\src\graphic\view.h" />
     <ClInclude Include="..\src\graphic\visual.h" />
+    <ClInclude Include="..\src\graphic\WICTextureLoader12.h" />
     <ClInclude Include="..\src\masterheader.h" />
     <ClInclude Include="..\src\system\commandmanager.h" />
     <ClInclude Include="..\src\system\imguimanager.h" />

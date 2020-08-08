@@ -130,8 +130,11 @@ int APIENTRY WinMain(::HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hInstance);
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(nCmdShow);
+
     // first, Init the logger
     Logger::GetInstance().Initialize("../bin/output.txt");
+
+    Microsoft::WRL::Wrappers::RoInitializeWrapper InitializeWinRT{ RO_INIT_MULTITHREADED };
 
     g_Log.info("Commandline args: {}", lpCmdLine);
     g_CommandLineOptions.Parse();

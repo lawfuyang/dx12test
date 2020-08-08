@@ -148,6 +148,12 @@
     <ClCompile Include="..\src\graphic\gfxresourcemanager.cpp">
       <Filter>graphic</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\DDSTextureLoader12.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphic\WICTextureLoader12.cpp">
+      <Filter>graphic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -305,6 +311,12 @@
       <Filter>graphic</Filter>
     </ClInclude>
     <ClInclude Include="..\src\graphic\gfxresourcemanager.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\DDSTextureLoader12.h">
+      <Filter>graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\WICTextureLoader12.h">
       <Filter>graphic</Filter>
     </ClInclude>
   </ItemGroup>

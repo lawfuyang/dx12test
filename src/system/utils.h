@@ -94,7 +94,7 @@ public:                                              \
 #define DeclareObjectModelFunctions(ClassName)                                                    \
 private:                                                                                          \
     friend class Scene;                                                                           \
-    ObjectID m_ObjectID = ID_InvalidObject;                                                       \
+    ObjectID m_ObjectID = GenerateObjectID();                                                     \
                                                                                                   \
 public:                                                                                           \
     static constexpr ClassID GetClassID() { return GetCompileTimeCRC32(bbeTOSTRING(ClassName)); } \
