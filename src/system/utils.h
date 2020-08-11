@@ -233,10 +233,11 @@ private:
     const AutoScopeCaller bbeUniqueVariable(mtDetectorScoped){ [&](){ __s_bbe_MTDetector__.Enter(std::this_thread::get_id()); }, [&](){ __s_bbe_MTDetector__.Exit(); } }; 
 
 // generic hasher func that uses Boost lib to hash the entire type
-// NOTE: Make sure every variable in type is of a POD type!
 template <typename T>
 static std::size_t GenericTypeHash(const T& s)
 {
+    static_assert(std::is_standard_layout_v<T> && std::is_trivial_v<T>);
+
     std::size_t hash = 0;
     const std::byte* rawMem = reinterpret_cast<const std::byte*>(&s);
     boost::hash_range(hash, rawMem, rawMem + sizeof(T));

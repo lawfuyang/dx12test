@@ -18,7 +18,7 @@ public:
     GfxTexture* m_NormalTexture = &GfxDefaultAssets::FlatNormal;
     GfxTexture* m_ORMTexture = &GfxDefaultAssets::Yellow2D;
 
-    bbeVector3 m_Scale = bbeVector3::One;
+    bbeVector3 m_Scale = bbeVector3::One * 100; // the unit cube is smol, so scale it up first. it will be reset back to '1' after selected new mesh
     bbeVector3 m_WorldPosition;
     bbeQuaternion m_Rotation;
 };

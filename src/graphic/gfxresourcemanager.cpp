@@ -59,9 +59,10 @@ T* GfxResourceManager::Get(const std::string& filePath, const ResourceLoadingFin
     {
         const std::size_t hashedFilePath = std::hash<std::string>{}(filePath);
 
-        std::shared_lock<std::shared_mutex> readLock{ resources.m_CacheLock };
+        std::shared_lock readLock{ resources.m_CacheLock };
         if (resources.m_ResourceCache.count(hashedFilePath))
         {
+            g_Log.info("Retrieved {} from resource cache", filePath.c_str());
             return resources.m_ResourceCache[hashedFilePath];
         }
     }
@@ -88,7 +89,7 @@ void ManagedGfxResources<GfxTexture>::Load(const std::string& filePath, const Gf
     const std::string fileExt = GetFileExtensionFromPath(filePath);
     const std::wstring filePathW = MakeWStrFromStr(filePath);
 
-    std::unique_ptr<uint8_t[]> decodedData;
+    std::vector<std::byte> decodedData;
     D3D12_RESOURCE_DESC texDesc{};
     D3D12_SUBRESOURCE_DATA subResource{};
     if (fileExt == "dds")
@@ -107,7 +108,34 @@ void ManagedGfxResources<GfxTexture>::Load(const std::string& filePath, const Gf
         return;
     }
 
+    // init and assign gfx texture in the next gfx frame
+    auto CreateGfxTexture = [&, texDesc = std::move(texDesc), initData = std::move(decodedData), filePath, finalizer]()
+    {
+        GfxTexture::InitParams params;
+        params.m_Format = texDesc.Format;
+        params.m_Width = (uint32_t)texDesc.Width;
+        params.m_Height = texDesc.Height;
+        params.m_InitData = initData.data();
+        params.m_ResourceName = GetFileNameFromPath(filePath).c_str();
 
+        GfxTexture* newTex = [&]()
+        {
+            bbeAutoLock(m_PoolLock);
+            return m_Pool.construct();
+        }();
+        newTex->Initialize(params);
+
+        finalizer(newTex);
+
+        g_Log.info("Loaded and initialized {}", filePath.c_str());
+
+        // finally, cache gfx texture
+        const std::size_t hashedFilePath = std::hash<std::string>{}(filePath);
+
+        std::unique_lock readLock{ m_CacheLock };
+        m_ResourceCache[hashedFilePath] = newTex;
+    };
+    g_GfxManager.AddGraphicCommand(CreateGfxTexture);
 }
 
 template<>

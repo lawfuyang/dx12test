@@ -47,6 +47,8 @@ void Visual::UpdateIMGUI()
             g_IMGUIManager.RegisterFileDialog("Visual::DiffuseTexture", ".dds,.hdr,.png,.jpg", FileSelectionFinalizer);
         }
         ImGui::SameLine();
+
+        // reset back to default texture
         if (ImGui::Button("Reset"))
         {
             g_GfxManager.AddGraphicCommand([&]() { m_DiffuseTexture = &GfxDefaultAssets::Checkerboard; });

@@ -322,7 +322,7 @@ namespace
         D3D12_RESOURCE_FLAGS resFlags,
         unsigned int loadFlags,
         _Outptr_ ID3D12Resource** texture,
-        std::unique_ptr<uint8_t[]>& decodedData,
+        std::vector<std::byte>& decodedData,
         D3D12_SUBRESOURCE_DATA& subresource,
         D3D12_RESOURCE_DESC* pDesc = nullptr) noexcept
     {
@@ -475,9 +475,7 @@ namespace
         auto rowPitch = static_cast<size_t>(rowBytes);
         auto imageSize = static_cast<size_t>(numBytes);
 
-        decodedData.reset(new (std::nothrow) uint8_t[imageSize]);
-        if (!decodedData)
-            return E_OUTOFMEMORY;
+        decodedData.resize(imageSize);
 
         // Load image data
         if (memcmp(&convertGUID, &pixelFormat, sizeof(GUID)) == 0
@@ -485,7 +483,7 @@ namespace
             && theight == height)
         {
             // No format conversion or resize needed
-            hr = frame->CopyPixels(nullptr, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), decodedData.get());
+            hr = frame->CopyPixels(nullptr, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), (BYTE*)decodedData.data());
             if (FAILED(hr))
                 return hr;
         }
@@ -513,7 +511,7 @@ namespace
             if (memcmp(&convertGUID, &pfScaler, sizeof(GUID)) == 0)
             {
                 // No format conversion needed
-                hr = scaler->CopyPixels(nullptr, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), decodedData.get());
+                hr = scaler->CopyPixels(nullptr, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), (BYTE*)decodedData.data());
                 if (FAILED(hr))
                     return hr;
             }
@@ -535,7 +533,7 @@ namespace
                 if (FAILED(hr))
                     return hr;
 
-                hr = FC->CopyPixels(nullptr, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), decodedData.get());
+                hr = FC->CopyPixels(nullptr, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), (BYTE*)decodedData.data());
                 if (FAILED(hr))
                     return hr;
             }
@@ -563,7 +561,7 @@ namespace
             if (FAILED(hr))
                 return hr;
 
-            hr = FC->CopyPixels(nullptr, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), decodedData.get());
+            hr = FC->CopyPixels(nullptr, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), (BYTE*)decodedData.data());
             if (FAILED(hr))
                 return hr;
         }
@@ -589,7 +587,7 @@ namespace
             memcpy(pDesc, &desc, sizeof(desc));
         }
 
-        subresource.pData = decodedData.get();
+        subresource.pData = decodedData.data();
         subresource.RowPitch = static_cast<LONG>(rowPitch);
         subresource.SlicePitch = static_cast<LONG>(imageSize);
 
@@ -647,7 +645,7 @@ namespace
 } // anonymous namespace
 
 //--------------------------------------------------------------------------------------
-void DirectX::LoadWICTextureFromFileSimple(const wchar_t* szFileName, std::unique_ptr<uint8_t[]>& decodedData, D3D12_SUBRESOURCE_DATA& subresource, D3D12_RESOURCE_DESC& desc) noexcept
+void DirectX::LoadWICTextureFromFileSimple(const wchar_t* szFileName, std::vector<std::byte>& decodedData, D3D12_SUBRESOURCE_DATA& subresource, D3D12_RESOURCE_DESC& desc) noexcept
 {
     LoadWICTextureFromFileEx(nullptr, szFileName, 0, D3D12_RESOURCE_FLAG_NONE, WIC_LOADER_DEFAULT, nullptr, decodedData, subresource, &desc);
 }
@@ -659,7 +657,7 @@ HRESULT DirectX::LoadWICTextureFromMemory(
     const uint8_t* wicData,
     size_t wicDataSize,
     ID3D12Resource** texture,
-    std::unique_ptr<uint8_t[]>& decodedData,
+    std::vector<std::byte>& decodedData,
     D3D12_SUBRESOURCE_DATA& subresource,
     size_t maxsize) noexcept
 {
@@ -685,7 +683,7 @@ HRESULT DirectX::LoadWICTextureFromMemoryEx(
     D3D12_RESOURCE_FLAGS resFlags,
     unsigned int loadFlags,
     ID3D12Resource** texture,
-    std::unique_ptr<uint8_t[]>& decodedData,
+    std::vector<std::byte>& decodedData,
     D3D12_SUBRESOURCE_DATA& subresource) noexcept
 {
     if (texture)
@@ -746,7 +744,7 @@ HRESULT DirectX::LoadWICTextureFromFile(
     ID3D12Device* d3dDevice,
     const wchar_t* fileName,
     ID3D12Resource** texture,
-    std::unique_ptr<uint8_t[]>& wicData,
+    std::vector<std::byte>& wicData,
     D3D12_SUBRESOURCE_DATA& subresource,
     size_t maxsize) noexcept
 {
@@ -771,7 +769,7 @@ HRESULT DirectX::LoadWICTextureFromFileEx(
     D3D12_RESOURCE_FLAGS resFlags,
     unsigned int loadFlags,
     ID3D12Resource** texture,
-    std::unique_ptr<uint8_t[]>& decodedData,
+    std::vector<std::byte>& decodedData,
     D3D12_SUBRESOURCE_DATA& subresource,
     D3D12_RESOURCE_DESC* pDesc) noexcept
 {

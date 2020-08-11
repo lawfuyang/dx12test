@@ -44,7 +44,7 @@ namespace DirectX
     };
 #endif
 
-    void LoadWICTextureFromFileSimple(const wchar_t* szFileName, std::unique_ptr<uint8_t[]>& decodedData, D3D12_SUBRESOURCE_DATA& subresource, D3D12_RESOURCE_DESC& desc) noexcept;
+    void LoadWICTextureFromFileSimple(const wchar_t* szFileName, std::vector<std::byte>& decodedData, D3D12_SUBRESOURCE_DATA& subresource, D3D12_RESOURCE_DESC& desc) noexcept;
 
     // Standard version
     HRESULT __cdecl LoadWICTextureFromMemory(
@@ -52,7 +52,7 @@ namespace DirectX
         _In_reads_bytes_(wicDataSize) const uint8_t* wicData,
         size_t wicDataSize,
         _Outptr_ ID3D12Resource** texture,
-        std::unique_ptr<uint8_t[]>& decodedData,
+        std::vector<std::byte>& decodedData,
         D3D12_SUBRESOURCE_DATA& subresource,
         size_t maxsize = 0) noexcept;
 
@@ -60,7 +60,7 @@ namespace DirectX
         _In_ ID3D12Device* d3dDevice,
         _In_z_ const wchar_t* szFileName,
         _Outptr_ ID3D12Resource** texture,
-        std::unique_ptr<uint8_t[]>& decodedData,
+        std::vector<std::byte>& decodedData,
         D3D12_SUBRESOURCE_DATA& subresource,
         size_t maxsize = 0) noexcept;
 
@@ -73,7 +73,7 @@ namespace DirectX
         D3D12_RESOURCE_FLAGS resFlags,
         unsigned int loadFlags,
         _Outptr_ ID3D12Resource** texture,
-        std::unique_ptr<uint8_t[]>& decodedData,
+        std::vector<std::byte>& decodedData,
         D3D12_SUBRESOURCE_DATA& subresource) noexcept;
 
     HRESULT __cdecl LoadWICTextureFromFileEx(
@@ -83,7 +83,7 @@ namespace DirectX
         D3D12_RESOURCE_FLAGS resFlags,
         unsigned int loadFlags,
         _Outptr_ ID3D12Resource** texture,
-        std::unique_ptr<uint8_t[]>& decodedData,
+        std::vector<std::byte>& decodedData,
         D3D12_SUBRESOURCE_DATA& subresource,
         D3D12_RESOURCE_DESC* pDesc = nullptr) noexcept;
 }
