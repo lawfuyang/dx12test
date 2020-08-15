@@ -308,6 +308,7 @@ struct GlobalsInitializer
         g_ShadersByteCodesDir      = g_ShadersTmpDir + "shaderbytecodes.h";
         g_DXCDir                   = g_AppDir + "..\\extern\\dxc\\dxc.exe";
 
+        CreateDirectory(StringFormat("%s..\\tmp", g_AppDir.c_str()).c_str(), nullptr);
         CreateDirectory(g_ShadersTmpDir.c_str(), nullptr);
         CreateDirectory((g_ShadersTmpDir + "autogen\\").c_str(), nullptr);
         CreateDirectory(g_ShadersTmpHLSLAutogenDir.c_str(), nullptr);
