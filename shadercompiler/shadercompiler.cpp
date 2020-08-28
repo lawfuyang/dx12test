@@ -371,7 +371,8 @@ int main()
     // print auto-gen constant buffer headers
     {
         tf::Taskflow tf;
-        tf.parallel_for(g_AllConstantBuffers.begin(), g_AllConstantBuffers.end(), [&](ConstantBuffer& cb)
+
+        tf.for_each(g_AllConstantBuffers.begin(), g_AllConstantBuffers.end(), [&](ConstantBuffer& cb)
             {
                 PrintAutogenFilesForCBs(cb);
             });
@@ -397,7 +398,7 @@ int main()
             tf.emplace([&]() { GetD3D12ShaderModels(); });
         }
 
-        tf.parallel_for(g_AllShaderCompileJobs.begin(), g_AllShaderCompileJobs.end(), [&](ShaderCompileJob& shaderJob)
+        tf.for_each(g_AllShaderCompileJobs.begin(), g_AllShaderCompileJobs.end(), [&](ShaderCompileJob& shaderJob)
             {
                 shaderJob.StartJob();
             });
