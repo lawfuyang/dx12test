@@ -65,12 +65,14 @@ static void GetD3D12ShaderModels()
         // Query the level of support of Shader Model.
         const D3D12_FEATURE_DATA_SHADER_MODEL shaderModels[] =
         {
+            D3D_SHADER_MODEL_6_6,
             D3D_SHADER_MODEL_6_5,
             D3D_SHADER_MODEL_6_4,
             D3D_SHADER_MODEL_6_3,
             D3D_SHADER_MODEL_6_2,
             D3D_SHADER_MODEL_6_1,
-            D3D_SHADER_MODEL_6_0
+            D3D_SHADER_MODEL_6_0,
+            D3D_SHADER_MODEL_5_1
         };
 
         for (D3D12_FEATURE_DATA_SHADER_MODEL shaderModel : shaderModels)
@@ -82,7 +84,7 @@ static void GetD3D12ShaderModels()
                 break;
             }
         }
-        assert(g_HighestShaderModel >= D3D_SHADER_MODEL_6_0);
+        assert(g_HighestShaderModel > D3D_SHADER_MODEL_5_1);
 
         break;
     }
@@ -316,8 +318,6 @@ struct GlobalsInitializer
 
         g_AllShaderCompileJobs.reserve(1024);
 
-        g_Serializer.Read(Serializer::JSON, "ShaderCompilerValues", *this);
-
         // init misc traits
     #define ADD_TYPE(hlslType, CPPType, TypeSize)   \
         g_HLSLTypeToCPPTypeMap[hlslType] = CPPType; \
@@ -338,17 +338,6 @@ struct GlobalsInitializer
         ADD_TYPE("float4x4", "bbeMatrix", 64);
     #undef ADD_TYPE
     }
-
-    ~GlobalsInitializer()
-    {
-        g_Serializer.Write(Serializer::JSON, "ShaderCompilerValues", *this);
-    }
-
-    template<typename Archive>
-    void Serialize(Archive& ar)
-    {
-        ar(CEREAL_NVP(g_HighestShaderModel));
-    }
 };
 static const GlobalsInitializer g_GlobalsInitializer;
 
@@ -356,6 +345,10 @@ int main()
 {
     // first, Init the logger
     Logger::GetInstance().Initialize("../bin/shadercompiler_output.txt");
+
+    tf::Taskflow getShaderModelGetTF;
+    getShaderModelGetTF.emplace([]() { GetD3D12ShaderModels(); });
+    std::future<void> shaderModelFuture = g_Executor.run(getShaderModelGetTF);
 
     // get each shader to populate g_AllShaderCompileJobs
     {
@@ -389,14 +382,12 @@ int main()
         g_Executor.run(tf).wait();
     }
 
+    // Must wait for d3d12 shader model to be retrived first before we schedule the jobs
+    shaderModelFuture.wait();
+
     // run all jobs in g_AllShaderCompileJobs
     {
         tf::Taskflow tf;
-
-        if (g_HighestShaderModel == 0)
-        {
-            tf.emplace([&]() { GetD3D12ShaderModels(); });
-        }
 
         tf.for_each(g_AllShaderCompileJobs.begin(), g_AllShaderCompileJobs.end(), [&](ShaderCompileJob& shaderJob)
             {

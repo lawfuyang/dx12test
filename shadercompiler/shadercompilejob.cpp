@@ -85,10 +85,20 @@ DXCProcessWrapper::DXCProcessWrapper(const std::string& inputCommandLine, const 
 static const std::string GetTargetProfileString(GfxShaderType type)
 {
     const char* ShaderTypeStrings[] = { "VS", "PS", "GS", "HS", "DS", "CS" };
-    const char* TargetProfileVersionStrings[] = { "_6_0", "_6_1", "_6_2", "_6_3", "_6_4", "_6_5" };
+    static const std::unordered_map<D3D_SHADER_MODEL, const char*> s_TargetProfileToStr =
+    {
+        { D3D_SHADER_MODEL_5_1, "_5_1" },
+        { D3D_SHADER_MODEL_6_0, "_6_0" },
+        { D3D_SHADER_MODEL_6_1, "_6_1" },
+        { D3D_SHADER_MODEL_6_2, "_6_2" },
+        { D3D_SHADER_MODEL_6_3, "_6_3" },
+        { D3D_SHADER_MODEL_6_4, "_6_4" },
+        { D3D_SHADER_MODEL_6_5, "_6_5" },
+        { D3D_SHADER_MODEL_6_6, "_6_6" },
+    };
 
-    std::string result = std::string{ ShaderTypeStrings[(int)type] };
-    result += TargetProfileVersionStrings[g_HighestShaderModel - D3D_SHADER_MODEL_6_0];
+    std::string result = ShaderTypeStrings[(int)type];
+    result += s_TargetProfileToStr.at(g_HighestShaderModel);
 
     std::transform(result.begin(), result.end(), result.begin(), [](char c) { return std::tolower(c); });
 
@@ -104,15 +114,13 @@ void ShaderCompileJob::StartJob()
     commandLine += " -E " + m_EntryPoint;
     commandLine += " -T " + GetTargetProfileString(m_ShaderType);
     commandLine += " -Fh " + m_ShaderObjCodeFileDir;
+    //commandLine += " -Fsh " + g_ShadersTmpDir + m_ShaderName + "_hash.h"; // TODO
     commandLine += " -Vn " + m_ShaderObjCodeVarName;
-    commandLine += " -nologo";
+    commandLine += " -nologo ";
+    commandLine += " -WX ";
     commandLine += " -I" + g_ShadersTmpDir;
     commandLine += StringFormat(" -D%s ", (m_ShaderType == GfxShaderType::VS ? "VERTEX_SHADER" : "PIXEL_SHADER"));
     commandLine += " -Qunused-arguments ";
-    commandLine += " -Qstrip_debug ";
-    commandLine += " -Qstrip_priv ";
-    commandLine += " -Qstrip_reflect ";
-    commandLine += " -Qstrip_rootsignature ";
 
     for (const std::string& define : m_Defines)
     {
