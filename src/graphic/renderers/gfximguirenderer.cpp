@@ -257,7 +257,7 @@ void GfxIMGUIRenderer::PopulateCommandList()
     // (Because we merged all buffers into a single one, we maintain our own offset into them)
     uint32_t global_vtx_offset = 0;
     uint32_t global_idx_offset = 0;
-    ImVec2 clip_off = imguiDrawData.m_Pos;
+    const bbeVector2 clip_off = imguiDrawData.m_Pos;
     for (uint32_t n = 0; n < imguiDrawData.m_DrawList.size(); n++)
     {
         const IMGUICmdList& cmd_list = imguiDrawData.m_DrawList[n];

@@ -1,8 +1,5 @@
 #pragma once
 
-#define USE_PIX
-#include <extern/pix/pix3.h>
-
 #include <string>
 #include <assert.h>
 

@@ -34,6 +34,7 @@
     <OutDir>$(SolutionDir)..\bin\</OutDir>
     <EnableManagedIncrementalBuild>true</EnableManagedIncrementalBuild>
     <TargetName>$(ProjectName)_Unity</TargetName>
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Unity|x64'">
     <ClCompile>
@@ -43,15 +44,18 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>false</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\;$(SolutionDir)..\src\;$(SolutionDir)..\extern\;$(SolutionDir)..\extern\spdlog\;$(SolutionDir)..\extern\tbb\;$(SolutionDir)..\extern\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\;$(SolutionDir)..\src\;$(SolutionDir)..\extern\;$(SolutionDir)..\extern\spdlog\;$(SolutionDir)..\extern\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ForcedIncludeFiles>masterheader.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ForcedIncludeFiles>pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -59,6 +63,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(solutiondir)..\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -156,7 +161,7 @@
     <ClInclude Include="..\src\graphic\view.h" />
     <ClInclude Include="..\src\graphic\visual.h" />
     <ClInclude Include="..\src\graphic\WICTextureLoader12.h" />
-    <ClInclude Include="..\src\masterheader.h" />
+    <ClInclude Include="..\src\pch.h" />
     <ClInclude Include="..\src\system\commandmanager.h" />
     <ClInclude Include="..\src\system\imguimanager.h" />
     <ClInclude Include="..\src\system\keyboard.h" />

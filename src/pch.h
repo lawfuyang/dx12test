@@ -3,6 +3,16 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
+#define MICROPROFILE_ENABLED 1
+#define MICROPROFILE_GPU_TIMERS_D3D12 1
+#define MICROPROFILE_WEBSERVER_MAXFRAMES 50
+
+// ImGuiFileDialog uses ImGuiListClipper's old ctor
+// #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+
+#if !defined(BBE_SHADERCOMPILER)
+    #define USE_PIX
+#endif
 
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "runtimeobject.lib")
@@ -12,14 +22,11 @@
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "dxguid.lib")
 
-#pragma comment(lib, "extern/pix/winpixeventruntime.lib")
+// PIX
+#pragma comment(lib, "extern/lib/winpixeventruntime.lib")
 
-#pragma comment(lib, "extern/spdlog/spdlog.lib")
-
-#pragma comment(lib, "extern/tbb/tbb.lib")
-#pragma comment(lib, "extern/tbb/tbbbind.lib")
-#pragma comment(lib, "extern/tbb/tbbmalloc.lib")
-#pragma comment(lib, "extern/tbb/tbbproxy.lib")
+// SPD Log
+#pragma comment(lib, "extern/lib/spdlog.lib")
 
 #pragma warning(disable : 4267)
 
@@ -60,6 +67,18 @@
 #include <dxgi1_6.h>
 #include <extern/d3d12/d3dx12.h>
 
+#if !defined(BBE_SHADERCOMPILER)
+    // D3D12MA
+    #include <extern/d3d12/D3D12MemAlloc.h>
+
+    // IMGUI
+    #include <extern/imgui/imgui.h>
+    #include <extern/imgui/ImGuiFileDialog.h>
+#endif
+
+// PIX
+#include <extern/pix/pix3.h>
+
 // TaskFlow task threading lib
 #include <extern/taskflow/taskflow.hpp>
 
@@ -80,6 +99,19 @@
 #include <cereal/types/string.hpp> // allow Cereal to serialize std::string
 #include <cereal/archives/binary.hpp> // Binary I/O
 #include <cereal/archives/json.hpp> // JSON I/O
+
+// SPD Log
+#include <extern/spdlog/spdlog/spdlog.h>
+#include <extern/spdlog/spdlog/sinks/basic_file_sink.h>
+
+// Math
+#include <extern/simplemath/SimpleMath.h>
+
+// Microprofile
+#include <extern/microprofile/microprofile.h>
+
+// Arg Parse
+#include <extern/argparse/argparse.h>
 
 // typedefs
 using WindowHandle = uint64_t;

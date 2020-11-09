@@ -1,6 +1,5 @@
 #include <system/imguimanager.h>
 
-#include <extern/imgui/ImGuiFileDialog.h>
 #define g_IMGUIFileDialog igfd::ImGuiFileDialog::Instance()
 
 void IMGUIManager::Initialize()
@@ -291,8 +290,8 @@ void IMGUIManager::SaveDrawData()
     IMGUIDrawData newDrawData;
     newDrawData.m_VtxCount = imguiDrawData->TotalVtxCount;
     newDrawData.m_IdxCount = imguiDrawData->TotalIdxCount;
-    newDrawData.m_Pos = imguiDrawData->DisplayPos;
-    newDrawData.m_Size = imguiDrawData->DisplaySize;
+    newDrawData.m_Pos = bbeVector2{ imguiDrawData->DisplayPos.x, imguiDrawData->DisplayPos.y };
+    newDrawData.m_Size = bbeVector2{ imguiDrawData->DisplaySize.x, imguiDrawData->DisplaySize.y };
 
     newDrawData.m_DrawList.resize(imguiDrawData->CmdListsCount);
     for (int n = 0; n < imguiDrawData->CmdListsCount; n++)

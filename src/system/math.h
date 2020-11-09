@@ -1,7 +1,5 @@
 #pragma once
 
-#include <extern/simplemath/SimpleMath.h>
-
 using bbeVector2    = DirectX::SimpleMath::Vector2;
 using bbeVector2I   = DirectX::XMINT2;
 using bbeVector2U   = DirectX::XMUINT2;

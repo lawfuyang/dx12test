@@ -198,7 +198,6 @@
     <ClInclude Include="..\src\system\logger.h">
       <Filter>system</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\masterheader.h" />
     <ClInclude Include="..\extern\microprofile\microprofile.h">
       <Filter>extern\microprofile</Filter>
     </ClInclude>
@@ -319,6 +318,7 @@
     <ClInclude Include="..\src\graphic\WICTextureLoader12.h">
       <Filter>graphic</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\pch.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="system">

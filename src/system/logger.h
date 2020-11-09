@@ -1,8 +1,5 @@
 #pragma once
 
-#include <extern/spdlog/spdlog/spdlog.h>
-#include <extern/spdlog/spdlog/sinks/basic_file_sink.h>
-
 #include "system/utils.h"
 
 class Logger

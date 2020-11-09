@@ -186,6 +186,7 @@ void GfxDevice::CheckFeaturesSupports()
     // Query the level of support of Shader Model.
     constexpr D3D12_FEATURE_DATA_SHADER_MODEL shaderModels[] = 
     {
+        D3D_SHADER_MODEL_6_6,
         D3D_SHADER_MODEL_6_5,
         D3D_SHADER_MODEL_6_4,
         D3D_SHADER_MODEL_6_3,
@@ -209,7 +210,9 @@ void GfxDevice::CheckFeaturesSupports()
     DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS2, &m_D3D12Options2, sizeof(m_D3D12Options2)));
     DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &m_D3D12Options3, sizeof(m_D3D12Options3)));
     DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS4, &m_D3D12Options4, sizeof(m_D3D12Options4)));
-    DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS4, &m_D3D12Options5, sizeof(m_D3D12Options4)));
+    DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &m_D3D12Options5, sizeof(m_D3D12Options5)));
+    DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &m_D3D12Options6, sizeof(m_D3D12Options6)));
+    DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &m_D3D12Options7, sizeof(m_D3D12Options7)));
     DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_GPU_VIRTUAL_ADDRESS_SUPPORT, &m_D3D12GPUVirtualAddressSupport, sizeof(m_D3D12GPUVirtualAddressSupport)));
 }
 

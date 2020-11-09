@@ -8,15 +8,6 @@
 /dx12test/imgui.ini
 /shadercompiler/x64
 /tmp/
+/extern/lib/
 /extern/boost/
-/extern/spdlog/
-/extern/microprofile/
-/extern/tbb/
-/extern/imgui/
-/extern/taskflow/
-/extern/argparse/
-/extern/d3d12/
-/extern/pix/
 /extern/dxc/
-/extern/cereal/
-/extern/imguifiledialog
