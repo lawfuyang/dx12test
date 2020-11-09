@@ -1,13 +1,5 @@
 #pragma once
 
-#include <inttypes.h>
-#include <string>
-#include <utility>
-#include <time.h>
-#include <mutex>
-#include <vector>
-#include <atomic>
-
 namespace UtilsPrivate
 {
     template<class T>
@@ -172,10 +164,6 @@ constexpr uint32_t GetCompileTimeCRC32(const char* str)
     return ~UtilsPrivate::ConstExpr_CRC32(str, UtilsPrivate::ConstExpr_String_Length(str), ~uint32_t(0));
 }
 
-// Convert a wide Unicode string to an UTF8 string
-const std::string MakeStrFromWStr(const std::wstring& wstr);
-static const std::wstring MakeWStrFromStr(const std::string& str) { return std::wstring{ str.begin(), str.end() }; }
-
 const std::string GetLastErrorAsString();
 
 const std::string& GetApplicationDirectory();
@@ -206,16 +194,16 @@ struct WindowsHandleWrapper
 
 struct CFileWrapper
 {
-    CFileWrapper(const std::string& fileName, bool isReadMode);
-    ~CFileWrapper();
+CFileWrapper(const std::string& fileName, bool isReadMode);
+~CFileWrapper();
 
-    CFileWrapper(const CFileWrapper&) = delete;
-    CFileWrapper& operator=(const CFileWrapper&) = delete;
+CFileWrapper(const CFileWrapper&) = delete;
+CFileWrapper& operator=(const CFileWrapper&) = delete;
 
-    operator bool() const { return m_File; }
-    operator FILE* () const { return m_File; }
+operator bool() const { return m_File; }
+operator FILE* () const { return m_File; }
 
-    FILE* m_File = nullptr;
+FILE* m_File = nullptr;
 };
 
 class MultithreadDetector
@@ -278,3 +266,34 @@ static void RunOnAllBits(uint32_t mask, Functor&& func)
 static ObjectID GenerateObjectID() { return boost::uuids::random_generator{}(); }
 static ObjectID ID_InvalidObject = boost::uuids::nil_generator{}();
 static std::string ToString(ObjectID id) { return boost::uuids::to_string(id); }
+
+namespace StringUtils
+{
+    std::wstring Utf8ToWide(const char* str, size_t utf8Length);
+    std::string WideToUtf8(const wchar_t* str, size_t wideLength);
+
+    static std::wstring Utf8ToWide(const std::string& str) { return Utf8ToWide(str.c_str(), str.length()); }
+    static std::string WideToUtf8(const std::wstring& str) { return WideToUtf8(str.c_str(), str.length()); }
+
+    using ConvertFuncType = int(int); // std::tolower & std::toupper has same signature
+
+    template <typename T>
+    static void TransformStrInplace(T& str, ConvertFuncType converterFunc)
+    {
+        using CharType = T::traits_type::char_type;
+        static_assert(std::is_same_v<CharType, char> || std::is_same_v<CharType, wchar_t>);
+
+        using IntType = std::conditional_t<std::is_same_v<CharType, char>, uint8_t, wchar_t>;
+        std::transform(str.begin(), str.end(), str.begin(), [converterFunc](CharType c) { return static_cast<CharType>(converterFunc(static_cast<IntType>(c))); });
+    }
+
+    template <typename StringType>
+    static void ToLower(StringType& str) { TransformStrInplace(str, std::tolower); }
+
+    template <typename StringType>
+    static void ToUpper(StringType& str) { TransformStrInplace(str, std::toupper); }
+}
+
+float RandomFloat(float range = 1.0f);
+uint32_t RandomUInt(uint32_t range = std::numeric_limits<uint32_t>::max());
+int32_t RandomInt(uint32_t range = std::numeric_limits<int32_t>::max());

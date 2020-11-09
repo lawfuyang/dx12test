@@ -87,7 +87,7 @@ void ManagedGfxResources<GfxTexture>::Load(const std::string& filePath, const Gf
     bbeProfileFunction();
 
     const std::string fileExt = GetFileExtensionFromPath(filePath);
-    const std::wstring filePathW = MakeWStrFromStr(filePath);
+    const std::wstring filePathW = StringUtils::Utf8ToWide(filePath);
 
     std::vector<std::byte> decodedData;
     D3D12_RESOURCE_DESC texDesc{};

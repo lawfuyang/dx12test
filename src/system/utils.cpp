@@ -24,15 +24,6 @@ const std::string GetTimeStamp()
     return dateStr;
 }
 
-const std::string MakeStrFromWStr(const std::wstring& wstr)
-{
-    if (wstr.empty()) return "";
-    int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
-    std::string strTo(size_needed, 0);
-    WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
-    return strTo;
-}
-
 const std::string GetLastErrorAsString()
 {
     // Get the error message, if any.
@@ -182,7 +173,7 @@ void ReadDataFromFile(const char* filename, std::vector<std::byte>& data)
     extendedParams.lpSecurityAttributes = nullptr;
     extendedParams.hTemplateFile = nullptr;
 
-    StaticWString<FILENAME_MAX> fileNameW = MakeWStrFromStr(filename).c_str();
+    StaticWString<FILENAME_MAX> fileNameW = StringUtils::Utf8ToWide(filename).c_str();
 
     Wrappers::FileHandle file(CreateFile2(fileNameW.c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &extendedParams));
     assert(file.Get() != INVALID_HANDLE_VALUE);
@@ -202,4 +193,117 @@ void ReadDataFromFile(const char* filename, std::vector<std::byte>& data)
     {
         assert(false);
     }
+}
+
+namespace StringUtils
+{
+    constexpr DWORD MBConversionFlags = MB_ERR_INVALID_CHARS;
+    constexpr DWORD WCConversionFlags = WC_ERR_INVALID_CHARS;
+
+    // Get the wchar length of a utf8 string
+    static size_t GetWideLength(const char* utf8String, size_t utf8Length)
+    {
+        const int newLen = ::MultiByteToWideChar(
+            CP_UTF8,
+            MBConversionFlags,
+            utf8String,
+            static_cast<int>(utf8Length),
+            nullptr,
+            0
+        );
+
+        return static_cast<size_t>(newLen);
+    }
+
+    // Get the utf8 length of a wchar string
+    static size_t GetUtf8Length(const wchar_t* wideString, size_t wideLength)
+    {
+        const int newLen = ::WideCharToMultiByte(
+            CP_UTF8,
+            WCConversionFlags,
+            wideString,
+            static_cast<int>(wideLength),
+            nullptr,
+            0,
+            nullptr,
+            nullptr
+        );
+
+        return static_cast<size_t>(newLen);
+    }
+
+    std::wstring Utf8ToWide(const char* utf8String, size_t utf8Length)
+    {
+        std::wstring dest;
+        const size_t wideLength = GetWideLength(utf8String, utf8Length);
+        dest.resize(wideLength);
+        ::MultiByteToWideChar(
+            CP_UTF8,
+            MBConversionFlags,
+            utf8String,
+            static_cast<int>(utf8Length),
+            &dest[0],
+            static_cast<int>(wideLength)
+        );
+
+        return dest;
+    }
+
+    std::string WideToUtf8(const wchar_t* wideString, size_t wideLength)
+    {
+        std::string dest;
+        const size_t utf8Length = GetUtf8Length(wideString, wideLength);
+        dest.resize(utf8Length);
+
+        ::WideCharToMultiByte(
+            CP_UTF8,
+            WCConversionFlags,
+            wideString,
+            static_cast<int>(wideLength),
+            &dest[0],
+            static_cast<int>(utf8Length),
+            nullptr,
+            nullptr
+        );
+
+        return dest;
+    }
+}
+
+template<typename T>
+static T GetRandomValue(T range)
+{
+    static std::random_device randomDevice;
+    static std::mt19937_64 randomEngine(randomDevice());
+
+    using distribution = typename std::conditional< std::is_floating_point_v<T>, std::uniform_real_distribution<T>, std::uniform_int_distribution<T>>::type;
+    static distribution randomValue(0, std::numeric_limits<T>::max());
+
+    T toret = randomValue(randomEngine);
+    if (std::is_floating_point_v<T>)
+    {
+        toret /= std::numeric_limits<T>::max();
+        toret *= range;
+    }
+    else
+    {
+        T temp = toret / range;
+        toret -= (temp * range);
+    }
+    return toret;
+}
+
+float RandomFloat(float range)
+{
+    return GetRandomValue<float>(range);
+}
+
+uint32_t RandomUInt(uint32_t range)
+{
+    return GetRandomValue<uint32_t>(range);
+}
+
+int32_t RandomInt(uint32_t range)
+{
+    return GetRandomValue<int32_t>(range);
 }

@@ -288,7 +288,7 @@ void GfxManager::UpdateIMGUIPropertyGrid()
     {
         WCHAR* statsStringW = NULL;
         allocator.BuildStatsString(&statsStringW, allocator.GetD3D12Options().ResourceHeapTier == D3D12_RESOURCE_HEAP_TIER_2);
-        const std::string statsString = MakeStrFromWStr(statsStringW);
+        const std::string statsString = StringUtils::WideToUtf8(statsStringW);
         allocator.FreeStatsString(statsStringW);
 
         ScopedIMGUIWindow window{ "Detailed Gfx Stats" };

@@ -51,7 +51,7 @@ const std::string GetD3DDebugName(ID3D12Object* object)
 
 void SetD3DDebugName(ID3D12Object* object, const std::string& name)
 {
-    object->SetName(MakeWStrFromStr(name).c_str());
+    object->SetName(StringUtils::Utf8ToWide(name).c_str());
     object->SetPrivateData(WKPDID_D3DDebugObjectName, (UINT)name.size(), name.c_str());
 }
 

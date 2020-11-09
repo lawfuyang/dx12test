@@ -65,7 +65,7 @@ void GfxRootSignature::Compile(CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t num
     m_RootParams.resize(numRootParams);
     memcpy(m_RootParams.data(), rootParams, sizeof(CD3DX12_ROOT_PARAMETER1) * numRootParams);
 
-    m_RootSignature->SetName(MakeWStrFromStr(rootSigName).c_str());
+    m_RootSignature->SetName(StringUtils::Utf8ToWide(rootSigName).c_str());
     m_Hash = std::hash<std::string_view>{}(rootSigName);
 
     for (uint32_t i = 0; i < numRootParams; ++i)

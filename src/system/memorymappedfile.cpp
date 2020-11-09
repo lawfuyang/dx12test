@@ -45,7 +45,7 @@ void MemoryMappedFile::Init(const std::wstring& filename, UINT fileSize)
     if (m_file == INVALID_HANDLE_VALUE)
     {
         g_Log.error("m_file is invalid. Error {}.", GetLastError());
-        g_Log.error("Target file is {}", MakeStrFromWStr(filename));
+        g_Log.error("Target file is {}", StringUtils::WideToUtf8(filename));
         return;
     }
 
