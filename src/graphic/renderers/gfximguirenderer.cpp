@@ -18,31 +18,23 @@ void GfxIMGUIRenderer::Initialize()
 {
     bbeProfileFunction();
 
-    GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "GfxIMGUIRenderer::Initialize");
-
     // Build texture atlas
-    InitFontsTexture(initContext);
+    InitFontsTexture();
 
     // Create buffers with a default size (they will later be grown as needed)
     void* dummyDrawData = nullptr;
-    GrowBuffers(initContext, *(const IMGUIDrawData*)dummyDrawData);
-
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-    gfxDevice.GetCommandListsManager().QueueCommandListToExecute(initContext.GetCommandList(), initContext.GetCommandList().GetType());
+    GrowBuffers(*(const IMGUIDrawData*)dummyDrawData);
 
     // Keep ranges static so GfxContext can parse through them
     static CD3DX12_DESCRIPTOR_RANGE1 ranges[2];
     ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
     ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 
-    CD3DX12_ROOT_PARAMETER1 rootParams[2];
-    rootParams[0].InitAsDescriptorTable(1, &ranges[0]);
-    rootParams[1].InitAsDescriptorTable(1, &ranges[1]);
-
-    m_RootSignature.Compile(rootParams, _countof(rootParams), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT, "GfxIMGUIRenderer_RootSignature");
+    const bool AllowInputAssembler = true;
+    m_RootSignature.Compile<AllowInputAssembler>(ranges, "GfxIMGUIRenderer_RootSignature");
 }
 
-void GfxIMGUIRenderer::InitFontsTexture(GfxContext& context)
+void GfxIMGUIRenderer::InitFontsTexture()
 {
     bbeProfileFunction();
 
@@ -58,10 +50,10 @@ void GfxIMGUIRenderer::InitFontsTexture(GfxContext& context)
     initParams.m_InitData = pixels;
     initParams.m_ResourceName = "IMGUI Fonts Texture";
 
-    m_FontsTexture.Initialize(context, initParams);
+    m_FontsTexture.Initialize(initParams);
 }
 
-void GfxIMGUIRenderer::GrowBuffers(GfxContext& context, const IMGUIDrawData& imguiDrawData)
+void GfxIMGUIRenderer::GrowBuffers(const IMGUIDrawData& imguiDrawData, GfxContext* context)
 {
     bbeProfileFunction();
     
@@ -85,7 +77,10 @@ void GfxIMGUIRenderer::GrowBuffers(GfxContext& context, const IMGUIDrawData& img
         bufferNames = "IMGUI GfxVertexBuffer" + StringFormat("_%u", initParams.m_NumVertices);
         initParams.m_ResourceName = bufferNames.c_str();
 
-        m_VertexBuffer.Initialize(context, initParams);
+        if (context)
+            m_VertexBuffer.Initialize(*context, initParams);
+        else
+            m_VertexBuffer.Initialize(initParams);
     }
     if (isInitPhase || (m_IndexBuffer.GetNumIndices() < imguiDrawData.m_IdxCount))
     {
@@ -100,7 +95,10 @@ void GfxIMGUIRenderer::GrowBuffers(GfxContext& context, const IMGUIDrawData& img
         bufferNames = "IMGUI GfxIndexBuffer" + StringFormat("_%u", initParams.m_NumIndices);
         initParams.m_ResourceName = bufferNames.c_str();
 
-        m_IndexBuffer.Initialize(context, initParams);
+        if (context)
+            m_IndexBuffer.Initialize(*context, initParams);
+        else
+            m_IndexBuffer.Initialize(initParams);
     }
 }
 
@@ -210,7 +208,7 @@ void GfxIMGUIRenderer::PopulateCommandList()
         return;
 
     // Create and grow vertex/index buffers if needed
-    GrowBuffers(context, imguiDrawData);
+    GrowBuffers(imguiDrawData, &context);
 
     // Upload vertex/index data into a single contiguous GPU buffer
     UploadBufferData(imguiDrawData);

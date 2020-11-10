@@ -32,14 +32,8 @@ void GfxForwardLightingPass::Initialize()
     ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // PerFrameConsts @ c1
     ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // Per Visual textures @ t0-t2
 
-    // Perfomance TIP: Order from most frequent to least frequent.
-    CD3DX12_ROOT_PARAMETER1 rootParams[_countof(ranges)];
-    for (uint32_t i = 0; i < _countof(rootParams); ++i)
-    {
-        rootParams[i].InitAsDescriptorTable(1, &ranges[i]); // 1 CBV in c0
-    }
-
-    m_RootSignature.Compile(rootParams, _countof(rootParams), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT, "GfxForwardLightingPass_RootSignature");
+    const bool AllowInputAssembler = true;
+    m_RootSignature.Compile<AllowInputAssembler>(ranges, "GfxForwardLightingPass_RootSignature");
 
     GfxTexture::InitParams depthBufferInitParams;
     depthBufferInitParams.m_Format = DXGI_FORMAT_D32_FLOAT;
@@ -54,12 +48,7 @@ void GfxForwardLightingPass::Initialize()
     depthBufferInitParams.m_ClearValue.DepthStencil.Depth = 1.0f;
     depthBufferInitParams.m_ClearValue.DepthStencil.Stencil = 0;
 
-    GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "GfxForwardLightingPass::Initialize");
-
-    gs_SceneDepthBuffer.Initialize(initContext, depthBufferInitParams);
-
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-    gfxDevice.GetCommandListsManager().QueueCommandListToExecute(initContext.GetCommandList(), initContext.GetCommandList().GetType());
+    gs_SceneDepthBuffer.Initialize(depthBufferInitParams);
 }
 
 void GfxForwardLightingPass::ShutDown()

@@ -294,11 +294,7 @@ ForwardDeclareSerializerFunctions(GfxTexture);
 void GfxTexture::Initialize(const InitParams& initParams)
 {
     GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName);
-
     Initialize(initContext, initParams);
-
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-    gfxDevice.GetCommandListsManager().QueueCommandListToExecute(initContext.GetCommandList(), initContext.GetCommandList().GetType());
 }
 
 void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParams)
@@ -386,6 +382,8 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     case SRV: CreateSRV(initParams); break;
     case UAV: assert(0); break; // TODO
     }
+
+    gfxDevice.GetCommandListsManager().QueueCommandListToExecute(initContext.GetCommandList(), initContext.GetCommandList().GetType());
 }
 
 void GfxTexture::CreateDSV(const InitParams& initParams)
