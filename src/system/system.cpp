@@ -126,16 +126,13 @@ void System::BGAsyncThreadLoop()
 {
     MicroProfileOnThreadCreate("BG Async Thread");
 
-    while (!m_BGAsyncThreadExit)
+    do
     {
-        bool hasCommands = true;
-        do
-        {
-            hasCommands = m_BGAsyncCommandManager.ConsumeOneCommand();
-        } while (hasCommands);
+        const bool ConsumeAllCmdsRecursive = true;
+        m_BGAsyncCommandManager.ConsumeAllCommandsST(ConsumeAllCmdsRecursive);
 
         ::Sleep(1);
-    }
+    }while (!m_BGAsyncThreadExit);
 }
 
 void System::Initialize()
@@ -167,7 +164,8 @@ void System::Shutdown()
     {
         bbeConditionalProfile(g_CommandLineOptions.m_ProfileShutdown, "System::Shutdown");
 
-        m_SystemCommandManager.ConsumeAllCommandsST();
+        const bool ConsumeAllCmdsRecursive = true;
+        m_SystemCommandManager.ConsumeAllCommandsST(ConsumeAllCmdsRecursive);
 
         g_IMGUIManager.ShutDown();
         ShutdownApplicationLayer();

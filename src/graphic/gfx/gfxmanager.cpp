@@ -102,11 +102,8 @@ void GfxManager::ShutDown()
     m_GfxDevice.WaitForFence();
 
     // finish all commands before shutting down
-    bool hasCommands = true;
-    do
-    {
-        hasCommands = m_GfxCommandManager.ConsumeOneCommand();
-    } while (hasCommands);
+    const bool ConsumeAllCmdsRecursive = true;
+    m_GfxCommandManager.ConsumeAllCommandsST(ConsumeAllCmdsRecursive);
 
     // get swapchain out of full screen before exiting
     BOOL fs = false;

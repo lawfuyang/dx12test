@@ -33,7 +33,7 @@ void CommandManager::ConsumeAllCommandsMT(tf::Subflow& subFlow)
         });
 }
 
-void CommandManager::ConsumeAllCommandsST()
+void CommandManager::ConsumeAllCommandsST(bool recursive)
 {
     bbeProfileFunction();
 
@@ -47,19 +47,30 @@ void CommandManager::ConsumeAllCommandsST()
         cmd();
     }
     m_ExecutingCommands.clear();
+
+    while (recursive && ConsumeOneCommand()) {}
 }
 
 bool CommandManager::ConsumeOneCommand()
 {
     bbeProfileFunction();
 
-    bbeAutoLock(m_CommandsLock);
+    std::function<void()> cmd = [&]()
+    {
+        bbeAutoLock(m_CommandsLock);
+        if (m_PendingCommands.empty())
+            return std::function<void()>{};
 
-    if (m_PendingCommands.empty())
-        return false;
+        std::function<void()> ret = m_PendingCommands.front();
+        m_PendingCommands.pop_front();
+        return ret;
+    }();
 
-    m_PendingCommands.front()();
-    m_PendingCommands.pop_front();
+    if (cmd)
+    {
+        cmd();
+        return true;
+    }
 
-    return true;
+    return false;
 }

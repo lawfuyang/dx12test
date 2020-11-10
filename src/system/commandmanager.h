@@ -7,7 +7,7 @@ public:
 
     void AddCommand(const std::function<void()>& newCmd);
     void ConsumeAllCommandsMT(tf::Subflow& sf);
-    void ConsumeAllCommandsST();
+    void ConsumeAllCommandsST(bool recursive = false);
     bool ConsumeOneCommand();
 
 private:
