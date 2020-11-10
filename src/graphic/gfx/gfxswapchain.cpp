@@ -33,7 +33,7 @@ void GfxSwapChain::Initialize()
     ComPtr<IDXGISwapChain1> swapChain;
     {
         bbeProfile("CreateSwapChainForHwnd");
-        DX12_CALL(dxgiFactory->CreateSwapChainForHwnd(gfxDevice.GetCommandListsManager().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT), // Swap chain needs the queue so that it can force a flush on it.
+        DX12_CALL(dxgiFactory->CreateSwapChainForHwnd(g_GfxCommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT), // Swap chain needs the queue so that it can force a flush on it.
                                                       g_System.GetEngineWindowHandle(),
                                                       &swapChainDesc,
                                                       nullptr,

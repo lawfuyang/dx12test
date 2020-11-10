@@ -26,7 +26,7 @@ public:
     void WaitForFence();
     void EndFrame();
 
-    GfxCommandListsManager& GetCommandListsManager() { return m_CommandListsManager; }
+    //GfxCommandListsManager& GetCommandListsManager() { return m_CommandListsManager; }
     GfxFence& GetFence() { return m_GfxFence; }
 
     D3D_ROOT_SIGNATURE_VERSION GetHighSupportedRootSignature() const { return m_RootSigSupport.HighestVersion; }
@@ -35,8 +35,7 @@ private:
     void ConfigureDebugLayer();
     void CheckFeaturesSupports();
 
-    GfxCommandListsManager m_CommandListsManager;
-    GfxFence               m_GfxFence;
+    GfxFence m_GfxFence;
 
     ComPtr<ID3D12Device6> m_D3DDevice;
 

@@ -16,7 +16,6 @@ public:
     };
 
     void Initialize(const InitParams&);
-    void Initialize(GfxContext& initContext, const InitParams&);
 
     void Release();
 

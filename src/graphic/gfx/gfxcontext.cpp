@@ -44,7 +44,7 @@ void GfxContext::CreateNullView(D3D12_DESCRIPTOR_RANGE_TYPE type, D3D12_CPU_DESC
 
 void GfxContext::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, const std::string& name)
 {
-    m_CommandList = g_GfxManager.GetGfxDevice().GetCommandListsManager().Allocate(cmdListType, name);
+    m_CommandList = g_GfxCommandListsManager.Allocate(cmdListType, name);
 
     // Just set default viewport/scissor vals that make sense
     const CD3DX12_VIEWPORT viewport{ 0.0f, 0.0f, (float)g_CommandLineOptions.m_WindowWidth, (float)g_CommandLineOptions.m_WindowHeight };

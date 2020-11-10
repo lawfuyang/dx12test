@@ -26,6 +26,8 @@ private:
 
 class GfxCommandListsManager
 {
+    DeclareSingletonFunctions(GfxCommandListsManager);
+
 public:
     static const uint32_t MaxCmdLists = 128;
 
@@ -54,3 +56,4 @@ private:
 
     CommandListPool m_DirectPool;
 };
+#define g_GfxCommandListsManager GfxCommandListsManager::GetInstance()

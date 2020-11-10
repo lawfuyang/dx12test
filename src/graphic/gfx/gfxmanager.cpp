@@ -56,7 +56,7 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
     ADD_TF_TASK(subFlow, g_GfxDefaultVertexFormats.Initialize());
     
     // tasks with dependencies
-    tf::Task cmdListInitTask              = ADD_TF_TASK(subFlow, m_GfxDevice.GetCommandListsManager().Initialize());
+    tf::Task cmdListInitTask              = ADD_TF_TASK(subFlow, g_GfxCommandListsManager.Initialize());
     tf::Task swapChainInitTask            = ADD_TF_TASK(subFlow, m_SwapChain.Initialize());
     tf::Task PSOManagerInitTask           = ADD_TF_TASK(subFlow, g_GfxPSOManager.Initialize());
     tf::Task dynamicDescHeapAllocatorInit = ADD_TF_TASK(subFlow, g_GfxGPUDescriptorAllocator.Initialize());
@@ -165,7 +165,7 @@ void GfxManager::ScheduleCommandListsExecution()
     {
         if (GfxContext* context = pass->GetGfxContext())
         {
-            m_GfxDevice.GetCommandListsManager().QueueCommandListToExecute(context->GetCommandList(), context->GetCommandList().GetType());
+            g_GfxCommandListsManager.QueueCommandListToExecute(context->GetCommandList(), context->GetCommandList().GetType());
         }
     };
 
@@ -198,7 +198,7 @@ void GfxManager::BeginFrame()
         GfxContext& clearBackBufferContext = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "ClearBackBuffer");
         clearBackBufferContext.ClearRenderTargetView(g_GfxManager.GetSwapChain().GetCurrentBackBuffer(), bbeVector4{ 0.0f, 0.2f, 0.4f, 1.0f });
         clearBackBufferContext.ClearDepth(gs_SceneDepthBuffer, 1.0f);
-        m_GfxDevice.GetCommandListsManager().QueueCommandListToExecute(clearBackBufferContext.GetCommandList(), clearBackBufferContext.GetCommandList().GetType());
+        g_GfxCommandListsManager.QueueCommandListToExecute(clearBackBufferContext.GetCommandList(), clearBackBufferContext.GetCommandList().GetType());
 
         m_GfxDevice.Flush();
     }
@@ -240,7 +240,7 @@ void GfxManager::TransitionBackBufferForPresent()
 
     m_SwapChain.TransitionBackBufferForPresent(context);
 
-    m_GfxDevice.GetCommandListsManager().QueueCommandListToExecute(context.GetCommandList(), context.GetCommandList().GetType());
+    g_GfxCommandListsManager.QueueCommandListToExecute(context.GetCommandList(), context.GetCommandList().GetType());
 }
 
 void GfxManager::UpdateIMGUIPropertyGrid()

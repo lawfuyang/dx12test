@@ -217,7 +217,7 @@ void GfxDevice::Flush(bool andWait)
 {
     bbeProfileFunction();
 
-    m_CommandListsManager.ExecutePendingCommandLists();
+    g_GfxCommandListsManager.ExecutePendingCommandLists();
 
     if (andWait)
     {
@@ -228,7 +228,7 @@ void GfxDevice::Flush(bool andWait)
 
 void GfxDevice::IncrementAndSignalFence()
 {
-    m_GfxFence.IncrementAndSignal(m_CommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT));
+    m_GfxFence.IncrementAndSignal(g_GfxCommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT));
 }
 
 void GfxDevice::WaitForFence()
