@@ -234,13 +234,17 @@ static std::size_t GenericTypeHash(const T& s)
 
 void ReadDataFromFile(const char* filename, std::vector<std::byte>& data);
 
-template <typename Functor>
+template <typename Functor, bool ForwardScan = true>
 static void RunOnAllBits(uint32_t mask, Functor&& func)
 {
+    std::bitset<32> bitSet{ mask };
     unsigned long idx;
-    while (_BitScanForward(&idx, mask))
+    auto ForwardScanFunc = [&]() { return _BitScanForward(&idx, bitSet.to_ulong()); };
+    auto ReverseScanFunc = [&]() { return _BitScanReverse(&idx, bitSet.to_ulong()); };
+
+    while (ForwardScan ? ForwardScanFunc() : ReverseScanFunc())
     {
-        mask ^= (1 << idx);
+        bitSet.set(idx, false);
         func(idx);
     }
 }
