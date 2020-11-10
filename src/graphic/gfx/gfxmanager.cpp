@@ -250,7 +250,7 @@ void GfxManager::UpdateIMGUIPropertyGrid()
 
     bbeProfileFunction();
 
-    D3D12MA::Allocator& allocator = m_GfxDevice.GetD3D12MemoryAllocator();
+    D3D12MA::Allocator& allocator = g_GfxMemoryAllocator.Dev();
 
     static bool showMemoryStats = false;
     static bool showDetailedStats = false;

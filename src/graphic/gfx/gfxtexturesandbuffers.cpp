@@ -45,15 +45,12 @@ D3D12MA::Allocation* GfxBufferCommon::CreateHeap(const GfxBufferCommon::HeapDesc
 {
     bbeProfileFunction();
 
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-    D3D12MA::Allocator& d3d12MemoryAllocator = gfxDevice.GetD3D12MemoryAllocator();
-
     D3D12MA::ALLOCATION_DESC bufferAllocDesc = {};
     bufferAllocDesc.HeapType = heapDesc.m_HeapType;
 
     D3D12MA::Allocation* allocHandle = nullptr;
     ID3D12Resource* newHeap = nullptr;
-    DX12_CALL(d3d12MemoryAllocator.CreateResource(
+    DX12_CALL(g_GfxMemoryAllocator.Dev().CreateResource(
         &bufferAllocDesc,
         &heapDesc.m_ResourceDesc,
         heapDesc.m_InitialState,
