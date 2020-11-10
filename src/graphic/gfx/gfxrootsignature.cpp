@@ -42,7 +42,7 @@ static constexpr D3D12_STATIC_SAMPLER_DESC gs_StaticSamplers[] =
     gs_AnisotropicWrapSamplerDesc,
 };
 
-void GfxRootSignature::CompileInternal(CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t numRootParams, D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags, const char* rootSigName)
+void GfxRootSignature::Compile(CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t numRootParams, D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags, const char* rootSigName)
 {
     assert(numRootParams < MaxRootParams);
     assert(m_RootSignature.Get() == nullptr);
@@ -66,11 +66,24 @@ void GfxRootSignature::CompileInternal(CD3DX12_ROOT_PARAMETER1* rootParams, uint
     memcpy(m_RootParams.data(), rootParams, sizeof(CD3DX12_ROOT_PARAMETER1) * numRootParams);
 
     m_RootSignature->SetName(StringUtils::Utf8ToWide(rootSigName).c_str());
-    m_Hash = std::hash<std::string_view>{}(rootSigName);
+}
 
-    for (uint32_t i = 0; i < numRootParams; ++i)
+GfxRootSignature* GfxRootSignatureManager::GetOrCreateRootSigInternal(std::size_t hash, CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t numRootParams, D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags, const char* rootSigName)
+{
+    bbeAutoLock(m_CachedRootSigsLock);
+    GfxRootSignature& rootSig = m_CachedRootSigs[hash];
+
+    // It's cached. Return it
+    if (rootSig.m_Hash != 0)
     {
-        boost::hash_combine(m_Hash, rootParams[i].ParameterType);
-        boost::hash_combine(m_Hash, rootParams[i].ShaderVisibility);
+        assert(rootSig.m_RootSignature.Get() != nullptr);
+        assert(!rootSig.m_RootParams.empty());
+        return &rootSig;
     }
+
+    assert(numRootParams < GfxRootSignature::MaxRootParams);
+
+    rootSig.m_Hash = hash;
+    rootSig.Compile(rootParams, numRootParams, rootSigFlags, rootSigName);
+    return &rootSig;
 }

@@ -2,10 +2,10 @@
 
 #include <graphic/renderers/gfxrendererbase.h>
 
-#include <graphic/gfx/gfxrootsignature.h>
 #include <graphic/gfx/gfxtexturesandbuffers.h>
 
 class GfxContext;
+class GfxRootSignature;
 struct IMGUIDrawData;
 
 class GfxIMGUIRenderer : public GfxRendererBase
@@ -25,7 +25,7 @@ private:
     void UploadBufferData(const IMGUIDrawData& imguiDrawData);
     void SetupRenderStates(GfxContext&, const IMGUIDrawData& imguiDrawData);
 
-    GfxRootSignature  m_RootSignature;
+    GfxRootSignature* m_RootSignature = nullptr;
     GfxVertexBuffer   m_VertexBuffer;
     GfxIndexBuffer    m_IndexBuffer;
     GfxTexture        m_FontsTexture;

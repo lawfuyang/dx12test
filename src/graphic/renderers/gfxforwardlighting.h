@@ -2,10 +2,10 @@
 
 #include <graphic/renderers/gfxrendererbase.h>
 
-#include <graphic/gfx/gfxrootsignature.h>
 #include <graphic/gfx/gfxtexturesandbuffers.h>
 
 class GfxContext;
+class GfxRootSignature;
 
 class GfxForwardLightingPass : public GfxRendererBase
 {
@@ -21,7 +21,7 @@ public:
 private:
     void UpdateIMGUI();
 
-    GfxRootSignature m_RootSignature;
+    GfxRootSignature* m_RootSignature = nullptr;
 
     bool m_UsePBRConsts = false;
     float m_ConstPBRRoughness = 0.75f;

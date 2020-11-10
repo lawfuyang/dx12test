@@ -31,7 +31,7 @@ void GfxIMGUIRenderer::Initialize()
     ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 
     const bool AllowInputAssembler = true;
-    m_RootSignature.Compile<AllowInputAssembler>(ranges, "GfxIMGUIRenderer_RootSignature");
+    m_RootSignature = g_GfxRootSignatureManager.GetOrCreateRootSig<AllowInputAssembler>(ranges, "GfxIMGUIRenderer_RootSignature");
 }
 
 void GfxIMGUIRenderer::InitFontsTexture()
@@ -190,7 +190,9 @@ void GfxIMGUIRenderer::PopulateCommandList()
 
     GfxContext& context = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "GfxIMGUIRenderer");
     m_Context = &context;
-    context.SetRootSignature(m_RootSignature);
+    
+    assert(m_RootSignature);
+    context.SetRootSignature(*m_RootSignature);
 
     bbeProfileGPUFunction(context);
 

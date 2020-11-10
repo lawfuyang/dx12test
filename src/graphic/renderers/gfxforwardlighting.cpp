@@ -33,7 +33,7 @@ void GfxForwardLightingPass::Initialize()
     ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // Per Visual textures @ t0-t2
 
     const bool AllowInputAssembler = true;
-    m_RootSignature.Compile<AllowInputAssembler>(ranges, "GfxForwardLightingPass_RootSignature");
+    m_RootSignature = g_GfxRootSignatureManager.GetOrCreateRootSig<AllowInputAssembler>(ranges, "GfxForwardLightingPass_RootSignature");
 
     GfxTexture::InitParams depthBufferInitParams;
     depthBufferInitParams.m_Format = DXGI_FORMAT_D32_FLOAT;
@@ -62,7 +62,9 @@ void GfxForwardLightingPass::PopulateCommandList()
 
     GfxContext& context = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "GfxForwardLightingPass");
     m_Context = &context;
-    context.SetRootSignature(m_RootSignature);
+
+    assert(m_RootSignature);
+    context.SetRootSignature(*m_RootSignature);
 
     bbeProfileGPUFunction(context);
 
