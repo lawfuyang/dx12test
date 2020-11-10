@@ -11,6 +11,7 @@ class Keyboard
 {
     DeclareSingletonFunctions(Keyboard);
 
+public:
     enum Key
     {
         KEY_NONE           = 0x0000,
@@ -134,10 +135,9 @@ class Keyboard
         KEY_MODIFIER_MASK  = 0xFFFF0000,
     };
 
-public:
-    static bool IsKeyPressed(Key key);
-    static bool WasKeyReleased(Key key);
-    static bool WasKeyPressed(Key key);
+    bool IsKeyPressed(Key key);
+    bool WasKeyReleased(Key key);
+    bool WasKeyPressed(Key key);
 
     void Tick();
 

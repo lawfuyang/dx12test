@@ -12,7 +12,7 @@ void CameraController::Initialize()
 {
     Reset();
 
-    m_CurrentMousePos = m_MouseLastPos = { Mouse::GetX(), Mouse::GetY() };
+    m_CurrentMousePos = m_MouseLastPos = { g_Mouse.GetX(), g_Mouse.GetY() };
 
     g_IMGUIManager.RegisterTopMenu("Graphic", "Camera Controller", &gs_ShowCameraControllerIMGUIWindow);
     g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUIPropertyGrid(); });
@@ -25,19 +25,19 @@ void CameraController::UpdateEyePosition()
     // Calculate the move vector in camera space.
     bbeVector3 finalMoveVector;
 
-    if (Keyboard::IsKeyPressed(Keyboard::KEY_A))
+    if (g_Keyboard.IsKeyPressed(Keyboard::KEY_A))
     {
         finalMoveVector += view.m_Right;
     }
-    if (Keyboard::IsKeyPressed(Keyboard::KEY_D))
+    if (g_Keyboard.IsKeyPressed(Keyboard::KEY_D))
     {
         finalMoveVector -= view.m_Right;
     }
-    if (Keyboard::IsKeyPressed(Keyboard::KEY_W))
+    if (g_Keyboard.IsKeyPressed(Keyboard::KEY_W))
     {
         finalMoveVector += view.m_LookAt;
     }
-    if (Keyboard::IsKeyPressed(Keyboard::KEY_S))
+    if (g_Keyboard.IsKeyPressed(Keyboard::KEY_S))
     {
         finalMoveVector -= view.m_LookAt;
     }
@@ -140,7 +140,7 @@ void CameraController::Serialize(Archive& ar)
 void CameraController::Update()
 {
     m_MouseLastPos = m_CurrentMousePos;
-    m_CurrentMousePos = { Mouse::GetX(), Mouse::GetY() };
+    m_CurrentMousePos = { g_Mouse.GetX(), g_Mouse.GetY() };
 
     // for some weird reason, windows underflows to 65535 when cursor is crosses left/top window
     m_CurrentMousePos.x = m_CurrentMousePos.x > 60000.0f ? 0.0f : m_CurrentMousePos.x;
@@ -149,7 +149,7 @@ void CameraController::Update()
 
     UpdateEyePosition();
 
-    if (Mouse::IsButtonPressed(Mouse::Right))
+    if (g_Mouse.IsButtonPressed(g_Mouse.Right))
     {
         UpdateCameraRotation();
     }

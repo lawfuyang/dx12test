@@ -26,7 +26,6 @@ public:
     void WaitForFence();
     void EndFrame();
 
-    //GfxCommandListsManager& GetCommandListsManager() { return m_CommandListsManager; }
     GfxFence& GetFence() { return m_GfxFence; }
 
     D3D_ROOT_SIGNATURE_VERSION GetHighSupportedRootSignature() const { return m_RootSigSupport.HighestVersion; }

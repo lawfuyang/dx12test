@@ -36,19 +36,19 @@ void System::ProcessWindowsMessage(HWND hWnd, UINT message, WPARAM wParam, LPARA
         break;
 
     case WM_LBUTTONDOWN:
-        g_Mouse.UpdateButton(Mouse::Left, true);
+        g_Mouse.UpdateButton(g_Mouse.Left, true);
         break;
 
     case WM_LBUTTONUP:
-        g_Mouse.UpdateButton(Mouse::Left, false);
+        g_Mouse.UpdateButton(g_Mouse.Left, false);
         break;
 
     case WM_RBUTTONDOWN:
-        g_Mouse.UpdateButton(Mouse::Right, true);
+        g_Mouse.UpdateButton(g_Mouse.Right, true);
         break;
 
     case WM_RBUTTONUP:
-        g_Mouse.UpdateButton(Mouse::Right, false);
+        g_Mouse.UpdateButton(g_Mouse.Right, false);
         break;
 
     case WM_MOUSEWHEEL:
@@ -119,7 +119,7 @@ void System::Loop()
 
 void System::RunKeyboardCommands()
 {
-    g_Profiler.DumpProfilerBlocks(Keyboard::IsKeyPressed(Keyboard::KEY_P));
+    g_Profiler.DumpProfilerBlocks(g_Keyboard.IsKeyPressed(Keyboard::KEY_P));
 }
 
 void System::BGAsyncThreadLoop()

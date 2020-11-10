@@ -4,6 +4,7 @@ class Mouse
 {
     DeclareSingletonFunctions(Mouse);
 
+public:
     enum Button
     {
         Left = 1,
@@ -11,24 +12,23 @@ class Mouse
         ButtonCount = 3,
     };
 
-public:
     void ProcessMouseMove(uint32_t param, int32_t x, int32_t y);
     void ProcessMouseWheel(int32_t delta);
     void UpdateButton(Button button, bool pressed);
 
-    static bool IsButtonPressed(Button key);
-    static bool WasButtonPressed(Button key);
-    static bool WasButtonReleased(Button key);
-    static bool WasHeldFor(Button key, float time);
-    static bool WasClicked(Button key, float time);
+    bool IsButtonPressed(Button key);
+    bool WasButtonPressed(Button key);
+    bool WasButtonReleased(Button key);
+    bool WasHeldFor(Button key, float time);
+    bool WasClicked(Button key, float time);
 
     // From [0, Resolution.X]
-    static float GetX();
+    float GetX();
 
     // From [0, Resolution.Y]
-    static float GetY();
+    float GetY();
 
-    static int32_t GetWheel();
+    int32_t GetWheel();
 
     void Tick();
 
