@@ -11,11 +11,9 @@ struct IMGUIDrawData;
 class GfxIMGUIRenderer : public GfxRendererBase
 {
 public:
-    DeclareSingletonFunctions(GfxIMGUIRenderer);
-
     void Initialize();
     void ShutDown() override;
-    void PopulateCommandList() override;
+    void PopulateCommandList(GfxContext& context) override;
 
     const char* GetName() const override { return "GfxIMGUIRenderer"; }
 
@@ -30,4 +28,3 @@ private:
     GfxIndexBuffer    m_IndexBuffer;
     GfxTexture        m_FontsTexture;
 };
-#define g_GfxIMGUIRenderer GfxIMGUIRenderer::GetInstance()

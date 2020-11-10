@@ -10,11 +10,9 @@ class GfxRootSignature;
 class GfxForwardLightingPass : public GfxRendererBase
 {
 public:
-    DeclareSingletonFunctions(GfxForwardLightingPass);
-
     void Initialize();
     void ShutDown() override;
-    void PopulateCommandList() override;
+    void PopulateCommandList(GfxContext& context) override;
 
     const char* GetName() const override { return "GfxForwardLightingPass"; }
 
@@ -27,4 +25,3 @@ private:
     float m_ConstPBRRoughness = 0.75f;
     float m_ConstPBRMetallic = 0.1f;
 };
-#define g_GfxForwardLightingPass GfxForwardLightingPass::GetInstance()

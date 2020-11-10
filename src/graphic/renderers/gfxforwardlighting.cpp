@@ -23,7 +23,7 @@ void GfxForwardLightingPass::Initialize()
 {
     bbeProfileFunction();
 
-    g_IMGUIManager.RegisterTopMenu("Graphic", "GfxForwardLightingPass", &gs_ShowForwardLightingIMGUIWindow);
+    g_IMGUIManager.RegisterTopMenu("Graphic", GetName(), &gs_ShowForwardLightingIMGUIWindow);
     g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUI(); });
 
     // Keep ranges static so GfxContext can parse through them
@@ -56,17 +56,13 @@ void GfxForwardLightingPass::ShutDown()
     gs_SceneDepthBuffer.Release();
 }
 
-void GfxForwardLightingPass::PopulateCommandList()
+void GfxForwardLightingPass::PopulateCommandList(GfxContext& context)
 {
     bbeProfileFunction();
-
-    GfxContext& context = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "GfxForwardLightingPass");
-    m_Context = &context;
+    bbeProfileGPUFunction(context);
 
     assert(m_RootSignature);
     context.SetRootSignature(*m_RootSignature);
-
-    bbeProfileGPUFunction(context);
 
     View& view = g_GfxManager.GetMainView();
 
@@ -137,3 +133,6 @@ void GfxForwardLightingPass::UpdateIMGUI()
         ImGui::SliderFloat("PBR Metallic", &m_ConstPBRMetallic, 0.0f, 1.0f);
     }
 }
+
+static GfxForwardLightingPass gs_GfxForwardLightingPass;
+GfxRendererBase* g_GfxForwardLightingPass = &gs_GfxForwardLightingPass;

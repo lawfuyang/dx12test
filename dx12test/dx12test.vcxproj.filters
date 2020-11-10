@@ -70,9 +70,6 @@
     <ClCompile Include="..\src\graphic\renderers\gfximguirenderer.cpp">
       <Filter>graphic\renderers</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\graphic\renderers\gfxzprepassrenderer.cpp">
-      <Filter>graphic\renderers</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\graphic\gfx\gfxcontext.cpp">
       <Filter>graphic\gfx</Filter>
     </ClCompile>
@@ -120,9 +117,6 @@
     </ClCompile>
     <ClCompile Include="..\src\graphic\gfx\gfxcommonstates.cpp">
       <Filter>graphic\gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\graphic\renderers\gfxshadowmaprenderer.cpp">
-      <Filter>graphic\renderers</Filter>
     </ClCompile>
     <ClCompile Include="..\src\graphic\gfx\gfxlightsmanager.cpp">
       <Filter>graphic\gfx</Filter>
@@ -234,9 +228,6 @@
     <ClInclude Include="..\src\graphic\renderers\gfxrendererbase.h">
       <Filter>graphic\renderers</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\renderers\gfxzprepassrenderer.h">
-      <Filter>graphic\renderers</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\graphic\gfx\gfxcontext.h">
       <Filter>graphic\gfx</Filter>
     </ClInclude>
@@ -287,9 +278,6 @@
     </ClInclude>
     <ClInclude Include="..\src\graphic\gfx\gfxcommonstates.h">
       <Filter>graphic\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\renderers\gfxshadowmaprenderer.h">
-      <Filter>graphic\renderers</Filter>
     </ClInclude>
     <ClInclude Include="..\src\graphic\gfx\gfxlightsmanager.h">
       <Filter>graphic\gfx</Filter>

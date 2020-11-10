@@ -38,7 +38,9 @@ private:
     void UpdateIMGUIPropertyGrid();
 
     std::mutex m_ContextsLock;
-    std::vector<GfxContext> m_AllContexts;
+    ObjectPool<GfxContext> m_ContextsPool;
+    std::vector<GfxContext*> m_AllContexts;
+    std::vector<GfxContext*> m_ScheduledContexts;
 
     GfxDevice         m_GfxDevice;
     GfxSwapChain      m_SwapChain;

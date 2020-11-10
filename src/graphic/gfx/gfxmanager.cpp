@@ -10,15 +10,14 @@
 #include <graphic/gfx/gfxdefaultassets.h>
 #include <graphic/gfx/gfxtexturesandbuffers.h>
 #include <graphic/gfx/gfxlightsmanager.h>
+#include <graphic/renderers/gfxrendererbase.h>
 
 #include <system/imguimanager.h>
 
-#include <graphic/renderers/gfxzprepassrenderer.h>
-#include <graphic/renderers/gfxforwardlighting.h>
-#include <graphic/renderers/gfximguirenderer.h>
-#include <graphic/renderers/gfxshadowmaprenderer.h>
-
 static bool gs_ShowGfxManagerIMGUIWindow = false;
+
+extern GfxRendererBase* g_GfxForwardLightingPass;
+extern GfxRendererBase* g_GfxIMGUIRenderer;
 extern GfxTexture gs_SceneDepthBuffer;
 
 void InitializeGraphic(tf::Subflow& subFlow)
@@ -75,10 +74,8 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
             tf::Task allTasks[] =
             {
                 ADD_SF_TASK(subFlow, g_GfxDefaultAssets.Initialize(sf)),
-                ADD_TF_TASK(subFlow, g_GfxForwardLightingPass.Initialize()),
-                ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer.Initialize()),
-                ADD_TF_TASK(subFlow, g_ZPrePassRenderer.Initialize()),
-                ADD_TF_TASK(subFlow, g_GfxShadowMapRenderer.Initialize()),
+                ADD_TF_TASK(subFlow, g_GfxForwardLightingPass->Initialize()),
+                ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer->Initialize()),
             };
 
             // HUGE assumption that all of the above gfx tasks queued their command lists to be executed
@@ -94,6 +91,7 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
     swapChainInitTask.succeed(cmdListInitTask);
 
     m_AllContexts.reserve(128);
+    m_ScheduledContexts.reserve(128);
 }
 
 void GfxManager::ShutDown()
@@ -117,10 +115,8 @@ void GfxManager::ShutDown()
         m_SwapChain.Dev()->SetFullscreenState(false, NULL);
 
     g_GfxPSOManager.ShutDown();
-    g_ZPrePassRenderer.ShutDown();
-    g_GfxForwardLightingPass.ShutDown();
-    g_GfxIMGUIRenderer.ShutDown();
-    g_GfxShadowMapRenderer.ShutDown();
+    g_GfxForwardLightingPass->ShutDown();
+    g_GfxIMGUIRenderer->ShutDown();
     g_GfxDefaultAssets.ShutDown();
     g_GfxResourceManager.ShutDown();
 
@@ -151,28 +147,31 @@ void GfxManager::ScheduleRenderPasses(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
 
-    ADD_TF_TASK(subFlow, g_ZPrePassRenderer.PopulateCommandList());
-    ADD_TF_TASK(subFlow, g_GfxForwardLightingPass.PopulateCommandList());
-    ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer.PopulateCommandList());
+    auto ScheduleRenderPass = [](GfxRendererBase* renderer)
+    {
+        // TODO: different cmd list type based on renderer type (async compute or direct)
+        GfxContext& context = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, renderer->GetName());
+        renderer->PopulateCommandList(context);
+        g_GfxManager.m_ScheduledContexts.push_back(&context);
+    };
+
+    // Manual scheduling
+    ADD_TF_TASK(subFlow, ScheduleRenderPass(g_GfxForwardLightingPass));
+    ADD_TF_TASK(subFlow, ScheduleRenderPass(g_GfxIMGUIRenderer));
 }
 
 void GfxManager::ScheduleCommandListsExecution()
 {
     bbeProfileFunction();
 
-    // helper lambda
-    auto QueueRenderPass = [&](GfxRendererBase* pass)
+    // schedule all render passes that were manually scheduled in "ScheduleRenderPasses"
+    for (GfxContext* context : m_ScheduledContexts)
     {
-        if (GfxContext* context = pass->GetGfxContext())
-        {
-            g_GfxCommandListsManager.QueueCommandListToExecute(context->GetCommandList(), context->GetCommandList().GetType());
-        }
-    };
+        g_GfxCommandListsManager.QueueCommandListToExecute(context->GetCommandList(), context->GetCommandList().GetType());
+    }
 
-    // queue all render passes
-    QueueRenderPass(&g_ZPrePassRenderer);
-    QueueRenderPass(&g_GfxForwardLightingPass);
-    QueueRenderPass(&g_GfxIMGUIRenderer);
+    // immediately clear array of scheduled renderers after queueing them for execution
+    m_ScheduledContexts.clear();
 
     // No more draw calls directly to the Back Buffer beyond this point!
     TransitionBackBufferForPresent();
@@ -207,11 +206,17 @@ void GfxManager::BeginFrame()
 void GfxManager::EndFrame()
 {
     bbeProfileFunction();
+    bbeMultiThreadDetector();
 
     m_GfxDevice.EndFrame();
     m_SwapChain.Present();
     m_GfxDevice.IncrementAndSignalFence();
 
+    assert(m_ScheduledContexts.empty());
+    for (GfxContext* context : m_AllContexts)
+    {
+        m_ContextsPool.destroy(context);
+    }
     m_AllContexts.clear();
 }
 
@@ -221,11 +226,13 @@ GfxContext& GfxManager::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType, 
 
     //g_Log.info("*** GfxManager::GenerateNewContext: {}", name);
 
-    GfxContext* newContext;
+    GfxContext* newContext = [this]()
     {
         bbeAutoLock(m_ContextsLock);
-        newContext = &m_AllContexts.emplace_back(GfxContext{});
-    }
+        GfxContext* ret = m_ContextsPool.construct();
+        m_AllContexts.push_back(ret);
+        return ret;
+    }();
     newContext->Initialize(cmdListType, name);
 
     return *newContext;

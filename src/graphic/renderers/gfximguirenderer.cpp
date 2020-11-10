@@ -184,17 +184,13 @@ void GfxIMGUIRenderer::ShutDown()
     m_FontsTexture.Release();
 }
 
-void GfxIMGUIRenderer::PopulateCommandList()
+void GfxIMGUIRenderer::PopulateCommandList(GfxContext& context)
 {
     bbeProfileFunction();
-
-    GfxContext& context = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "GfxIMGUIRenderer");
-    m_Context = &context;
+    bbeProfileGPUFunction(context);
     
     assert(m_RootSignature);
     context.SetRootSignature(*m_RootSignature);
-
-    bbeProfileGPUFunction(context);
 
     static_assert(sizeof(ImDrawVert) == sizeof(float) * 2 + sizeof(float) * 2 + sizeof(uint32_t)); // Position2f_TexCoord2f_Color4ub
     static_assert(sizeof(ImDrawIdx) == sizeof(uint16_t)); // 2 byte index size
@@ -280,3 +276,6 @@ void GfxIMGUIRenderer::PopulateCommandList()
         global_vtx_offset += cmd_list.m_VB.size();
     }
 }
+
+static GfxIMGUIRenderer gs_GfxIMGUIRenderer;
+GfxRendererBase* g_GfxIMGUIRenderer = &gs_GfxIMGUIRenderer;
