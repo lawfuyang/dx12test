@@ -27,7 +27,6 @@ public:
     void EndFrame();
 
     GfxCommandListsManager& GetCommandListsManager() { return m_CommandListsManager; }
-    D3D12MA::Allocator& GetD3D12MemoryAllocator() { assert(m_D3D12MemoryAllocator); return *m_D3D12MemoryAllocator; }
     GfxFence& GetFence() { return m_GfxFence; }
 
     D3D_ROOT_SIGNATURE_VERSION GetHighSupportedRootSignature() const { return m_RootSigSupport.HighestVersion; }
@@ -35,14 +34,11 @@ public:
 private:
     void ConfigureDebugLayer();
     void CheckFeaturesSupports();
-    void InitD3D12Allocator();
 
     GfxCommandListsManager m_CommandListsManager;
     GfxFence               m_GfxFence;
 
     ComPtr<ID3D12Device6> m_D3DDevice;
-
-    D3D12MA::Allocator* m_D3D12MemoryAllocator = nullptr;
 
     bool m_TearingSupported = false;
     D3D12_FEATURE_DATA_D3D12_OPTIONS               m_D3D12Options                  = {};
@@ -57,3 +53,18 @@ private:
     D3D12_FEATURE_DATA_SHADER_MODEL                m_D3DHighestShaderModel         = { D3D_SHADER_MODEL_5_1 };
     D3D12_FEATURE_DATA_ROOT_SIGNATURE              m_RootSigSupport                = { D3D_ROOT_SIGNATURE_VERSION_1_1 };
 };
+
+class GfxMemoryAllocator
+{
+    DeclareSingletonFunctions(GfxMemoryAllocator);
+
+public:
+    void Initialize();
+    void Release();
+
+    D3D12MA::Allocator& Dev() { assert(m_D3D12MemoryAllocator); return *m_D3D12MemoryAllocator; }
+
+private:
+    D3D12MA::Allocator* m_D3D12MemoryAllocator = nullptr;
+};
+#define g_GfxMemoryAllocator GfxMemoryAllocator::GetInstance()

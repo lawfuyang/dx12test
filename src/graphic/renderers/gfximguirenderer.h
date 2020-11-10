@@ -20,8 +20,8 @@ public:
     const char* GetName() const override { return "GfxIMGUIRenderer"; }
 
 private:
-    void InitFontsTexture(GfxContext&);
-    void GrowBuffers(GfxContext&, const IMGUIDrawData& imguiDrawData);
+    void InitFontsTexture();
+    void GrowBuffers(const IMGUIDrawData& imguiDrawData, GfxContext* context = nullptr);
     void UploadBufferData(const IMGUIDrawData& imguiDrawData);
     void SetupRenderStates(GfxContext&, const IMGUIDrawData& imguiDrawData);
 

@@ -86,7 +86,7 @@ void GfxDevice::Initialize()
 
     CheckFeaturesSupports();
 
-    InitD3D12Allocator();
+    g_GfxMemoryAllocator.Initialize();
 }
 
 void GfxDevice::ShutDown()
@@ -94,10 +94,7 @@ void GfxDevice::ShutDown()
     bbeProfileFunction();
     g_Log.info("Shutting Down GfxDevice");
 
-    g_Log.info("Releasing D3D12 Memory Allocator");
-    assert(m_D3D12MemoryAllocator);
-    m_D3D12MemoryAllocator->Release();
-    m_D3D12MemoryAllocator = nullptr;
+    g_GfxMemoryAllocator.Release();
 }
 
 void GfxDevice::CheckStatus()
@@ -216,33 +213,6 @@ void GfxDevice::CheckFeaturesSupports()
     DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_GPU_VIRTUAL_ADDRESS_SUPPORT, &m_D3D12GPUVirtualAddressSupport, sizeof(m_D3D12GPUVirtualAddressSupport)));
 }
 
-void GfxDevice::InitD3D12Allocator()
-{
-    bbeProfileFunction();
-
-    g_Log.info("Initializing D3D12 Memory Allocator");
-
-    D3D12MA::ALLOCATOR_DESC desc = {};
-    desc.Flags = g_CommandLineOptions.m_GfxMemAllocAlwaysCommitedMemory ? D3D12MA::ALLOCATOR_FLAG_ALWAYS_COMMITTED : D3D12MA::ALLOCATOR_FLAG_NONE;
-    desc.pDevice = m_D3DDevice.Get();
-    desc.pAdapter = GfxAdapter::GetInstance().GetAllAdapters()[0].Get(); // Just get first adapter
-
-    DX12_CALL(D3D12MA::CreateAllocator(&desc, &m_D3D12MemoryAllocator));
-    assert(m_D3D12MemoryAllocator);
-
-    switch (m_D3D12MemoryAllocator->GetD3D12Options().ResourceHeapTier)
-    {
-    case D3D12_RESOURCE_HEAP_TIER_1:
-        g_Log.info("    D3D12_RESOURCE_HEAP_TIER = D3D12_RESOURCE_HEAP_TIER_1");
-        break;
-    case D3D12_RESOURCE_HEAP_TIER_2:
-        g_Log.info("    D3D12_RESOURCE_HEAP_TIER = D3D12_RESOURCE_HEAP_TIER_2");
-        break;
-    default:
-        assert(0);
-    }
-}
-
 void GfxDevice::Flush(bool andWait)
 {
     bbeProfileFunction();
@@ -274,4 +244,39 @@ void GfxDevice::EndFrame()
 
     // execute remaining cmd lists
     Flush();
+}
+
+void GfxMemoryAllocator::Initialize()
+{
+    bbeProfileFunction();
+
+    g_Log.info("Initializing D3D12 Memory Allocator");
+
+    D3D12MA::ALLOCATOR_DESC desc{};
+    desc.Flags = g_CommandLineOptions.m_GfxMemAllocAlwaysCommitedMemory ? D3D12MA::ALLOCATOR_FLAG_ALWAYS_COMMITTED : D3D12MA::ALLOCATOR_FLAG_NONE;
+    desc.pDevice = g_GfxManager.GetGfxDevice().Dev();
+    desc.pAdapter = g_GfxAdapter.GetAllAdapters()[0].Get(); // Just get first adapter
+
+    DX12_CALL(D3D12MA::CreateAllocator(&desc, &m_D3D12MemoryAllocator));
+    assert(m_D3D12MemoryAllocator);
+
+    switch (m_D3D12MemoryAllocator->GetD3D12Options().ResourceHeapTier)
+    {
+    case D3D12_RESOURCE_HEAP_TIER_1:
+        g_Log.info("    D3D12_RESOURCE_HEAP_TIER = D3D12_RESOURCE_HEAP_TIER_1");
+        break;
+    case D3D12_RESOURCE_HEAP_TIER_2:
+        g_Log.info("    D3D12_RESOURCE_HEAP_TIER = D3D12_RESOURCE_HEAP_TIER_2");
+        break;
+    default:
+        assert(0);
+    }
+}
+
+void GfxMemoryAllocator::Release()
+{
+    g_Log.info("Releasing D3D12 Memory Allocator");
+    assert(m_D3D12MemoryAllocator);
+    m_D3D12MemoryAllocator->Release();
+    m_D3D12MemoryAllocator = nullptr;
 }

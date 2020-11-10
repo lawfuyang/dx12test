@@ -42,7 +42,7 @@ static constexpr D3D12_STATIC_SAMPLER_DESC gs_StaticSamplers[] =
     gs_AnisotropicWrapSamplerDesc,
 };
 
-void GfxRootSignature::Compile(CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t numRootParams, D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags, const char* rootSigName)
+void GfxRootSignature::CompileInternal(CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t numRootParams, D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags, const char* rootSigName)
 {
     assert(numRootParams < MaxRootParams);
     assert(m_RootSignature.Get() == nullptr);
