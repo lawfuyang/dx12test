@@ -5,8 +5,8 @@ class GfxContext;
 class GfxRendererBase
 {
 public:
-    virtual void Initialize() = 0;
-    virtual void ShutDown() = 0;
-    virtual void PopulateCommandList(GfxContext& context) = 0;
+    virtual void Initialize() {};
+    virtual void ShutDown() {};
+    virtual void PopulateCommandList(GfxContext& context) {};
     virtual const char* GetName() const = 0;
 };

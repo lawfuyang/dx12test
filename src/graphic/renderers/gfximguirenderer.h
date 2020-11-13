@@ -11,7 +11,7 @@ struct IMGUIDrawData;
 class GfxIMGUIRenderer : public GfxRendererBase
 {
 public:
-    void Initialize();
+    void Initialize() override;
     void ShutDown() override;
     void PopulateCommandList(GfxContext& context) override;
 
