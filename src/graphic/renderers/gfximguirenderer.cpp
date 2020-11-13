@@ -26,12 +26,12 @@ void GfxIMGUIRenderer::Initialize()
     GrowBuffers(*(const IMGUIDrawData*)dummyDrawData);
 
     // Keep ranges static so GfxContext can parse through them
+    // Perfomance TIP: Order from most frequent to least frequent.
     static CD3DX12_DESCRIPTOR_RANGE1 ranges[2];
     ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
     ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 
-    const bool AllowInputAssembler = true;
-    m_RootSignature = g_GfxRootSignatureManager.GetOrCreateRootSig<AllowInputAssembler>(ranges, "GfxIMGUIRenderer_RootSignature");
+    m_RootSignature = g_GfxRootSignatureManager.GetOrCreateRootSig(ranges, _countof(ranges), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT, "GfxIMGUIRenderer_RootSignature");
 }
 
 void GfxIMGUIRenderer::InitFontsTexture()

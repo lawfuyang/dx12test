@@ -68,22 +68,34 @@ void GfxRootSignature::Compile(CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t num
     m_RootSignature->SetName(StringUtils::Utf8ToWide(rootSigName).c_str());
 }
 
-GfxRootSignature* GfxRootSignatureManager::GetOrCreateRootSigInternal(std::size_t hash, CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t numRootParams, D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags, const char* rootSigName)
+GfxRootSignature* GfxRootSignatureManager::GetOrCreateRootSig(CD3DX12_DESCRIPTOR_RANGE1* ranges, uint32_t nbRanges, D3D12_ROOT_SIGNATURE_FLAGS flags, const char* rootSigName)
 {
+    assert(nbRanges < GfxRootSignature::MaxRootParams);
+    CD3DX12_ROOT_PARAMETER1 rootParams[GfxRootSignature::MaxRootParams];
+
+    for (uint32_t i = 0; i < nbRanges; ++i)
+        rootParams[i].InitAsDescriptorTable(1, &ranges[i]);
+
+    std::size_t hash = 0;
+    boost::hash_combine(hash, flags);
+    for (uint32_t i = 0; i < nbRanges; ++i)
+    {
+        boost::hash_combine(hash, rootParams[i].ParameterType);
+        boost::hash_combine(hash, rootParams[i].ShaderVisibility);
+    }
+
     bbeAutoLock(m_CachedRootSigsLock);
     GfxRootSignature& rootSig = m_CachedRootSigs[hash];
 
     // It's cached. Return it
-    if (rootSig.m_Hash != 0)
+    if (rootSig.m_RootSignature.Get() != nullptr)
     {
-        assert(rootSig.m_RootSignature.Get() != nullptr);
+        assert(rootSig.m_Hash != 0);
         assert(!rootSig.m_RootParams.empty());
         return &rootSig;
     }
 
-    assert(numRootParams < GfxRootSignature::MaxRootParams);
-
     rootSig.m_Hash = hash;
-    rootSig.Compile(rootParams, numRootParams, rootSigFlags, rootSigName);
+    rootSig.Compile(rootParams, nbRanges, flags, rootSigName);
     return &rootSig;
 }

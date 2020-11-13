@@ -27,13 +27,13 @@ void GfxForwardLightingPass::Initialize()
     g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUI(); });
 
     // Keep ranges static so GfxContext can parse through them
+    // Perfomance TIP: Order from most frequent to least frequent.
     static CD3DX12_DESCRIPTOR_RANGE1 ranges[3];
     ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // PerInstanceConsts @ c0
     ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // PerFrameConsts @ c1
     ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); // Per Visual textures @ t0-t2
 
-    const bool AllowInputAssembler = true;
-    m_RootSignature = g_GfxRootSignatureManager.GetOrCreateRootSig<AllowInputAssembler>(ranges, "GfxForwardLightingPass_RootSignature");
+    m_RootSignature = g_GfxRootSignatureManager.GetOrCreateRootSig(ranges, _countof(ranges), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT, "GfxForwardLightingPass_RootSignature");
 
     GfxTexture::InitParams depthBufferInitParams;
     depthBufferInitParams.m_Format = DXGI_FORMAT_D32_FLOAT;
