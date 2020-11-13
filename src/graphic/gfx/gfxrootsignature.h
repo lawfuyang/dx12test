@@ -23,6 +23,14 @@ class GfxRootSignatureManager
 {
     DeclareSingletonFunctions(GfxRootSignatureManager);
 public:
+
+    // helper to pass in ref to array of ranges
+    template <uint32_t NbRanges>
+    GfxRootSignature* GetOrCreateRootSig(CD3DX12_DESCRIPTOR_RANGE1(&ranges)[NbRanges], D3D12_ROOT_SIGNATURE_FLAGS flags, const char* rootSigName)
+    {
+        return GetOrCreateRootSig((CD3DX12_DESCRIPTOR_RANGE1*)&ranges, NbRanges, flags, rootSigName);
+    }
+
     GfxRootSignature* GetOrCreateRootSig(CD3DX12_DESCRIPTOR_RANGE1* ranges, uint32_t nbRanges, D3D12_ROOT_SIGNATURE_FLAGS flags, const char* rootSigName);
 
 private:
