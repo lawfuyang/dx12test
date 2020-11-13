@@ -17,7 +17,7 @@
 #include <tmp/shaders/autogen/cpp/PS_ForwardLighting.h>
 
 static bool gs_ShowForwardLightingIMGUIWindow = false;
-GfxTexture gs_SceneDepthBuffer;
+GfxTexture g_SceneDepthBuffer;
 
 void GfxForwardLightingPass::Initialize()
 {
@@ -48,12 +48,12 @@ void GfxForwardLightingPass::Initialize()
     depthBufferInitParams.m_ClearValue.DepthStencil.Depth = 1.0f;
     depthBufferInitParams.m_ClearValue.DepthStencil.Stencil = 0;
 
-    gs_SceneDepthBuffer.Initialize(depthBufferInitParams);
+    g_SceneDepthBuffer.Initialize(depthBufferInitParams);
 }
 
 void GfxForwardLightingPass::ShutDown()
 {
-    gs_SceneDepthBuffer.Release();
+    g_SceneDepthBuffer.Release();
 }
 
 void GfxForwardLightingPass::PopulateCommandList(GfxContext& context)
@@ -76,7 +76,7 @@ void GfxForwardLightingPass::PopulateCommandList(GfxContext& context)
     UploadConstantBufferToGPU(context, frameConsts, 1);
 
     context.SetRenderTarget(0, g_GfxManager.GetSwapChain().GetCurrentBackBuffer());
-    context.SetDepthStencil(gs_SceneDepthBuffer);
+    context.SetDepthStencil(g_SceneDepthBuffer);
 
     GfxPipelineStateObject& pso = context.GetPSO();
 

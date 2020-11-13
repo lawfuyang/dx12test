@@ -18,7 +18,7 @@ static bool gs_ShowGfxManagerIMGUIWindow = false;
 
 extern GfxRendererBase* g_GfxForwardLightingPass;
 extern GfxRendererBase* g_GfxIMGUIRenderer;
-extern GfxTexture gs_SceneDepthBuffer;
+extern GfxTexture g_SceneDepthBuffer;
 
 void InitializeGraphic(tf::Subflow& subFlow)
 {
@@ -193,7 +193,7 @@ void GfxManager::BeginFrame()
     {
         GfxContext& clearBackBufferContext = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "ClearBackBuffer");
         clearBackBufferContext.ClearRenderTargetView(g_GfxManager.GetSwapChain().GetCurrentBackBuffer(), bbeVector4{ 0.0f, 0.2f, 0.4f, 1.0f });
-        clearBackBufferContext.ClearDepth(gs_SceneDepthBuffer, 1.0f);
+        clearBackBufferContext.ClearDepth(g_SceneDepthBuffer, 1.0f);
         g_GfxCommandListsManager.QueueCommandListToExecute(clearBackBufferContext.GetCommandList(), clearBackBufferContext.GetCommandList().GetType());
 
         m_GfxDevice.Flush();
