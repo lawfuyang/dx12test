@@ -1,16 +1,10 @@
+#include "globals.h"
 #include "shadercompilejob.h"
 #include "constantbuffer.h"
 #include "shaderkeyhelper.h"
 #include "shaderpermutationsprintjob.h"
 
 void PrintToConsoleAndLogFile(const std::string& str);
-
-extern std::string g_ShadersDir;
-extern std::mutex g_AllConstantBuffersLock;
-extern std::mutex g_AllShaderPermutationsPrintJobsLock;
-extern std::vector<ConstantBuffer> g_AllConstantBuffers;
-extern std::vector<ShaderPermutationsPrintJob> g_AllShaderPermutationsPrintJobs;
-extern std::unordered_map<std::string, std::vector<std::string>> g_AllShaderPermutationsStrings;
 
 struct ForwardLighting
 {
@@ -58,8 +52,8 @@ struct ForwardLighting
             cb.AddVariable("float", "ConstPBRRoughness");
             cb.AddVariable("float", "ConstPBRMetallic");
 
-            bbeAutoLock(g_AllConstantBuffersLock);
-            g_AllConstantBuffers.push_back(cb);
+            bbeAutoLock(g_Globals.m_AllConstantBuffersLock);
+            g_Globals.m_AllConstantBuffers.push_back(cb);
         }
 
         {
@@ -72,8 +66,8 @@ struct ForwardLighting
             cb.m_Register = 0;
             cb.AddVariable("float4x4", "WorldMatrix");
 
-            bbeAutoLock(g_AllConstantBuffersLock);
-            g_AllConstantBuffers.push_back(cb);
+            bbeAutoLock(g_Globals.m_AllConstantBuffersLock);
+            g_Globals.m_AllConstantBuffers.push_back(cb);
         }
     }
 
@@ -100,7 +94,7 @@ struct ForwardLighting
         }
 
         PopulateJobParams params;
-        params.m_ShaderFilePath = g_ShadersDir + "forwardlighting.hlsl";
+        params.m_ShaderFilePath = g_Globals.m_ShadersDir + "forwardlighting.hlsl";
         params.m_ShaderName = ms_ShaderName;
         params.m_ShaderID = GetCompileTimeCRC32(ms_ShaderName);
 
@@ -119,9 +113,9 @@ struct ForwardLighting
         PopulateJobsArray(params);
 
 
-        bbeAutoLock(g_AllShaderPermutationsPrintJobsLock);
+        bbeAutoLock(g_Globals.m_AllShaderPermutationsPrintJobsLock);
         {
-            ShaderPermutationsPrintJob& printJob = g_AllShaderPermutationsPrintJobs.emplace_back();
+            ShaderPermutationsPrintJob& printJob = g_Globals.m_AllShaderPermutationsPrintJobs.emplace_back();
             printJob.m_ShaderType = GfxShaderType::VS;
             printJob.m_BaseShaderID = GetCompileTimeCRC32(ms_ShaderName);
             printJob.m_BaseShaderName = StringFormat("VS_%s", ms_ShaderName);
@@ -129,7 +123,7 @@ struct ForwardLighting
         }
 
         {
-            ShaderPermutationsPrintJob& printJob = g_AllShaderPermutationsPrintJobs.emplace_back();
+            ShaderPermutationsPrintJob& printJob = g_Globals.m_AllShaderPermutationsPrintJobs.emplace_back();
             printJob.m_ShaderType = GfxShaderType::PS;
             printJob.m_BaseShaderID = GetCompileTimeCRC32(ms_ShaderName);
             printJob.m_BaseShaderName = StringFormat("PS_%s", ms_ShaderName);

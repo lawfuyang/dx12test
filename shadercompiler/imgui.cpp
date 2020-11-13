@@ -1,18 +1,10 @@
+#include "globals.h"
 #include "shadercompilejob.h"
 #include "constantbuffer.h"
 #include "shaderkeyhelper.h"
 #include "shaderpermutationsprintjob.h"
 
 void PrintToConsoleAndLogFile(const std::string& str);
-
-extern std::string g_ShadersDir;
-extern std::mutex g_AllShaderCompileJobsLock;
-extern std::mutex g_AllConstantBuffersLock;
-extern std::mutex g_AllShaderPermutationsPrintJobsLock;
-extern std::vector<ShaderCompileJob> g_AllShaderCompileJobs;
-extern std::vector<ConstantBuffer> g_AllConstantBuffers;
-extern std::vector<ShaderPermutationsPrintJob> g_AllShaderPermutationsPrintJobs;
-extern std::unordered_map<std::string, std::vector<std::string>> g_AllShaderPermutationsStrings;
 
 struct IMGUI
 {
@@ -28,14 +20,14 @@ struct IMGUI
         cb.AddVariable("float4x4", "ProjMatrix");
 
         {
-            bbeAutoLock(g_AllConstantBuffersLock);
-            g_AllConstantBuffers.push_back(cb);
+            bbeAutoLock(g_Globals.m_AllConstantBuffersLock);
+            g_Globals.m_AllConstantBuffers.push_back(cb);
         }
 
         bool validKeys[1] = { true };
 
         PopulateJobParams params;
-        params.m_ShaderFilePath = g_ShadersDir + "imgui.hlsl";
+        params.m_ShaderFilePath = g_Globals.m_ShadersDir + "imgui.hlsl";
         params.m_ShaderName = "IMGUI";
         params.m_EntryPoint = "VSMain";
         params.m_ShaderType = GfxShaderType::VS;
@@ -48,16 +40,16 @@ struct IMGUI
         params.m_ShaderType = GfxShaderType::PS;
         PopulateJobsArray(params);
 
-        bbeAutoLock(g_AllShaderPermutationsPrintJobsLock);
+        bbeAutoLock(g_Globals.m_AllShaderPermutationsPrintJobsLock);
         {
-            ShaderPermutationsPrintJob& printJob = g_AllShaderPermutationsPrintJobs.emplace_back();
+            ShaderPermutationsPrintJob& printJob = g_Globals.m_AllShaderPermutationsPrintJobs.emplace_back();
             printJob.m_ShaderType = GfxShaderType::VS;
             printJob.m_BaseShaderID = GetCompileTimeCRC32(ms_ShaderName);
             printJob.m_BaseShaderName = StringFormat("VS_%s", ms_ShaderName);
         }
 
         {
-            ShaderPermutationsPrintJob& printJob = g_AllShaderPermutationsPrintJobs.emplace_back();
+            ShaderPermutationsPrintJob& printJob = g_Globals.m_AllShaderPermutationsPrintJobs.emplace_back();
             printJob.m_ShaderType = GfxShaderType::PS;
             printJob.m_BaseShaderID = GetCompileTimeCRC32(ms_ShaderName);
             printJob.m_BaseShaderName = StringFormat("PS_%s", ms_ShaderName);

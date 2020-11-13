@@ -1,17 +1,10 @@
-
 #include "shadercompilejob.h"
+#include "globals.h"
 
 // increase up to 64 when needed. This is just to prevent file names from being too long...
 static const uint32_t MAX_SHADER_KEY_BITS = 4;
 
 void PrintToConsoleAndLogFile(const std::string& str);
-
-extern std::mutex g_AllShaderCompileJobsLock;
-extern std::vector<ShaderCompileJob> g_AllShaderCompileJobs;
-extern D3D_SHADER_MODEL g_HighestShaderModel;
-extern std::string g_DXCDir;
-extern std::string g_ShadersTmpDir;
-extern bool g_CompileFailureDetected;
 
 DXCProcessWrapper::DXCProcessWrapper(const std::string& inputCommandLine, const ShaderCompileJob& job)
 {
@@ -40,7 +33,7 @@ DXCProcessWrapper::DXCProcessWrapper(const std::string& inputCommandLine, const 
 
     ::PROCESS_INFORMATION processInfo = {};
 
-    std::string commandLine = g_DXCDir.c_str();
+    std::string commandLine = g_Globals.m_DXCDir.c_str();
     commandLine += " " + inputCommandLine;
 
     if (!::CreateProcess(nullptr,   // No module name (use command line).
@@ -78,7 +71,7 @@ DXCProcessWrapper::DXCProcessWrapper(const std::string& inputCommandLine, const 
     if (numCharsRead)
     {
         g_Log.info("{}: {}", job.m_ShaderName.c_str(), buffer.c_str());
-        g_CompileFailureDetected = true;
+        g_Globals.m_CompileFailureDetected = true;
     }
 }
 
@@ -98,7 +91,7 @@ static const std::string GetTargetProfileString(GfxShaderType type)
     };
 
     std::string result = ShaderTypeStrings[(int)type];
-    result += s_TargetProfileToStr.at(g_HighestShaderModel);
+    result += s_TargetProfileToStr.at(g_Globals.m_HighestShaderModel);
 
     std::transform(result.begin(), result.end(), result.begin(), [](char c) { return std::tolower(c); });
 
@@ -107,7 +100,7 @@ static const std::string GetTargetProfileString(GfxShaderType type)
 
 void ShaderCompileJob::StartJob()
 {
-    m_ShaderObjCodeFileDir = g_ShadersTmpDir + m_ShaderName + ".h";
+    m_ShaderObjCodeFileDir = g_Globals.m_ShadersTmpDir + m_ShaderName + ".h";
     m_ShaderObjCodeVarName = m_ShaderName + "_ObjCode";
 
     std::string commandLine = m_ShaderFilePath;
@@ -118,7 +111,7 @@ void ShaderCompileJob::StartJob()
     commandLine += " -Vn " + m_ShaderObjCodeVarName;
     commandLine += " -nologo ";
     commandLine += " -WX ";
-    commandLine += " -I" + g_ShadersTmpDir;
+    commandLine += " -I" + g_Globals.m_ShadersTmpDir;
     commandLine += StringFormat(" -D%s ", (m_ShaderType == GfxShaderType::VS ? "VERTEX_SHADER" : "PIXEL_SHADER"));
     commandLine += " -Qunused-arguments ";
 
@@ -134,7 +127,7 @@ void ShaderCompileJob::StartJob()
 
     DXCProcessWrapper compilerProcess{ commandLine, *this };
 
-    if (!g_CompileFailureDetected)
+    if (!g_Globals.m_CompileFailureDetected)
     {
         PrintToConsoleAndLogFile(StringFormat("Compiled %s", m_ShaderName.c_str()));
     }
@@ -166,8 +159,8 @@ void PopulateJobsArray(const PopulateJobParams& params)
 
         ++totalPermutations;
 
-        bbeAutoLock(g_AllShaderCompileJobsLock);
-        g_AllShaderCompileJobs.push_back(newJob);
+        bbeAutoLock(g_Globals.m_AllShaderCompileJobsLock);
+        g_Globals.m_AllShaderCompileJobs.push_back(newJob);
     }
 
     PrintToConsoleAndLogFile(StringFormat("%s%s: %u permutations", (params.m_ShaderType == GfxShaderType::VS ? "VS_" : "PS_"), params.m_ShaderName, totalPermutations));

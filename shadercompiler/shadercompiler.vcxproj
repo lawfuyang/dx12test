@@ -75,6 +75,7 @@
     <ClInclude Include="..\src\graphic\dx12utils.h" />
     <ClInclude Include="..\src\system\utils.h" />
     <ClInclude Include="constantbuffer.h" />
+    <ClInclude Include="globals.h" />
     <ClInclude Include="shadercompilejob.h" />
     <ClInclude Include="shaderkeyhelper.h" />
     <ClInclude Include="shaderpermutationsprintjob.h" />

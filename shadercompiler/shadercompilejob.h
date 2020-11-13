@@ -1,14 +1,13 @@
 #pragma once
 
-#define RegisterJobPopulator(Name, Func)                    \
-extern std::vector<std::function<void()>> g_JobsPopulators; \
-struct __##Name##__Init                                     \
-{                                                           \
-    __##Name##__Init::__##Name##__Init()                    \
-    {                                                       \
-        g_JobsPopulators.push_back(Func);                   \
-    }                                                       \
-};                                                          \
+#define RegisterJobPopulator(Name, Func)            \
+struct __##Name##__Init                             \
+{                                                   \
+    __##Name##__Init::__##Name##__Init()            \
+    {                                               \
+        g_Globals.m_JobsPopulators.push_back(Func); \
+    }                                               \
+};                                                  \
 static const __##Name##__Init gs__##Name##__Init;
 
 
