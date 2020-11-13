@@ -27,7 +27,7 @@ void ConstantBuffer::SanityCheck()
     uint32_t paddingVarCount = 0;
     while (!bbeIsAligned(bufferSize, 16))
     {
-        AddVariable("uint", StringFormat("%s_DummyPaddingVar%d", m_Name, paddingVarCount++));
+        AddVariable("uint", StringFormat("DummyPaddingVar%d", paddingVarCount++));
         bufferSize += 4;
     }
 }

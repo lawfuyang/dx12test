@@ -112,20 +112,24 @@ private:
 class GfxConstantBuffer : public GfxBufferCommon
 {
 public:
-    GfxConstantBuffer(uint32_t rootIndex, uint32_t rootOffset = 0)
+    GfxConstantBuffer(uint32_t rootIndex, uint32_t rootOffset)
         : m_RootIndex(rootIndex)
         , m_RootOffset(rootOffset)
     {}
 
-    template <typename CBStruct>
-    void UploadToGPU(GfxContext& context, const CBStruct& cb) { UploadToGPU(context, (const void*)&cb, sizeof(CBStruct), CBStruct::ms_Name); }
-
-private:
     void UploadToGPU(GfxContext& context, const void* data, uint32_t bufferSize, const char* CBName);
 
+private:
     uint32_t m_RootIndex;
     uint32_t m_RootOffset;
 };
+
+template <typename CBStruct>
+static void UploadConstantBufferToGPU(GfxContext& context, const CBStruct& cb, uint32_t rootIndex, uint32_t rootOffset = 0)
+{
+    GfxConstantBuffer gfxCB{ rootIndex, rootOffset };
+    gfxCB.UploadToGPU(context, (const void*)&cb, sizeof(CBStruct), CBStruct::ms_Name);
+}
 
 class GfxTexture : public GfxHazardTrackedResource,
                    public GfxBufferCommon
