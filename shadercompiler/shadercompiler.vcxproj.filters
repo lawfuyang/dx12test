@@ -5,20 +5,6 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="extern">
-      <UniqueIdentifier>{0186e6cc-fb80-49cd-9e2f-5a2da824f860}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="extern\microprofile">
-      <UniqueIdentifier>{61d84db5-cc64-47b0-8c55-c5e6cc2d1c32}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\shaders">
       <UniqueIdentifier>{f8fb1d05-281f-4e3c-9968-3f03de9a8bbd}</UniqueIdentifier>
     </Filter>
@@ -33,16 +19,10 @@
     <ClCompile Include="..\src\graphic\dx12utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\extern\microprofile\microprofile.cpp">
-      <Filter>extern\microprofile</Filter>
-    </ClCompile>
     <ClCompile Include="imgui.cpp">
       <Filter>Source Files\shaders</Filter>
     </ClCompile>
     <ClCompile Include="shadercompilejob.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="constantbuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="forwardlighting.cpp">
@@ -50,29 +30,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\system\utils.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\graphic\dx12utils.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\extern\microprofile\microprofile.h">
-      <Filter>extern\microprofile</Filter>
-    </ClInclude>
-    <ClInclude Include="shadercompilejob.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="constantbuffer.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="shaderkeyhelper.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="shaderpermutationsprintjob.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="globals.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
+    <ClInclude Include="shadercompiler_pch.h" />
   </ItemGroup>
 </Project>

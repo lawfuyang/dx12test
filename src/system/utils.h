@@ -174,6 +174,8 @@ void SplitPath(const std::string& fullPath, std::string& dir, std::string& fileN
 void GetFilesInDirectory(std::vector<std::string>& out, const std::string& directory);
 const std::string GetFileNameFromPath(const std::string& fullPath);
 const std::string GetFileExtensionFromPath(const std::string& fullPath);
+void ReadDataFromFile(const char* filename, std::vector<std::byte>& data);
+std::size_t GetFileContentsHash(const std::string& dir);
 
 struct WindowsHandleWrapper
 {
@@ -194,7 +196,7 @@ struct WindowsHandleWrapper
 
 struct CFileWrapper
 {
-CFileWrapper(const std::string& fileName, bool isReadMode);
+CFileWrapper(const std::string& fileName, bool isReadMode = true);
 ~CFileWrapper();
 
 CFileWrapper(const CFileWrapper&) = delete;
@@ -231,8 +233,6 @@ static std::size_t GenericTypeHash(const T& s)
     boost::hash_range(hash, rawMem, rawMem + sizeof(T));
     return hash;
 }
-
-void ReadDataFromFile(const char* filename, std::vector<std::byte>& data);
 
 template <typename Functor, bool ForwardScan = true>
 static void RunOnAllBits(uint32_t mask, Functor&& func)

@@ -35,21 +35,35 @@ private:
 #define g_Profiler SystemProfiler::GetInstance()
 
 #define bbeAutoLock(lck) \
-    MICROPROFILE_SCOPEI("Locks", bbeTOSTRING(lck), 0xFF0000); \
-    const AutoScopeCaller bbeUniqueVariable(ScopedLock){ [&](){ lck.lock(); }, [&](){ lck.unlock(); } };
+    bbeProfileLock(lck); \
+    const std::lock_guard bbeUniqueVariable(ScopedLock) {lck};
 
-#define bbeDefineProfilerToken(var, group, name, color) MICROPROFILE_DEFINE(var, group, name, color)
-#define bbeProfile(str)                                 MICROPROFILE_SCOPEI("", str, GetCompileTimeCRC32(str))
-#define bbeProfileToken(token)                          MICROPROFILE_SCOPE(token)
-#define bbeProfileFunction()                            MICROPROFILE_SCOPEI("", __FUNCTION__, GetCompileTimeCRC32(__FUNCTION__))
-#define bbeConditionalProfile(condition, name)          MICROPROFILE_CONDITIONAL_SCOPEI(condition, name, name, GetCompileTimeCRC32(name))
-#define bbeProfileBlockEnd()                            MICROPROFILE_LEAVE()
-#define bbePIXEvent(gfxContext)                         const ScopedPixEvent bbeUniqueVariable(pixEvent) { gfxContext.GetCommandList().Dev() }
+#if defined(BBE_USE_PROFILER)
+    #define bbeDefineProfilerToken(var, group, name, color) MICROPROFILE_DEFINE(var, group, name, color)
+    #define bbeProfile(str)                                 MICROPROFILE_SCOPEI("", str, GetCompileTimeCRC32(str))
+    #define bbeProfileToken(token)                          MICROPROFILE_SCOPE(token)
+    #define bbeProfileFunction()                            MICROPROFILE_SCOPEI("", __FUNCTION__, GetCompileTimeCRC32(__FUNCTION__))
+    #define bbeConditionalProfile(condition, name)          MICROPROFILE_CONDITIONAL_SCOPEI(condition, name, name, GetCompileTimeCRC32(name))
+    #define bbeProfileBlockEnd()                            MICROPROFILE_LEAVE()
+    #define bbeProfileLock(lck)                             MICROPROFILE_SCOPEI("Locks", bbeTOSTRING(lck), 0xFF0000);
+    #define bbePIXEvent(gfxContext)                         const ScopedPixEvent bbeUniqueVariable(pixEvent) { gfxContext.GetCommandList().Dev() }
 
-#define bbeProfileGPU(gfxContext, name) \
-    bbePIXEvent(gfxContext); \
-    MICROPROFILE_SCOPEGPUI_L(g_Profiler.GetGPULogForCurrentThread(gfxContext.GetCommandList()), name, GetCompileTimeCRC32(name));
+    #define bbeProfileGPU(gfxContext, name) \
+        bbePIXEvent(gfxContext); \
+        MICROPROFILE_SCOPEGPUI_L(g_Profiler.GetGPULogForCurrentThread(gfxContext.GetCommandList()), name, GetCompileTimeCRC32(name));
 
-#define bbeProfileGPUFunction(gfxContext) \
-    bbePIXEvent(gfxContext); \
-    MICROPROFILE_SCOPEGPUI_L(g_Profiler.GetGPULogForCurrentThread(gfxContext.GetCommandList()), __FUNCTION__, GetCompileTimeCRC32(__FUNCTION__));
+    #define bbeProfileGPUFunction(gfxContext) \
+        bbePIXEvent(gfxContext); \
+        MICROPROFILE_SCOPEGPUI_L(g_Profiler.GetGPULogForCurrentThread(gfxContext.GetCommandList()), __FUNCTION__, GetCompileTimeCRC32(__FUNCTION__));
+#else
+    #define bbeDefineProfilerToken(var, group, name, color) __noop
+    #define bbeProfile(str)                                 __noop
+    #define bbeProfileToken(token)                          __noop
+    #define bbeProfileFunction()                            __noop
+    #define bbeConditionalProfile(condition, name)          __noop
+    #define bbeProfileBlockEnd()                            __noop
+    #define bbeProfileLock(lck)                             __noop
+    #define bbePIXEvent(gfxContext)                         __noop
+    #define bbeProfileGPU(gfxContext, name)                 __noop
+    #define bbeProfileGPUFunction(gfxContext)               __noop
+#endif

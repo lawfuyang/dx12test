@@ -60,6 +60,9 @@
 #include <wrl.h>
 #include <windows.h>
 #include <winuser.h>
+#include <concurrent_vector.h>
+#include <concurrent_queue.h>
+#include <concurrent_unordered_map.h>
 
 // DirectX
 #include <d3d12.h>
@@ -70,13 +73,23 @@
 #if defined(BBE_SHADERCOMPILER)
     // json
     #include <extern/json/json.hpp>
+    using json = nlohmann::json;
 #else
+    #define BBE_USE_PROFILER
+
     // D3D12MA
     #include <extern/d3d12/D3D12MemAlloc.h>
 
     // IMGUI
     #include <extern/imgui/imgui.h>
     #include <extern/imgui/ImGuiFileDialog.h>
+
+    // Cereal serialization lib
+    #define CEREAL_SERIALIZE_FUNCTION_NAME Serialize
+    #include <cereal/types/vector.hpp> // allow Cereal to serialize std::vector
+    #include <cereal/types/string.hpp> // allow Cereal to serialize std::string
+    #include <cereal/archives/binary.hpp> // Binary I/O
+    #include <cereal/archives/json.hpp> // JSON I/O
 #endif // #if defined(BBE_SHADERCOMPILER)
 
 // PIX
@@ -96,13 +109,6 @@
 #include <extern/boost/uuid/uuid_generators.hpp>
 #include <extern/boost/uuid/uuid_io.hpp>
 
-// Cereal serialization lib
-#define CEREAL_SERIALIZE_FUNCTION_NAME Serialize
-#include <cereal/types/vector.hpp> // allow Cereal to serialize std::vector
-#include <cereal/types/string.hpp> // allow Cereal to serialize std::string
-#include <cereal/archives/binary.hpp> // Binary I/O
-#include <cereal/archives/json.hpp> // JSON I/O
-
 // SPD Log
 #include <extern/spdlog/spdlog/spdlog.h>
 #include <extern/spdlog/spdlog/sinks/basic_file_sink.h>
@@ -110,8 +116,9 @@
 // Math
 #include <extern/simplemath/SimpleMath.h>
 
-// Microprofile
-#include <extern/microprofile/microprofile.h>
+#if defined(BBE_USE_PROFILER)
+    #include <extern/microprofile/microprofile.h>
+#endif
 
 // Arg Parse
 #include <extern/argparse/argparse.h>
@@ -142,11 +149,14 @@ using Microsoft::WRL::ComPtr;
 
 #include <system/math.h>
 #include <system/utils.h>
-#include <system/memcpy.h>
 #include <system/timer.h>
 #include <system/system.h>
 #include <system/logger.h>
-#include <system/keyboard.h>
-#include <system/mouse.h>
 #include <system/profiler.h>
-#include <system/serializer.h>
+
+#if !defined(BBE_SHADERCOMPILER)
+    #include <system/memcpy.h>
+    #include <system/serializer.h>
+    #include <system/keyboard.h>
+    #include <system/mouse.h>
+#endif

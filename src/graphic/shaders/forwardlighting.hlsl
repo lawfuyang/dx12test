@@ -7,11 +7,18 @@
 #include "autogen/hlsl/PerInstanceConsts.h"
 
 static const PerFrameConsts g_PerFrameConsts = CreatePerFrameConsts();
-static const PerInstanceConsts g_PerInstanceConsts = CreatePerInstanceConsts();
+static const float4x4 g_ViewProjMatrix      = g_PerFrameConsts.m_ViewProjMatrix;
+static const float4   g_CameraPosition      = g_PerFrameConsts.m_CameraPosition;
+static const float4   g_SceneLightDir       = g_PerFrameConsts.m_SceneLightDir;
+static const float4   g_SceneLightIntensity = g_PerFrameConsts.m_SceneLightIntensity;
+static const float4   g_ConstPBRRoughness   = g_PerFrameConsts.m_ConstPBRRoughness;
+static const float4   g_ConstPBRMetallic    = g_PerFrameConsts.m_ConstPBRMetallic;
 
-Texture2D<float4> g_DiffuseTexture : register(t0);
-Texture2D<float4> g_NormalTexture : register(t1);
-Texture2D<float4> g_ORMTexture : register(t2);
+static const PerInstanceConsts g_PerInstanceConsts = CreatePerInstanceConsts();
+static const Texture2D g_DiffuseTexture = g_PerInstanceConsts.m_DiffuseTexture;
+static const Texture2D g_NormalTexture  = g_PerInstanceConsts.m_NormalTexture;
+static const Texture2D g_ORMTexture     = g_PerInstanceConsts.m_ORMTexture;
+static const float4x4  g_WorldMatrix    = g_PerInstanceConsts.m_WorldMatrix;
 
 struct VS_OUT
 {
@@ -37,7 +44,7 @@ VS_OUT VSMain(VS_IN input)
 #endif
 
     result.m_Position = mul(position, g_PerInstanceConsts.m_WorldMatrix);
-    result.m_Position = mul(result.m_Position, g_PerFrameConsts.m_ViewProjMatrix);
+    result.m_Position = mul(result.m_Position, g_WorldMatrix);
     result.m_TexCoord = input.m_TexCoord;
     result.m_Bitangent = 0;
 

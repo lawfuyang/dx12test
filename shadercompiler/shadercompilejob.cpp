@@ -1,5 +1,3 @@
-#include "shadercompilejob.h"
-#include "globals.h"
 
 // increase up to 64 when needed. This is just to prevent file names from being too long...
 static const uint32_t MAX_SHADER_KEY_BITS = 4;
@@ -71,7 +69,7 @@ DXCProcessWrapper::DXCProcessWrapper(const std::string& inputCommandLine, const 
     if (numCharsRead)
     {
         g_Log.info("{}: {}", job.m_ShaderName.c_str(), buffer.c_str());
-        g_Globals.m_CompileFailureDetected = true;
+        g_CompileFailureDetected = true;
     }
 }
 
@@ -127,7 +125,7 @@ void ShaderCompileJob::StartJob()
 
     DXCProcessWrapper compilerProcess{ commandLine, *this };
 
-    if (!g_Globals.m_CompileFailureDetected)
+    if (!g_CompileFailureDetected)
     {
         PrintToConsoleAndLogFile(StringFormat("Compiled %s", m_ShaderName.c_str()));
     }
@@ -141,6 +139,7 @@ void PopulateJobsArray(const PopulateJobParams& params)
         if (!params.m_KeysArray[key])
             continue;
 
+        static_assert(MAX_SHADER_KEY_BITS <= sizeof(unsigned long long) * CHAR_BIT);
         const std::bitset<MAX_SHADER_KEY_BITS> keyBitSet{ key };
 
         ShaderCompileJob newJob;

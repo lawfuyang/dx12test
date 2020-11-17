@@ -1,7 +1,7 @@
 
 #include <graphic/dx12utils.h>
 
-#include "globals.h"
+BBE_OPTIMIZE_OFF;
 
 tf::Executor g_Executor;
 
@@ -17,22 +17,20 @@ static void GetD3D12ShaderModels()
     DX12_CALL(CreateDXGIFactory2(0, IID_PPV_ARGS(&DXGIFactory)));
 
     ComPtr<IDXGIAdapter1> hardwareAdapter;
-    for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != DXGIFactory->EnumAdapters1(adapterIndex, &hardwareAdapter); ++adapterIndex)
+    for (UINT adapterIndex = 0; DXGIFactory->EnumAdapters1(adapterIndex, &hardwareAdapter) != DXGI_ERROR_NOT_FOUND; ++adapterIndex)
     {
-        DXGI_ADAPTER_DESC1 desc;
+        DXGI_ADAPTER_DESC1 desc{};
         hardwareAdapter->GetDesc1(&desc);
 
+        // Don't bother with the Basic Render Driver adapter.
         if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
-        {
-            // Don't bother with the Basic Render Driver adapter.
             continue;
-        }
 
         // we only care about D3D_FEATURE_LEVEL_1_0_CORE support
         ComPtr<ID3D12Device6> D3DDevice;
         if (SUCCEEDED(D3D12CreateDevice(hardwareAdapter.Get(), D3D_FEATURE_LEVEL_1_0_CORE, IID_PPV_ARGS(&D3DDevice))))
         {
-            g_Log.info("Created ID3D12Device. D3D_FEATURE_LEVEL: {}", GetD3DFeatureLevelName(D3D_FEATURE_LEVEL_1_0_CORE));
+            PrintToConsoleAndLogFile(StringFormat("Created ID3D12Device. D3D_FEATURE_LEVEL: %s", GetD3DFeatureLevelName(D3D_FEATURE_LEVEL_1_0_CORE)));
         }
         assert(D3DDevice);
 
@@ -53,7 +51,7 @@ static void GetD3D12ShaderModels()
         {
             if (SUCCEEDED(D3DDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel))))
             {
-                g_Log.info("D3D12_FEATURE_SHADER_MODEL support: {}", GetD3DShaderModelName(shaderModel.HighestShaderModel));
+                PrintToConsoleAndLogFile(StringFormat("D3D12_FEATURE_SHADER_MODEL support: %s", GetD3DShaderModelName(shaderModel.HighestShaderModel)));
                 g_Globals.m_HighestShaderModel = shaderModel.HighestShaderModel;
                 break;
             }
@@ -62,26 +60,6 @@ static void GetD3D12ShaderModels()
 
         break;
     }
-}
-
-static std::size_t GetFileContentsHash(const std::string& dir)
-{
-    const bool IsReadMode = true;
-    CFileWrapper file(dir, IsReadMode);
-
-    // no existing generated file exists... return 0
-    if (!file)
-        return std::size_t{ 0 };
-
-    // read each line and hash the entire file contents
-    std::string fileContents;
-    StaticString<BBE_KB(1)> buffer;
-    while (fgets(buffer.data(), sizeof(buffer), file))
-    {
-        fileContents += buffer.c_str();
-        buffer.clear();
-    }
-    return std::hash<std::string>{} (fileContents);
 }
 
 static void OverrideExistingFileIfNecessary(const std::string& generatedString, const std::string& dirFull)
@@ -93,7 +71,7 @@ static void OverrideExistingFileIfNecessary(const std::string& generatedString, 
     // if hashes are different, over ride with new contents
     if (existingHash != newHash)
     {
-        g_Log.info("hash different for '{}'... over-riding with new contents", dirFull.c_str());
+        PrintToConsoleAndLogFile(StringFormat("hash different for '%s'... over-riding with new contents", dirFull.c_str()));
         const bool IsReadMode = false;
         CFileWrapper file{ dirFull, IsReadMode };
         assert(file);
@@ -101,7 +79,7 @@ static void OverrideExistingFileIfNecessary(const std::string& generatedString, 
     }
     else
     {
-        g_Log.info("No change detected for '{}'", dirFull);
+        PrintToConsoleAndLogFile(StringFormat("No change detected for '%s'", dirFull));
     }
 }
 
@@ -131,6 +109,7 @@ static void PrintGeneratedByteCodeHeadersFile()
     generatedString += "\n";
     generatedString += "static const ShaderData gs_AllShadersData[] = \n";
     generatedString += "{\n";
+
     for (const ShaderCompileJob& shaderJob : g_Globals.m_AllShaderCompileJobs)
     {
         generatedString += "    {\n";
@@ -139,7 +118,7 @@ static void PrintGeneratedByteCodeHeadersFile()
         generatedString += StringFormat("        %" PRIu64 ",\n", GetFileContentsHash(shaderJob.m_ShaderObjCodeFileDir));
         generatedString += StringFormat("        %u,\n", shaderJob.m_ShaderKey);
         generatedString += StringFormat("        %u,\n", shaderJob.m_BaseShaderID);
-        generatedString += StringFormat("        %s,\n", gs_GfxShaderTypeStrings[(uint32_t)shaderJob.m_ShaderType]);
+        generatedString += StringFormat("        %s,\n", EnumToString(shaderJob.m_ShaderType));
         generatedString += "    },\n";
         generatedString += "\n";
     }
@@ -176,7 +155,7 @@ static void PrintShaderPermutationStructs()
         generatedString += "    };\n\n";
         generatedString += "private:\n";
         generatedString += StringFormat("    static const uint32_t BaseShaderID = %u;\n", job.m_BaseShaderID);
-        generatedString += StringFormat("    static const GfxShaderType ShaderType = %s;\n", gs_GfxShaderTypeStrings[(uint32_t)job.m_ShaderType]);
+        generatedString += StringFormat("    static const GfxShaderType ShaderType = %s;\n", EnumToString(job.m_ShaderType));
         generatedString += "\n";
         generatedString += "    friend class GfxShaderManager;\n";
 
@@ -191,85 +170,79 @@ static void PrintShaderPermutationStructs()
     }
 }
 
-static void PrintAutogenFilesForShaders()
-{
-    PrintGeneratedByteCodeHeadersFile();
-    PrintShaderPermutationStructs();
-}
-
-static void PrintAutogenFilesForCBs(ConstantBuffer& cb)
-{
-    cb.SanityCheck();
-
-    PrintToConsoleAndLogFile(StringFormat("ConstantBuffer: %s, register: %u", cb.m_Name, cb.m_Register));
-
-    // CPP
-    {
-        std::string generatedString;
-        generatedString += "#pragma once\n\n";
-        generatedString += "namespace AutoGenerated\n";
-        generatedString += "{\n\n";
-
-        generatedString += StringFormat("struct alignas(16) %s\n", cb.m_Name);
-        generatedString += "{\n";
-        generatedString += StringFormat("    inline static const char* ms_Name = \"%s GfxConstantBuffer\";\n\n", cb.m_Name);
-
-        for (const ConstantBuffer::CPPTypeVarNamePair& var : cb.m_Variables)
-        {
-            generatedString += StringFormat("    %s m_%s;\n", var.m_CPPVarType.c_str(), var.m_VarName.c_str());
-        }
-
-        generatedString += "};\n\n";
-
-        generatedString += "\n";
-        generatedString += "}\n";
-
-        const std::string outputDir = g_Globals.m_ShadersTmpCPPAutogenDir + cb.m_Name + ".h";
-        OverrideExistingFileIfNecessary(generatedString, outputDir);
-    }
-
-    // HLSL
-    {
-        std::string generatedString;
-
-        generatedString += StringFormat("#ifndef __%s_H__\n", cb.m_Name);
-        generatedString += StringFormat("#define __%s_H__\n\n", cb.m_Name);
-
-        // cbuffer definition
-        generatedString += StringFormat("cbuffer %s_CB : register(b%u)\n", cb.m_Name, cb.m_Register);
-        generatedString += "{\n";
-        for (const ConstantBuffer::CPPTypeVarNamePair& var : cb.m_Variables)
-        {
-            generatedString += StringFormat("    %s g_%s_%s;\n", var.m_HLLSVarType.c_str(), cb.m_Name, var.m_VarName.c_str());
-        }
-        generatedString += "};\n\n";
-
-        // struct for cbuffer definition
-        generatedString += StringFormat("struct %s\n", cb.m_Name, cb.m_Register);
-        generatedString += "{\n";
-        for (const ConstantBuffer::CPPTypeVarNamePair& var : cb.m_Variables)
-        {
-            generatedString += StringFormat("    %s m_%s;\n", var.m_HLLSVarType.c_str(), var.m_VarName.c_str());
-        }
-        generatedString += "};\n\n";
-
-        // Helper creater function for struct
-        generatedString += StringFormat("%s Create%s()\n", cb.m_Name, cb.m_Name);
-        generatedString += "{\n";
-        generatedString += StringFormat("    %s consts;\n", cb.m_Name);
-        for (const ConstantBuffer::CPPTypeVarNamePair& var : cb.m_Variables)
-        {
-            generatedString += StringFormat("    consts.m_%s = g_%s_%s;\n", var.m_VarName.c_str(), cb.m_Name, var.m_VarName.c_str());
-        }
-        generatedString += "    return consts;\n";
-        generatedString += "}\n\n";
-
-        generatedString += StringFormat("#endif // #define __%s_H__\n", cb.m_Name);
-
-        const std::string outputDir = g_Globals.m_ShadersTmpHLSLAutogenDir + cb.m_Name + ".h";
-        OverrideExistingFileIfNecessary(generatedString, outputDir);
-    }
-}
+//static void PrintAutogenFilesForCBs(ConstantBuffer& cb)
+//{
+//    cb.SanityCheck();
+//
+//    PrintToConsoleAndLogFile(StringFormat("ConstantBuffer: %s, register: %u", cb.m_Name, cb.m_Register));
+//
+//    // CPP
+//    {
+//        std::string generatedString;
+//        generatedString += "#pragma once\n\n";
+//        generatedString += "namespace AutoGenerated\n";
+//        generatedString += "{\n\n";
+//
+//        generatedString += StringFormat("struct alignas(16) %s\n", cb.m_Name);
+//        generatedString += "{\n";
+//        generatedString += StringFormat("    inline static const char* ms_Name = \"%s GfxConstantBuffer\";\n\n", cb.m_Name);
+//
+//        for (const ConstantBuffer::CPPTypeVarNamePair& var : cb.m_Variables)
+//        {
+//            generatedString += StringFormat("    %s m_%s;\n", var.m_CPPVarType.c_str(), var.m_VarName.c_str());
+//        }
+//
+//        generatedString += "};\n\n";
+//
+//        generatedString += "\n";
+//        generatedString += "}\n";
+//
+//        const std::string outputDir = g_Globals.m_ShadersTmpCPPAutogenDir + cb.m_Name + ".h";
+//        OverrideExistingFileIfNecessary(generatedString, outputDir);
+//    }
+//
+//    // HLSL
+//    {
+//        std::string generatedString;
+//
+//        generatedString += StringFormat("#ifndef __%s_H__\n", cb.m_Name);
+//        generatedString += StringFormat("#define __%s_H__\n\n", cb.m_Name);
+//
+//        // cbuffer definition
+//        generatedString += StringFormat("cbuffer %s_CB : register(b%u)\n", cb.m_Name, cb.m_Register);
+//        generatedString += "{\n";
+//        for (const ConstantBuffer::CPPTypeVarNamePair& var : cb.m_Variables)
+//        {
+//            generatedString += StringFormat("    %s g_%s_%s;\n", var.m_HLLSVarType.c_str(), cb.m_Name, var.m_VarName.c_str());
+//        }
+//        generatedString += "};\n\n";
+//
+//        // struct for cbuffer definition
+//        generatedString += StringFormat("struct %s\n", cb.m_Name, cb.m_Register);
+//        generatedString += "{\n";
+//        for (const ConstantBuffer::CPPTypeVarNamePair& var : cb.m_Variables)
+//        {
+//            generatedString += StringFormat("    %s m_%s;\n", var.m_HLLSVarType.c_str(), var.m_VarName.c_str());
+//        }
+//        generatedString += "};\n\n";
+//
+//        // Helper creater function for struct
+//        generatedString += StringFormat("%s Create%s()\n", cb.m_Name, cb.m_Name);
+//        generatedString += "{\n";
+//        generatedString += StringFormat("    %s consts;\n", cb.m_Name);
+//        for (const ConstantBuffer::CPPTypeVarNamePair& var : cb.m_Variables)
+//        {
+//            generatedString += StringFormat("    consts.m_%s = g_%s_%s;\n", var.m_VarName.c_str(), cb.m_Name, var.m_VarName.c_str());
+//        }
+//        generatedString += "    return consts;\n";
+//        generatedString += "}\n\n";
+//
+//        generatedString += StringFormat("#endif // #define __%s_H__\n", cb.m_Name);
+//
+//        const std::string outputDir = g_Globals.m_ShadersTmpHLSLAutogenDir + cb.m_Name + ".h";
+//        OverrideExistingFileIfNecessary(generatedString, outputDir);
+//    }
+//}
 
 struct GlobalsInitializer
 {
@@ -277,6 +250,7 @@ struct GlobalsInitializer
     {
         // init dirs
         g_Globals.m_AppDir                   = GetApplicationDirectory();
+        g_Globals.m_ShadersJSONDir           = g_Globals.m_AppDir + "..\\shadercompiler\\shaders";
         g_Globals.m_ShadersTmpDir            = g_Globals.m_AppDir + "..\\tmp\\shaders\\";
         g_Globals.m_ShadersTmpHLSLAutogenDir = g_Globals.m_ShadersTmpDir + "autogen\\hlsl\\";
         g_Globals.m_ShadersTmpCPPAutogenDir  = g_Globals.m_ShadersTmpDir + "autogen\\cpp\\";
@@ -289,100 +263,174 @@ struct GlobalsInitializer
         CreateDirectory((g_Globals.m_ShadersTmpDir + "autogen\\").c_str(), nullptr);
         CreateDirectory(g_Globals.m_ShadersTmpHLSLAutogenDir.c_str(), nullptr);
         CreateDirectory(g_Globals.m_ShadersTmpCPPAutogenDir.c_str(), nullptr);
-
-        g_Globals.m_AllShaderCompileJobs.reserve(1024);
-
-        // init misc traits
-    #define ADD_TYPE(hlslType, CPPType, TypeSize)   \
-        g_Globals.m_HLSLTypeToCPPTypeMap[hlslType] = CPPType; \
-        g_Globals.m_CPPTypeSizeMap[CPPType] = TypeSize;
-
-        ADD_TYPE("int", "int32_t", 4);
-        ADD_TYPE("int2", "bbeVector2I", 8);
-        ADD_TYPE("int3", "bbeVector3I", 12);
-        ADD_TYPE("int4", "bbeVector4I", 16);
-        ADD_TYPE("uint", "uint32_t", 4);
-        ADD_TYPE("uint2", "bbeVector2U", 8);
-        ADD_TYPE("uint3", "bbeVector3U", 12);
-        ADD_TYPE("uint4", "bbeVector4U", 16);
-        ADD_TYPE("float", "float", 4);
-        ADD_TYPE("float2", "bbeVector2", 8);
-        ADD_TYPE("float3", "bbeVector3", 12);
-        ADD_TYPE("float4", "bbeVector4", 16);
-        ADD_TYPE("float4x4", "bbeMatrix", 64);
-    #undef ADD_TYPE
     }
 };
 static const GlobalsInitializer g_GlobalsInitializer;
+
+struct PermutationRule
+{
+    DEFINE_ENUM_WITH_STRING_CONVERSIONS(Type, (AnyBitSet)(AllBitsSet)(CountBits)(MaxOneBitSet));
+
+
+};
+
+struct ConstantBuffer
+{
+    struct Variable
+    {
+        std::string m_Type;
+        std::string m_Name;
+    };
+
+    std::string m_Name;
+    uint32_t m_Register;
+    std::vector<Variable> m_Variables;
+};
+
+struct Shader
+{
+    std::string m_Name;
+    std::string m_FileName;
+    std::string m_EntryPoints[NbShaderTypes];
+    std::vector<std::string> m_Permutations[NbShaderTypes];
+    std::vector<PermutationRule> m_PermutationRules;
+    std::vector<ConstantBuffer> m_ConstantBuffers;
+};
 
 int main()
 {
     // first, Init the logger
     Logger::GetInstance().Initialize("../bin/shadercompiler_output.txt");
 
-    tf::Taskflow getShaderModelGetTF;
-    getShaderModelGetTF.emplace([]() { GetD3D12ShaderModels(); });
-    std::future<void> shaderModelFuture = g_Executor.run(getShaderModelGetTF);
+    std::vector<std::string> allJSONs;
+    GetFilesInDirectory(allJSONs, g_Globals.m_ShadersJSONDir);
 
-    // get each shader to populate g_AllShaderCompileJobs
+    concurrency::concurrent_vector<Shader> allShaders;
+    for (const std::string& file : allJSONs)
     {
-        tf::Taskflow tf;
+        PrintToConsoleAndLogFile(StringFormat("Processing '%s'...", GetFileNameFromPath(file).c_str()));
 
-        for (const auto& func : g_Globals.m_JobsPopulators)
+        CFileWrapper jsonFile{ file.c_str() };
+
+        try
         {
-            tf.emplace([&]() { func(); });
-        }
-        g_Executor.run(tf).wait();
-    }
+            json baseJSON = json::parse(jsonFile);
 
-    // print auto-gen constant buffer headers
-    {
-        tf::Taskflow tf;
+            Shader& newShader = *allShaders.push_back(Shader{});
+            newShader.m_Name = baseJSON.at("ShaderName");
+            newShader.m_FileName = baseJSON.at("FileName");
 
-        tf.for_each(g_Globals.m_AllConstantBuffers.begin(), g_Globals.m_AllConstantBuffers.end(), [&](ConstantBuffer& cb)
+            // Add entry points
+            auto AddEntryPoint = [&baseJSON, &newShader](GfxShaderType shaderType, const char* entryJSONName) { if (baseJSON.contains(entryJSONName)) newShader.m_EntryPoints[shaderType] = baseJSON.at(entryJSONName); };
+            AddEntryPoint(VS, "VSEntryPoint");
+            AddEntryPoint(PS, "PSEntryPoint");
+            AddEntryPoint(CS, "CSEntryPoint");
+
+            // add Shader Permutations
+            if (baseJSON.contains("ShaderPermutations"))
             {
-                PrintAutogenFilesForCBs(cb);
-            });
+                json shaderPermsJSON = baseJSON.at("ShaderPermutations");
 
-        // sort the container, so that it always produces consistent auto-gen files
-        tf.emplace([&]()
-            {
-                std::sort(g_Globals.m_AllShaderCompileJobs.begin(), g_Globals.m_AllShaderCompileJobs.end(), [&](const ShaderCompileJob& lhs, ShaderCompileJob& rhs)
+                auto AddPermutations = [&shaderPermsJSON, &newShader](GfxShaderType shaderType, const char* permJSONName)
+                {
+                    if (shaderPermsJSON.contains(permJSONName))
                     {
-                        return lhs.m_BaseShaderName < rhs.m_BaseShaderName;
-                    });
-            });
+                        json perms = shaderPermsJSON.at(permJSONName);
+                        for (const auto elem : perms)
+                        {
+                            const std::string permName = elem.get<std::string>();
+                            PrintToConsoleAndLogFile(StringFormat("%s Permutation: %s", EnumToString(shaderType), permName.c_str()));
 
-        g_Executor.run(tf).wait();
-    }
+                            newShader.m_Permutations[shaderType].push_back(permName);
+                        }
+                    }
+                };
 
-    // Must wait for d3d12 shader model to be retrived first before we schedule the jobs
-    shaderModelFuture.wait();
+                AddPermutations(VS, "VSPermutations");
+                AddPermutations(PS, "PSPermutations");
+                AddPermutations(CS, "CSPermutations");
+            }
 
-    // run all jobs in g_AllShaderCompileJobs
-    {
-        tf::Taskflow tf;
-
-        tf.for_each(g_Globals.m_AllShaderCompileJobs.begin(), g_Globals.m_AllShaderCompileJobs.end(), [&](ShaderCompileJob& shaderJob)
+            for (json cBuffer : baseJSON.at("ConstantBuffers"))
             {
-                shaderJob.StartJob();
-            });
+                ConstantBuffer& newCBuffer = newShader.m_ConstantBuffers.emplace_back();
+                newCBuffer.m_Name = cBuffer.at("Name");
+                newCBuffer.m_Register = cBuffer.at("Register");
 
-        g_Executor.run(tf).wait();
+                PrintToConsoleAndLogFile(StringFormat("ConstantBuffer for '%s': '%s(b%d)'", newShader.m_Name.c_str(), newCBuffer.m_Name.c_str(), newCBuffer.m_Register));
+
+                for (json constant : cBuffer.at("Constants"))
+                {
+                    newCBuffer.m_Variables.push_back({ constant.at("Type"), constant.at("Name") });
+                }
+            }
+        }
+        catch (const std::exception& e)
+        {
+            PrintToConsoleAndLogFile(e.what());
+            assert(false);
+        }
     }
 
-    if (g_Globals.m_CompileFailureDetected)
+    //tf::Taskflow getShaderModelTF;
+    //getShaderModelTF.emplace([]() { GetD3D12ShaderModels(); });
+    //std::future<void> getShaderModelFuture = g_Executor.run(getShaderModelTF);
+
+    //// get each shader to populate g_AllShaderCompileJobs
+    //{
+    //    tf::Taskflow tf;
+
+    //    for (const auto& func : g_Globals.m_JobsPopulators)
+    //    {
+    //        tf.emplace([&]() { func(); });
+    //    }
+    //    g_Executor.run(tf).wait();
+    //}
+
+    //// print auto-gen constant buffer headers
+    //{
+    //    tf::Taskflow tf;
+
+    //    tf.for_each(g_Globals.m_AllConstantBuffers.begin(), g_Globals.m_AllConstantBuffers.end(), [&](ConstantBuffer& cb)
+    //        {
+    //            PrintAutogenFilesForCBs(cb);
+    //        });
+
+    //    // sort the container, so that it always produces consistent auto-gen files
+    //    tf.emplace([&]()
+    //        {
+    //            std::sort(g_Globals.m_AllShaderCompileJobs.begin(), g_Globals.m_AllShaderCompileJobs.end(), [&](const ShaderCompileJob& lhs, ShaderCompileJob& rhs)
+    //                {
+    //                    return lhs.m_BaseShaderName < rhs.m_BaseShaderName;
+    //                });
+    //        });
+
+    //    g_Executor.run(tf).wait();
+    //}
+
+    // Must wait for d3d12 shader model to be retrieved first before we schedule the jobs
+    // getShaderModelFuture.wait();
+
+    //// run all jobs in g_AllShaderCompileJobs
+    //{
+    //    tf::Taskflow tf;
+
+    //    tf.for_each(g_Globals.m_AllShaderCompileJobs.begin(), g_Globals.m_AllShaderCompileJobs.end(), [&](ShaderCompileJob& shaderJob)
+    //        {
+    //            shaderJob.StartJob();
+    //        });
+
+    //    g_Executor.run(tf).wait();
+    //}
+
+    if (g_CompileFailureDetected)
     {
-        printf("Compile failure(s) detected! Check log output for more information.\n\n");
+        PrintToConsoleAndLogFile("Compile failure(s) detected!\n\n");
     }
     else
     {
-        PrintAutogenFilesForShaders();
-    }
-
-    if (g_Globals.m_AllShaderCompileJobs.size() > 1024)
-    {
-        PrintToConsoleAndLogFile("g_AllShaderCompileJobs has more than 1024 jobs! Increase reserve count");
+        PrintGeneratedByteCodeHeadersFile();
+        PrintShaderPermutationStructs();
     }
 
     system("pause");

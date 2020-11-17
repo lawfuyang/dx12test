@@ -43,8 +43,8 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\;$(SolutionDir)..\src\;$(SolutionDir)..\extern\;$(SolutionDir)..\extern\spdlog\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <ForcedIncludeFiles>pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\;$(SolutionDir)..\src\;$(SolutionDir)..\extern\;$(SolutionDir)..\extern\spdlog\;$(solutiondir)..\shadercompiler\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>pch.h;shadercompiler_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>BBE_SHADERCOMPILER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>
@@ -61,24 +61,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\extern\microprofile\microprofile.cpp" />
     <ClCompile Include="..\src\graphic\dx12utils.cpp" />
     <ClCompile Include="..\src\system\utils.cpp" />
-    <ClCompile Include="constantbuffer.cpp" />
     <ClCompile Include="forwardlighting.cpp" />
     <ClCompile Include="imgui.cpp" />
     <ClCompile Include="shadercompilejob.cpp" />
     <ClCompile Include="shadercompiler.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\extern\microprofile\microprofile.h" />
-    <ClInclude Include="..\src\graphic\dx12utils.h" />
-    <ClInclude Include="..\src\system\utils.h" />
-    <ClInclude Include="constantbuffer.h" />
-    <ClInclude Include="globals.h" />
-    <ClInclude Include="shadercompilejob.h" />
-    <ClInclude Include="shaderkeyhelper.h" />
-    <ClInclude Include="shaderpermutationsprintjob.h" />
+    <ClInclude Include="shadercompiler_pch.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
