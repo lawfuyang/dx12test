@@ -67,14 +67,17 @@
 #include <dxgi1_6.h>
 #include <extern/d3d12/d3dx12.h>
 
-#if !defined(BBE_SHADERCOMPILER)
+#if defined(BBE_SHADERCOMPILER)
+    // json
+    #include <extern/json/json.hpp>
+#else
     // D3D12MA
     #include <extern/d3d12/D3D12MemAlloc.h>
 
     // IMGUI
     #include <extern/imgui/imgui.h>
     #include <extern/imgui/ImGuiFileDialog.h>
-#endif
+#endif // #if defined(BBE_SHADERCOMPILER)
 
 // PIX
 #include <extern/pix/pix3.h>
