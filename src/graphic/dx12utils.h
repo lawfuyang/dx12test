@@ -14,6 +14,19 @@
 
 #define D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN ((D3D12_GPU_VIRTUAL_ADDRESS)-1)
 
+// sorted by highest SM
+static const D3D12_FEATURE_DATA_SHADER_MODEL gs_AllD3D12ShaderModels[] =
+{
+    D3D_SHADER_MODEL_6_6,
+    D3D_SHADER_MODEL_6_5,
+    D3D_SHADER_MODEL_6_4,
+    D3D_SHADER_MODEL_6_3,
+    D3D_SHADER_MODEL_6_2,
+    D3D_SHADER_MODEL_6_1,
+    D3D_SHADER_MODEL_6_0,
+    D3D_SHADER_MODEL_5_1
+};
+
 const char* GetD3DFeatureLevelName(D3D_FEATURE_LEVEL FeatureLevel);
 const char* GetD3DShaderModelName(D3D_SHADER_MODEL shaderModel);
 const std::string GetD3DDebugName(ID3D12Object* resource);

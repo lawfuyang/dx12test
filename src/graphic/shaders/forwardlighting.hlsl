@@ -7,18 +7,22 @@
 #include "autogen/hlsl/PerInstanceConsts.h"
 
 static const PerFrameConsts g_PerFrameConsts = CreatePerFrameConsts();
-static const float4x4 g_ViewProjMatrix      = g_PerFrameConsts.m_ViewProjMatrix;
-static const float4   g_CameraPosition      = g_PerFrameConsts.m_CameraPosition;
-static const float4   g_SceneLightDir       = g_PerFrameConsts.m_SceneLightDir;
-static const float4   g_SceneLightIntensity = g_PerFrameConsts.m_SceneLightIntensity;
-static const float4   g_ConstPBRRoughness   = g_PerFrameConsts.m_ConstPBRRoughness;
-static const float4   g_ConstPBRMetallic    = g_PerFrameConsts.m_ConstPBRMetallic;
+static const float4x4 g_ViewProjMatrix      = g_PerFrameConsts.GetViewProjMatrix();
+static const float4   g_CameraPosition      = g_PerFrameConsts.GetCameraPosition();
+static const float4   g_SceneLightDir       = g_PerFrameConsts.GetSceneLightDir();
+static const float4   g_SceneLightIntensity = g_PerFrameConsts.GetSceneLightIntensity();
+static const float4   g_ConstPBRRoughness   = g_PerFrameConsts.GetConstPBRRoughness();
+static const float4   g_ConstPBRMetallic    = g_PerFrameConsts.GetConstPBRMetallic();
 
 static const PerInstanceConsts g_PerInstanceConsts = CreatePerInstanceConsts();
-static const Texture2D g_DiffuseTexture = g_PerInstanceConsts.m_DiffuseTexture;
-static const Texture2D g_NormalTexture  = g_PerInstanceConsts.m_NormalTexture;
-static const Texture2D g_ORMTexture     = g_PerInstanceConsts.m_ORMTexture;
-static const float4x4  g_WorldMatrix    = g_PerInstanceConsts.m_WorldMatrix;
+static const Texture2D g_DiffuseTexture = g_PerInstanceConsts.GetDiffuseTexture();
+static const Texture2D g_NormalTexture  = g_PerInstanceConsts.GetNormalTexture();
+static const Texture2D g_ORMTexture     = g_PerInstanceConsts.GetORMTexture();
+static const float4x4  g_WorldMatrix    = g_PerInstanceConsts.GetWorldMatrix();
+
+//Texture2D g_DiffuseTexture : register(t0);
+//Texture2D g_NormalTexture : register(t1);
+//Texture2D g_ORMTexture : register(t2);
 
 struct VS_OUT
 {

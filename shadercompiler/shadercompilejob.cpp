@@ -89,7 +89,7 @@ static const std::string GetTargetProfileString(GfxShaderType type)
     };
 
     std::string result = ShaderTypeStrings[(int)type];
-    result += s_TargetProfileToStr.at(g_Globals.m_HighestShaderModel);
+    result += s_TargetProfileToStr.at(g_HighestD3D12ShaderModel);
 
     std::transform(result.begin(), result.end(), result.begin(), [](char c) { return std::tolower(c); });
 
@@ -133,6 +133,8 @@ void ShaderCompileJob::StartJob()
 
 void PopulateJobsArray(const PopulateJobParams& params)
 {
+    const std::string shaderTypePrefix = StringFormat("%s_", EnumToString(params.m_ShaderType));
+
     uint32_t totalPermutations = 0;
     for (uint32_t key = 0; key < params.m_KeysArraySz; ++key)
     {
@@ -148,7 +150,7 @@ void PopulateJobsArray(const PopulateJobParams& params)
         newJob.m_EntryPoint = params.m_EntryPoint;
         newJob.m_ShaderFilePath = params.m_ShaderFilePath;
         newJob.m_BaseShaderName = params.m_ShaderName;
-        newJob.m_ShaderName = (params.m_ShaderType == GfxShaderType::VS ? "VS_" : "PS_") + newJob.m_BaseShaderName + "_" + keyBitSet.to_string();
+        newJob.m_ShaderName = StringFormat("%s_%s_%s", shaderTypePrefix, newJob.m_BaseShaderName, keyBitSet.to_string());
         newJob.m_ShaderType = params.m_ShaderType;
 
         RunOnAllBits(keyBitSet.to_ulong(), [&](uint32_t index)
@@ -162,5 +164,5 @@ void PopulateJobsArray(const PopulateJobParams& params)
         g_Globals.m_AllShaderCompileJobs.push_back(newJob);
     }
 
-    PrintToConsoleAndLogFile(StringFormat("%s%s: %u permutations", (params.m_ShaderType == GfxShaderType::VS ? "VS_" : "PS_"), params.m_ShaderName, totalPermutations));
+    PrintToConsoleAndLogFile(StringFormat("%s_%s: %u permutations", EnumToString(params.m_ShaderType), params.m_ShaderName, totalPermutations));
 }

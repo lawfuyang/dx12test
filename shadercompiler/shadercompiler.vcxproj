@@ -50,6 +50,7 @@
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>NotSet</SubSystem>
@@ -63,8 +64,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\graphic\dx12utils.cpp" />
     <ClCompile Include="..\src\system\utils.cpp" />
-    <ClCompile Include="forwardlighting.cpp" />
-    <ClCompile Include="imgui.cpp" />
+    <ClCompile Include="printingfunctions.cpp" />
     <ClCompile Include="shadercompilejob.cpp" />
     <ClCompile Include="shadercompiler.cpp" />
   </ItemGroup>

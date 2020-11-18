@@ -1,7 +1,5 @@
 #include "system/utils.h"
 
-#include <assert.h>
-
 void BreakIntoDebugger()
 {
     if (!::IsDebuggerPresent())

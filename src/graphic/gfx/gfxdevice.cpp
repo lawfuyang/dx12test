@@ -180,18 +180,7 @@ void GfxDevice::CheckFeaturesSupports()
         m_RootSigSupport.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
     }
 
-    // Query the level of support of Shader Model.
-    constexpr D3D12_FEATURE_DATA_SHADER_MODEL shaderModels[] = 
-    {
-        D3D_SHADER_MODEL_6_6,
-        D3D_SHADER_MODEL_6_5,
-        D3D_SHADER_MODEL_6_4,
-        D3D_SHADER_MODEL_6_3,
-        D3D_SHADER_MODEL_6_2,
-        D3D_SHADER_MODEL_6_1,
-        D3D_SHADER_MODEL_6_0
-    };
-    for (D3D12_FEATURE_DATA_SHADER_MODEL shaderModel : shaderModels)
+    for (D3D12_FEATURE_DATA_SHADER_MODEL shaderModel : gs_AllD3D12ShaderModels)
     {
         if (SUCCEEDED(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel))))
         {

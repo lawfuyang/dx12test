@@ -36,8 +36,9 @@ const char* GetD3DShaderModelName(D3D_SHADER_MODEL shaderModel)
         bbeSimpleSwitchCaseString(D3D_SHADER_MODEL_6_3);
         bbeSimpleSwitchCaseString(D3D_SHADER_MODEL_6_4);
         bbeSimpleSwitchCaseString(D3D_SHADER_MODEL_6_5);
+        bbeSimpleSwitchCaseString(D3D_SHADER_MODEL_6_6);
 
-    default: return "D3D_SHADER_MODEL_6_5+";
+    default: return "D3D_SHADER_MODEL_6_6+";
     }
 }
 

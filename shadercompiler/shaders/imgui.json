@@ -1,0 +1,29 @@
+{
+    "Shader": {
+        "ShaderName": "IMGUI",
+        "FileName": "imgui.hlsl",
+        "VSEntryPoint": "VSMain",
+        "PSEntryPoint": "PSMain"
+    },
+    "ShaderInputs": [
+        {
+            "Name": "IMGUIConsts",
+            "ConstantBuffer": {
+                "Register": 0,
+                "Constants": [
+                    {
+                        "Type": "float4x4",
+                        "Name": "ProjMatrix"
+                    }
+                ]
+            },
+            "Resources": [
+                {
+                    "Type": "Texture2D",
+                    "Register": 0,
+                    "Name": "IMGUITexture"
+                }
+            ]
+        }
+    ]
+}

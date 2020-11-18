@@ -1,79 +1,97 @@
 {
-    "ShaderName": "ForwardLighting",
-    "FileName": "forwardlighting.hlsl",
-    "VSEntryPoint": "VSMain",
-    "PSEntryPoint": "PSMain",
-    "ShaderPermutations": {
-        "VSPermutations": [
-            "VERTEX_FORMAT_Position2f_TexCoord2f_Color4ub",
-            "VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f",
-            "VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f"
-        ],
-        "PSPermutations": [
-            "USE_PBR_CONSTS"
-        ]
-    },
-    "PermutationRules": [
-        {
-            "Name": "OneVertexFormatRule",
-            "RuleType": "OnlyOneBitSet",
-            "ShaderType": "VS",
-            "PermutationIndices": [
-                0,
-                1,
-                2
-            ]
+    "Shader": {
+        "ShaderName": "ForwardLighting",
+        "FileName": "forwardlighting.hlsl",
+        "VSEntryPoint": "VSMain",
+        "PSEntryPoint": "PSMain",
+        "ShaderPermutations": {
+            "VS": {
+                "Defines": [
+                    "VERTEX_FORMAT_Position2f_TexCoord2f_Color4ub",
+                    "VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f",
+                    "VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f"
+                ],
+                "Rules": [
+                    {
+                        "Name": "OneVertexFormatRule",
+                        "RuleType": "OnlyOneBitSet",
+                        "ShaderType": "VS",
+                        "AffectedIndices": [
+                            0,
+                            1,
+                            2
+                        ]
+                    }
+                ]
+            },
+            "PS": {
+                "Defines": [
+                    "USE_PBR_CONSTS"
+                ]
+            }
         }
-    ],
-    "ConstantBuffers": [
+    },
+    "ShaderInputs": [
         {
-            "Name": "PerFrameConsts",
-            "Register": 1,
-            "Constants": [
+            "Name": "PerInstanceConsts",
+            "ConstantBuffer": {
+                "Register": 0,
+                "Constants": [
+                    {
+                        "Type": "float4x4",
+                        "Name": "WorldMatrix"
+                    }
+                ]
+            },
+            "Resources": [
                 {
-                    "Type": "float4x4",
-                    "Name": "ViewProjMatrix"
-                    
+                    "Type": "Texture2D",
+                    "Register": 0,
+                    "Name": "DiffuseTexture"
                 },
                 {
-                    "Type": "float4",
-                    "Name": "CameraPosition"
-                    
+                    "Type": "Texture2D",
+                    "Register": 1,
+                    "Name": "NormalTexture"
                 },
                 {
-                    "Type": "float4",
-                    "Name": "SceneLightDir"
-                },
-                {
-                    "Type": "float4",
-                    "Name": "SceneLightIntensity"
-                },
-                {
-                    "Type": "float4",
-                    "Name": "ConstPBRRoughness"
-                },
-                {
-                    "Type": "float4",
-                    "Name": "ConstPBRMetallic"
+                    "Type": "Texture2D",
+                    "Register": 2,
+                    "Name": "ORMTexture"
                 }
             ]
         },
         {
-            "Name": "PerInstanceConsts",
-            "Register": 0,
-            "Constants": [
-                {
-                    "Type": "float4x4",
-                    "Name": "WorldMatrix"
-                }
-            ]
-        }
-    ],
-    "Resources": [
-        {
-            "Type": "Texture2D",
-            "Register": 2,
-            "Name": "ORMTexture"
+            "Name": "PerFrameConsts",
+            "ConstantBuffer": {
+                "Register": 1,
+                "Constants": [
+                    {
+                        "Type": "float4x4",
+                        "Name": "ViewProjMatrix"
+                    },
+                    {
+                        "Type": "float4",
+                        "Name": "CameraPosition"
+                    },
+                    {
+                        "Type": "float4",
+                        "Name": "SceneLightDir"
+                    },
+                    {
+                        "Type": "float4",
+                        "Name": "SceneLightIntensity"
+                    },
+                    {
+                        "Type": "float4",
+                        "Name": "ConstPBRRoughness"
+                    },
+                    {
+                        "Type": "float4",
+                        "Name": "ConstPBRMetallic"
+                    }
+                ]
+            }
         }
     ]
 }

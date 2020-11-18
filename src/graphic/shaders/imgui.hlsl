@@ -3,8 +3,8 @@
 #include "autogen/hlsl/IMGUIConsts.h"
 
 static const IMGUIConsts g_IMGUIConsts = CreateIMGUIConsts();
-
-Texture2D<float4> g_IMGUITexture : register(t0);
+static const Texture2D g_IMGUITexture = g_IMGUIConsts.GetIMGUITexture();
+static const float4x4 g_ProjMatrix    = g_IMGUIConsts.GetProjMatrix();
 
 struct VS_IN
 {
@@ -24,7 +24,7 @@ VS_OUT VSMain(VS_IN input)
 {
     VS_OUT result;
 
-    result.m_Position = mul(float4(input.m_Position, 0, 1), g_IMGUIConsts.m_ProjMatrix);
+    result.m_Position = mul(float4(input.m_Position, 0, 1), g_ProjMatrix);
     result.m_TexCoord = input.m_TexCoord;
     result.m_Color = input.m_Color;
 

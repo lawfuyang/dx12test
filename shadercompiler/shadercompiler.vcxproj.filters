@@ -5,9 +5,6 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Source Files\shaders">
-      <UniqueIdentifier>{f8fb1d05-281f-4e3c-9968-3f03de9a8bbd}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="shadercompiler.cpp">
@@ -19,14 +16,11 @@
     <ClCompile Include="..\src\graphic\dx12utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="imgui.cpp">
-      <Filter>Source Files\shaders</Filter>
-    </ClCompile>
     <ClCompile Include="shadercompilejob.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="forwardlighting.cpp">
-      <Filter>Source Files\shaders</Filter>
+    <ClCompile Include="printingfunctions.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

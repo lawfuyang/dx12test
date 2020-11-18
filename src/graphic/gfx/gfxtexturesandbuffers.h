@@ -124,11 +124,14 @@ private:
     uint32_t m_RootOffset;
 };
 
-template <typename CBStruct>
-static void UploadConstantBufferToGPU(GfxContext& context, const CBStruct& cb, uint32_t rootIndex, uint32_t rootOffset = 0)
+template <typename CBType>
+static void UploadConstantBufferToGPU(GfxContext& context, const CBType& inputs)
 {
-    GfxConstantBuffer gfxCB{ rootIndex, rootOffset };
-    gfxCB.UploadToGPU(context, (const void*)&cb, sizeof(CBStruct), CBStruct::ms_Name);
+    if constexpr (CBType::ConstantBufferRegister != 0xDEADBEEF)
+    {
+        GfxConstantBuffer gfxCB{ CBType::ConstantBufferRegister, 0 };
+        gfxCB.UploadToGPU(context, (const void*)&cb, sizeof(CBStruct), CBStruct::Name);
+    }
 }
 
 class GfxTexture : public GfxHazardTrackedResource,
