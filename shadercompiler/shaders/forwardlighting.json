@@ -16,7 +16,7 @@
                         "Name": "OneVertexFormatRule",
                         "RuleType": "OnlyOneBitSet",
                         "ShaderType": "VS",
-                        "AffectedIndices": [
+                        "AffectedDefines": [
                             0,
                             1,
                             2

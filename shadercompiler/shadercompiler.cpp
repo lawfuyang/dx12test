@@ -154,10 +154,15 @@ int main()
     // first, Init the logger
     Logger::GetInstance().Initialize("../bin/shadercompiler_output.txt");
 
+    tf::Taskflow getShaderModelTF;
+    getShaderModelTF.emplace([]() { GetHighestD3D12ShaderModel(); });
+    std::future<void> getShaderModelFuture = g_Executor.run(getShaderModelTF);
+
     std::vector<std::string> allJSONs;
     GetFilesInDirectory(allJSONs, g_Globals.m_ShadersJSONDir);
 
     concurrency::concurrent_vector<Shader> allShaders;
+    allShaders.reserve(allJSONs.size());
     for (const std::string& file : allJSONs)
     {
         PrintToConsoleAndLogFile(StringFormat("Processing '%s'...", GetFileNameFromPath(file).c_str()));
@@ -177,32 +182,31 @@ int main()
                 newShader.m_FileName = shaderJSON.at("FileName");
 
                 // Add entry points
-                auto AddEntryPoint = [&shaderJSON, &newShader](GfxShaderType shaderType)
+                for (uint32_t i = 0; i < NbShaderTypes; ++i)
                 {
-                    const std::string entryPointName = std::string{ EnumToString(shaderType) } + "EntryPoint";
-                    if (shaderJSON.contains(entryPointName.c_str()))
+                    const std::string entryPointName = StringFormat("%sEntryPoint", EnumToString((GfxShaderType)i));
+                    if (shaderJSON.contains(entryPointName))
                     {
-                        newShader.m_EntryPoints[shaderType] = shaderJSON.at(entryPointName.c_str());
-                        newShader.m_Permutations[shaderType].push_back("");
+                        newShader.m_EntryPoints[i] = shaderJSON.at(entryPointName);
+                        newShader.m_Permutations[i].push_back("");
                     }
-                };
-                AddEntryPoint(VS);
-                AddEntryPoint(PS);
-                AddEntryPoint(CS);
+                }
 
                 // add Shader Permutations
                 if (shaderJSON.contains("ShaderPermutations"))
                 {
-                    auto AddPermutations = [&shaderJSON, &newShader](GfxShaderType shaderType)
+                    for (uint32_t i = 0; i < NbShaderTypes; ++i)
                     {
                         json shaderPermsJSON = shaderJSON.at("ShaderPermutations");
-                        const char* shaderTypeStr = EnumToString(shaderType);
+                        const char* shaderTypeStr = EnumToString((GfxShaderType)i);
                         if (shaderPermsJSON.contains(shaderTypeStr))
                         {
+                            assert(newShader.m_EntryPoints[i].size()); // Must have existing entry point
+
                             json shaderPermsForTypeJSON = shaderPermsJSON.at(shaderTypeStr);
                             for (const json permutation : shaderPermsForTypeJSON.at("Defines"))
                             {
-                                newShader.m_Permutations[shaderType].push_back(permutation.get<std::string>());
+                                newShader.m_Permutations[i].push_back(permutation.get<std::string>());
                             }
 
                             // TODO
@@ -211,10 +215,7 @@ int main()
 
                             }
                         }
-                    };
-                    AddPermutations(VS);
-                    AddPermutations(PS);
-                    AddPermutations(CS);
+                    }
                 }
 
                 for (uint32_t i = 0; i < NbShaderTypes; ++i)
@@ -224,45 +225,48 @@ int main()
                 }
             }
 
-            for (json shaderInput : baseJSON.at("ShaderInputs"))
+            if (baseJSON.contains("ShaderInputs"))
             {
-                ShaderInputs inputs{ shaderInput.at("Name") };
-
-                // Constant Buffer
-                if (shaderInput.contains("ConstantBuffer"))
+                for (json shaderInput : baseJSON.at("ShaderInputs"))
                 {
-                    json cBufferJSON = shaderInput.at("ConstantBuffer");
-                    inputs.m_ConstantBuffer.m_Register = cBufferJSON.at("Register");
+                    ShaderInputs inputs{ shaderInput.at("Name") };
 
-                    uint32_t totalBytes = 0;
-                    for (json constantJSON : cBufferJSON.at("Constants"))
+                    // Constant Buffer
+                    if (shaderInput.contains("ConstantBuffer"))
                     {
-                        inputs.m_ConstantBuffer.m_Constants.push_back({ constantJSON.at("Type"), constantJSON.at("Name") });
-                        totalBytes += g_TypesTraitsMap.at(inputs.m_ConstantBuffer.m_Constants.back().m_Type).m_SizeInBytes;
+                        json cBufferJSON = shaderInput.at("ConstantBuffer");
+                        inputs.m_ConstantBuffer.m_Register = cBufferJSON.at("Register");
+
+                        uint32_t totalBytes = 0;
+                        for (json constantJSON : cBufferJSON.at("Constants"))
+                        {
+                            inputs.m_ConstantBuffer.m_Constants.push_back({ constantJSON.at("Type"), constantJSON.at("Name") });
+                            totalBytes += g_TypesTraitsMap.at(inputs.m_ConstantBuffer.m_Constants.back().m_Type).m_SizeInBytes;
+                        }
+
+                        // Add padding if necessary
+                        const uint32_t numPadVars = (AlignUp(totalBytes, 16) - totalBytes) / sizeof(uint32_t);
+                        for (uint32_t i = 0; i < numPadVars; ++i)
+                        {
+                            inputs.m_ConstantBuffer.m_Constants.push_back({ "uint", StringFormat("PADDING_%d", i).c_str() });
+                        }
                     }
 
-                    // Add padding if necessary
-                    const uint32_t numPadVars = (AlignUp(totalBytes, 16) - totalBytes) / sizeof(uint32_t);
-                    for (uint32_t i = 0; i < numPadVars; ++i)
+                    // SRVs, UAVs
+                    if (shaderInput.contains("Resources"))
                     {
-                        inputs.m_ConstantBuffer.m_Constants.push_back({ "uint", StringFormat("PADDING_%d", i).c_str() });
+                        json resourcesJSON = shaderInput.at("Resources");
+                        for (json resource : resourcesJSON)
+                        {
+                            const std::string& resourceTypeStr = resource.at("Type");
+                            const ResourceType resourceType = g_ResourceTraitsMap.at(resourceTypeStr).m_Type;
+
+                            inputs.m_Resources[resourceType].push_back({ resourceTypeStr, resource.at("Register"), resource.at("Name") });
+                        }
                     }
+
+                    PrintAutogenFilesForShaderInput(inputs);
                 }
-
-                // SRVs, UAVs
-                if (shaderInput.contains("Resources"))
-                {
-                    json resourcesJSON = shaderInput.at("Resources");
-                    for (json resource : resourcesJSON)
-                    {
-                        const std::string& resourceTypeStr = resource.at("Type");
-                        const ResourceType resourceType = g_ResourceTraitsMap.at(resourceTypeStr).m_Type;
-
-                        inputs.m_Resources[resourceType].push_back({ resourceTypeStr, resource.at("Register"), resource.at("Name") });
-                    }
-                }
-
-                PrintAutogenFilesForShaderInput(inputs);
             }
         }
         catch (const std::exception& e)
@@ -272,66 +276,20 @@ int main()
         }
     }
 
-    tf::Taskflow getShaderModelTF;
-    getShaderModelTF.emplace([]() { GetHighestD3D12ShaderModel(); });
-    std::future<void> getShaderModelFuture = g_Executor.run(getShaderModelTF);
-
-    //// get each shader to populate g_AllShaderCompileJobs
-    //{
-    //    tf::Taskflow tf;
-
-    //    for (const auto& func : g_Globals.m_JobsPopulators)
-    //    {
-    //        tf.emplace([&]() { func(); });
-    //    }
-    //    g_Executor.run(tf).wait();
-    //}
-
-    //// print auto-gen constant buffer headers
-    //{
-    //    tf::Taskflow tf;
-
-    //    tf.for_each(g_Globals.m_AllConstantBuffers.begin(), g_Globals.m_AllConstantBuffers.end(), [&](ConstantBuffer& cb)
-    //        {
-    //            PrintAutogenFilesForCBs(cb);
-    //        });
-
-    //    // sort the container, so that it always produces consistent auto-gen files
-    //    tf.emplace([&]()
-    //        {
-    //            std::sort(g_Globals.m_AllShaderCompileJobs.begin(), g_Globals.m_AllShaderCompileJobs.end(), [&](const ShaderCompileJob& lhs, ShaderCompileJob& rhs)
-    //                {
-    //                    return lhs.m_BaseShaderName < rhs.m_BaseShaderName;
-    //                });
-    //        });
-
-    //    g_Executor.run(tf).wait();
-    //}
-
      // Must wait for d3d12 shader model to be retrieved first before we schedule the jobs
      getShaderModelFuture.wait();
 
-    //// run all jobs in g_AllShaderCompileJobs
-    //{
-    //    tf::Taskflow tf;
+    // run all jobs in g_AllShaderCompileJobs
 
-    //    tf.for_each(g_Globals.m_AllShaderCompileJobs.begin(), g_Globals.m_AllShaderCompileJobs.end(), [&](ShaderCompileJob& shaderJob)
-    //        {
-    //            shaderJob.StartJob();
-    //        });
-
-    //    g_Executor.run(tf).wait();
-    //}
-
-    //if (g_CompileFailureDetected)
-    //{
-    //    PrintToConsoleAndLogFile("Compile failure(s) detected!\n\n");
-    //}
-    //else
-    //{
-    //    PrintGeneratedByteCodeHeadersFile();
-    //    PrintShaderPermutationStructs();
-    //}
+    if (g_CompileFailureDetected)
+    {
+        PrintToConsoleAndLogFile("Compile failure(s) detected!\n\n");
+    }
+    else
+    {
+        //PrintGeneratedByteCodeHeadersFile();
+        //PrintShaderPermutationStructs();
+    }
 
     system("pause");
     return 0;

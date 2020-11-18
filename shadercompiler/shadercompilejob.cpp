@@ -73,7 +73,7 @@ DXCProcessWrapper::DXCProcessWrapper(const std::string& inputCommandLine, const 
     }
 }
 
-static const std::string GetTargetProfileString(GfxShaderType type)
+static const char* GetTargetProfileString(GfxShaderType type)
 {
     const char* ShaderTypeStrings[] = { "VS", "PS", "GS", "HS", "DS", "CS" };
     static const std::unordered_map<D3D_SHADER_MODEL, const char*> s_TargetProfileToStr =
@@ -88,28 +88,26 @@ static const std::string GetTargetProfileString(GfxShaderType type)
         { D3D_SHADER_MODEL_6_6, "_6_6" },
     };
 
-    std::string result = ShaderTypeStrings[(int)type];
-    result += s_TargetProfileToStr.at(g_HighestD3D12ShaderModel);
+    StaticString<BBE_KB(1)> result = StringFormat("%s%s", ShaderTypeStrings[type], s_TargetProfileToStr.at(g_HighestD3D12ShaderModel)).c_str();
+    StringUtils::ToLower(result);
 
-    std::transform(result.begin(), result.end(), result.begin(), [](char c) { return std::tolower(c); });
-
-    return result;
+    return result.c_str();
 }
 
 void ShaderCompileJob::StartJob()
 {
-    m_ShaderObjCodeFileDir = g_Globals.m_ShadersTmpDir + m_ShaderName + ".h";
-    m_ShaderObjCodeVarName = m_ShaderName + "_ObjCode";
+    m_ShaderObjCodeFileDir = StringFormat("%s%s.h", g_Globals.m_ShadersTmpDir.c_str(), m_ShaderName.c_str());
+    m_ShaderObjCodeVarName = StringFormat("%s_ObjCode", m_ShaderName.c_str());
 
     std::string commandLine = m_ShaderFilePath;
-    commandLine += " -E " + m_EntryPoint;
-    commandLine += " -T " + GetTargetProfileString(m_ShaderType);
-    commandLine += " -Fh " + m_ShaderObjCodeFileDir;
+    commandLine += StringFormat(" -E %s", m_EntryPoint.c_str());
+    commandLine += StringFormat(" -T %s", GetTargetProfileString(m_ShaderType));
+    commandLine += StringFormat(" -Fh %s", m_ShaderObjCodeFileDir.c_str());
     //commandLine += " -Fsh " + g_ShadersTmpDir + m_ShaderName + "_hash.h"; // TODO
-    commandLine += " -Vn " + m_ShaderObjCodeVarName;
+    commandLine += StringFormat(" -Vn %s", m_ShaderObjCodeVarName.c_str());
     commandLine += " -nologo ";
     commandLine += " -WX ";
-    commandLine += " -I" + g_Globals.m_ShadersTmpDir;
+    commandLine += StringFormat(" -I%s", g_Globals.m_ShadersTmpDir.c_str());
     commandLine += StringFormat(" -D%s ", (m_ShaderType == GfxShaderType::VS ? "VERTEX_SHADER" : "PIXEL_SHADER"));
     commandLine += " -Qunused-arguments ";
 

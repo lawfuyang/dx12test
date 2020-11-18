@@ -154,3 +154,8 @@ void PrintAutogenFilesForShaderInput(const ShaderInputs& inputs)
     PrintShaderInputCPPFile(inputs);
     PrintShaderInputHLSLFile(inputs);
 }
+
+void PrintAutogenByteCodeHeadersFile()
+{
+
+}

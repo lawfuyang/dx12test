@@ -117,7 +117,7 @@ struct ShaderPermutationsPrintJob
 
 void PrintToConsoleAndLogFile(const std::string& str);
 void PrintAutogenFilesForShaderInput(const ShaderInputs& inputs);
-void PopulateJobsArray(const PopulateJobParams& params);
+void PrintAutogenByteCodeHeadersFile();
 
 template <typename... Ts>
 static bool AnyBitSet(uint32_t key, Ts&&... masks)
