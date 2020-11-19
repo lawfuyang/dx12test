@@ -6,8 +6,7 @@
         "PSEntryPoint": "PSMain",
         "ShaderPermutations": {
             "VS": {
-                "Defines": [
-                    "VERTEX_FORMAT_Position2f_TexCoord2f_Color4ub",
+                "Permutations": [
                     "VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f",
                     "VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f"
                 ],
@@ -23,7 +22,7 @@
                 ]
             },
             "PS": {
-                "Defines": [
+                "Permutations": [
                     "USE_PBR_CONSTS"
                 ]
             }
@@ -81,11 +80,11 @@
                         "Name": "SceneLightIntensity"
                     },
                     {
-                        "Type": "float4",
+                        "Type": "float",
                         "Name": "ConstPBRRoughness"
                     },
                     {
-                        "Type": "float4",
+                        "Type": "float",
                         "Name": "ConstPBRMetallic"
                     }
                 ]

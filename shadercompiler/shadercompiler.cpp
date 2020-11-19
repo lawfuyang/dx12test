@@ -1,40 +1,36 @@
 
-BBE_OPTIMIZE_OFF;
-
-tf::Executor g_Executor;
-
-struct GlobalsInitializer
+static void InitializeGlobals()
 {
-    GlobalsInitializer()
-    {
-        // init dirs
-        g_Globals.m_AppDir                                    = GetApplicationDirectory();
-        g_Globals.m_ShadersJSONDir                            = g_Globals.m_AppDir + "..\\shadercompiler\\shaders";
-        g_Globals.m_ShadersTmpDir                             = g_Globals.m_AppDir + "..\\tmp\\shaders\\";
-        g_Globals.m_ShadersTmpHLSLAutogenDir                  = g_Globals.m_ShadersTmpDir + "autogen\\hlsl\\";
-        g_Globals.m_ShadersTmpCPPShaderInputsAutogenDir       = g_Globals.m_ShadersTmpDir + "autogen\\cpp\\ShaderInputs\\";
-        g_Globals.m_ShadersTmpCPPShaderPermutationsAutogenDir = g_Globals.m_ShadersTmpDir + "autogen\\cpp\\ShaderPermutations\\";
-        g_Globals.m_ShadersDir                                = g_Globals.m_AppDir + "..\\src\\graphic\\shaders\\";
-        g_Globals.m_ShadersByteCodesDir                       = g_Globals.m_ShadersTmpDir + "shaderbytecodes.h";
-        g_Globals.m_DXCDir                                    = g_Globals.m_AppDir + "..\\extern\\dxc\\dxc.exe";
+    // init dirs
+    g_GlobalDirs.m_ShadersTmpDir                             = GetApplicationDirectory() + "..\\tmp\\shaders\\";
+    g_GlobalDirs.m_ShadersTmpAutoGenDir                      = g_GlobalDirs.m_ShadersTmpDir + "autogen\\";
+    g_GlobalDirs.m_ShadersTmpPermutationHashesDir            = g_GlobalDirs.m_ShadersTmpAutoGenDir + "permutationhashes\\";
+    g_GlobalDirs.m_ShadersTmpCPPAutogenDir                   = g_GlobalDirs.m_ShadersTmpAutoGenDir + "cpp\\";
+    g_GlobalDirs.m_ShadersTmpHLSLAutogenDir                  = g_GlobalDirs.m_ShadersTmpAutoGenDir + "hlsl\\";
+    g_GlobalDirs.m_ShadersTmpCPPShaderInputsAutogenDir       = g_GlobalDirs.m_ShadersTmpAutoGenDir + "cpp\\ShaderInputs\\";
+    g_GlobalDirs.m_ShadersTmpCPPShaderPermutationsAutogenDir = g_GlobalDirs.m_ShadersTmpAutoGenDir + "cpp\\ShaderPermutations\\";
 
-        CreateDirectory(StringFormat("%s..\\tmp", g_Globals.m_AppDir.c_str()).c_str(), nullptr);
-        CreateDirectory(g_Globals.m_ShadersTmpDir.c_str(), nullptr);
-        CreateDirectory((g_Globals.m_ShadersTmpDir + "autogen\\").c_str(), nullptr);
-        CreateDirectory(g_Globals.m_ShadersTmpHLSLAutogenDir.c_str(), nullptr);
-        CreateDirectory(g_Globals.m_ShadersTmpCPPShaderInputsAutogenDir.c_str(), nullptr);
-        CreateDirectory(g_Globals.m_ShadersTmpCPPShaderPermutationsAutogenDir.c_str(), nullptr);
-    }
-};
-static const GlobalsInitializer g_GlobalsInitializer;
+    CreateDirectory(StringFormat("%s..\\tmp", GetApplicationDirectory().c_str()).c_str(), nullptr);
+    CreateDirectory(g_GlobalDirs.m_ShadersTmpDir.c_str(), nullptr);
+    CreateDirectory(g_GlobalDirs.m_ShadersTmpAutoGenDir.c_str(), nullptr);
+    CreateDirectory(g_GlobalDirs.m_ShadersTmpCPPAutogenDir.c_str(), nullptr);
+    CreateDirectory(g_GlobalDirs.m_ShadersTmpPermutationHashesDir.c_str(), nullptr);
+    CreateDirectory(g_GlobalDirs.m_ShadersTmpHLSLAutogenDir.c_str(), nullptr);
+    CreateDirectory(g_GlobalDirs.m_ShadersTmpCPPShaderInputsAutogenDir.c_str(), nullptr);
+    CreateDirectory(g_GlobalDirs.m_ShadersTmpCPPShaderPermutationsAutogenDir.c_str(), nullptr);
+}
 
 int main()
 {
     // first, Init the logger
     Logger::GetInstance().Initialize("../bin/shadercompiler_output.txt");
 
+    InitializeGlobals();
+
     std::vector<std::string> allJSONs;
-    GetFilesInDirectory(allJSONs, g_Globals.m_ShadersJSONDir);
+    GetFilesInDirectory(allJSONs, StringFormat("%s%s", GetApplicationDirectory().c_str(), "..\\shadercompiler\\shaders"));
+
+    // tf::Executor executor;
 
     concurrency::concurrent_vector<Shader> allShaders;
     allShaders.reserve(allJSONs.size());
@@ -43,122 +39,122 @@ int main()
         PrintToConsoleAndLogFile(StringFormat("Processing '%s'...", GetFileNameFromPath(file).c_str()));
 
         CFileWrapper jsonFile{ file.c_str() };
+        json baseJSON = json::parse(jsonFile);
 
-        try
+        json shaderJSON = baseJSON["Shader"];
+        if (!shaderJSON.empty())
         {
-            json baseJSON = json::parse(jsonFile);
+            Shader& newShader = *allShaders.push_back(Shader{});
+            newShader.m_Name = shaderJSON.at("ShaderName");
+            newShader.m_FileName = shaderJSON.at("FileName");
+            newShader.m_BaseShaderID = std::hash<std::string>{}(newShader.m_Name);
 
-            json shaderJSON = baseJSON["Shader"];
-            if (!shaderJSON.empty())
+            // Add entry points
+            for (uint32_t i = 0; i < GfxShaderType_Count; ++i)
             {
-                Shader& newShader = *allShaders.push_back(Shader{});
-                newShader.m_Name = shaderJSON.at("ShaderName");
-                newShader.m_FileName = shaderJSON.at("FileName");
-                newShader.m_ID = std::hash<std::string>{}(newShader.m_Name);
-
-                // Add entry points
-                for (uint32_t i = 0; i < GfxShaderType_Count; ++i)
+                const GfxShaderType shaderType = (GfxShaderType)i;
+                const std::string entryPointName = StringFormat("%sEntryPoint", EnumToString(shaderType));
+                if (shaderJSON.contains(entryPointName))
                 {
-                    const GfxShaderType shaderType = (GfxShaderType)i;
-                    const std::string entryPointName = StringFormat("%sEntryPoint", EnumToString(shaderType));
-                    if (shaderJSON.contains(entryPointName))
-                    {
-                        newShader.m_EntryPoints[i] = shaderJSON.at(entryPointName);
+                    newShader.m_EntryPoints[i] = shaderJSON.at(entryPointName);
 
-                        // Base shader permutation always exists
-                        newShader.m_Permutations.push_back({ newShader.m_ID, newShader.m_Name, shaderType });
-                    }
-                }
-
-                // add Shader Permutations
-                json shaderPermsJSON = shaderJSON["ShaderPermutations"];
-                for (uint32_t i = 0; i < GfxShaderType_Count; ++i)
-                {
-                    const GfxShaderType shaderType = (GfxShaderType)i;
-                    json shaderPermsForTypeJSON = shaderPermsJSON[EnumToString(shaderType)];
-
-                    // no permutations for this shader type. go to next type
-                    if (shaderPermsForTypeJSON.empty())
-                        continue;
-
-                    PermutationsProcessingContext context{ newShader, shaderType };
-
-                    // get all permutation macro define strings
-                    for (const json permutationJSON : shaderPermsForTypeJSON.at("Defines"))
-                    {
-                        context.m_AllPermutationsDefines.push_back(permutationJSON.get<std::string>());
-                    }
-
-                    // get all permutation rules
-                    for (const json ruleJSON : shaderPermsForTypeJSON["Rules"])
-                    {
-                        PermutationsProcessingContext::RuleProperty& newProperty = context.m_RuleProperties.emplace_back();
-                        newProperty.m_Rule = StringToPermutationRule(ruleJSON.at("Rule"));
-
-                        for (const json affectedBitsJSON : ruleJSON.at("AffectedBits"))
-                            newProperty.m_AffectedBits |= (1 << affectedBitsJSON.get<uint32_t>());
-                    }
-
-                    AddValidPermutations(context);
+                    // Base shader permutation always exists
+                    newShader.m_Permutations[shaderType].push_back({ 0, newShader.m_Name });
                 }
             }
 
-            for (json shaderInput : baseJSON["ShaderInputs"])
+            // add Shader Permutations
+            json shaderPermsJSON = shaderJSON["ShaderPermutations"];
+            for (uint32_t i = 0; i < GfxShaderType_Count; ++i)
             {
-                ShaderInputs inputs{ shaderInput.at("Name") };
+                const GfxShaderType shaderType = (GfxShaderType)i;
+                json shaderPermsForTypeJSON = shaderPermsJSON[EnumToString(shaderType)];
 
-                // Constant Buffer
-                json cBufferJSON = shaderInput["ConstantBuffer"];
-                if (!cBufferJSON.empty())
+                // no permutations for this shader type. go to next type
+                if (shaderPermsForTypeJSON.empty())
+                    continue;
+
+                PermutationsProcessingContext context{ newShader, shaderType };
+
+                // get all permutation macro define strings
+                for (const json permutationJSON : shaderPermsForTypeJSON.at("Permutations"))
                 {
-                    inputs.m_ConstantBuffer.m_Register = cBufferJSON.at("Register");
-
-                    uint32_t totalBytes = 0;
-                    for (json constantJSON : cBufferJSON.at("Constants"))
-                    {
-                        inputs.m_ConstantBuffer.m_Constants.push_back({ constantJSON.at("Type"), constantJSON.at("Name") });
-                        totalBytes += gs_TypesTraitsMap.at(inputs.m_ConstantBuffer.m_Constants.back().m_Type).m_SizeInBytes;
-                    }
-
-                    // Add padding if necessary
-                    const uint32_t numPadVars = (AlignUp(totalBytes, 16) - totalBytes) / sizeof(uint32_t);
-                    for (uint32_t i = 0; i < numPadVars; ++i)
-                    {
-                        inputs.m_ConstantBuffer.m_Constants.push_back({ "uint", StringFormat("PADDING_%d", i).c_str() });
-                    }
+                    context.m_AllPermutationsDefines.push_back(permutationJSON.get<std::string>());
                 }
 
-                // SRVs, UAVs
-                for (json resource : shaderInput["Resources"])
+                // get all permutation rules
+                for (const json ruleJSON : shaderPermsForTypeJSON["Rules"])
                 {
-                    const std::string& resourceTypeStr = resource.at("Type");
-                    const ResourceType resourceType = gs_ResourceTraitsMap.at(resourceTypeStr).m_Type;
+                    PermutationsProcessingContext::RuleProperty& newProperty = context.m_RuleProperties.emplace_back();
+                    newProperty.m_Rule = StringToPermutationRule(ruleJSON.at("Rule"));
 
-                    inputs.m_Resources[resourceType].push_back({ resourceTypeStr, resource.at("Register"), resource.at("Name") });
+                    for (const json affectedBitsJSON : ruleJSON.at("AffectedBits"))
+                        newProperty.m_AffectedBits |= (1 << affectedBitsJSON.get<uint32_t>());
                 }
 
-                PrintAutogenFilesForShaderInput(inputs);
+                AddValidPermutations(context);
             }
+
+            PrintAutogenFileForShaderPermutationStructs(newShader);
         }
-        catch (const std::exception& e)
+
+        for (json shaderInput : baseJSON["ShaderInputs"])
         {
-            PrintToConsoleAndLogFile(e.what());
-            assert(false);
+            ShaderInputs inputs{ shaderInput.at("Name") };
+
+            // Constant Buffer
+            json cBufferJSON = shaderInput["ConstantBuffer"];
+            if (!cBufferJSON.empty())
+            {
+                inputs.m_ConstantBuffer.m_Register = cBufferJSON.at("Register");
+
+                uint32_t totalBytes = 0;
+                for (json constantJSON : cBufferJSON.at("Constants"))
+                {
+                    inputs.m_ConstantBuffer.m_Constants.push_back({ constantJSON.at("Type"), constantJSON.at("Name") });
+                    totalBytes += gs_TypesTraitsMap.at(inputs.m_ConstantBuffer.m_Constants.back().m_Type).m_SizeInBytes;
+                }
+
+                // Add padding if necessary
+                const uint32_t numPadVars = (AlignUp(totalBytes, 16) - totalBytes) / sizeof(uint32_t);
+                for (uint32_t i = 0; i < numPadVars; ++i)
+                {
+                    inputs.m_ConstantBuffer.m_Constants.push_back({ "uint", StringFormat("PADDING_%d", i).c_str() });
+                }
+            }
+
+            // SRVs, UAVs
+            for (json resource : shaderInput["Resources"])
+            {
+                const std::string& resourceTypeStr = resource.at("Type");
+                const ResourceType resourceType = gs_ResourceTraitsMap.at(resourceTypeStr).m_Type;
+
+                inputs.m_Resources[resourceType].push_back({ resourceTypeStr, resource.at("Register"), resource.at("Name") });
+            }
+
+            PrintAutogenFilesForShaderInput(inputs);
         }
     }
 
-    // Compile all shader permutations
+    // Finally, compile all shader permutations
+    for (const Shader& shader : allShaders)
+    {
+        for (uint32_t i = 0; i < GfxShaderType_Count; ++i)
+        {
+            for (const Shader::Permutation& permutation : shader.m_Permutations[i])
+            {
+                CompilePermutation(shader, permutation, (GfxShaderType)i);
+            }
+        }
+    }
 
+    // print shaderbytecodes.h
+    PrintAutogenByteCodeHeadersFile(allShaders);
 
     if (gs_CompileFailureDetected)
-    {
-        PrintToConsoleAndLogFile("Compile failure(s) detected!\n\n");
-    }
+        PrintToConsoleAndLogFile("\n\nCompile failure(s) detected!\n\n");
     else
-    {
-        //PrintGeneratedByteCodeHeadersFile();
-        //PrintShaderPermutationStructs();
-    }
+        PrintToConsoleAndLogFile("\n\nAll Shader Compilation Succeeded!\n\n");
 
     system("pause");
     return 0;

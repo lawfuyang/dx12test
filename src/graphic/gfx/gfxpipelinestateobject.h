@@ -28,7 +28,7 @@ public:
 
 private:
     GfxRootSignature*           m_RootSig = nullptr;
-    GfxVertexFormat*            m_VertexFormat = nullptr;
+    GfxVertexFormat*            m_VertexFormat = &GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub;
     D3D12_PRIMITIVE_TOPOLOGY    m_PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
     const GfxShader*            m_VS = nullptr;
     const GfxShader*            m_PS = nullptr;

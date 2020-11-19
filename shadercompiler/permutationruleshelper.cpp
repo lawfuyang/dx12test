@@ -41,13 +41,15 @@ void AddValidPermutations(PermutationsProcessingContext& context)
         {
             // Run through array of permutation names and append to get full shader name
             std::string name = context.m_Shader.m_Name;
-            RunOnAllBits(i, [&context, &name](uint32_t bit)
+            std::vector<std::string> defines;
+            RunOnAllBits(i, [&](uint32_t bit)
                 {
+                    defines.push_back(context.m_AllPermutationsDefines[bit]);
                     name += context.m_AllPermutationsDefines[bit];
                 });
 
-            const std::size_t id = std::hash<std::string>{}(name);
-            context.m_Shader.m_Permutations.push_back({ id, name, context.m_Type });
+            context.m_Shader.m_Permutations[context.m_Type].push_back({ i, name, defines });
+
         }
     }
 }

@@ -1,13 +1,9 @@
 #pragma once
 
-static const D3D_SHADER_MODEL gs_HighestD3D12ShaderModel = D3D_SHADER_MODEL_6_6;
-
 static const uint32_t NbShaderBits = 4;
 
 DEFINE_ENUM_WITH_STRING_CONVERSIONS(GfxShaderType, (VS)(PS)(CS));
-
 DEFINE_ENUM_WITH_STRING_CONVERSIONS(ResourceType, (SRV)(UAV));
-
 DEFINE_ENUM_WITH_STRING_CONVERSIONS(PermutationRule, (AnyBitSet)(AllBitsSet)(OnlyOneBitSet)(MaxOneBitSet));
 
 struct HLSLTypesTraits
@@ -15,7 +11,6 @@ struct HLSLTypesTraits
     const char* m_CPPType;
     uint32_t m_SizeInBytes;
 };
-
 static const std::unordered_map<std::string_view, HLSLTypesTraits> gs_TypesTraitsMap =
 {
     { "int"      , { "int32_t", 4 } },
@@ -37,7 +32,6 @@ struct ResourceTraits
 {
     ResourceType m_Type;
 };
-
 static const std::unordered_map<std::string_view, ResourceTraits> gs_ResourceTraitsMap =
 {
     { "Texture2D", { SRV } },
@@ -58,7 +52,7 @@ struct ShaderInputs
     struct Resource
     {
         std::string m_Type;
-        uint32_t m_Register;
+        uint32_t m_Register = 0xDEADBEEF;
         std::string m_Name;
     };
 
@@ -70,18 +64,19 @@ struct ShaderInputs
 
 struct Shader
 {
-    std::size_t m_ID;
+    std::size_t m_BaseShaderID;
     std::string m_Name;
     std::string m_FileName;
     std::string m_EntryPoints[GfxShaderType_Count];
 
     struct Permutation
     {
-        std::size_t m_ID;
+        uint32_t m_ShaderKey;
         std::string m_Name;
-        GfxShaderType m_Type;
+        std::vector<std::string> m_Defines;
+        std::size_t m_Hash;
     };
-    std::vector<Permutation> m_Permutations;
+    std::vector<Permutation> m_Permutations[GfxShaderType_Count];
 };
 
 struct PermutationsProcessingContext
@@ -101,72 +96,22 @@ struct PermutationsProcessingContext
 void AddValidPermutations(PermutationsProcessingContext& context);
 void PrintToConsoleAndLogFile(const std::string& str);
 void PrintAutogenFilesForShaderInput(const ShaderInputs& inputs);
-void PrintShaderPermutationStructs();
-void PrintAutogenByteCodeHeadersFile();
+void PrintAutogenFileForShaderPermutationStructs(const Shader& shader);
+void CompilePermutation(const Shader& parentShader, const Shader::Permutation& permutation, GfxShaderType shaderType);
+void PrintAutogenByteCodeHeadersFile(const concurrency::concurrent_vector<Shader>& allShaders);
 
-struct ShaderCompileJob
+struct GlobalDirs
 {
-    void StartJob();
+    DeclareSingletonFunctions(GlobalDirs);
 
-    GfxShaderType m_ShaderType;
-    uint32_t m_BaseShaderID;
-    uint32_t m_ShaderKey;
-    std::string m_ShaderFilePath;
-    std::string m_EntryPoint;
-    std::string m_ShaderName;
-    std::string m_BaseShaderName;
-    std::vector<std::string> m_Defines;
-
-    // These 2 will be set internally
-    std::string m_ShaderObjCodeVarName;
-    std::string m_ShaderObjCodeFileDir;
-};
-
-struct DXCProcessWrapper
-{
-    DXCProcessWrapper(const std::string& inputCommandLine, const ShaderCompileJob& job);
-};
-
-struct PopulateJobParams
-{
-    std::string m_ShaderFilePath;
-    std::string m_ShaderName;
-    std::string m_EntryPoint;
-    GfxShaderType m_ShaderType;
-    std::vector<std::string> m_DefineStrings;
-    bool* m_KeysArray;
-    uint32_t m_KeysArraySz;
-    uint32_t m_ShaderID;
-};
-
-struct ShaderPermutationsPrintJob
-{
-    GfxShaderType m_ShaderType;
-    uint32_t m_BaseShaderID;
-    std::string m_BaseShaderName;
-    std::vector<std::string> m_Defines;
-};
-
-struct Globals
-{
-    DeclareSingletonFunctions(Globals);
-
-    std::string m_AppDir;
-    std::string m_ShadersJSONDir;
     std::string m_ShadersTmpDir;
+    std::string m_ShadersTmpAutoGenDir;
+    std::string m_ShadersTmpPermutationHashesDir;
+    std::string m_ShadersTmpCPPAutogenDir;
     std::string m_ShadersTmpHLSLAutogenDir;
     std::string m_ShadersTmpCPPShaderInputsAutogenDir;
     std::string m_ShadersTmpCPPShaderPermutationsAutogenDir;
-    std::string m_ShadersDir;
-    std::string m_DXCDir;
-    std::string m_ShadersByteCodesDir;
-
-    std::mutex m_AllShaderCompileJobsLock;
-    std::mutex m_AllShaderPermutationsPrintJobsLock;
-
-    std::vector<ShaderCompileJob>           m_AllShaderCompileJobs;
-    std::vector<ShaderPermutationsPrintJob> m_AllShaderPermutationsPrintJobs;
 };
-#define g_Globals Globals::GetInstance()
+#define g_GlobalDirs GlobalDirs::GetInstance()
 
 static bool gs_CompileFailureDetected = false;

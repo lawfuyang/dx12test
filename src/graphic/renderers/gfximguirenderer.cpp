@@ -236,9 +236,9 @@ void GfxIMGUIRenderer::PopulateCommandList(GfxContext& context)
     }
 
     GfxPipelineStateObject& pso = context.GetPSO();
-    pso.SetVertexShader(g_GfxShaderManager.GetShader(Shaders::VS_IMGUIPermutations{}));
-    pso.SetPixelShader(g_GfxShaderManager.GetShader(Shaders::PS_IMGUIPermutations{}));
-    pso.SetVertexFormat(GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub);
+    pso.SetVertexShader(g_GfxShaderManager.GetShader(Shaders::VS_IMGUI{}));
+    pso.SetPixelShader(g_GfxShaderManager.GetShader(Shaders::PS_IMGUI{}));
+    // pso.SetVertexFormat(GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub); // It's default to be this
 
     context.StageSRV(m_FontsTexture, 1, 0);
 

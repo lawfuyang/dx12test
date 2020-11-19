@@ -11,18 +11,14 @@ static const float4x4 g_ViewProjMatrix      = g_PerFrameConsts.GetViewProjMatrix
 static const float4   g_CameraPosition      = g_PerFrameConsts.GetCameraPosition();
 static const float4   g_SceneLightDir       = g_PerFrameConsts.GetSceneLightDir();
 static const float4   g_SceneLightIntensity = g_PerFrameConsts.GetSceneLightIntensity();
-static const float4   g_ConstPBRRoughness   = g_PerFrameConsts.GetConstPBRRoughness();
-static const float4   g_ConstPBRMetallic    = g_PerFrameConsts.GetConstPBRMetallic();
+static const float    g_ConstPBRRoughness   = g_PerFrameConsts.GetConstPBRRoughness();
+static const float    g_ConstPBRMetallic    = g_PerFrameConsts.GetConstPBRMetallic();
 
 static const PerInstanceConsts g_PerInstanceConsts = CreatePerInstanceConsts();
 static const Texture2D g_DiffuseTexture = g_PerInstanceConsts.GetDiffuseTexture();
 static const Texture2D g_NormalTexture  = g_PerInstanceConsts.GetNormalTexture();
 static const Texture2D g_ORMTexture     = g_PerInstanceConsts.GetORMTexture();
 static const float4x4  g_WorldMatrix    = g_PerInstanceConsts.GetWorldMatrix();
-
-//Texture2D g_DiffuseTexture : register(t0);
-//Texture2D g_NormalTexture : register(t1);
-//Texture2D g_ORMTexture : register(t2);
 
 struct VS_OUT
 {
@@ -35,19 +31,18 @@ struct VS_OUT
     float3 m_PositionW : POSITIONT;
 };
 
-#if defined(VERTEX_SHADER)
 VS_OUT VSMain(VS_IN input)
 {
     VS_OUT result = (VS_OUT)0;
 
     float4 position;
-#if defined(VERTEX_FORMAT_Position2f_TexCoord2f_Color4ub)
-    position = float4(input.m_Position, 0, 1);
-#elif defined(VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f) || defined(VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f)
+#if defined(VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f) || defined(VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f)
     position = float4(input.m_Position, 1);
+#else
+    position = float4(input.m_Position, 0, 1);
 #endif
 
-    result.m_Position = mul(position, g_PerInstanceConsts.m_WorldMatrix);
+    result.m_Position = mul(position, g_WorldMatrix);
     result.m_Position = mul(result.m_Position, g_WorldMatrix);
     result.m_TexCoord = input.m_TexCoord;
     result.m_Bitangent = 0;
@@ -63,9 +58,6 @@ VS_OUT VSMain(VS_IN input)
 
     return result;
 }
-#endif
-
-#if defined(PIXEL_SHADER)
 
 float4 PSMain(VS_OUT input) : SV_TARGET
 {
@@ -74,12 +66,12 @@ float4 PSMain(VS_OUT input) : SV_TARGET
     float3 normal = PeturbNormal(localNormal, input.m_PositionW.xyz, input.m_Normal, input.m_TexCoord);
 
     // View vector
-    float3 V = normalize(g_PerFrameConsts.m_CameraPosition.xyz - input.m_PositionW.xyz);
+    float3 V = normalize(g_CameraPosition.xyz - input.m_PositionW.xyz);
 
     // Init per-pixel PBR properties
     float ambientOcclusion = 1.0;
-    float roughness = g_PerFrameConsts.m_ConstPBRRoughness;
-    float metallic = g_PerFrameConsts.m_ConstPBRMetallic;
+    float roughness = g_ConstPBRRoughness;
+    float metallic = g_ConstPBRMetallic;
 #if !defined(USE_PBR_CONSTS)
     // R = Occlusion, G = Roughness, B = Metalness
     float3 ORM = g_ORMTexture.Sample(g_AnisotropicClampSampler, input.m_TexCoord).rgb;
@@ -105,12 +97,10 @@ float4 PSMain(VS_OUT input) : SV_TARGET
 
     EvaluateLightPBRParams dirLightPBRParams;
     dirLightPBRParams.Common = commonPBRParams;
-    dirLightPBRParams.lightColor = g_PerFrameConsts.m_SceneLightIntensity.xyz;
-    dirLightPBRParams.L = g_PerFrameConsts.m_SceneLightDir.xyz;
+    dirLightPBRParams.lightColor = g_SceneLightIntensity.xyz;
+    dirLightPBRParams.L = g_SceneLightDir.xyz;
 
     float3 finalColor = EvaluateLightPBR(dirLightPBRParams);
 
-    return float4(finalColor, 1.0);
+    return float4(finalColor, 1.0f);
 }
-
-#endif

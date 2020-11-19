@@ -65,7 +65,7 @@
     <ClCompile Include="..\src\system\utils.cpp" />
     <ClCompile Include="permutationruleshelper.cpp" />
     <ClCompile Include="printingfunctions.cpp" />
-    <ClCompile Include="shadercompilejob.cpp" />
+    <ClCompile Include="shadercompilationhelper.cpp" />
     <ClCompile Include="shadercompiler.cpp" />
   </ItemGroup>
   <ItemGroup>

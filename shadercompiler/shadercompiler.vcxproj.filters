@@ -13,13 +13,13 @@
     <ClCompile Include="..\src\system\utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="shadercompilejob.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="printingfunctions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="permutationruleshelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="shadercompilationhelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
