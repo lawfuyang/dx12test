@@ -40,7 +40,7 @@ public:
 private:
 
     // key == BaseShaderID, val = { ShaderKey, GfxShader }
-    using ShaderContainer = std::unordered_map<uint32_t, std::unordered_map<uint32_t, GfxShader>>;
+    using ShaderContainer = std::unordered_map<std::size_t, std::unordered_map<uint32_t, GfxShader>>;
     ShaderContainer m_ShaderContainers[NbShaderTypes];
 };
 #define g_GfxShaderManager GfxShaderManager::GetInstance()

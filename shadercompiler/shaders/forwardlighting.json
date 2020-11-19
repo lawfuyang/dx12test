@@ -13,10 +13,8 @@
                 ],
                 "Rules": [
                     {
-                        "Name": "OneVertexFormatRule",
-                        "RuleType": "OnlyOneBitSet",
-                        "ShaderType": "VS",
-                        "AffectedDefines": [
+                        "Rule": "OnlyOneBitSet",
+                        "AffectedBits": [
                             0,
                             1,
                             2

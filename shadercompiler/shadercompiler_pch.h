@@ -1,7 +1,14 @@
 #pragma once
 
+static const D3D_SHADER_MODEL gs_HighestD3D12ShaderModel = D3D_SHADER_MODEL_6_6;
+
+static const uint32_t NbShaderBits = 4;
+
 DEFINE_ENUM_WITH_STRING_CONVERSIONS(GfxShaderType, (VS)(PS)(CS));
-static const uint32_t NbShaderTypes = GfxShaderType::CS + 1;
+
+DEFINE_ENUM_WITH_STRING_CONVERSIONS(ResourceType, (SRV)(UAV));
+
+DEFINE_ENUM_WITH_STRING_CONVERSIONS(PermutationRule, (AnyBitSet)(AllBitsSet)(OnlyOneBitSet)(MaxOneBitSet));
 
 struct HLSLTypesTraits
 {
@@ -9,7 +16,7 @@ struct HLSLTypesTraits
     uint32_t m_SizeInBytes;
 };
 
-static const std::unordered_map<std::string_view, HLSLTypesTraits> g_TypesTraitsMap =
+static const std::unordered_map<std::string_view, HLSLTypesTraits> gs_TypesTraitsMap =
 {
     { "int"      , { "int32_t", 4 } },
     { "int2"     , { "bbeVector2I", 8 } },
@@ -26,15 +33,12 @@ static const std::unordered_map<std::string_view, HLSLTypesTraits> g_TypesTraits
     { "float4x4" , { "bbeMatrix", 64 } },
 };
 
-DEFINE_ENUM_WITH_STRING_CONVERSIONS(ResourceType, (SRV)(UAV));
-static const uint32_t NbResourceTypes = ResourceType::UAV + 1;
-
 struct ResourceTraits
 {
     ResourceType m_Type;
 };
 
-static const std::unordered_map<std::string_view, ResourceTraits> g_ResourceTraitsMap =
+static const std::unordered_map<std::string_view, ResourceTraits> gs_ResourceTraitsMap =
 {
     { "Texture2D", { SRV } },
 };
@@ -61,16 +65,44 @@ struct ShaderInputs
     std::string m_Name;
     ConstantBuffer m_ConstantBuffer;
 
-    std::vector<Resource> m_Resources[NbResourceTypes];
+    std::vector<Resource> m_Resources[ResourceType_Count];
 };
 
 struct Shader
 {
+    std::size_t m_ID;
     std::string m_Name;
     std::string m_FileName;
-    std::string m_EntryPoints[NbShaderTypes];
-    std::vector<std::string> m_Permutations[NbShaderTypes];
+    std::string m_EntryPoints[GfxShaderType_Count];
+
+    struct Permutation
+    {
+        std::size_t m_ID;
+        std::string m_Name;
+        GfxShaderType m_Type;
+    };
+    std::vector<Permutation> m_Permutations;
 };
+
+struct PermutationsProcessingContext
+{
+    struct RuleProperty
+    {
+        PermutationRule m_Rule;
+        uint32_t m_AffectedBits = 0;
+    };
+
+    Shader& m_Shader;
+    GfxShaderType m_Type;
+    std::vector<std::string> m_AllPermutationsDefines;
+    std::vector<RuleProperty> m_RuleProperties;
+};
+
+void AddValidPermutations(PermutationsProcessingContext& context);
+void PrintToConsoleAndLogFile(const std::string& str);
+void PrintAutogenFilesForShaderInput(const ShaderInputs& inputs);
+void PrintShaderPermutationStructs();
+void PrintAutogenByteCodeHeadersFile();
 
 struct ShaderCompileJob
 {
@@ -115,39 +147,6 @@ struct ShaderPermutationsPrintJob
     std::vector<std::string> m_Defines;
 };
 
-void PrintToConsoleAndLogFile(const std::string& str);
-void PrintAutogenFilesForShaderInput(const ShaderInputs& inputs);
-void PrintAutogenByteCodeHeadersFile();
-
-template <typename... Ts>
-static bool AnyBitSet(uint32_t key, Ts&&... masks)
-{
-    return (key & ((masks) | ...)) != 0;
-}
-
-template <typename... Ts>
-static bool AllBitsSet(uint32_t key, Ts&&... masks)
-{
-    return key == ((masks) | ...);
-}
-
-static uint32_t CountBits(uint32_t key)
-{
-    return std::bitset<64>{ key }.count();
-}
-
-template <typename... Ts>
-static bool OnlyOneBitSet(uint32_t key, Ts&&... masks)
-{
-    return CountBits(key & ((masks) | ...)) == 1;
-}
-
-template <typename... Ts>
-static bool MaxOneBitSet(uint32_t key, Ts&&... masks)
-{
-    return CountBits(key & ((masks) | ...)) <= 1;
-}
-
 struct Globals
 {
     DeclareSingletonFunctions(Globals);
@@ -162,10 +161,7 @@ struct Globals
     std::string m_DXCDir;
     std::string m_ShadersByteCodesDir;
 
-    std::vector<std::function<void()>> m_JobsPopulators;
-
     std::mutex m_AllShaderCompileJobsLock;
-    std::mutex m_AllConstantBuffersLock;
     std::mutex m_AllShaderPermutationsPrintJobsLock;
 
     std::vector<ShaderCompileJob>           m_AllShaderCompileJobs;
@@ -173,5 +169,4 @@ struct Globals
 };
 #define g_Globals Globals::GetInstance()
 
-static D3D_SHADER_MODEL g_HighestD3D12ShaderModel = D3D_SHADER_MODEL_5_1;
-static bool g_CompileFailureDetected = false;
+static bool gs_CompileFailureDetected = false;
