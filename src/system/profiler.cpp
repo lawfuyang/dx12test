@@ -71,7 +71,7 @@ void SystemProfiler::DumpProfilerBlocks(bool condition, bool immediately)
     }
 }
 
-void SystemProfiler::SubmitAllGPULogsToQueue(ID3D12CommandQueue* queue)
+void SystemProfiler::SubmitAllGPULogsToQueue(void* queue)
 {
     for (auto& gpuLog : m_PerThreadGPULogs)
     {

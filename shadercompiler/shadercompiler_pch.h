@@ -77,6 +77,8 @@ struct Shader
         std::size_t m_Hash = 0;
     };
     std::vector<Permutation> m_Permutations[GfxShaderType_Count];
+
+    bool operator<(const Shader& rhs) const { return m_BaseShaderID < rhs.m_BaseShaderID; }
 };
 
 struct PermutationsProcessingContext

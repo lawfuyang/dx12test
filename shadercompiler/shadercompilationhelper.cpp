@@ -61,32 +61,12 @@ static bool RunDXCCompiler(const std::string& inputCommandLine, std::string& err
     return totalRead == 0;
 }
 
-static std::string GetTargetProfileString(GfxShaderType type)
-{
-    const D3D_SHADER_MODEL ShaderModelToUse = D3D_SHADER_MODEL_6_5;
-
-    static const std::unordered_map<D3D_SHADER_MODEL, const char*> s_TargetProfileToStr =
-    {
-        { D3D_SHADER_MODEL_5_1, "5_1" },
-        { D3D_SHADER_MODEL_6_0, "6_0" },
-        { D3D_SHADER_MODEL_6_1, "6_1" },
-        { D3D_SHADER_MODEL_6_2, "6_2" },
-        { D3D_SHADER_MODEL_6_3, "6_3" },
-        { D3D_SHADER_MODEL_6_4, "6_4" },
-        { D3D_SHADER_MODEL_6_5, "6_5" },
-        { D3D_SHADER_MODEL_6_6, "6_6" },
-    };
-
-    std::string result = StringFormat("%s_%s", EnumToString(type), s_TargetProfileToStr.at(ShaderModelToUse));
-    StringUtils::ToLower(result);
-
-    return result;
-}
-
 void CompilePermutation(const Shader& parentShader, Shader::Permutation& permutation, GfxShaderType shaderType)
 {
     if (gs_CompileFailureDetected)
         return;
+
+    const char* ShaderModelToUse = "6_5";
 
     const std::string shadersSrcDir = StringFormat("%s..\\src\\graphic\\shaders\\", GetApplicationDirectory().c_str());
     const std::string shaderObjCodeFileDir = StringFormat("%s%s.h", g_GlobalDirs.m_ShadersTmpDir.c_str(), permutation.m_Name.c_str());
@@ -94,7 +74,7 @@ void CompilePermutation(const Shader& parentShader, Shader::Permutation& permuta
 
     std::string commandLine = StringFormat("%s%s", shadersSrcDir.c_str(), parentShader.m_FileName.c_str());
     commandLine += StringFormat(" -E %s", parentShader.m_EntryPoints[shaderType].c_str());
-    commandLine += StringFormat(" -T %s", GetTargetProfileString(shaderType).c_str());
+    commandLine += StringFormat(" -T %s_%s", EnumToString(shaderType), ShaderModelToUse);
     commandLine += StringFormat(" -Fh %s", shaderObjCodeFileDir.c_str());
     commandLine += StringFormat(" -Vn %s", shaderObjCodeVarName.c_str());
     commandLine += " -nologo ";

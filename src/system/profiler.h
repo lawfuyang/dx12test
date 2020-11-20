@@ -16,7 +16,7 @@ public:
     void OnFlip();
     void DumpProfilerBlocks(bool condition, bool immediately = false);
     int GetGPUQueueHandle(void* queue) const { return m_GPUQueueToProfilerHandle.at(queue); }
-    void SubmitAllGPULogsToQueue(ID3D12CommandQueue*);
+    void SubmitAllGPULogsToQueue(void*);
 
     MicroProfileThreadLogGpu* GetGPULogForCurrentThread(const GfxCommandList&);
 

@@ -146,7 +146,9 @@ int main()
         }
     }
 
-    // print shaderbytecodes.h
+    // sort all shaders to have consistent shaderbytecodes.h output
+    std::sort(allShaders.begin(), allShaders.end());
+
     PrintAutogenByteCodeHeadersFile(allShaders);
 
     if (gs_CompileFailureDetected)

@@ -4,8 +4,12 @@
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 
-// ImGuiFileDialog uses ImGuiListClipper's old ctor
-// #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+#if !defined(BBE_SHADERCOMPILER)
+    #define BBE_USE_PROFILER
+#endif
+
+// uncomment to disable all asserts
+//#define NDEBUG
 
 #if !defined(BBE_SHADERCOMPILER)
     #define USE_PIX
@@ -28,9 +32,6 @@
 #pragma comment(lib, "extern/lib/spdlog.lib")
 
 #pragma warning(disable : 4267)
-
-// uncomment to disable all asserts
-//#define NDEBUG
 
 // C Standard Lib
 #include <time.h>
@@ -63,14 +64,12 @@
 #include <concurrent_queue.h>
 #include <concurrent_unordered_map.h>
 
-// DirectX
-#include <d3d12.h>
-#include <d3d12sdklayers.h>
-#include <dxgi1_6.h>
-#include <extern/d3d12/d3dx12.h>
-
 #if !defined(BBE_SHADERCOMPILER)
-    #define BBE_USE_PROFILER
+    // DirectX
+    #include <d3d12.h>
+    #include <d3d12sdklayers.h>
+    #include <dxgi1_6.h>
+    #include <extern/d3d12/d3dx12.h>
 #endif
 
 #if defined(BBE_SHADERCOMPILER)
@@ -82,6 +81,7 @@
     #include <extern/d3d12/D3D12MemAlloc.h>
 
     // IMGUI
+    // #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS // ImGuiFileDialog uses ImGuiListClipper's old ctor
     #include <extern/imgui/imgui.h>
     #include <extern/imgui/ImGuiFileDialog.h>
 
