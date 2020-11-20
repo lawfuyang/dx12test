@@ -64,7 +64,7 @@ struct ShaderInputs
 
 struct Shader
 {
-    std::size_t m_BaseShaderID;
+    std::size_t m_BaseShaderID = 0;
     std::string m_Name;
     std::string m_FileName;
     std::string m_EntryPoints[GfxShaderType_Count];
@@ -74,7 +74,7 @@ struct Shader
         uint32_t m_ShaderKey;
         std::string m_Name;
         std::vector<std::string> m_Defines;
-        std::size_t m_Hash;
+        std::size_t m_Hash = 0;
     };
     std::vector<Permutation> m_Permutations[GfxShaderType_Count];
 };
@@ -97,7 +97,7 @@ void AddValidPermutations(PermutationsProcessingContext& context);
 void PrintToConsoleAndLogFile(const std::string& str);
 void PrintAutogenFilesForShaderInput(const ShaderInputs& inputs);
 void PrintAutogenFileForShaderPermutationStructs(const Shader& shader);
-void CompilePermutation(const Shader& parentShader, const Shader::Permutation& permutation, GfxShaderType shaderType);
+void CompilePermutation(const Shader& parentShader, Shader::Permutation& permutation, GfxShaderType shaderType);
 void PrintAutogenByteCodeHeadersFile(const concurrency::concurrent_vector<Shader>& allShaders);
 
 struct GlobalDirs
@@ -106,7 +106,6 @@ struct GlobalDirs
 
     std::string m_ShadersTmpDir;
     std::string m_ShadersTmpAutoGenDir;
-    std::string m_ShadersTmpPermutationHashesDir;
     std::string m_ShadersTmpCPPAutogenDir;
     std::string m_ShadersTmpHLSLAutogenDir;
     std::string m_ShadersTmpCPPShaderInputsAutogenDir;

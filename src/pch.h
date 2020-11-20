@@ -3,9 +3,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
-#define MICROPROFILE_ENABLED 1
-#define MICROPROFILE_GPU_TIMERS_D3D12 1
-#define MICROPROFILE_WEBSERVER_MAXFRAMES 50
 
 // ImGuiFileDialog uses ImGuiListClipper's old ctor
 // #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
@@ -17,13 +14,15 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "runtimeobject.lib")
 
-#pragma comment(lib, "d3d12.lib")
-#pragma comment(lib, "d3dcompiler.lib")
-#pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "dxguid.lib")
+#if !defined(BBE_SHADERCOMPILER)
+    #pragma comment(lib, "d3d12.lib")
+    #pragma comment(lib, "d3dcompiler.lib")
+    #pragma comment(lib, "dxgi.lib")
+    #pragma comment(lib, "dxguid.lib")
 
-// PIX
-#pragma comment(lib, "extern/lib/winpixeventruntime.lib")
+    // PIX
+    #pragma comment(lib, "extern/lib/winpixeventruntime.lib")
+#endif
 
 // SPD Log
 #pragma comment(lib, "extern/lib/spdlog.lib")
@@ -70,13 +69,15 @@
 #include <dxgi1_6.h>
 #include <extern/d3d12/d3dx12.h>
 
+#if !defined(BBE_SHADERCOMPILER)
+    #define BBE_USE_PROFILER
+#endif
+
 #if defined(BBE_SHADERCOMPILER)
     // json
     #include <extern/json/json.hpp>
     using json = nlohmann::json;
 #else
-    #define BBE_USE_PROFILER
-
     // D3D12MA
     #include <extern/d3d12/D3D12MemAlloc.h>
 
@@ -117,6 +118,9 @@
 #include <extern/simplemath/SimpleMath.h>
 
 #if defined(BBE_USE_PROFILER)
+    #define MICROPROFILE_ENABLED 1
+    #define MICROPROFILE_GPU_TIMERS_D3D12 1
+    #define MICROPROFILE_WEBSERVER_MAXFRAMES 50
     #include <extern/microprofile/microprofile.h>
 #endif
 

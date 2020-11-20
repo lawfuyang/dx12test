@@ -195,21 +195,12 @@ void ReadDataFromFile(const char* filename, std::vector<std::byte>& data)
 
 std::size_t GetFileContentsHash(const std::string& dir)
 {
-    CFileWrapper file{ dir };
+    // read entire file to array of bytes
+    std::vector<std::byte> fileBytes;
+    ReadDataFromFile(dir.c_str(), fileBytes);
 
-    // no existing generated file exists... return 0
-    if (!file)
-        return std::size_t{ 0 };
-
-    // read each line and hash the entire file contents
-    std::string fileContents;
-    StaticString<BBE_KB(1)> buffer;
-    while (fgets(buffer.data(), sizeof(buffer), file))
-    {
-        fileContents += buffer.c_str();
-        buffer.clear();
-    }
-    return std::hash<std::string>{} (fileContents);
+    // hash entire array of bytes
+    return boost::hash_range(fileBytes.begin(), fileBytes.end());
 }
 
 namespace StringUtils

@@ -4,7 +4,6 @@ static void InitializeGlobals()
     // init dirs
     g_GlobalDirs.m_ShadersTmpDir                             = GetApplicationDirectory() + "..\\tmp\\shaders\\";
     g_GlobalDirs.m_ShadersTmpAutoGenDir                      = g_GlobalDirs.m_ShadersTmpDir + "autogen\\";
-    g_GlobalDirs.m_ShadersTmpPermutationHashesDir            = g_GlobalDirs.m_ShadersTmpAutoGenDir + "permutationhashes\\";
     g_GlobalDirs.m_ShadersTmpCPPAutogenDir                   = g_GlobalDirs.m_ShadersTmpAutoGenDir + "cpp\\";
     g_GlobalDirs.m_ShadersTmpHLSLAutogenDir                  = g_GlobalDirs.m_ShadersTmpAutoGenDir + "hlsl\\";
     g_GlobalDirs.m_ShadersTmpCPPShaderInputsAutogenDir       = g_GlobalDirs.m_ShadersTmpAutoGenDir + "cpp\\ShaderInputs\\";
@@ -14,7 +13,6 @@ static void InitializeGlobals()
     CreateDirectory(g_GlobalDirs.m_ShadersTmpDir.c_str(), nullptr);
     CreateDirectory(g_GlobalDirs.m_ShadersTmpAutoGenDir.c_str(), nullptr);
     CreateDirectory(g_GlobalDirs.m_ShadersTmpCPPAutogenDir.c_str(), nullptr);
-    CreateDirectory(g_GlobalDirs.m_ShadersTmpPermutationHashesDir.c_str(), nullptr);
     CreateDirectory(g_GlobalDirs.m_ShadersTmpHLSLAutogenDir.c_str(), nullptr);
     CreateDirectory(g_GlobalDirs.m_ShadersTmpCPPShaderInputsAutogenDir.c_str(), nullptr);
     CreateDirectory(g_GlobalDirs.m_ShadersTmpCPPShaderPermutationsAutogenDir.c_str(), nullptr);
@@ -137,11 +135,11 @@ int main()
     }
 
     // Finally, compile all shader permutations
-    for (const Shader& shader : allShaders)
+    for (Shader& shader : allShaders)
     {
         for (uint32_t i = 0; i < GfxShaderType_Count; ++i)
         {
-            for (const Shader::Permutation& permutation : shader.m_Permutations[i])
+            for (Shader::Permutation& permutation : shader.m_Permutations[i])
             {
                 CompilePermutation(shader, permutation, (GfxShaderType)i);
             }

@@ -83,21 +83,19 @@ static std::string GetTargetProfileString(GfxShaderType type)
     return result;
 }
 
-void CompilePermutation(const Shader& parentShader, const Shader::Permutation& permutation, GfxShaderType shaderType)
+void CompilePermutation(const Shader& parentShader, Shader::Permutation& permutation, GfxShaderType shaderType)
 {
     if (gs_CompileFailureDetected)
         return;
 
     const std::string shadersSrcDir = StringFormat("%s..\\src\\graphic\\shaders\\", GetApplicationDirectory().c_str());
     const std::string shaderObjCodeFileDir = StringFormat("%s%s.h", g_GlobalDirs.m_ShadersTmpDir.c_str(), permutation.m_Name.c_str());
-    const std::string shaderHashFileDir = StringFormat("%s%s_hash.dat", g_GlobalDirs.m_ShadersTmpPermutationHashesDir.c_str(), permutation.m_Name.c_str());
     const std::string shaderObjCodeVarName = StringFormat("%s_ObjCode", permutation.m_Name.c_str());
 
     std::string commandLine = StringFormat("%s%s", shadersSrcDir.c_str(), parentShader.m_FileName.c_str());
     commandLine += StringFormat(" -E %s", parentShader.m_EntryPoints[shaderType].c_str());
     commandLine += StringFormat(" -T %s", GetTargetProfileString(shaderType).c_str());
     commandLine += StringFormat(" -Fh %s", shaderObjCodeFileDir.c_str());
-    commandLine += StringFormat(" -Fsh %s", shaderHashFileDir.c_str());
     commandLine += StringFormat(" -Vn %s", shaderObjCodeVarName.c_str());
     commandLine += " -nologo ";
     commandLine += " -WX ";
@@ -123,4 +121,8 @@ void CompilePermutation(const Shader& parentShader, const Shader::Permutation& p
     }
 
     PrintToConsoleAndLogFile(StringFormat("Compiled %s_%s", EnumToString(shaderType), permutation.m_Name.c_str()));
+
+    // compute permutation hash
+    permutation.m_Hash = GetFileContentsHash(shaderObjCodeFileDir.c_str());
+    assert(permutation.m_Hash != 0);
 }

@@ -199,16 +199,16 @@ struct WindowsHandleWrapper
 
 struct CFileWrapper
 {
-CFileWrapper(const std::string& fileName, bool isReadMode = true);
-~CFileWrapper();
+    CFileWrapper(const std::string& fileName, bool isReadMode = true);
+    ~CFileWrapper();
 
-CFileWrapper(const CFileWrapper&) = delete;
-CFileWrapper& operator=(const CFileWrapper&) = delete;
+    CFileWrapper(const CFileWrapper&) = delete;
+    CFileWrapper& operator=(const CFileWrapper&) = delete;
 
-operator bool() const { return m_File; }
-operator FILE* () const { return m_File; }
+    operator bool() const { return m_File; }
+    operator FILE* () const { return m_File; }
 
-FILE* m_File = nullptr;
+    FILE* m_File = nullptr;
 };
 
 class MultithreadDetector
@@ -281,7 +281,7 @@ static void RunOnAllBits(uint32_t mask, Functor&& func)
     }
 
 static ObjectID GenerateObjectID() { return boost::uuids::random_generator{}(); }
-static ObjectID ID_InvalidObject = boost::uuids::nil_generator{}();
+static const ObjectID ID_InvalidObject = boost::uuids::nil_generator{}();
 static std::string ToString(ObjectID id) { return boost::uuids::to_string(id); }
 
 namespace StringUtils
