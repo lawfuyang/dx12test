@@ -137,15 +137,6 @@ private:
 #define bbeMemZeroArray(dst)  memset(dst, 0, sizeof(dst))
 #define bbeMemZeroStruct(dst) memset(&dst, 0, sizeof(dst))
 
-template<typename... Args>
-static const std::string StringFormat(const char* format, Args&&... args)
-{
-    const size_t size = snprintf(nullptr, 0, format, args...) + 1; // Extra space for '\0'
-    char* buf = (char*)_malloca(size);
-    snprintf(buf, size, format, args ...);
-    return std::string{ buf, buf + size - 1 }; // We don't want the '\0' inside
-}
-
 #define bbePrefetchData(address, offset_in_bytes) _mm_prefetch((const char*)(address) + offset_in_bytes, _MM_HINT_T0);
 
 #define bbeSimpleSwitchCaseString(x) case(x): return bbeTOSTRING(x);
@@ -156,6 +147,8 @@ static const std::string StringFormat(const char* format, Args&&... args)
 #define BBE_GB(Nb)                   BBE_MB((Nb)*1024ULL)     ///< Define for gigabytes prefix (2 ^ 30)
 #define BBE_TB(Nb)                   BBE_GB((Nb)*1024ULL)     ///< Define for terabytes prefix (2 ^ 40)
 #define BBE_PB(Nb)                   BBE_TB((Nb)*1024ULL)     ///< Define for petabytes prefix (2 ^ 50)
+
+const char* StringFormat(const char* format, ...);
 
 void BreakIntoDebugger();
 
@@ -178,7 +171,7 @@ void GetFilesInDirectory(std::vector<std::string>& out, const std::string& direc
 const std::string GetFileNameFromPath(const std::string& fullPath);
 const std::string GetFileExtensionFromPath(const std::string& fullPath);
 void ReadDataFromFile(const char* filename, std::vector<std::byte>& data);
-std::size_t GetFileContentsHash(const std::string& dir);
+std::size_t GetFileContentsHash(const char* dir);
 
 struct WindowsHandleWrapper
 {
@@ -199,7 +192,7 @@ struct WindowsHandleWrapper
 
 struct CFileWrapper
 {
-    CFileWrapper(const std::string& fileName, bool isReadMode = true);
+    CFileWrapper(const char*fileName, bool isReadMode = true);
     ~CFileWrapper();
 
     CFileWrapper(const CFileWrapper&) = delete;

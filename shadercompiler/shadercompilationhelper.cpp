@@ -77,7 +77,7 @@ static std::string GetTargetProfileString(GfxShaderType type)
         { D3D_SHADER_MODEL_6_6, "6_6" },
     };
 
-    std::string result = StringFormat("%s_%s", EnumToString(type), s_TargetProfileToStr.at(ShaderModelToUse)).c_str();
+    std::string result = StringFormat("%s_%s", EnumToString(type), s_TargetProfileToStr.at(ShaderModelToUse));
     StringUtils::ToLower(result);
 
     return result;

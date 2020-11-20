@@ -9,7 +9,7 @@ static void InitializeGlobals()
     g_GlobalDirs.m_ShadersTmpCPPShaderInputsAutogenDir       = g_GlobalDirs.m_ShadersTmpAutoGenDir + "cpp\\ShaderInputs\\";
     g_GlobalDirs.m_ShadersTmpCPPShaderPermutationsAutogenDir = g_GlobalDirs.m_ShadersTmpAutoGenDir + "cpp\\ShaderPermutations\\";
 
-    CreateDirectory(StringFormat("%s..\\tmp", GetApplicationDirectory().c_str()).c_str(), nullptr);
+    CreateDirectory(StringFormat("%s..\\tmp", GetApplicationDirectory().c_str()), nullptr);
     CreateDirectory(g_GlobalDirs.m_ShadersTmpDir.c_str(), nullptr);
     CreateDirectory(g_GlobalDirs.m_ShadersTmpAutoGenDir.c_str(), nullptr);
     CreateDirectory(g_GlobalDirs.m_ShadersTmpCPPAutogenDir.c_str(), nullptr);
@@ -117,7 +117,7 @@ int main()
                 const uint32_t numPadVars = (AlignUp(totalBytes, 16) - totalBytes) / sizeof(uint32_t);
                 for (uint32_t i = 0; i < numPadVars; ++i)
                 {
-                    inputs.m_ConstantBuffer.m_Constants.push_back({ "uint", StringFormat("PADDING_%d", i).c_str() });
+                    inputs.m_ConstantBuffer.m_Constants.push_back({ "uint", StringFormat("PADDING_%d", i) });
                 }
             }
 

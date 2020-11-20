@@ -1,4 +1,6 @@
 
+BBE_OPTIMIZE_OFF;
+
 void PrintToConsoleAndLogFile(const std::string& str)
 {
     printf("%s\n", str.c_str());
@@ -7,23 +9,28 @@ void PrintToConsoleAndLogFile(const std::string& str)
 
 static void OverrideExistingFileIfNecessary(const std::string& generatedString, const std::string& dirFull)
 {
+    // write to tmp file to retrieve hash
+    const std::string tmpOutputDir = StringFormat("%stmp_%d.h", g_GlobalDirs.m_ShadersTmpAutoGenDir.c_str(), std::this_thread::get_id());
+    {
+        CFileWrapper tmpFile{ tmpOutputDir.c_str(), false };
+        fprintf(tmpFile, "%s", generatedString.c_str());
+    }
+
     // hash both existing and newly generated contents
-    const std::size_t existingHash = GetFileContentsHash(dirFull);
-    const std::size_t newHash = std::hash<std::string>{}(generatedString);
+    const std::size_t existingHash = GetFileContentsHash(dirFull.c_str());
+    const std::size_t newHash = GetFileContentsHash(tmpOutputDir.c_str());
 
     // if hashes are different, over ride with new contents
     if (existingHash != newHash)
     {
         PrintToConsoleAndLogFile(StringFormat("hash different for '%s'... over-riding with new contents", dirFull.c_str()));
-        const bool IsReadMode = false;
-        CFileWrapper file{ dirFull, IsReadMode };
-        assert(file);
-        fprintf(file, "%s", generatedString.c_str());
+        ::MoveFileExA(tmpOutputDir.c_str(), dirFull.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH);
     }
     else
     {
         PrintToConsoleAndLogFile(StringFormat("No change detected for '%s'", dirFull.c_str()));
     }
+    ::DeleteFileA(tmpOutputDir.c_str());
 }
 
 static void PrintShaderInputCPPFile(const ShaderInputs& inputs)

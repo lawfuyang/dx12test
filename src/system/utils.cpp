@@ -1,5 +1,19 @@
 #include "system/utils.h"
 
+const char* StringFormat(const char* format, ...)
+{
+    thread_local char tl_StrBuffers[BBE_KB(1)][8];
+    thread_local uint32_t tl_BuffersCursor = 0;
+    tl_BuffersCursor = (tl_BuffersCursor + 1) % _countof(tl_StrBuffers);
+
+    va_list marker;
+    va_start(marker, format);
+    _vsnprintf_s(tl_StrBuffers[tl_BuffersCursor], BBE_KB(1), BBE_KB(1), format, marker);
+    va_end(marker);
+
+    return tl_StrBuffers[tl_BuffersCursor];
+}
+
 void BreakIntoDebugger()
 {
     if (!::IsDebuggerPresent())
@@ -126,9 +140,10 @@ const std::string GetFileExtensionFromPath(const std::string& fullPath)
     return found == std::string::npos ? "" : fullPath.substr(found + 1);
 }
 
-CFileWrapper::CFileWrapper(const std::string& fileName, bool isReadMode)
+CFileWrapper::CFileWrapper(const char* fileName, bool isReadMode)
 {
-    m_File = fopen(fileName.c_str(), isReadMode ? "r" : "w");
+    m_File = fopen(fileName, isReadMode ? "r" : "w");
+    assert(m_File);
 }
 
 CFileWrapper::~CFileWrapper()
@@ -174,7 +189,8 @@ void ReadDataFromFile(const char* filename, std::vector<std::byte>& data)
     StaticWString<FILENAME_MAX> fileNameW = StringUtils::Utf8ToWide(filename).c_str();
 
     Wrappers::FileHandle file(CreateFile2(fileNameW.c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &extendedParams));
-    assert(file.Get() != INVALID_HANDLE_VALUE);
+    if (file.Get() == INVALID_HANDLE_VALUE)
+        return;
 
     FILE_STANDARD_INFO fileInfo = {};
     if (!GetFileInformationByHandleEx(file.Get(), FileStandardInfo, &fileInfo, sizeof(fileInfo)))
@@ -193,11 +209,11 @@ void ReadDataFromFile(const char* filename, std::vector<std::byte>& data)
     }
 }
 
-std::size_t GetFileContentsHash(const std::string& dir)
+std::size_t GetFileContentsHash(const char* dir)
 {
     // read entire file to array of bytes
     std::vector<std::byte> fileBytes;
-    ReadDataFromFile(dir.c_str(), fileBytes);
+    ReadDataFromFile(dir, fileBytes);
 
     // hash entire array of bytes
     return boost::hash_range(fileBytes.begin(), fileBytes.end());
