@@ -87,10 +87,13 @@
 
     // Cereal serialization lib
     #define CEREAL_SERIALIZE_FUNCTION_NAME Serialize
-    #include <cereal/types/vector.hpp> // allow Cereal to serialize std::vector
-    #include <cereal/types/string.hpp> // allow Cereal to serialize std::string
-    #include <cereal/archives/binary.hpp> // Binary I/O
-    #include <cereal/archives/json.hpp> // JSON I/O
+    #include <extern/cereal/types/vector.hpp> // allow Cereal to serialize std::vector
+    #include <extern/cereal/types/string.hpp> // allow Cereal to serialize std::string
+    #include <extern/cereal/archives/binary.hpp> // Binary I/O
+    #include <extern/cereal/archives/json.hpp> // JSON I/O
+
+    // Arg Parse
+    #include <extern/argparse/argparse.h>
 #endif // #if defined(BBE_SHADERCOMPILER)
 
 // PIX
@@ -123,9 +126,6 @@
     #define MICROPROFILE_WEBSERVER_MAXFRAMES 50
     #include <extern/microprofile/microprofile.h>
 #endif
-
-// Arg Parse
-#include <extern/argparse/argparse.h>
 
 // typedefs
 using WindowHandle = uint64_t;
