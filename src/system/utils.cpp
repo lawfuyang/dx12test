@@ -2,7 +2,10 @@
 
 const char* StringFormat(const char* format, ...)
 {
-    thread_local char tl_StrBuffers[BBE_KB(1)][8];
+    // Increase this when consecutive StringFormat calls start to return garbage
+    const uint32_t NbStrBuffers = 8;
+
+    thread_local char tl_StrBuffers[BBE_KB(1)][NbStrBuffers];
     thread_local uint32_t tl_BuffersCursor = 0;
     tl_BuffersCursor = (tl_BuffersCursor + 1) % _countof(tl_StrBuffers);
 

@@ -4,8 +4,7 @@
 #include <graphic/gfx/gfxdevice.h>
 #include <graphic/gfx/gfxmanager.h>
 
-#include <tmp/shaders/autogen/cpp/VS_ForwardLighting.h>
-#include <tmp/shaders/autogen/cpp/PS_ForwardLighting.h>
+#include <tmp/shaders/autogen/cpp/ShaderPermutations/ForwardLighting.h>
 
 void GfxDefaultAssets::Initialize(tf::Subflow& sf)
 {

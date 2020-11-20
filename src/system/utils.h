@@ -148,6 +148,7 @@ private:
 #define BBE_TB(Nb)                   BBE_GB((Nb)*1024ULL)     ///< Define for terabytes prefix (2 ^ 40)
 #define BBE_PB(Nb)                   BBE_TB((Nb)*1024ULL)     ///< Define for petabytes prefix (2 ^ 50)
 
+// WARNING! DO NOT STORE RESULT FOR LONG!
 const char* StringFormat(const char* format, ...);
 
 void BreakIntoDebugger();
@@ -251,7 +252,7 @@ static void RunOnAllBits(uint32_t mask, Functor&& func)
         name##_Count                                                                       \
     };                                                                                     \
                                                                                            \
-    static const char* EnumToString(name v)                                                \
+    static constexpr char* EnumToString(name v)                                            \
     {                                                                                      \
         switch (v)                                                                         \
         {                                                                                  \

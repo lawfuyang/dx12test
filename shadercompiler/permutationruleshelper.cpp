@@ -48,7 +48,8 @@ void AddValidPermutations(PermutationsProcessingContext& context)
                     name += context.m_AllPermutationsDefines[bit];
                 });
 
-            context.m_Shader.m_Permutations[context.m_Type].push_back({ i, name, defines });
+            const std::string shaderObjCodeFileDir = StringFormat("%s%s_%s.h", g_GlobalDirs.m_ShadersTmpDir.c_str(), EnumToString(context.m_Type), name.c_str());
+            context.m_Shader.m_Permutations[context.m_Type].push_back({ i, name, shaderObjCodeFileDir, defines });
 
         }
     }

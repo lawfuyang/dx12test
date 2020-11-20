@@ -125,13 +125,12 @@ private:
 };
 
 template <typename CBType>
-static void UploadConstantBufferToGPU(GfxContext& context, const CBType& inputs)
+static void UploadConstantBufferToGPU(GfxContext& context, const CBType& cb)
 {
-    if constexpr (CBType::ConstantBufferRegister != 0xDEADBEEF)
-    {
-        GfxConstantBuffer gfxCB{ CBType::ConstantBufferRegister, 0 };
-        gfxCB.UploadToGPU(context, (const void*)&cb, sizeof(CBStruct), CBStruct::Name);
-    }
+    static_assert(CBType::ConstantBufferRegister != 0xDEADBEEF);
+
+    GfxConstantBuffer gfxCB{ CBType::ConstantBufferRegister, 0 };
+    gfxCB.UploadToGPU(context, (const void*)&cb, sizeof(CBType), CBType::Name);
 }
 
 class GfxTexture : public GfxHazardTrackedResource,

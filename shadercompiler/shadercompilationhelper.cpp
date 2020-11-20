@@ -27,6 +27,10 @@ static bool RunDXCCompiler(const std::string& inputCommandLine, std::string& err
     ::PROCESS_INFORMATION processInfo = {};
 
     const std::string commandLine = StringFormat("%s..\\extern\\dxc\\dxc.exe ", GetApplicationDirectory().c_str()) + inputCommandLine;
+
+    // uncomment to see full cmdline sent to DXC
+    // PrintToConsoleAndLogFile(commandLine);
+
     if (!::CreateProcess(nullptr,   // No module name (use command line).
         (LPSTR)commandLine.c_str(), // Command line.
         nullptr,                    // Process handle not inheritable.
@@ -66,16 +70,20 @@ void CompilePermutation(const Shader& parentShader, Shader::Permutation& permuta
     if (gs_CompileFailureDetected)
         return;
 
+    const char* shaderTypeStr = EnumToString(shaderType);
     const char* ShaderModelToUse = "6_5";
 
     const std::string shadersSrcDir = StringFormat("%s..\\src\\graphic\\shaders\\", GetApplicationDirectory().c_str());
-    const std::string shaderObjCodeFileDir = StringFormat("%s%s.h", g_GlobalDirs.m_ShadersTmpDir.c_str(), permutation.m_Name.c_str());
-    const std::string shaderObjCodeVarName = StringFormat("%s_ObjCode", permutation.m_Name.c_str());
+    const std::string shaderObjCodeVarName = StringFormat("%s_%s_ObjCode", shaderTypeStr, permutation.m_Name.c_str());
+
+    std::string shaderModelStr = StringFormat("%s_%s", shaderTypeStr, ShaderModelToUse);
+    StringUtils::ToLower(shaderModelStr);
+    shaderModelStr = StringFormat(" -T %s", shaderModelStr.c_str());
 
     std::string commandLine = StringFormat("%s%s", shadersSrcDir.c_str(), parentShader.m_FileName.c_str());
     commandLine += StringFormat(" -E %s", parentShader.m_EntryPoints[shaderType].c_str());
-    commandLine += StringFormat(" -T %s_%s", EnumToString(shaderType), ShaderModelToUse);
-    commandLine += StringFormat(" -Fh %s", shaderObjCodeFileDir.c_str());
+    commandLine += shaderModelStr;
+    commandLine += StringFormat(" -Fh %s", permutation.m_ShaderObjCodeFileDir.c_str());
     commandLine += StringFormat(" -Vn %s", shaderObjCodeVarName.c_str());
     commandLine += " -nologo ";
     commandLine += " -WX ";
@@ -90,8 +98,6 @@ void CompilePermutation(const Shader& parentShader, Shader::Permutation& permuta
     // debugging stuff
     // commandLine += " -Zi -Qembed_debug -Fd " + g_ShadersTmpDir + m_ShaderName + ".pdb";
 
-    PrintToConsoleAndLogFile(StringFormat("ShaderCompileJob: %s", commandLine.c_str()));
-
     std::string errorMsg;
     if (!RunDXCCompiler(commandLine, errorMsg))
     {
@@ -100,9 +106,9 @@ void CompilePermutation(const Shader& parentShader, Shader::Permutation& permuta
         return;
     }
 
-    PrintToConsoleAndLogFile(StringFormat("Compiled %s_%s", EnumToString(shaderType), permutation.m_Name.c_str()));
+    PrintToConsoleAndLogFile(StringFormat("Compiled %s_%s", shaderTypeStr, permutation.m_Name.c_str()));
 
     // compute permutation hash
-    permutation.m_Hash = GetFileContentsHash(shaderObjCodeFileDir.c_str());
+    permutation.m_Hash = GetFileContentsHash(permutation.m_ShaderObjCodeFileDir.c_str());
     assert(permutation.m_Hash != 0);
 }

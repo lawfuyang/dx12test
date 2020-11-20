@@ -57,7 +57,8 @@ int main()
                     newShader.m_EntryPoints[i] = shaderJSON.at(entryPointName);
 
                     // Base shader permutation always exists
-                    newShader.m_Permutations[shaderType].push_back({ 0, newShader.m_Name });
+                    const std::string shaderObjCodeFileDir = StringFormat("%s%s_%s.h", g_GlobalDirs.m_ShadersTmpDir.c_str(), EnumToString(shaderType), newShader.m_Name.c_str());
+                    newShader.m_Permutations[shaderType].push_back({ 0, newShader.m_Name, shaderObjCodeFileDir });
                 }
             }
 

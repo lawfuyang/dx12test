@@ -73,12 +73,13 @@ struct Shader
     {
         uint32_t m_ShaderKey;
         std::string m_Name;
+        std::string m_ShaderObjCodeFileDir;
         std::vector<std::string> m_Defines;
         std::size_t m_Hash = 0;
     };
     std::vector<Permutation> m_Permutations[GfxShaderType_Count];
 
-    bool operator<(const Shader& rhs) const { return m_BaseShaderID < rhs.m_BaseShaderID; }
+    bool operator<(const Shader& rhs) const { return m_Name < rhs.m_Name; }
 };
 
 struct PermutationsProcessingContext
