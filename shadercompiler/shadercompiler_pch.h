@@ -96,13 +96,6 @@ struct PermutationsProcessingContext
     std::vector<RuleProperty> m_RuleProperties;
 };
 
-void AddValidPermutations(PermutationsProcessingContext& context);
-void PrintToConsoleAndLogFile(const std::string& str);
-void PrintAutogenFilesForShaderInput(const ShaderInputs& inputs);
-void PrintAutogenFileForShaderPermutationStructs(const Shader& shader);
-void CompilePermutation(const Shader& parentShader, Shader::Permutation& permutation, GfxShaderType shaderType);
-void PrintAutogenByteCodeHeadersFile(const concurrency::concurrent_vector<Shader>& allShaders);
-
 struct GlobalDirs
 {
     DeclareSingletonFunctions(GlobalDirs);
@@ -115,5 +108,12 @@ struct GlobalDirs
     std::string m_ShadersTmpCPPShaderPermutationsAutogenDir;
 };
 #define g_GlobalDirs GlobalDirs::GetInstance()
+
+void AddValidPermutations(PermutationsProcessingContext& context);
+void PrintToConsoleAndLogFile(const std::string& str);
+void PrintAutogenFilesForShaderInput(const ShaderInputs& inputs);
+void PrintAutogenFileForShaderPermutationStructs(const Shader& shader);
+void CompilePermutation(const Shader& parentShader, Shader::Permutation& permutation, GfxShaderType shaderType);
+void PrintAutogenByteCodeHeadersFile(const concurrency::concurrent_vector<Shader>& allShaders);
 
 static bool gs_CompileFailureDetected = false;

@@ -167,15 +167,17 @@ int main()
     }
     executor.run(tf).wait();
 
-    // sort all shaders to have consistent shaderbytecodes.h output
-    std::sort(allShaders.begin(), allShaders.end());
-
-    PrintAutogenByteCodeHeadersFile(allShaders);
-
     if (gs_CompileFailureDetected)
         PrintToConsoleAndLogFile("\n\nCompile failure(s) detected!\n\n");
     else
+    {
         PrintToConsoleAndLogFile("\n\nAll Shader Compilation Succeeded!\n\n");
+
+        // sort all shaders to have consistent shaderbytecodes.h output
+        std::sort(allShaders.begin(), allShaders.end());
+
+        PrintAutogenByteCodeHeadersFile(allShaders);
+    }
 
     system("pause");
     return 0;
