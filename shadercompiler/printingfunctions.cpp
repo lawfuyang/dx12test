@@ -106,8 +106,8 @@ static void PrintShaderInputHLSLFile(const ShaderInputs& inputs)
 
     // Real struct to be referenced by user
     generatedString += StringFormat("struct %s {\n", inputs.m_Name.c_str());
-    generatedString += StringFormat("    struct %s__Constants constants;\n", inputs.m_Name.c_str());
-    generatedString += StringFormat("    struct %s__Resources resources;\n\n", inputs.m_Name.c_str());
+    generatedString += StringFormat("    %s__Constants constants;\n", inputs.m_Name.c_str());
+    generatedString += StringFormat("    %s__Resources resources;\n\n", inputs.m_Name.c_str());
     for (const ShaderInputs::Constant& var : inputs.m_ConstantBuffer.m_Constants)
     {
         generatedString += StringFormat("    %s Get%s() { return constants.m_%s; }\n", var.m_Type.c_str(), var.m_Name.c_str(), var.m_Name.c_str());
@@ -222,7 +222,7 @@ void PrintAutogenByteCodeHeadersFile(const concurrency::concurrent_vector<Shader
     generatedString += "    const uint32_t m_ByteCodeSize;\n";
     generatedString += "    const std::size_t m_Hash;\n";
     generatedString += "    const uint32_t m_ShaderKey;\n";
-    generatedString += "    const std::size_t m_BaseShaderID;\n";
+    generatedString += "    const uint32_t m_BaseShaderID;\n";
     generatedString += "    const GfxShaderType m_ShaderType;\n";
     generatedString += "};\n";
 

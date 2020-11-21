@@ -42,12 +42,12 @@ public:
 
     struct HeapDesc
     {
-        D3D12_HEAP_TYPE           m_HeapType            = D3D12_HEAP_TYPE_DEFAULT;
-        D3D12_RESOURCE_DESC       m_ResourceDesc        = {};
-        D3D12_RESOURCE_STATES     m_InitialState        = D3D12_RESOURCE_STATE_COMMON;
-        D3D12_CLEAR_VALUE         m_ClearValue          = {};
-        D3D12MA::ALLOCATION_FLAGS m_AllocationFlags     = D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET;
-        const char*               m_ResourceName        = "";
+        D3D12_HEAP_TYPE           m_HeapType        = D3D12_HEAP_TYPE_DEFAULT;
+        D3D12_RESOURCE_DESC       m_ResourceDesc    = {};
+        D3D12_RESOURCE_STATES     m_InitialState    = D3D12_RESOURCE_STATE_COMMON;
+        D3D12_CLEAR_VALUE         m_ClearValue      = {};
+        D3D12MA::ALLOCATION_FLAGS m_AllocationFlags = D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET;
+        const char*               m_ResourceName    = "";
     };
     static D3D12MA::Allocation* CreateHeap(const HeapDesc&);
 
@@ -108,30 +108,6 @@ private:
     DXGI_FORMAT m_Format = DXGI_FORMAT_R16_UINT;
     uint32_t m_NumIndices = 0;
 };
-
-class GfxConstantBuffer : public GfxBufferCommon
-{
-public:
-    GfxConstantBuffer(uint32_t rootIndex, uint32_t rootOffset)
-        : m_RootIndex(rootIndex)
-        , m_RootOffset(rootOffset)
-    {}
-
-    void UploadToGPU(GfxContext& context, const void* data, uint32_t bufferSize, const char* CBName);
-
-private:
-    uint32_t m_RootIndex;
-    uint32_t m_RootOffset;
-};
-
-template <typename CBType>
-static void UploadConstantBufferToGPU(GfxContext& context, const CBType& cb)
-{
-    static_assert(CBType::ConstantBufferRegister != 0xDEADBEEF);
-
-    GfxConstantBuffer gfxCB{ CBType::ConstantBufferRegister, 0 };
-    gfxCB.UploadToGPU(context, (const void*)&cb, sizeof(CBType), CBType::Name);
-}
 
 class GfxTexture : public GfxHazardTrackedResource,
                    public GfxBufferCommon

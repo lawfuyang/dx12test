@@ -64,7 +64,7 @@ struct ShaderInputs
 
 struct Shader
 {
-    std::size_t m_BaseShaderID = 0;
+    uint32_t m_BaseShaderID = 0;
     std::string m_Name;
     std::string m_FileName;
     std::string m_EntryPoints[GfxShaderType_Count];

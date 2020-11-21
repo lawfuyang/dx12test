@@ -237,55 +237,6 @@ void GfxIndexBuffer::Initialize(GfxContext& initContext, const InitParams& initP
     }
 }
 
-void GfxConstantBuffer::UploadToGPU(GfxContext& context, const void* data, uint32_t bufferSize, const char* CBName)
-{
-    bbeProfileFunction();
-
-    assert((bbeIsAligned(bufferSize, 16))); // CBuffers are 16 bytes aligned
-
-    m_SizeInBytes = AlignUp(bufferSize, 256); // CB size is required to be 256-byte aligned.
-
-    // Create upload heap for constant buffer
-    GfxBufferCommon::HeapDesc heapDesc;
-    heapDesc.m_HeapType = D3D12_HEAP_TYPE_UPLOAD;
-    heapDesc.m_ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(m_SizeInBytes);
-    heapDesc.m_InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
-    heapDesc.m_ResourceName = CBName;
-
-    m_D3D12MABufferAllocation = CreateHeap(heapDesc);
-    assert(m_D3D12MABufferAllocation);
-
-    // init desc heap for cbuffer
-    GfxDescriptorHeap descHeap;
-    descHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
-
-    // Describe and create a constant buffer view.
-    D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-    cbvDesc.BufferLocation = m_D3D12MABufferAllocation->GetResource()->GetGPUVirtualAddress();
-    cbvDesc.SizeInBytes = m_SizeInBytes;
-
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-    gfxDevice.Dev()->CreateConstantBufferView(&cbvDesc, descHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
-
-    void* mappedMemory = nullptr;
-    DX12_CALL(m_D3D12MABufferAllocation->GetResource()->Map(0, nullptr, reinterpret_cast<void**>(&mappedMemory)));
-    memcpy(mappedMemory, data, m_SizeInBytes);
-    m_D3D12MABufferAllocation->GetResource()->Unmap(0, nullptr);
-
-    context.StageCBV(descHeap, m_RootIndex, m_RootOffset);
-
-    // free desc heap next gpu frame
-    D3D12MA::Allocation* allocCopy = m_D3D12MABufferAllocation;
-    m_D3D12MABufferAllocation = nullptr;
-    g_GfxManager.AddGraphicCommand([descHeap, allocCopy]()
-        {
-            // release CB heap
-            GfxBufferCommon::ReleaseAllocation(allocCopy);
-
-            // descHeap then goes out of scope and decrements the last ref count of ComPtr<ID3D12DescriptorHeap>, destroying it
-        });
-}
-
 ForwardDeclareSerializerFunctions(GfxTexture);
 
 void GfxTexture::Initialize(const InitParams& initParams)

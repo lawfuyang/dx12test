@@ -32,7 +32,6 @@ public:
     void SetIndexBuffer(GfxIndexBuffer& iBuffer);
     void SetRootSignature(GfxRootSignature&);
     void StageSRV(GfxTexture&, uint32_t rootIndex, uint32_t offset);
-    void StageCBV(GfxDescriptorHeap&, uint32_t rootIndex, uint32_t offset);
 
     void DirtyPSO() { m_DirtyPSO = true; }
 
@@ -40,6 +39,13 @@ public:
     static void CreateNullSRV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc);
     static void CreateNullUAV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc);
     static void CreateNullView(D3D12_DESCRIPTOR_RANGE_TYPE, D3D12_CPU_DESCRIPTOR_HANDLE destDesc);
+
+    template <typename CBType>
+    void StageCBV(const CBType& cb)
+    {
+        static_assert(CBType::ConstantBufferRegister != 0xDEADBEEF);
+        StageCBVInternal((const void*)&cb, sizeof(CBType), CBType::ConstantBufferRegister, CBType::Name);
+    }
 
     GfxCommandList&         GetCommandList() { return *m_CommandList; }
     GfxPipelineStateObject& GetPSO()         { return m_PSO; }
@@ -63,6 +69,7 @@ private:
     void StageDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptor, uint32_t rootIndex, uint32_t offset);
     void CommitStagedResources();
     void CheckStagingResourceInputs(uint32_t rootIndex, uint32_t offset, D3D12_DESCRIPTOR_RANGE_TYPE);
+    void StageCBVInternal(const void* data, uint32_t bufferSize, uint32_t cbRegister, const char* CBName);
 
     GfxCommandList*   m_CommandList                                      = nullptr;
     GfxVertexBuffer*  m_VertexBuffer                                     = nullptr;
