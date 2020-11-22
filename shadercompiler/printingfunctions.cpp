@@ -85,68 +85,48 @@ static void PrintShaderInputHLSLFile(const ShaderInputs& inputs)
     generatedString += StringFormat("#ifndef __%s_H__\n", inputs.m_Name.c_str());
     generatedString += StringFormat("#define __%s_H__\n\n", inputs.m_Name.c_str());
 
-    // constants struct
-    generatedString += StringFormat("struct %s__Constants {\n", inputs.m_Name.c_str());
-    for (const ShaderInputs::Constant& var : inputs.m_ConstantBuffer.m_Constants)
-    {
-        generatedString += StringFormat("    %s m_%s;\n", var.m_Type.c_str(), var.m_Name.c_str());
-    }
-    generatedString += "};\n\n";
-
-    // SRVs & UAVs struct
-    generatedString += StringFormat("struct %s__Resources {\n", inputs.m_Name.c_str());
-    for (uint32_t i = 0; i < ResourceType_Count; ++i)
-    {
-        for (const ShaderInputs::Resource& resource : inputs.m_Resources[i])
-        {
-            generatedString += StringFormat("    %s m_%s;\n", resource.m_Type.c_str(), resource.m_Name.c_str());
-        }
-    }
-    generatedString += "};\n\n";
-
-    // Real struct to be referenced by user
-    generatedString += StringFormat("struct %s {\n", inputs.m_Name.c_str());
-    generatedString += StringFormat("    %s__Constants constants;\n", inputs.m_Name.c_str());
-    generatedString += StringFormat("    %s__Resources resources;\n\n", inputs.m_Name.c_str());
-    for (const ShaderInputs::Constant& var : inputs.m_ConstantBuffer.m_Constants)
-    {
-        generatedString += StringFormat("    %s Get%s() { return constants.m_%s; }\n", var.m_Type.c_str(), var.m_Name.c_str(), var.m_Name.c_str());
-    }
-    generatedString += "\n";
-    for (const ShaderInputs::Resource& resource : inputs.m_Resources[SRV])
-    {
-        generatedString += StringFormat("    %s Get%s() { return resources.m_%s; };\n", resource.m_Type.c_str(), resource.m_Name.c_str(), resource.m_Name.c_str());
-    }
-    generatedString += "};\n\n";
-
-    // cbuffer declaration
+    // CBV, SRVs & UAVs bindings
     if (inputs.m_ConstantBuffer.m_Constants.size())
     {
-        generatedString += StringFormat("cbuffer %s_cbuffer : register(b%d) { %s__Constants g_%s__Constants; }\n",
-            inputs.m_Name.c_str(), inputs.m_ConstantBuffer.m_Register, inputs.m_Name.c_str(), inputs.m_Name.c_str());
+        generatedString += "// CBV Bindings\n";
+        generatedString += StringFormat("struct %s__ConstantsStruct {\n", inputs.m_Name.c_str());
+        for (const ShaderInputs::Constant& var : inputs.m_ConstantBuffer.m_Constants)
+        {
+            generatedString += StringFormat("    %s m_%s;\n", var.m_Type.c_str(), var.m_Name.c_str());
+        }
+        generatedString += "};\n";
+
+        generatedString += StringFormat("ConstantBuffer<%s__ConstantsStruct> %s__Constants : register(b%d);\n", inputs.m_Name.c_str(), inputs.m_Name.c_str(), inputs.m_ConstantBuffer.m_Register);
     }
 
-    // SRVs & UAVs bindings
     for (uint32_t i = 0; i < ResourceType_Count; ++i)
     {
+        generatedString += StringFormat("\n// %s Bindings\n", EnumToString((ResourceType)i));
         for (const ShaderInputs::Resource& resource : inputs.m_Resources[i])
         {
-            generatedString += StringFormat("%s %s_%s : register(%s%d);\n",
+            generatedString += StringFormat("%s %s__%s : register(%s%d);\n",
                 resource.m_Type.c_str(), inputs.m_Name.c_str(), resource.m_Name.c_str(), (i == SRV) ? "t" : "u", resource.m_Register);
         }
     }
-    generatedString += "\n\n";
+    generatedString += "\n";
 
-    // Helper creater function for struct
-    generatedString += StringFormat("%s Create%s() {\n", inputs.m_Name.c_str(), inputs.m_Name.c_str());
-    generatedString += StringFormat("    %s i;\n", inputs.m_Name.c_str());
-    generatedString += StringFormat("    i.constants = g_%s__Constants;\n", inputs.m_Name.c_str());
-    for (const ShaderInputs::Resource& resource : inputs.m_Resources[SRV])
+    // Public Interface
+    generatedString += "// Public Interface\n";
+    generatedString += StringFormat("struct %s {\n", inputs.m_Name.c_str());
+    generatedString += "    // CBV Interfaces\n";
+    for (const ShaderInputs::Constant& var : inputs.m_ConstantBuffer.m_Constants)
     {
-        generatedString += StringFormat("    i.resources.m_%s = %s_%s;\n", resource.m_Name.c_str(), inputs.m_Name.c_str(), resource.m_Name.c_str());
+        generatedString += StringFormat("    static %s Get%s() { return %s__Constants.m_%s; }\n", var.m_Type.c_str(), var.m_Name.c_str(), inputs.m_Name.c_str(), var.m_Name.c_str());
     }
-    generatedString += "    return i;\n";
-    generatedString += "}\n\n";
+    for (uint32_t i = 0; i < ResourceType_Count; ++i)
+    {
+        generatedString += StringFormat("\n    // %s Interfaces\n", EnumToString((ResourceType)i));
+        for (const ShaderInputs::Resource& resource : inputs.m_Resources[i])
+        {
+            generatedString += StringFormat("    static %s Get%s() { return %s__%s; };\n", resource.m_Type.c_str(), resource.m_Name.c_str(), inputs.m_Name.c_str(), resource.m_Name.c_str());
+        }
+    }
+    generatedString += "};\n\n";
 
     generatedString += StringFormat("#endif // #define __%s_H__\n", inputs.m_Name.c_str());
 

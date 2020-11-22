@@ -2,9 +2,8 @@
 
 #include "autogen/hlsl/IMGUIConsts.h"
 
-static const IMGUIConsts g_IMGUIConsts = CreateIMGUIConsts();
-static const Texture2D g_IMGUITexture = g_IMGUIConsts.GetIMGUITexture();
-static const float4x4 g_ProjMatrix    = g_IMGUIConsts.GetProjMatrix();
+static const Texture2D g_IMGUITexture = IMGUIConsts::GetIMGUITexture();
+static const float4x4 g_ProjMatrix    = IMGUIConsts::GetProjMatrix();
 
 struct VS_IN
 {
