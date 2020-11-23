@@ -163,10 +163,10 @@ constexpr uint32_t GetCompileTimeCRC32(const char* str)
 
 const std::string GetLastErrorAsString();
 
-const std::string& GetApplicationDirectory();
-const std::string& GetTempDirectory();
-const std::string& GetAssetsDirectory();
-const std::string GetDirectoryFromPath(const std::string& fullPath);
+const char* GetApplicationDirectory();
+const char* GetTempDirectory();
+const char* GetAssetsDirectory();
+const std::string GetDirectoryFromPath(const char* fullPath);
 void SplitPath(const std::string& fullPath, std::string& dir, std::string& fileName);
 void GetFilesInDirectory(std::vector<std::string>& out, const std::string& directory);
 const std::string GetFileNameFromPath(const std::string& fullPath);

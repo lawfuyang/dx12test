@@ -2,14 +2,15 @@
 static void InitializeGlobals()
 {
     // init dirs
-    g_GlobalDirs.m_ShadersTmpDir                             = GetApplicationDirectory() + "..\\tmp\\shaders\\";
+    g_GlobalDirs.m_ShadersSrcDir                             = StringFormat("%s..\\shadercompiler\\shaders", GetApplicationDirectory());
+    g_GlobalDirs.m_ShadersTmpDir                             = StringFormat("%s..\\tmp\\shaders\\", GetApplicationDirectory());
     g_GlobalDirs.m_ShadersTmpAutoGenDir                      = g_GlobalDirs.m_ShadersTmpDir + "autogen\\";
     g_GlobalDirs.m_ShadersTmpCPPAutogenDir                   = g_GlobalDirs.m_ShadersTmpAutoGenDir + "cpp\\";
     g_GlobalDirs.m_ShadersTmpHLSLAutogenDir                  = g_GlobalDirs.m_ShadersTmpAutoGenDir + "hlsl\\";
     g_GlobalDirs.m_ShadersTmpCPPShaderInputsAutogenDir       = g_GlobalDirs.m_ShadersTmpAutoGenDir + "cpp\\ShaderInputs\\";
     g_GlobalDirs.m_ShadersTmpCPPShaderPermutationsAutogenDir = g_GlobalDirs.m_ShadersTmpAutoGenDir + "cpp\\ShaderPermutations\\";
 
-    CreateDirectory(StringFormat("%s..\\tmp", GetApplicationDirectory().c_str()), nullptr);
+    CreateDirectory(StringFormat("%s..\\tmp", GetApplicationDirectory()), nullptr);
     CreateDirectory(g_GlobalDirs.m_ShadersTmpDir.c_str(), nullptr);
     CreateDirectory(g_GlobalDirs.m_ShadersTmpAutoGenDir.c_str(), nullptr);
     CreateDirectory(g_GlobalDirs.m_ShadersTmpCPPAutogenDir.c_str(), nullptr);
@@ -138,7 +139,7 @@ int main()
     InitializeGlobals();
 
     std::vector<std::string> allJSONs;
-    GetFilesInDirectory(allJSONs, StringFormat("%s%s", GetApplicationDirectory().c_str(), "..\\shadercompiler\\shaders"));
+    GetFilesInDirectory(allJSONs, g_GlobalDirs.m_ShadersSrcDir.c_str());
 
     tf::Executor executor;
     tf::Taskflow tf;

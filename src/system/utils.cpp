@@ -53,40 +53,32 @@ const std::string GetLastErrorAsString()
     return std::string{ messageBuffer };
 }
 
-const std::string& GetApplicationDirectory()
+const char* GetApplicationDirectory()
 {
-    static std::once_flag s_OnceFlag;
-    static std::string s_AppDir;
-
-    std::call_once(s_OnceFlag, [&]()
-        {
-            CHAR fileName[1024] = {};
-            ::GetModuleFileNameA(NULL, fileName, sizeof(fileName));
-            s_AppDir = GetDirectoryFromPath(fileName);
-        });
-
-    return s_AppDir;
-}
-
-const std::string& GetTempDirectory()
-{
-    static std::string s_TmpDir = GetApplicationDirectory() + "..\\tmp\\";
-    return s_TmpDir;
-}
-
-const std::string& GetAssetsDirectory()
-{
-    static std::string dir = GetApplicationDirectory() + "\\assets\\";
-    return dir;
-}
-
-const std::string GetDirectoryFromPath(const std::string& fullPath)
-{
-    if (fullPath.empty())
+    static StaticString<BBE_KB(1)> s_AppDir = []()
     {
-        return fullPath;
-    }
+        char fileName[BBE_KB(1)]{};
+        ::GetModuleFileNameA(NULL, fileName, sizeof(fileName));
+        return GetDirectoryFromPath(fileName).c_str();
+    }();
 
+    return s_AppDir.c_str();
+}
+
+const char* GetTempDirectory()
+{
+    static StaticString<BBE_KB(1)> s_TmpDir = StringFormat("%s..\\tmp\\", GetApplicationDirectory());
+    return s_TmpDir.c_str();
+}
+
+const char* GetAssetsDirectory()
+{
+    static StaticString<BBE_KB(1)> s_AssetsDir = StringFormat("%s\\assets\\", GetApplicationDirectory());
+    return s_AssetsDir.c_str();
+}
+
+const std::string GetDirectoryFromPath(const char* fullPath)
+{
     std::string ret, empty;
     SplitPath(fullPath, ret, empty);
     return ret;

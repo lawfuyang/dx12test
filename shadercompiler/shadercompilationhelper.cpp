@@ -26,7 +26,7 @@ static bool RunDXCCompiler(const std::string& inputCommandLine, std::string& err
 
     ::PROCESS_INFORMATION processInfo = {};
 
-    const std::string commandLine = StringFormat("%s..\\extern\\dxc\\dxc.exe ", GetApplicationDirectory().c_str()) + inputCommandLine;
+    const std::string commandLine = StringFormat("%s..\\extern\\dxc\\dxc.exe %s", GetApplicationDirectory(), inputCommandLine.c_str());
 
     // uncomment to see full cmdline sent to DXC
     // PrintToConsoleAndLogFile(commandLine);
@@ -73,7 +73,7 @@ void CompilePermutation(const Shader& parentShader, Shader::Permutation& permuta
     const char* shaderTypeStr = EnumToString(shaderType);
     const char* ShaderModelToUse = "6_5";
 
-    const std::string shadersSrcDir = StringFormat("%s..\\src\\graphic\\shaders\\", GetApplicationDirectory().c_str());
+    const std::string shadersSrcDir = StringFormat("%s..\\src\\graphic\\shaders\\", GetApplicationDirectory());
     const std::string shaderObjCodeVarName = StringFormat("%s_%s_ObjCode", shaderTypeStr, permutation.m_Name.c_str());
 
     std::string shaderModelStr = StringFormat("%s_%s", shaderTypeStr, ShaderModelToUse);
