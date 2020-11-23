@@ -364,7 +364,7 @@ void GfxContext::CommitStagedResources()
         heapDesc.m_HeapType = D3D12_HEAP_TYPE_UPLOAD;
         heapDesc.m_ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(stagedCBV.m_CBBytes.size());
         heapDesc.m_InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
-        heapDesc.m_ResourceName = stagedCBV.m_Name.c_str();
+        heapDesc.m_ResourceName = stagedCBV.m_Name;
 
         D3D12MA::Allocation* uploadHeap = GfxBufferCommon::CreateHeap(heapDesc);
         assert(uploadHeap);
@@ -389,7 +389,7 @@ void GfxContext::CommitStagedResources()
         const uint32_t RootOffset = 0; // TODO?
         StageDescriptor(descHeap.Dev()->GetCPUDescriptorHandleForHeapStart(), cbRegister, RootOffset);
 
-        // free desc heap next gpu frame
+        // free Descriptor & Upload heaps next gpu frame
         g_GfxManager.AddGraphicCommand([descHeap, uploadHeap]()
         {
             // release CB heap
@@ -439,7 +439,6 @@ void GfxContext::CommitStagedResources()
             destHandle.Offset(1, descriptorSize);
         }
     });
-
 }
 
 void GfxContext::DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation, uint32_t baseVertexLocation, uint32_t startInstanceLocation)

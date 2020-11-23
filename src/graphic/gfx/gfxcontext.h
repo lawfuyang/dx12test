@@ -61,7 +61,7 @@ private:
 
     struct StagedCBV
     {
-        StaticString<256> m_Name;
+        const char* m_Name;
         InplaceArray<std::byte, 256> m_CBBytes;
     };
 

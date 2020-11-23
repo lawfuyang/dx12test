@@ -41,7 +41,7 @@ VS_OUT VSMain(VS_IN input)
 #endif
 
     result.m_Position = mul(position, g_WorldMatrix);
-    result.m_Position = mul(result.m_Position, g_WorldMatrix);
+    result.m_Position = mul(result.m_Position, g_ViewProjMatrix);
     result.m_TexCoord = input.m_TexCoord;
     result.m_Bitangent = 0;
 
