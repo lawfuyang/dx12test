@@ -144,17 +144,18 @@ void GfxManager::ScheduleRenderPasses(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
 
-    auto ScheduleRenderPass = [](GfxRendererBase* renderer)
+    auto ScheduleRenderPass = [&subFlow](GfxRendererBase* renderer)
     {
         // TODO: different cmd list type based on renderer type (async compute or direct)
         GfxContext& context = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, renderer->GetName());
-        renderer->PopulateCommandList(context);
         g_GfxManager.m_ScheduledContexts.push_back(&context);
+
+        ADD_TF_TASK(subFlow, renderer->PopulateCommandList(context));
     };
 
     // Manual scheduling
-    ADD_TF_TASK(subFlow, ScheduleRenderPass(g_GfxForwardLightingPass));
-    ADD_TF_TASK(subFlow, ScheduleRenderPass(g_GfxIMGUIRenderer));
+    ScheduleRenderPass(g_GfxForwardLightingPass);
+    ScheduleRenderPass(g_GfxIMGUIRenderer);
 }
 
 void GfxManager::ScheduleCommandListsExecution()

@@ -105,6 +105,7 @@ struct GlobalDirs
     std::string m_ShadersTmpAutoGenDir;
     std::string m_ShadersTmpCPPAutogenDir;
     std::string m_ShadersTmpHLSLAutogenDir;
+    std::string m_ShadersTmpPDBAutogenDir;
     std::string m_ShadersTmpCPPShaderInputsAutogenDir;
     std::string m_ShadersTmpCPPShaderPermutationsAutogenDir;
 };

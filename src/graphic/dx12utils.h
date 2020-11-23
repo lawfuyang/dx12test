@@ -44,16 +44,12 @@ public:
     ScopedPixEvent(ID3D12GraphicsCommandList* pCommandList) noexcept
         : m_CommandList(pCommandList)
     {
-        if (g_CommandLineOptions.m_PIXCapture)
-        {
-            assert(pCommandList);
-            PIXBeginEvent(pCommandList, 0, GetD3DDebugName(pCommandList).c_str());
-        }
+        assert(pCommandList);
+        PIXBeginEvent(pCommandList, 0, GetD3DDebugName(pCommandList).c_str());
     }
     ~ScopedPixEvent()
     {
-        if (g_CommandLineOptions.m_PIXCapture)
-            PIXEndEvent(m_CommandList);
+        PIXEndEvent(m_CommandList);
     }
 
 private:

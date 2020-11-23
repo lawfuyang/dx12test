@@ -60,6 +60,7 @@
 #include <wrl.h>
 #include <windows.h>
 #include <winuser.h>
+#include <VersionHelpers.h>
 #include <concurrent_vector.h>
 #include <concurrent_queue.h>
 #include <concurrent_unordered_map.h>

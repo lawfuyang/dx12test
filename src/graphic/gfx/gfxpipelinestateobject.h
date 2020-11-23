@@ -57,7 +57,11 @@ public:
     ID3D12PipelineState* GetComputePSO(const GfxPipelineStateObject&);
 
 private:
-    void SavePSOToPipelineLibrary(ID3D12PipelineState* pso, const std::wstring& psoHashStr);
+    template <typename PSODesc>
+    ID3D12PipelineState* LoadOrSavePSOFromLibrary(const GfxPipelineStateObject& pso, const PSODesc&);
+
+    bool LoadPSOInternal(LPCWSTR pName, const D3D12_GRAPHICS_PIPELINE_STATE_DESC& pDesc, ID3D12PipelineState*& pso) { return m_PipelineLibrary->LoadGraphicsPipeline(pName, &pDesc, IID_PPV_ARGS(&pso)) != E_INVALIDARG; }
+    bool LoadPSOInternal(LPCWSTR pName, const D3D12_COMPUTE_PIPELINE_STATE_DESC& pDesc, ID3D12PipelineState*& pso) { return m_PipelineLibrary->LoadComputePipeline(pName, &pDesc, IID_PPV_ARGS(&pso)) != E_INVALIDARG; }
 
     std::mutex m_PipelineLibraryLock;
     ComPtr<ID3D12PipelineLibrary> m_PipelineLibrary;
