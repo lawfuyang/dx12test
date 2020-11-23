@@ -171,8 +171,7 @@ ID3D12PipelineState* GfxPSOManager::LoadOrSavePSOFromLibrary(const GfxPipelineSt
 {
     bbeProfileFunction();
 
-    const std::size_t psoHash = std::hash<GfxPipelineStateObject>{}(pso);
-    const StaticWString<32> psoHashStr = std::to_wstring(psoHash).c_str();
+    const StaticWString<32> psoHashStr = std::to_wstring(pso.GetHash()).c_str();
 
     // TODO: RWLock? Study perf...
     bbeAutoLock(m_PipelineLibraryLock);
@@ -181,7 +180,7 @@ ID3D12PipelineState* GfxPSOManager::LoadOrSavePSOFromLibrary(const GfxPipelineSt
     if (!LoadPSOInternal(psoHashStr.c_str(), psoDesc, psoToReturn))
     {
         bbeProfile("Create & Save PSO");
-        g_Log.info("Creating & Storing new PSO '{}' into PipelineLibrary", psoHash);
+        g_Log.info("Creating & Storing new PSO '{}' into PipelineLibrary", pso.GetHash());
 
         // A PSO with the specified name doesn’t exist, or the input desc doesn’t match the data in the library. Store it in the library for next time.
         CreatePSOInternal(psoDesc, psoToReturn);

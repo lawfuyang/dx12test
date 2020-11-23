@@ -33,8 +33,6 @@ public:
     void SetRootSignature(GfxRootSignature&);
     void StageSRV(GfxTexture&, uint32_t rootIndex, uint32_t offset);
 
-    void DirtyPSO() { m_DirtyPSO = true; }
-
     static void CreateNullCBV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc);
     static void CreateNullSRV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc);
     static void CreateNullUAV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc);
@@ -84,8 +82,9 @@ private:
 
     std::bitset<GfxRootSignature::MaxRootParams> m_StaleResourcesBitMap;
 
-    bool m_DirtyPSO        = true;
-    bool m_DirtyBuffers    = true;
+    std::size_t m_LastUsedPSOHash = 0;
+
+    bool m_DirtyBuffers = true;
 
     friend class GfxManager;
 };

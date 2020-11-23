@@ -261,9 +261,12 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
         assert(m_PSO.m_RenderTargets.RTFormats[i] != DXGI_FORMAT_UNKNOWN);
     }
 
-    if (m_DirtyPSO)
+    m_PSO.m_Hash = std::hash<GfxPipelineStateObject>{}(m_PSO);
+    if (m_LastUsedPSOHash != m_PSO.m_Hash)
     {
         bbeProfile("Set PSO Params");
+
+        m_LastUsedPSOHash = m_PSO.m_Hash;
 
         // PSO
         m_CommandList->Dev()->SetPipelineState(g_GfxPSOManager.GetGraphicsPSO(m_PSO));
@@ -447,9 +450,6 @@ void GfxContext::PreDraw()
 
 void GfxContext::PostDraw()
 {
-    // Assume user will manually dirty the flags after each draw
-    m_DirtyPSO = false;
-
     // reset dirty flag for Vertex/Index buffers
     m_DirtyBuffers = false;
 

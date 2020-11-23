@@ -26,6 +26,8 @@ public:
     CD3DX12_RASTERIZER_DESC& GetRasterizerStates() { return m_RasterizerStates; }
     CD3DX12_DEPTH_STENCIL_DESC1& GetDepthStencilStates() { return m_DepthStencilStates; }
 
+    std::size_t GetHash() const { return m_Hash; }
+
 private:
     GfxRootSignature*           m_RootSig = nullptr;
     GfxVertexFormat*            m_VertexFormat = &GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub;
@@ -39,6 +41,8 @@ private:
     CD3DX12_RASTERIZER_DESC     m_RasterizerStates{ GfxCommonStates::CullCounterClockwise };
     D3D12_RT_FORMAT_ARRAY       m_RenderTargets = {};
     DXGI_SAMPLE_DESC            m_SampleDescriptors = DefaultSampleDesc{};
+
+    std::size_t m_Hash = 0;
 
     friend class GfxContext;
     friend class GfxPSOManager;
