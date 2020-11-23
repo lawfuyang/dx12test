@@ -32,6 +32,7 @@ public:
     View& GetMainView() { return m_MainView; }
 
 private:
+    GfxContext& GenerateNewContextInternal();
     void ScheduleRenderPasses(tf::Subflow& sf);
     void ScheduleCommandListsExecution();
     void TransitionBackBufferForPresent();

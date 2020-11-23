@@ -73,9 +73,7 @@ void GfxContext::ClearRenderTargetView(GfxTexture& tex, const bbeVector4& clearC
 
     const UINT numRects = 0;
     const D3D12_RECT* pRects = nullptr;
-
-    const FLOAT colorInFloat[] = { clearColor.x, clearColor.y, clearColor.z, clearColor.w };
-    m_CommandList->Dev()->ClearRenderTargetView(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), colorInFloat, numRects, pRects);
+    m_CommandList->Dev()->ClearRenderTargetView(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), (const FLOAT*)&clearColor, numRects, pRects);
 }
 
 static void ClearDepthStencilInternal(GfxContext& gfxContext, GfxTexture& tex, float depth, uint8_t stencil, D3D12_CLEAR_FLAGS flags)
@@ -166,53 +164,20 @@ void GfxContext::SetRootSignature(GfxRootSignature& rootSig)
     }
 }
 
-// TODO: dont upload to GPU unless necessary
 void GfxContext::StageCBVInternal(const void* data, uint32_t bufferSize, uint32_t cbRegister, const char* CBName)
 {
-    bbeProfileFunction();
-
     assert((bbeIsAligned(bufferSize, 16))); // CBuffers are 16 bytes aligned
     const uint32_t sizeInBytes = AlignUp(bufferSize, 256); // CB size is required to be 256-byte aligned.
 
-    // Create upload heap for constant buffer
-    GfxBufferCommon::HeapDesc heapDesc;
-    heapDesc.m_HeapType = D3D12_HEAP_TYPE_UPLOAD;
-    heapDesc.m_ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeInBytes);
-    heapDesc.m_InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
-    heapDesc.m_ResourceName = CBName;
-
-    D3D12MA::Allocation* uploadHeap = GfxBufferCommon::CreateHeap(heapDesc);
-    assert(uploadHeap);
-
-    // init desc heap for cbuffer
-    GfxDescriptorHeap descHeap;
-    descHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
-
-    // Describe and create a constant buffer view.
-    D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-    cbvDesc.BufferLocation = uploadHeap->GetResource()->GetGPUVirtualAddress();
-    cbvDesc.SizeInBytes = sizeInBytes;
-
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-    gfxDevice.Dev()->CreateConstantBufferView(&cbvDesc, descHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
-
-    void* mappedMemory = nullptr;
-    DX12_CALL(uploadHeap->GetResource()->Map(0, nullptr, reinterpret_cast<void**>(&mappedMemory)));
-    memcpy(mappedMemory, data, sizeInBytes);
-    uploadHeap->GetResource()->Unmap(0, nullptr);
-
     const uint32_t RootOffset = 0; // TODO?
     CheckStagingResourceInputs(cbRegister, RootOffset, D3D12_DESCRIPTOR_RANGE_TYPE_CBV);
-    StageDescriptor(descHeap.Dev()->GetCPUDescriptorHandleForHeapStart(), cbRegister, RootOffset);
 
-    // free desc heap next gpu frame
-    g_GfxManager.AddGraphicCommand([descHeap, uploadHeap]()
-        {
-            // release CB heap
-            GfxBufferCommon::ReleaseAllocation(uploadHeap);
+    StagedCBV& stagedCBV = m_StagedCBVs[cbRegister];
+    stagedCBV.m_Name = CBName;
 
-            // descHeap then goes out of scope and decrements the last ref count of ComPtr<ID3D12DescriptorHeap>, destroying it
-        });
+    // copy over bytes to upload later
+    stagedCBV.m_CBBytes.resize(sizeInBytes);
+    memcpy(stagedCBV.m_CBBytes.data(), data, bufferSize);
 }
 
 void GfxContext::CheckStagingResourceInputs(uint32_t rootIndex, uint32_t offset, D3D12_DESCRIPTOR_RANGE_TYPE type)
@@ -297,7 +262,7 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
     {
         bbeProfile("Set Buffer Params");
 
-        D3D12_VERTEX_BUFFER_VIEW vBufferView;
+        D3D12_VERTEX_BUFFER_VIEW vBufferView{};
         vBufferView.BufferLocation = m_VertexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
         vBufferView.StrideInBytes = m_VertexBuffer->GetStrideInBytes();
         vBufferView.SizeInBytes = m_VertexBuffer->GetSizeInBytes();
@@ -306,7 +271,7 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
 
         if (m_IndexBuffer)
         {
-            D3D12_INDEX_BUFFER_VIEW indexBufferView;
+            D3D12_INDEX_BUFFER_VIEW indexBufferView{};
             indexBufferView.BufferLocation = m_IndexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
             indexBufferView.Format = m_IndexBuffer->GetFormat();
             indexBufferView.SizeInBytes = m_IndexBuffer->GetSizeInBytes();
@@ -388,10 +353,56 @@ void GfxContext::CommitStagedResources()
 {
     //bbeProfileFunction();
 
-    // no dirty root params. return
+    // Upload CBV bytes
+    for (const auto& elem : m_StagedCBVs)
+    {
+        const uint32_t cbRegister = elem.first;
+        const StagedCBV& stagedCBV = elem.second;
+
+        // Create upload heap for constant buffer
+        GfxBufferCommon::HeapDesc heapDesc;
+        heapDesc.m_HeapType = D3D12_HEAP_TYPE_UPLOAD;
+        heapDesc.m_ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(stagedCBV.m_CBBytes.size());
+        heapDesc.m_InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
+        heapDesc.m_ResourceName = stagedCBV.m_Name.c_str();
+
+        D3D12MA::Allocation* uploadHeap = GfxBufferCommon::CreateHeap(heapDesc);
+        assert(uploadHeap);
+
+        // init desc heap for cbuffer
+        GfxDescriptorHeap descHeap;
+        descHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
+
+        // Describe and create a constant buffer view.
+        D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
+        cbvDesc.BufferLocation = uploadHeap->GetResource()->GetGPUVirtualAddress();
+        cbvDesc.SizeInBytes = stagedCBV.m_CBBytes.size();
+
+        GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+        gfxDevice.Dev()->CreateConstantBufferView(&cbvDesc, descHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
+
+        void* mappedMemory = nullptr;
+        DX12_CALL(uploadHeap->GetResource()->Map(0, nullptr, reinterpret_cast<void**>(&mappedMemory)));
+        memcpy(mappedMemory, stagedCBV.m_CBBytes.data(), stagedCBV.m_CBBytes.size());
+        uploadHeap->GetResource()->Unmap(0, nullptr);
+
+        const uint32_t RootOffset = 0; // TODO?
+        StageDescriptor(descHeap.Dev()->GetCPUDescriptorHandleForHeapStart(), cbRegister, RootOffset);
+
+        // free desc heap next gpu frame
+        g_GfxManager.AddGraphicCommand([descHeap, uploadHeap]()
+        {
+            // release CB heap
+            GfxBufferCommon::ReleaseAllocation(uploadHeap);
+
+            // descHeap then goes out of scope and decrements the last ref count of ComPtr<ID3D12DescriptorHeap>, destroying it
+        });
+    }
+
+    // Resources
     if (m_StaleResourcesBitMap.none())
         return;
-
+    
     uint32_t numHeapsNeeded = 0;
     RunOnAllBits(m_StaleResourcesBitMap.to_ulong(), [&](uint32_t rootIndex) { numHeapsNeeded += m_StagedResources[rootIndex].m_SrcDescriptors.size(); });
     assert(numHeapsNeeded > 0);
@@ -401,33 +412,34 @@ void GfxContext::CommitStagedResources()
     // allocate shader visible heaps
     GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.Allocate(numHeapsNeeded);
 
-    const uint32_t descriptorSize = gfxDevice.Dev()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    static const uint32_t descriptorSize = gfxDevice.Dev()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     RunOnAllBits(m_StaleResourcesBitMap.to_ulong(), [&](uint32_t rootIndex)
+    {
+        // set desc heap for this table
+        m_CommandList->Dev()->SetGraphicsRootDescriptorTable(rootIndex, destHandle.m_GPUHandle);
+
+        const StagedResourceDescriptor& resourceDesc = m_StagedResources[rootIndex];
+
+        // copy descriptors to shader visible heaps 1 by 1
+        for (uint32_t i = 0; i < resourceDesc.m_SrcDescriptors.size(); ++i)
         {
-            // set desc heap for this table
-            m_CommandList->Dev()->SetGraphicsRootDescriptorTable(rootIndex, destHandle.m_GPUHandle);
+            D3D12_CPU_DESCRIPTOR_HANDLE srcDesc = resourceDesc.m_SrcDescriptors[i];
 
-            const StagedResourceDescriptor& resourceDesc = m_StagedResources[rootIndex];
-
-            // copy descriptors to shader visible heaps 1 by 1
-            for (uint32_t i = 0; i < resourceDesc.m_SrcDescriptors.size(); ++i)
+            if (srcDesc.ptr == 0)
             {
-                D3D12_CPU_DESCRIPTOR_HANDLE srcDesc = resourceDesc.m_SrcDescriptors[i];
-
-                if (srcDesc.ptr == 0)
-                {
-                    D3D12_DESCRIPTOR_RANGE_TYPE srcDescType = resourceDesc.m_SrcDescriptorTypes[i];
-                    CreateNullView(srcDescType, destHandle.m_CPUHandle);
-                }
-                else
-                {
-                    gfxDevice.Dev()->CopyDescriptorsSimple(1, destHandle.m_CPUHandle, srcDesc, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-                }
-
-                destHandle.Offset(1, descriptorSize);
+                D3D12_DESCRIPTOR_RANGE_TYPE srcDescType = resourceDesc.m_SrcDescriptorTypes[i];
+                CreateNullView(srcDescType, destHandle.m_CPUHandle);
             }
-        });
+            else
+            {
+                gfxDevice.Dev()->CopyDescriptorsSimple(1, destHandle.m_CPUHandle, srcDesc, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+            }
+
+            destHandle.Offset(1, descriptorSize);
+        }
+    });
+
 }
 
 void GfxContext::DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation, uint32_t baseVertexLocation, uint32_t startInstanceLocation)
@@ -454,4 +466,5 @@ void GfxContext::PostDraw()
     m_DirtyBuffers = false;
 
     m_StaleResourcesBitMap.reset();
+    m_StagedCBVs.clear();
 }

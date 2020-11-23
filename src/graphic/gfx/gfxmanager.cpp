@@ -146,11 +146,14 @@ void GfxManager::ScheduleRenderPasses(tf::Subflow& subFlow)
 
     auto ScheduleRenderPass = [&subFlow](GfxRendererBase* renderer)
     {
-        // TODO: different cmd list type based on renderer type (async compute or direct)
-        GfxContext& context = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, renderer->GetName());
-        g_GfxManager.m_ScheduledContexts.push_back(&context);
-
-        ADD_TF_TASK(subFlow, renderer->PopulateCommandList(context));
+        GfxContext& context = g_GfxManager.GenerateNewContextInternal();
+        if (renderer->ShouldRender(context))
+        {
+            // TODO: different cmd list type based on renderer type (async compute or direct)
+            context.Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, renderer->GetName());
+            g_GfxManager.m_ScheduledContexts.push_back(&context);
+            subFlow.emplace([&, renderer]() { renderer->PopulateCommandList(context); });// .name(StringFormat("%s::PopulateCommandList", renderer->GetName()));
+        }
     };
 
     // Manual scheduling
@@ -220,20 +223,20 @@ void GfxManager::EndFrame()
 
 GfxContext& GfxManager::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType, const std::string& name)
 {
+    GfxContext& newContext = GenerateNewContextInternal();
+    newContext.Initialize(cmdListType, name);
+
+    return newContext;
+}
+
+GfxContext& GfxManager::GenerateNewContextInternal()
+{
     bbeProfileFunction();
 
-    //g_Log.info("*** GfxManager::GenerateNewContext: {}", name);
-
-    GfxContext* newContext = [this]()
-    {
-        bbeAutoLock(m_ContextsLock);
-        GfxContext* ret = m_ContextsPool.construct();
-        m_AllContexts.push_back(ret);
-        return ret;
-    }();
-    newContext->Initialize(cmdListType, name);
-
-    return *newContext;
+    bbeAutoLock(m_ContextsLock);
+    GfxContext* ret = m_ContextsPool.construct();
+    m_AllContexts.push_back(ret);
+    return *ret;
 }
 
 void GfxManager::TransitionBackBufferForPresent()

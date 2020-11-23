@@ -59,6 +59,12 @@ private:
         std::vector<CD3DX12_CPU_DESCRIPTOR_HANDLE> m_SrcDescriptors;
     };
 
+    struct StagedCBV
+    {
+        StaticString<256> m_Name;
+        InplaceArray<std::byte, 256> m_CBBytes;
+    };
+
     void CompileAndSetGraphicsPipelineState();
     void PreDraw();
     void PostDraw();
@@ -81,6 +87,7 @@ private:
     InplaceArray<StagedResourceDescriptor, GfxRootSignature::MaxRootParams> m_StagedResources;
 
     std::bitset<GfxRootSignature::MaxRootParams> m_StaleResourcesBitMap;
+    std::unordered_map<uint32_t, StagedCBV> m_StagedCBVs;
 
     std::size_t m_LastUsedPSOHash = 0;
 

@@ -12,6 +12,7 @@ class GfxForwardLightingPass : public GfxRendererBase
 public:
     void Initialize() override;
     void ShutDown() override;
+    bool ShouldRender(GfxContext&) const override;
     void PopulateCommandList(GfxContext& context) override;
 
     const char* GetName() const override { return "GfxForwardLightingPass"; }
