@@ -16,8 +16,23 @@ static void InitializeGlobals()
     CreateDirectory(g_GlobalDirs.m_ShadersTmpAutoGenDir.c_str(), nullptr);
     CreateDirectory(g_GlobalDirs.m_ShadersTmpCPPAutogenDir.c_str(), nullptr);
     CreateDirectory(g_GlobalDirs.m_ShadersTmpHLSLAutogenDir.c_str(), nullptr);
+    CreateDirectory(g_GlobalDirs.m_ShadersTmpPDBAutogenDir.c_str(), nullptr);
     CreateDirectory(g_GlobalDirs.m_ShadersTmpCPPShaderInputsAutogenDir.c_str(), nullptr);
     CreateDirectory(g_GlobalDirs.m_ShadersTmpCPPShaderPermutationsAutogenDir.c_str(), nullptr);
+
+    CFileWrapper jsonFile{ StringFormat("%s..\\shadercompiler\\shadercompiler_options.json", GetApplicationDirectory()) };
+    json optionsJSON = json::parse(jsonFile);
+
+    try
+    {
+        gs_ShaderModelToUse = optionsJSON.at("ShaderModel");
+    }
+    catch (const std::exception& e)
+    {
+        PrintToConsoleAndLogFile(e.what());
+        system("pause");
+        std::exit(-1);
+    }
 }
 
 static void ProcessShaderPermutations(concurrency::concurrent_vector<Shader>& allShaders, json baseJSON)
@@ -57,25 +72,7 @@ static void ProcessShaderPermutations(concurrency::concurrent_vector<Shader>& al
         if (shaderPermsForTypeJSON.empty())
             continue;
 
-        PermutationsProcessingContext context{ newShader, shaderType };
-
-        // get all permutation macro define strings
-        for (const json permutationJSON : shaderPermsForTypeJSON.at("Permutations"))
-        {
-            context.m_AllPermutationsDefines.push_back(permutationJSON.get<std::string>());
-        }
-
-        // get all permutation rules
-        for (const json ruleJSON : shaderPermsForTypeJSON["Rules"])
-        {
-            PermutationsProcessingContext::RuleProperty& newProperty = context.m_RuleProperties.emplace_back();
-            newProperty.m_Rule = StringToPermutationRule(ruleJSON.at("Rule"));
-
-            for (const json affectedBitsJSON : ruleJSON.at("AffectedBits"))
-                newProperty.m_AffectedBits |= (1 << affectedBitsJSON.get<uint32_t>());
-        }
-
-        AddValidPermutations(context);
+        AddValidPermutations(newShader, shaderType, shaderPermsForTypeJSON);
     }
 
     PrintAutogenFileForShaderPermutationStructs(newShader);

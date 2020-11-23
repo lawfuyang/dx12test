@@ -82,20 +82,6 @@ struct Shader
     bool operator<(const Shader& rhs) const { return m_Name < rhs.m_Name; }
 };
 
-struct PermutationsProcessingContext
-{
-    struct RuleProperty
-    {
-        PermutationRule m_Rule;
-        uint32_t m_AffectedBits = 0;
-    };
-
-    Shader& m_Shader;
-    GfxShaderType m_Type;
-    std::vector<std::string> m_AllPermutationsDefines;
-    std::vector<RuleProperty> m_RuleProperties;
-};
-
 struct GlobalDirs
 {
     DeclareSingletonFunctions(GlobalDirs);
@@ -111,7 +97,7 @@ struct GlobalDirs
 };
 #define g_GlobalDirs GlobalDirs::GetInstance()
 
-void AddValidPermutations(PermutationsProcessingContext& context);
+void AddValidPermutations(Shader& newShader, GfxShaderType shaderType, json shaderPermsForTypeJSON);
 void PrintToConsoleAndLogFile(const std::string& str);
 void PrintAutogenFilesForShaderInput(const ShaderInputs& inputs);
 void PrintAutogenFileForShaderPermutationStructs(const Shader& shader);
@@ -119,3 +105,4 @@ void CompilePermutation(const Shader& parentShader, Shader::Permutation& permuta
 void PrintAutogenByteCodeHeadersFile(const concurrency::concurrent_vector<Shader>& allShaders);
 
 static bool gs_CompileFailureDetected = false;
+static std::string gs_ShaderModelToUse;

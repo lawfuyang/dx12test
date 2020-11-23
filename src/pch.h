@@ -74,7 +74,7 @@
 #endif
 
 #if defined(BBE_SHADERCOMPILER)
-    // json
+    // Quick & Easy JSON parsing
     #include <extern/json/json.hpp>
     using json = nlohmann::json;
 #else

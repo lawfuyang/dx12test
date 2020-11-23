@@ -65,19 +65,6 @@ static bool RunDXCCompiler(const std::string& inputCommandLine, std::string& err
     return totalRead == 0;
 }
 
-static const char* GetHighestShaderModelStr()
-{
-#if defined(NTDDI_WIN10_VB)
-    #if (NTDDI_VERSION > NTDDI_WIN10_VB)
-        return "6_5";
-    #else
-        return "6_4";
-    #endif
-#endif
-
-    return "5_1";
-}
-
 void CompilePermutation(const Shader& parentShader, Shader::Permutation& permutation, GfxShaderType shaderType)
 {
     if (gs_CompileFailureDetected)
@@ -88,7 +75,7 @@ void CompilePermutation(const Shader& parentShader, Shader::Permutation& permuta
     const std::string shadersSrcDir = StringFormat("%s..\\src\\graphic\\shaders\\", GetApplicationDirectory());
     const std::string shaderNameWithPrefix = StringFormat("%s_%s", shaderTypeStr, permutation.m_Name.c_str());
 
-    std::string shaderModelStr = StringFormat("%s_%s", shaderTypeStr, GetHighestShaderModelStr());
+    std::string shaderModelStr = StringFormat("%s_%s", shaderTypeStr, gs_ShaderModelToUse.c_str());
     StringUtils::ToLower(shaderModelStr);
     shaderModelStr = StringFormat(" -T %s", shaderModelStr.c_str());
 

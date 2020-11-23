@@ -7,10 +7,6 @@
       "Command": "--enablegfxdebuglayer"
     },
     {
-      "Id": "5ac8b453-0d42-48ea-9f22-6fc2066d1330",
-      "Command": "--gfxmemallocalwayscommitedmemory"
-    },
-    {
       "Id": "8c076c2c-7802-4a6f-b014-bae20d92a23f",
       "Command": "--resolution 1600 900"
     },
