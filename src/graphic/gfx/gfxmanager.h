@@ -35,7 +35,6 @@ private:
     GfxContext& GenerateNewContextInternal();
     void ScheduleRenderPasses(tf::Subflow& sf);
     void ScheduleCommandListsExecution();
-    void TransitionBackBufferForPresent();
     void UpdateIMGUIPropertyGrid();
 
     std::mutex m_ContextsLock;

@@ -15,14 +15,11 @@ static_assert(IsAligned(gs_IBufferGrowSize, 4));
 
 class GfxIMGUIRenderer : public GfxRendererBase
 {
-public:
     void Initialize() override;
     void ShutDown() override;
     void PopulateCommandList(GfxContext& context) override;
-
     const char* GetName() const override { return "GfxIMGUIRenderer"; }
 
-private:
     void InitFontsTexture();
     void GrowBuffers(const IMGUIDrawData& imguiDrawData, GfxContext* context = nullptr);
     void UploadBufferData(const IMGUIDrawData& imguiDrawData);

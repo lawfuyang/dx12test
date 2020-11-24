@@ -16,7 +16,6 @@ public:
     GfxTexture& GetCurrentBackBuffer() { return m_RenderTargets[m_FrameIndex]; }
 
     void Initialize();
-    void TransitionBackBufferForPresent(GfxContext&);
     void Present();
 
 private:

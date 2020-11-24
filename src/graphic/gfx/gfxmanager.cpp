@@ -5,6 +5,7 @@
 
 static bool gs_ShowGfxManagerIMGUIWindow = false;
 
+extern GfxRendererBase* g_GfxBackBufferTransitionRenderer;
 extern GfxRendererBase* g_GfxForwardLightingPass;
 extern GfxRendererBase* g_GfxIMGUIRenderer;
 extern GfxTexture g_SceneDepthBuffer;
@@ -148,6 +149,7 @@ void GfxManager::ScheduleRenderPasses(tf::Subflow& subFlow)
     // Manual scheduling
     ScheduleRenderPass(g_GfxForwardLightingPass);
     ScheduleRenderPass(g_GfxIMGUIRenderer);
+    ScheduleRenderPass(g_GfxBackBufferTransitionRenderer);
 }
 
 void GfxManager::ScheduleCommandListsExecution()
@@ -162,9 +164,6 @@ void GfxManager::ScheduleCommandListsExecution()
 
     // immediately clear array of scheduled renderers after queueing them for execution
     m_ScheduledContexts.clear();
-
-    // No more draw calls directly to the Back Buffer beyond this point!
-    TransitionBackBufferForPresent();
 
     // execute all command lists
     m_GfxDevice.Flush();
@@ -226,18 +225,6 @@ GfxContext& GfxManager::GenerateNewContextInternal()
     GfxContext* ret = m_ContextsPool.construct();
     m_AllContexts.push_back(ret);
     return *ret;
-}
-
-void GfxManager::TransitionBackBufferForPresent()
-{
-    bbeProfileFunction();
-
-    GfxContext& context = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "TransitionBackBufferForPresent");
-    SetD3DDebugName(context.GetCommandList().Dev(), "TransitionBackBufferForPresent");
-
-    m_SwapChain.TransitionBackBufferForPresent(context);
-
-    g_GfxCommandListsManager.QueueCommandListToExecute(context.GetCommandList(), context.GetCommandList().GetType());
 }
 
 void GfxManager::UpdateIMGUIPropertyGrid()

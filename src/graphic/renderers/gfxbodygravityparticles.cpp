@@ -3,10 +3,8 @@
 
 class GfxBodyGravityParticlesUpdate : public GfxRendererBase
 {
-public:
     void Initialize() override;
     void PopulateCommandList(GfxContext& context) override;
-
     const char* GetName() const override { return "GfxBodyGravityParticlesUpdate"; }
 
     GfxRootSignature* m_RootSignature = nullptr;

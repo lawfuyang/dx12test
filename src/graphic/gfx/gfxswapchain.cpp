@@ -7,8 +7,6 @@ void GfxSwapChain::Initialize()
 
     assert(m_SwapChain.Get() == nullptr);
 
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-
     // Describe and create the swap chain.
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
     swapChainDesc.Width = g_CommandLineOptions.m_WindowWidth;
@@ -56,13 +54,6 @@ void GfxSwapChain::ShutDown()
     {
         tex.Release();
     }
-}
-
-void GfxSwapChain::TransitionBackBufferForPresent(GfxContext& context)
-{
-    bbeProfileFunction();
-
-    context.TransitionResource(m_RenderTargets[m_FrameIndex], D3D12_RESOURCE_STATE_PRESENT, true);
 }
 
 void GfxSwapChain::Present()
