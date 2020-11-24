@@ -60,12 +60,20 @@ struct CommandLineOptions
 
     void Parse();
 
-    bool     m_EnableGfxDebugLayer             = false;
-    bool     m_GfxMemAllocAlwaysCommitedMemory = false;
-    bool     m_PIXCapture                      = false;
-    bool     m_ProfileInit                     = false;
-    bool     m_ProfileShutdown                 = false;
-    uint32_t m_WindowWidth                     = 1600;
-    uint32_t m_WindowHeight                    = 900;
+    bool     m_PIXCapture      = false;
+    bool     m_ProfileInit     = false;
+    bool     m_ProfileShutdown = false;
+    uint32_t m_WindowWidth     = 1600;
+    uint32_t m_WindowHeight    = 900;
+
+    struct GfxDebugLayer
+    {
+        bool m_Enabled                                 = false;
+        bool m_BreakOnWarnings                         = false;
+        bool m_BreakOnErrors                           = false;
+        bool m_EnableGPUValidation                     = false;
+        bool m_SynchronizedCommandQueueValidation      = false;
+        bool m_EnableConservativeResourceStateTracking = false;
+    } m_GfxDebugLayer;
 };
 #define g_CommandLineOptions CommandLineOptions::GetInstance()

@@ -10,39 +10,36 @@
 #include <graphic/gfx/gfxshadermanager.h>
 #include <graphic/gfx/gfxtexturesandbuffers.h>
 
-const bool g_BreakOnWarnings                         = true;
-const bool g_BreakOnErrors                           = true;
-const bool g_EnableGPUValidation                     = false; // TODO: investigate _com_error
-const bool g_SynchronizedCommandQueueValidation      = true;
-const bool g_DisableStateTracking                    = false;
-const bool g_EnableConservativeResourceStateTracking = true;
-
-static void EnableD3D12DebugLayer()
+static void ConfigureDebugLayerBeforeDeviceCreation()
 {
+    if (!g_CommandLineOptions.m_GfxDebugLayer.m_Enabled)
+        return;
+
     bbeProfileFunction();
     g_Log.info("Enabling D3D12 Debug Layer");
 
     ComPtr<ID3D12Debug> debugController;
-    if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
-    {
-        debugController->EnableDebugLayer();
+    if (FAILED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
+        return;
 
-        ComPtr<ID3D12Debug1> debugController1;
-        if (SUCCEEDED(debugController->QueryInterface(IID_PPV_ARGS(&debugController1))))
-        {
-            g_Log.info("    GPU Based Validation: {}", g_EnableGPUValidation);
-            g_Log.info("    Synchronized Command Queue Validation: {}", g_SynchronizedCommandQueueValidation);
-            debugController1->SetEnableGPUBasedValidation(g_EnableGPUValidation);
-            debugController1->SetEnableSynchronizedCommandQueueValidation(g_SynchronizedCommandQueueValidation);
-        }
+    debugController->EnableDebugLayer();
 
-        ComPtr<ID3D12Debug2> debugController2;
-        if (SUCCEEDED(debugController->QueryInterface(IID_PPV_ARGS(&debugController2))))
-        {
-            g_Log.info("    Disable State Tracking: {}", g_DisableStateTracking);
-            debugController2->SetGPUBasedValidationFlags(g_DisableStateTracking ? D3D12_GPU_BASED_VALIDATION_FLAGS_DISABLE_STATE_TRACKING : D3D12_GPU_BASED_VALIDATION_FLAGS_NONE);
-        }
-    }
+    ComPtr<ID3D12Debug1> debugController1;
+    if (FAILED(debugController->QueryInterface(IID_PPV_ARGS(&debugController1))))
+        return;
+
+    debugController1->SetEnableGPUBasedValidation(g_CommandLineOptions.m_GfxDebugLayer.m_EnableGPUValidation);
+    debugController1->SetEnableSynchronizedCommandQueueValidation(g_CommandLineOptions.m_GfxDebugLayer.m_SynchronizedCommandQueueValidation);
+
+    ComPtr<ID3D12Debug2> debugController2;
+    if (FAILED(debugController1->QueryInterface(IID_PPV_ARGS(&debugController2))))
+        return;
+
+    debugController2->SetGPUBasedValidationFlags(D3D12_GPU_BASED_VALIDATION_FLAGS_NONE);
+
+    ComPtr<ID3D12Debug3> debugController3;
+    if (FAILED(debugController2->QueryInterface(IID_PPV_ARGS(&debugController3))))
+        return;
 }
 
 void GfxDevice::Initialize()
@@ -50,12 +47,9 @@ void GfxDevice::Initialize()
     bbeProfileFunction();
     g_Log.info("Initializing GfxDevice");
 
-    if (g_CommandLineOptions.m_EnableGfxDebugLayer)
-    {
-        EnableD3D12DebugLayer();
-    }
+    ConfigureDebugLayerBeforeDeviceCreation();
 
-    constexpr D3D_FEATURE_LEVEL featureLevels[] =
+    const D3D_FEATURE_LEVEL featureLevels[] =
     {
         D3D_FEATURE_LEVEL_12_1,
         D3D_FEATURE_LEVEL_12_0,
@@ -75,12 +69,9 @@ void GfxDevice::Initialize()
             break;
         }
     }
-    assert(m_D3DDevice.Get() != nullptr);
+    assert(m_D3DDevice);
 
-    if (g_CommandLineOptions.m_EnableGfxDebugLayer)
-    {
-        ConfigureDebugLayer();
-    }
+    ConfigureDebugLayerAfterDeviceCreation();
 
     m_GfxFence.Initialize();
 
@@ -108,25 +99,23 @@ void GfxDevice::CheckStatus()
     assert(result != DXGI_ERROR_INVALID_CALL);
 }
 
-void GfxDevice::ConfigureDebugLayer()
+void GfxDevice::ConfigureDebugLayerAfterDeviceCreation()
 {
+    if (!g_CommandLineOptions.m_GfxDebugLayer.m_Enabled)
+        return;
+
     bbeProfileFunction();
 
     ComPtr<ID3D12DebugDevice1> debugDevice1;
     if (SUCCEEDED(Dev()->QueryInterface(IID_PPV_ARGS(&debugDevice1))))
     {
-        g_Log.info("Configuring D3D12 Debug Layer...");
-        g_Log.info("    Enable Conservative Resource State Tracking: {}", g_EnableConservativeResourceStateTracking);
-        if constexpr (g_EnableConservativeResourceStateTracking)
+        if (g_CommandLineOptions.m_GfxDebugLayer.m_EnableConservativeResourceStateTracking)
         {
-            const D3D12_DEBUG_FEATURE debugFeatures
-            {
-                D3D12_DEBUG_FEATURE_ALLOW_BEHAVIOR_CHANGING_DEBUG_AIDS | D3D12_DEBUG_FEATURE_CONSERVATIVE_RESOURCE_STATE_TRACKING
-            };
+            const D3D12_DEBUG_FEATURE debugFeatures = D3D12_DEBUG_FEATURE_ALLOW_BEHAVIOR_CHANGING_DEBUG_AIDS | D3D12_DEBUG_FEATURE_CONSERVATIVE_RESOURCE_STATE_TRACKING;
             debugDevice1->SetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_FEATURE_FLAGS, &debugFeatures, sizeof(debugFeatures));
         }
 
-        if constexpr (g_EnableGPUValidation)
+        if (g_CommandLineOptions.m_GfxDebugLayer.m_EnableGPUValidation)
         {
             const D3D12_DEBUG_DEVICE_GPU_BASED_VALIDATION_SETTINGS gpuValidationSettings
             {
@@ -138,13 +127,12 @@ void GfxDevice::ConfigureDebugLayer()
         }
     }
 
+    // Filter unwanted gfx warnings/errors
     ComPtr<ID3D12InfoQueue> debugInfoQueue;
     DX12_CALL(Dev()->QueryInterface(__uuidof(ID3D12InfoQueue), (LPVOID*)&debugInfoQueue));
 
-    g_Log.info("    Break on Warnings: {}", g_BreakOnWarnings);
-    g_Log.info("    Break on Errors: {}", g_BreakOnErrors);
-    debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, g_BreakOnWarnings);
-    debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, g_BreakOnErrors);
+    debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, g_CommandLineOptions.m_GfxDebugLayer.m_BreakOnWarnings);
+    debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, g_CommandLineOptions.m_GfxDebugLayer.m_BreakOnErrors);
 
     D3D12_MESSAGE_ID warningsToIgnore[] =
     {
@@ -241,8 +229,10 @@ void GfxMemoryAllocator::Initialize()
 
     g_Log.info("Initializing D3D12 Memory Allocator");
 
+    static bool s_AlwaysCommitedMemory = false;
+
     D3D12MA::ALLOCATOR_DESC desc{};
-    desc.Flags = g_CommandLineOptions.m_GfxMemAllocAlwaysCommitedMemory ? D3D12MA::ALLOCATOR_FLAG_ALWAYS_COMMITTED : D3D12MA::ALLOCATOR_FLAG_NONE;
+    desc.Flags = s_AlwaysCommitedMemory ? D3D12MA::ALLOCATOR_FLAG_ALWAYS_COMMITTED : D3D12MA::ALLOCATOR_FLAG_NONE;
     desc.pDevice = g_GfxManager.GetGfxDevice().Dev();
     desc.pAdapter = g_GfxAdapter.GetAllAdapters()[0].Get(); // Just get first adapter
 

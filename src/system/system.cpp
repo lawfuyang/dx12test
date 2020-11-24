@@ -191,8 +191,7 @@ void CommandLineOptions::Parse()
     parser.add_argument("--profileinit", "profileinit");
     parser.add_argument("--profileshutdown", "profileshutdown");
     parser.add_argument("--resolution", "resolution");
-    parser.add_argument("--gfxmemallocalwayscommitedmemory", "gfxmemallocalwayscommitedmemory");
-    parser.add_argument("--enablegfxdebuglayer", "enablegfxdebuglayer");
+    parser.add_argument("--gfxdebuglayer", "gfxdebuglayer");
 
     try
     {
@@ -206,14 +205,27 @@ void CommandLineOptions::Parse()
     m_PIXCapture                      = parser.exists("pixcapture");
     m_ProfileInit                     = parser.exists("profileinit");
     m_ProfileShutdown                 = parser.exists("profileshutdown");
-    m_GfxMemAllocAlwaysCommitedMemory = parser.exists("gfxmemallocalwayscommitedmemory");
-    m_EnableGfxDebugLayer             = parser.exists("enablegfxdebuglayer");
 
     if (parser.exists("resolution"))
     {
         const std::vector<uint32_t> resolution = parser.getv<uint32_t>("resolution");
         m_WindowWidth = resolution[0];
         m_WindowHeight = resolution[1];
+    }
+
+    if (parser.exists("gfxdebuglayer"))
+    {
+        m_GfxDebugLayer.m_Enabled = true;
+
+        const std::vector<std::string> args = parser.getv<std::string>("gfxdebuglayer");
+        for (const std::string& str : args)
+        {
+            if (str.find("breakonwarnings") != std::string::npos) { m_GfxDebugLayer.m_BreakOnWarnings = true; }
+            else if (str.find("breakonerrors") != std::string::npos) { m_GfxDebugLayer.m_BreakOnErrors = true; }
+            else if (str.find("gpuvalidation") != std::string::npos) { m_GfxDebugLayer.m_EnableGPUValidation = true; }
+            else if (str.find("cmdqueuevalidation") != std::string::npos) { m_GfxDebugLayer.m_SynchronizedCommandQueueValidation = true; }
+            else if (str.find("resourcestatetracking") != std::string::npos) { m_GfxDebugLayer.m_EnableConservativeResourceStateTracking = true; }
+        }
     }
 
     const std::vector<std::string> unusedArgs = parser.getv<std::string>("");

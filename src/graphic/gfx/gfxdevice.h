@@ -31,7 +31,7 @@ public:
     D3D_ROOT_SIGNATURE_VERSION GetHighSupportedRootSignature() const { return m_RootSigSupport.HighestVersion; }
 
 private:
-    void ConfigureDebugLayer();
+    void ConfigureDebugLayerAfterDeviceCreation();
     void CheckFeaturesSupports();
 
     GfxFence m_GfxFence;

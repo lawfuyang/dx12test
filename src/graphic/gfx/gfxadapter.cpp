@@ -8,7 +8,7 @@ void GfxAdapter::Initialize()
 
     {
         bbeProfile("CreateDXGIFactory2");
-        const UINT factoryFlags = g_CommandLineOptions.m_EnableGfxDebugLayer ? DXGI_CREATE_FACTORY_DEBUG : 0;
+        const UINT factoryFlags = g_CommandLineOptions.m_GfxDebugLayer.m_Enabled ? DXGI_CREATE_FACTORY_DEBUG : 0;
         DX12_CALL(CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&m_DXGIFactory)));
     }
 
