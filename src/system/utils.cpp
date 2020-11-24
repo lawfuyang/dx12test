@@ -138,7 +138,6 @@ const std::string GetFileExtensionFromPath(const std::string& fullPath)
 CFileWrapper::CFileWrapper(const char* fileName, bool isReadMode)
 {
     m_File = fopen(fileName, isReadMode ? "r" : "w");
-    assert(m_File);
 }
 
 CFileWrapper::~CFileWrapper()

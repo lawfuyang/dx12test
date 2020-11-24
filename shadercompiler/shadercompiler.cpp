@@ -1,9 +1,11 @@
 
 static void InitializeGlobals()
 {
+    const std::string tmpDir = StringFormat("%s..\\tmp\\", GetApplicationDirectory());
+
     // init dirs
     g_GlobalDirs.m_ShadersSrcDir                             = StringFormat("%s..\\shadercompiler\\shaders", GetApplicationDirectory());
-    g_GlobalDirs.m_ShadersTmpDir                             = StringFormat("%s..\\tmp\\shaders\\", GetApplicationDirectory());
+    g_GlobalDirs.m_ShadersTmpDir                             = StringFormat("%sshaders\\", tmpDir.c_str());
     g_GlobalDirs.m_ShadersTmpAutoGenDir                      = g_GlobalDirs.m_ShadersTmpDir + "autogen\\";
     g_GlobalDirs.m_ShadersTmpCPPAutogenDir                   = g_GlobalDirs.m_ShadersTmpAutoGenDir + "cpp\\";
     g_GlobalDirs.m_ShadersTmpHLSLAutogenDir                  = g_GlobalDirs.m_ShadersTmpAutoGenDir + "hlsl\\";
@@ -20,11 +22,23 @@ static void InitializeGlobals()
     CreateDirectory(g_GlobalDirs.m_ShadersTmpCPPShaderInputsAutogenDir.c_str(), nullptr);
     CreateDirectory(g_GlobalDirs.m_ShadersTmpCPPShaderPermutationsAutogenDir.c_str(), nullptr);
 
-    CFileWrapper jsonFile{ StringFormat("%s..\\shadercompiler\\shadercompiler_options.json", GetApplicationDirectory()) };
-    json optionsJSON = json::parse(jsonFile);
+    const std::string jsonDir = StringFormat("%sshadercompiler_options.json", tmpDir.c_str());
+    CFileWrapper jsonFile{ jsonDir.c_str() };
+
+    // use default shader if no json file found
+    if (!jsonFile)
+    {
+        json defaultJSON;
+        defaultJSON["ShaderModel"] = gs_ShaderModelToUse;
+        
+        std::ofstream outStream{ jsonDir };
+        outStream << defaultJSON;
+        return;
+    }
 
     try
     {
+        json optionsJSON = json::parse(jsonFile);
         gs_ShaderModelToUse = optionsJSON.at("ShaderModel");
     }
     catch (const std::exception& e)

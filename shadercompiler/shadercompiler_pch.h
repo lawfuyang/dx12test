@@ -105,4 +105,4 @@ void CompilePermutation(const Shader& parentShader, Shader::Permutation& permuta
 void PrintAutogenByteCodeHeadersFile(const concurrency::concurrent_vector<Shader>& allShaders);
 
 static bool gs_CompileFailureDetected = false;
-static std::string gs_ShaderModelToUse;
+static std::string gs_ShaderModelToUse = "6_4";
