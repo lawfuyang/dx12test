@@ -46,7 +46,6 @@ void GfxRootSignature::Compile(CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t num
 {
     assert(numRootParams < MaxRootParams);
     assert(m_RootSignature.Get() == nullptr);
-    assert(m_RootParams.empty());
 
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
     const D3D_ROOT_SIGNATURE_VERSION highestRootSigVer = gfxDevice.GetHighSupportedRootSignature();
@@ -61,9 +60,26 @@ void GfxRootSignature::Compile(CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t num
     DX12_CALL(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, highestRootSigVer, &signature, &error));
     DX12_CALL(gfxDevice.Dev()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature)));
 
-    // copy root params to an internal array so GfxContext can parse through them
-    m_RootParams.resize(numRootParams);
-    memcpy(m_RootParams.data(), rootParams, sizeof(CD3DX12_ROOT_PARAMETER1) * numRootParams);
+    // parse root sig to prepare container of staged resources' descriptors
+    for (uint32_t i = 0; i < numRootParams; ++i)
+    {
+        StagedResourcesDescriptors& param = m_Params.emplace_back();
+
+        // No descriptor staging and copying needed for root params & constants
+        if (rootParams[i].ParameterType != D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE)
+            continue;
+
+        const D3D12_ROOT_DESCRIPTOR_TABLE1& rootTable = rootParams[i].DescriptorTable;
+        for (uint32_t rangeIdx = 0; rangeIdx < rootTable.NumDescriptorRanges; ++rangeIdx)
+        {
+            const D3D12_DESCRIPTOR_RANGE1& range = rootTable.pDescriptorRanges[rangeIdx];
+            for (uint32_t i = 0; i < range.NumDescriptors; ++i)
+            {
+                param.m_Types.push_back(range.RangeType);
+                param.m_Descriptors.emplace_back(CD3DX12_DEFAULT{});
+            }
+        }
+    }
 
     m_RootSignature->SetName(StringUtils::Utf8ToWide(rootSigName).c_str());
 }
@@ -91,7 +107,7 @@ GfxRootSignature* GfxRootSignatureManager::GetOrCreateRootSig(CD3DX12_DESCRIPTOR
     if (rootSig.m_RootSignature.Get() != nullptr)
     {
         assert(rootSig.m_Hash != 0);
-        assert(!rootSig.m_RootParams.empty());
+        assert(!rootSig.m_Params.empty());
         return &rootSig;
     }
 

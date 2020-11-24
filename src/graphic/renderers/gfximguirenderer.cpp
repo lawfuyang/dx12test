@@ -24,9 +24,8 @@ void GfxIMGUIRenderer::Initialize()
     void* dummyDrawData = nullptr;
     GrowBuffers(*(const IMGUIDrawData*)dummyDrawData);
 
-    // Keep ranges static so GfxContext can parse through them
     // Perfomance TIP: Order from most frequent to least frequent.
-    static CD3DX12_DESCRIPTOR_RANGE1 ranges[2];
+    CD3DX12_DESCRIPTOR_RANGE1 ranges[2];
     ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
     ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 

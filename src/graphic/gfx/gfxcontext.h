@@ -33,11 +33,6 @@ public:
     void SetRootSignature(GfxRootSignature&);
     void StageSRV(GfxTexture&, uint32_t rootIndex, uint32_t offset);
 
-    static void CreateNullCBV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc);
-    static void CreateNullSRV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc);
-    static void CreateNullUAV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc);
-    static void CreateNullView(D3D12_DESCRIPTOR_RANGE_TYPE, D3D12_CPU_DESCRIPTOR_HANDLE destDesc);
-
     template <typename CBType>
     void StageCBV(const CBType& cb)
     {
@@ -53,12 +48,6 @@ public:
     void DrawIndexedInstanced(uint32_t IndexCountPerInstance, uint32_t InstanceCount, uint32_t StartIndexLocation, uint32_t BaseVertexLocation, uint32_t StartInstanceLocation);
 
 private:
-    struct StagedResourceDescriptor
-    {
-        std::vector<D3D12_DESCRIPTOR_RANGE_TYPE> m_SrcDescriptorTypes;
-        std::vector<CD3DX12_CPU_DESCRIPTOR_HANDLE> m_SrcDescriptors;
-    };
-
     struct StagedCBV
     {
         const char* m_Name;
@@ -84,7 +73,7 @@ private:
     GfxPipelineStateObject m_PSO;
 
     InplaceArray<D3D12_RESOURCE_BARRIER, 16> m_ResourceBarriers;
-    InplaceArray<StagedResourceDescriptor, GfxRootSignature::MaxRootParams> m_StagedResources;
+    GfxRootSignature::RootSigParams m_StagedResources;
 
     std::bitset<GfxRootSignature::MaxRootParams> m_StaleResourcesBitMap;
     std::unordered_map<uint32_t, StagedCBV> m_StagedCBVs;

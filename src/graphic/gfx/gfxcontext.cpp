@@ -6,42 +6,6 @@
 #include <graphic/gfx/gfxtexturesandbuffers.h>
 #include <graphic/gfx/gfxrootsignature.h>
 
-void GfxContext::CreateNullCBV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc)
-{
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-
-    D3D12_CONSTANT_BUFFER_VIEW_DESC nullCBDesc = {};
-    gfxDevice.Dev()->CreateConstantBufferView(&nullCBDesc, destDesc);
-}
-
-void GfxContext::CreateNullSRV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc)
-{
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-
-    CD3D12_SHADER_RESOURCE_VIEW_DESC desc{ D3D12_SRV_DIMENSION_TEXTURE2D, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 1 };
-    gfxDevice.Dev()->CreateShaderResourceView(nullptr, &desc, destDesc);
-}
-
-void GfxContext::CreateNullUAV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc)
-{
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-
-    CD3D12_UNORDERED_ACCESS_VIEW_DESC desc{ D3D12_UAV_DIMENSION_BUFFER, DXGI_FORMAT_R8G8B8A8_UNORM };
-    gfxDevice.Dev()->CreateUnorderedAccessView(nullptr, nullptr, &desc, destDesc);
-}
-
-void GfxContext::CreateNullView(D3D12_DESCRIPTOR_RANGE_TYPE type, D3D12_CPU_DESCRIPTOR_HANDLE destHandle)
-{
-    switch (type)
-    {
-    case D3D12_DESCRIPTOR_RANGE_TYPE_SRV: CreateNullSRV(destHandle); break;
-    case D3D12_DESCRIPTOR_RANGE_TYPE_UAV: CreateNullUAV(destHandle); break;
-    case D3D12_DESCRIPTOR_RANGE_TYPE_CBV: CreateNullCBV(destHandle); break;
-
-    default: assert(0);
-    }
-}
-
 void GfxContext::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, const std::string& name)
 {
     m_CommandList = g_GfxCommandListsManager.Allocate(cmdListType, name);
@@ -137,31 +101,10 @@ void GfxContext::SetRootSignature(GfxRootSignature& rootSig)
 
     // Upon setting a new Root Signature, ALL staged resources will be set to null views!
     // Make sure you double check after setting a new root sig
-    m_StagedResources.clear();
+    m_StagedResources = rootSig.m_Params;
 
     m_PSO.SetRootSignature(rootSig);
     m_CommandList->Dev()->SetGraphicsRootSignature(rootSig.Dev());
-    
-    // parse root sig to prepare container of staged resources' descriptors
-    for (const CD3DX12_ROOT_PARAMETER1& rootParam : rootSig.m_RootParams)
-    {
-        StagedResourceDescriptor& newDesc = m_StagedResources.emplace_back();
-
-        // No descriptor staging and copying needed for root params & constants
-        if (rootParam.ParameterType != D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE)
-            continue;
-
-        const D3D12_ROOT_DESCRIPTOR_TABLE1& rootTable = rootParam.DescriptorTable;
-        for (uint32_t rangeIdx = 0; rangeIdx < rootTable.NumDescriptorRanges; ++rangeIdx)
-        {
-            const D3D12_DESCRIPTOR_RANGE1& range = rootTable.pDescriptorRanges[rangeIdx];
-            for (uint32_t i = 0; i < range.NumDescriptors; ++i)
-            {
-                newDesc.m_SrcDescriptorTypes.push_back(range.RangeType);
-                newDesc.m_SrcDescriptors.emplace_back(CD3DX12_DEFAULT{});
-            }
-        }
-    }
 }
 
 void GfxContext::StageCBVInternal(const void* data, uint32_t bufferSize, uint32_t cbRegister, const char* CBName)
@@ -184,8 +127,8 @@ void GfxContext::CheckStagingResourceInputs(uint32_t rootIndex, uint32_t offset,
 {
     assert(rootIndex < GfxRootSignature::MaxRootParams);
     assert(rootIndex < m_StagedResources.size());
-    assert(offset < m_StagedResources[rootIndex].m_SrcDescriptors.size());
-    assert(m_StagedResources[rootIndex].m_SrcDescriptorTypes[offset] == type);
+    assert(offset < m_StagedResources[rootIndex].m_Descriptors.size());
+    assert(m_StagedResources[rootIndex].m_Types[offset] == type);
 }
 
 void GfxContext::StageSRV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
@@ -196,7 +139,7 @@ void GfxContext::StageSRV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
 
 void GfxContext::StageDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptor, uint32_t rootIndex, uint32_t offset)
 {
-    D3D12_CPU_DESCRIPTOR_HANDLE& destDesc = m_StagedResources[rootIndex].m_SrcDescriptors[offset];
+    D3D12_CPU_DESCRIPTOR_HANDLE& destDesc = m_StagedResources[rootIndex].m_Descriptors[offset];
 
     if (destDesc.ptr == srcDescriptor.ptr)
         return;
@@ -349,6 +292,42 @@ void GfxContext::InsertUAVBarrier(GfxHazardTrackedResource& resource, bool flush
         FlushResourceBarriers();
 }
 
+static void CreateNullCBV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc)
+{
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+
+    D3D12_CONSTANT_BUFFER_VIEW_DESC nullCBDesc = {};
+    gfxDevice.Dev()->CreateConstantBufferView(&nullCBDesc, destDesc);
+}
+
+static void CreateNullSRV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc)
+{
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+
+    CD3D12_SHADER_RESOURCE_VIEW_DESC desc{ D3D12_SRV_DIMENSION_TEXTURE2D, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 1 };
+    gfxDevice.Dev()->CreateShaderResourceView(nullptr, &desc, destDesc);
+}
+
+static void CreateNullUAV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc)
+{
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+
+    CD3D12_UNORDERED_ACCESS_VIEW_DESC desc{ D3D12_UAV_DIMENSION_BUFFER, DXGI_FORMAT_R8G8B8A8_UNORM };
+    gfxDevice.Dev()->CreateUnorderedAccessView(nullptr, nullptr, &desc, destDesc);
+}
+
+static void CreateNullView(D3D12_DESCRIPTOR_RANGE_TYPE type, D3D12_CPU_DESCRIPTOR_HANDLE destHandle)
+{
+    switch (type)
+    {
+    case D3D12_DESCRIPTOR_RANGE_TYPE_SRV: CreateNullSRV(destHandle); break;
+    case D3D12_DESCRIPTOR_RANGE_TYPE_UAV: CreateNullUAV(destHandle); break;
+    case D3D12_DESCRIPTOR_RANGE_TYPE_CBV: CreateNullCBV(destHandle); break;
+
+    default: assert(0);
+    }
+}
+
 void GfxContext::CommitStagedResources()
 {
     //bbeProfileFunction();
@@ -404,7 +383,7 @@ void GfxContext::CommitStagedResources()
         return;
     
     uint32_t numHeapsNeeded = 0;
-    RunOnAllBits(m_StaleResourcesBitMap.to_ulong(), [&](uint32_t rootIndex) { numHeapsNeeded += m_StagedResources[rootIndex].m_SrcDescriptors.size(); });
+    RunOnAllBits(m_StaleResourcesBitMap.to_ulong(), [&](uint32_t rootIndex) { numHeapsNeeded += m_StagedResources[rootIndex].m_Descriptors.size(); });
     assert(numHeapsNeeded > 0);
 
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
@@ -419,16 +398,16 @@ void GfxContext::CommitStagedResources()
         // set desc heap for this table
         m_CommandList->Dev()->SetGraphicsRootDescriptorTable(rootIndex, destHandle.m_GPUHandle);
 
-        const StagedResourceDescriptor& resourceDesc = m_StagedResources[rootIndex];
+        const GfxRootSignature::StagedResourcesDescriptors& resourceDesc = m_StagedResources[rootIndex];
 
         // copy descriptors to shader visible heaps 1 by 1
-        for (uint32_t i = 0; i < resourceDesc.m_SrcDescriptors.size(); ++i)
+        for (uint32_t i = 0; i < resourceDesc.m_Descriptors.size(); ++i)
         {
-            D3D12_CPU_DESCRIPTOR_HANDLE srcDesc = resourceDesc.m_SrcDescriptors[i];
+            D3D12_CPU_DESCRIPTOR_HANDLE srcDesc = resourceDesc.m_Descriptors[i];
 
             if (srcDesc.ptr == 0)
             {
-                D3D12_DESCRIPTOR_RANGE_TYPE srcDescType = resourceDesc.m_SrcDescriptorTypes[i];
+                D3D12_DESCRIPTOR_RANGE_TYPE srcDescType = resourceDesc.m_Types[i];
                 CreateNullView(srcDescType, destHandle.m_CPUHandle);
             }
             else

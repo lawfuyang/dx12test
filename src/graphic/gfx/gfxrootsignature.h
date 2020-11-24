@@ -1,5 +1,7 @@
 #pragma once
 
+static const uint32_t gs_MaxRootSigParams = 8;
+
 class GfxRootSignature
 {
 public:
@@ -11,7 +13,14 @@ public:
 private:
     void Compile(CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t numRootParams, D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags, const char* rootSigName);
 
-    InplaceArray<CD3DX12_ROOT_PARAMETER1, MaxRootParams> m_RootParams;
+    struct StagedResourcesDescriptors
+    {
+        std::vector<D3D12_DESCRIPTOR_RANGE_TYPE> m_Types;
+        std::vector<CD3DX12_CPU_DESCRIPTOR_HANDLE> m_Descriptors;
+    };
+    using RootSigParams = InplaceArray<StagedResourcesDescriptors, gs_MaxRootSigParams>;
+    RootSigParams m_Params;
+
     ComPtr<ID3D12RootSignature> m_RootSignature;
     std::size_t m_Hash = 0;
 
