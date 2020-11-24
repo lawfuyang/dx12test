@@ -291,9 +291,6 @@
     <ClInclude Include="..\src\graphic\shapes.h">
       <Filter>graphic</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\graphic\renderers\gfxforwardlighting.h">
-      <Filter>graphic\renderers</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\application\scene.h">
       <Filter>application</Filter>
     </ClInclude>

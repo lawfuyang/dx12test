@@ -1,7 +1,7 @@
-#include <graphic/renderers/gfxforwardlighting.h>
 
 #include <system/imguimanager.h>
 
+#include <graphic/renderers/gfxrendererbase.h>
 #include <graphic/visual.h>
 #include <graphic/gfx/gfxmanager.h>
 #include <graphic/gfx/gfxcontext.h>
@@ -18,11 +18,33 @@
 static bool gs_ShowForwardLightingIMGUIWindow = false;
 GfxTexture g_SceneDepthBuffer;
 
+class GfxForwardLightingPass : public GfxRendererBase
+{
+public:
+    void Initialize() override;
+    void ShutDown() override;
+    bool ShouldRender(GfxContext&) const override;
+    void PopulateCommandList(GfxContext& context) override;
+
+    const char* GetName() const override { return "GfxForwardLightingPass"; }
+
+private:
+    void UpdateIMGUI();
+
+    GfxRootSignature* m_RootSignature = nullptr;
+
+    bool m_UsePBRConsts = false;
+    float m_ConstPBRRoughness = 0.75f;
+    float m_ConstPBRMetallic = 0.1f;
+
+    bool m_ShowForwardLightingIMGUIWindow = false;
+};
+
 void GfxForwardLightingPass::Initialize()
 {
     bbeProfileFunction();
 
-    g_IMGUIManager.RegisterTopMenu("Graphic", GetName(), &gs_ShowForwardLightingIMGUIWindow);
+    g_IMGUIManager.RegisterTopMenu("Graphic", GetName(), &m_ShowForwardLightingIMGUIWindow);
     g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUI(); });
 
     // Perfomance TIP: Order from most frequent to least frequent.
@@ -120,7 +142,7 @@ void GfxForwardLightingPass::PopulateCommandList(GfxContext& context)
 
 void GfxForwardLightingPass::UpdateIMGUI()
 {
-    if (!gs_ShowForwardLightingIMGUIWindow)
+    if (!m_ShowForwardLightingIMGUIWindow)
         return;
 
     ScopedIMGUIWindow window{ "GfxForwardLightingPass" };

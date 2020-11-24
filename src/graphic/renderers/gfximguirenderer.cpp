@@ -1,7 +1,7 @@
-#include <graphic/renderers/GfxIMGUIRenderer.h>
 
 #include <system/imguimanager.h>
 
+#include <graphic/renderers/gfxrendererbase.h>
 #include <graphic/gfx/gfxmanager.h>
 #include <graphic/gfx/gfxcontext.h>
 
@@ -12,6 +12,27 @@ static const uint32_t gs_VBufferGrowSize = 5000;
 static const uint32_t gs_IBufferGrowSize = 10000;
 
 static_assert(IsAligned(gs_IBufferGrowSize, 4));
+
+class GfxIMGUIRenderer : public GfxRendererBase
+{
+public:
+    void Initialize() override;
+    void ShutDown() override;
+    void PopulateCommandList(GfxContext& context) override;
+
+    const char* GetName() const override { return "GfxIMGUIRenderer"; }
+
+private:
+    void InitFontsTexture();
+    void GrowBuffers(const IMGUIDrawData& imguiDrawData, GfxContext* context = nullptr);
+    void UploadBufferData(const IMGUIDrawData& imguiDrawData);
+    void SetupRenderStates(GfxContext&, const IMGUIDrawData& imguiDrawData);
+
+    GfxRootSignature* m_RootSignature = nullptr;
+    GfxVertexBuffer   m_VertexBuffer;
+    GfxIndexBuffer    m_IndexBuffer;
+    GfxTexture        m_FontsTexture;
+};
 
 void GfxIMGUIRenderer::Initialize()
 {
