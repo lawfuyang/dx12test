@@ -1,14 +1,5 @@
 #include <graphic/gfx/gfxdevice.h>
-
-#include <graphic/gfx/gfxmanager.h>
-#include <graphic/dx12utils.h>
-#include <graphic/gfx/gfxadapter.h>
-#include <graphic/gfx/gfxcontext.h>
-#include <graphic/gfx/gfxdescriptorheap.h>
-#include <graphic/gfx/gfxrootsignature.h>
-#include <graphic/gfx/gfxpipelinestateobject.h>
-#include <graphic/gfx/gfxshadermanager.h>
-#include <graphic/gfx/gfxtexturesandbuffers.h>
+#include <graphic/pch.h>
 
 static void ConfigureDebugLayerBeforeDeviceCreation()
 {

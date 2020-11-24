@@ -218,7 +218,7 @@ void PrintAutogenByteCodeHeadersFile(const concurrency::concurrent_vector<Shader
                 generatedString += StringFormat("    {\n");
                 generatedString += StringFormat("        %s,\n", byteCodeVarName.c_str());
                 generatedString += StringFormat("        _countof(%s),\n", byteCodeVarName.c_str());
-                generatedString += StringFormat("        %" PRIu64 ",\n", permutation.m_Hash);
+                generatedString += StringFormat("        %llu,\n", permutation.m_Hash);
                 generatedString += StringFormat("        %u,\n", permutation.m_ShaderKey);
                 generatedString += StringFormat("        %u,\n", shader.m_BaseShaderID);
                 generatedString += StringFormat("        %s,\n", EnumToString((GfxShaderType)i));

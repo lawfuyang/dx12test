@@ -1,11 +1,8 @@
 #include <graphic/gfxresourcemanager.h>
+#include <graphic/pch.h>
 
 #include <graphic/WICTextureLoader12.h>
 #include <graphic/DDSTextureLoader12.h>
-
-#include <graphic/gfx/gfxmanager.h>
-#include <graphic/gfx/gfxdefaultassets.h>
-#include <graphic/gfx/gfxtexturesandbuffers.h>
 
 std::vector<std::function<void()>> gs_AllManagedGfxResourcesReleasers;
 

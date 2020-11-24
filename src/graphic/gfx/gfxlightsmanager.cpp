@@ -1,6 +1,5 @@
 #include <graphic/gfx/gfxlightsmanager.h>
-
-#include <graphic/gfx/gfxmanager.h>
+#include <graphic/pch.h>
 
 #include <system/imguimanager.h>
 

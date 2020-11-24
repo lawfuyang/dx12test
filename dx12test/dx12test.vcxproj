@@ -99,6 +99,7 @@
     <ClCompile Include="..\src\graphic\gfx\gfxswapchain.cpp" />
     <ClCompile Include="..\src\graphic\gfx\gfxtexturesandbuffers.cpp" />
     <ClCompile Include="..\src\graphic\gfx\gfxvertexformat.cpp" />
+    <ClCompile Include="..\src\graphic\renderers\gfxbackbuffertransitionrenderer.cpp" />
     <ClCompile Include="..\src\graphic\renderers\gfxbodygravityparticles.cpp" />
     <ClCompile Include="..\src\graphic\renderers\gfxforwardlighting.cpp" />
     <ClCompile Include="..\src\graphic\renderers\gfximguirenderer.cpp" />
@@ -152,6 +153,7 @@
     <ClInclude Include="..\src\graphic\gfx\gfxswapchain.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxtexturesandbuffers.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxvertexformat.h" />
+    <ClInclude Include="..\src\graphic\pch.h" />
     <ClInclude Include="..\src\graphic\renderers\gfxbodygravityparticles.h" />
     <ClInclude Include="..\src\graphic\renderers\gfximguirenderer.h" />
     <ClInclude Include="..\src\graphic\renderers\gfxrendererbase.h" />

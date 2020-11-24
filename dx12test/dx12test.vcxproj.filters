@@ -151,6 +151,9 @@
     <ClCompile Include="..\src\graphic\renderers\gfxbodygravityparticles.cpp">
       <Filter>graphic\renderers</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\renderers\gfxbackbuffertransitionrenderer.cpp">
+      <Filter>graphic\renderers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -309,6 +312,9 @@
     <ClInclude Include="..\src\pch.h" />
     <ClInclude Include="..\src\graphic\renderers\gfxbodygravityparticles.h">
       <Filter>graphic\renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\pch.h">
+      <Filter>graphic</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

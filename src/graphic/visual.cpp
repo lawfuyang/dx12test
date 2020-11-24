@@ -1,7 +1,5 @@
 #include <graphic/visual.h>
-
-#include <graphic/gfx/gfxmanager.h>
-#include <graphic/gfxresourcemanager.h>
+#include <graphic/pch.h>
 
 #include <system/imguimanager.h>
 

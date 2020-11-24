@@ -1,8 +1,5 @@
 #include <graphic/gfx/gfxshadermanager.h>
-
-#include <d3dcompiler.h>
-
-#include <graphic/dx12utils.h>
+#include <graphic/pch.h>
 
 #include <tmp/shaders/shaderbytecodes.h>
 

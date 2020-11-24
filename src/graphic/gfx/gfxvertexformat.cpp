@@ -1,5 +1,4 @@
-#include "graphic/gfx/gfxvertexformat.h"
-
+#include <graphic/gfx/gfxvertexformat.h>
 #include <graphic/dx12utils.h>
 
 template <uint32_t NumElements>

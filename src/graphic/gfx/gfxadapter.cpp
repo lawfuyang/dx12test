@@ -1,6 +1,5 @@
-#include "graphic/gfx/gfxadapter.h"
-
-#include "graphic/dx12utils.h"
+#include <graphic/gfx/gfxadapter.h>
+#include <graphic/pch.h>
 
 void GfxAdapter::Initialize()
 {

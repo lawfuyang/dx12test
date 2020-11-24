@@ -1,16 +1,5 @@
 #include <graphic/gfx/gfxmanager.h>
-
-#include <graphic/dx12utils.h>
-#include <graphic/gfxresourcemanager.h>
-#include <graphic/gfx/gfxadapter.h>
-#include <graphic/gfx/gfxcontext.h>
-#include <graphic/gfx/gfxrootsignature.h>
-#include <graphic/gfx/gfxshadermanager.h>
-#include <graphic/gfx/gfxvertexformat.h>
-#include <graphic/gfx/gfxdefaultassets.h>
-#include <graphic/gfx/gfxtexturesandbuffers.h>
-#include <graphic/gfx/gfxlightsmanager.h>
-#include <graphic/renderers/gfxrendererbase.h>
+#include <graphic/pch.h>
 
 #include <system/imguimanager.h>
 

@@ -1,4 +1,5 @@
 #include <graphic/shapes.h>
+#include <graphic/pch.h>
 
 void Frustum::Create(const bbeMatrix& viewProjection)
 {

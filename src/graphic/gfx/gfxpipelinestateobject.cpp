@@ -1,11 +1,5 @@
 #include <graphic/gfx/gfxpipelinestateobject.h>
-
-#include <graphic/dx12utils.h>
-#include <graphic/gfx/gfxmanager.h>
-#include <graphic/gfx/gfxdevice.h>
-#include <graphic/gfx/gfxrootsignature.h>
-#include <graphic/gfx/gfxvertexformat.h>
-#include <graphic/gfx/gfxshadermanager.h>
+#include <graphic/pch.h>
 
 void GfxPipelineStateObject::SetRenderTargetFormat(uint32_t idx, DXGI_FORMAT format)
 {

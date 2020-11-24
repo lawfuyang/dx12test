@@ -1,4 +1,5 @@
-#include "graphic/view.h"
+#include <graphic/view.h>
+#include <graphic/pch.h>
 
 void View::CreatePerspective(float newNear, float newFar, float newFOV)
 {

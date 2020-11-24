@@ -34,41 +34,41 @@
 #pragma warning(disable : 4267)
 
 // C Standard Lib
-#include <time.h>
-#include <stdio.h>
 #include <assert.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <time.h>
 
 // C++ STL
+#include <algorithm>
+#include <array>
 #include <atomic>
+#include <bitset>
 #include <chrono>
+#include <fstream>
+#include <functional>
+#include <map>
+#include <mutex>
+#include <numeric>
+#include <queue>
+#include <shared_mutex>
 #include <string>
 #include <thread>
 #include <vector>
-#include <queue>
-#include <algorithm>
-#include <array>
-#include <numeric>
-#include <mutex>
-#include <shared_mutex>
-#include <functional>
-#include <fstream>
-#include <bitset>
-#include <map>
 
 // windows
-#include <inttypes.h>
-#include <wrl.h>
-#include <windows.h>
-#include <winuser.h>
-#include <VersionHelpers.h>
-#include <concurrent_vector.h>
 #include <concurrent_queue.h>
 #include <concurrent_unordered_map.h>
+#include <concurrent_vector.h>
+#include <windows.h>
+#include <winuser.h>
+#include <wrl.h>
 
 #if !defined(BBE_SHADERCOMPILER)
     // DirectX
     #include <d3d12.h>
     #include <d3d12sdklayers.h>
+    #include <d3dcompiler.h>
     #include <dxgi1_6.h>
     #include <extern/d3d12/d3dx12.h>
 #endif
@@ -104,12 +104,12 @@
 #include <extern/taskflow/taskflow.hpp>
 
 // Boost
-#include <extern/boost/container/small_vector.hpp>
 #include <extern/boost/circular_buffer.hpp>
-#include <extern/boost/pool/object_pool.hpp>
+#include <extern/boost/container/small_vector.hpp>
 #include <extern/boost/container_hash/hash.hpp>
-#include <extern/boost/static_string.hpp>
+#include <extern/boost/pool/object_pool.hpp>
 #include <extern/boost/preprocessor.hpp>
+#include <extern/boost/static_string.hpp>
 #include <extern/boost/uuid/uuid.hpp>
 #include <extern/boost/uuid/uuid_generators.hpp>
 #include <extern/boost/uuid/uuid_io.hpp>

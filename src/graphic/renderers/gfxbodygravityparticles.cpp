@@ -1,6 +1,5 @@
 
-#include <graphic/renderers/gfxrendererbase.h>
-#include <graphic/gfx/gfxrootsignature.h>
+#include <graphic/pch.h>
 
 class GfxBodyGravityParticlesUpdate : public GfxRendererBase
 {

@@ -1,10 +1,5 @@
 #include <graphic/gfx/gfxcontext.h>
-
-#include <graphic/dx12utils.h>
-#include <graphic/gfx/gfxmanager.h>
-#include <graphic/gfx/gfxcommandlist.h>
-#include <graphic/gfx/gfxtexturesandbuffers.h>
-#include <graphic/gfx/gfxrootsignature.h>
+#include <graphic/pch.h>
 
 void GfxContext::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, const std::string& name)
 {

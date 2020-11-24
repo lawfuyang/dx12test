@@ -1,9 +1,5 @@
 #include <graphic/gfx/gfxtexturesandbuffers.h>
-
-#include <graphic/gfx/gfxmanager.h>
-#include <graphic/gfx/gfxdevice.h>
-#include <graphic/gfx/gfxcontext.h>
-#include <graphic/dx12utils.h>
+#include <graphic/pch.h>
 
 #include <system/imguimanager.h>
 

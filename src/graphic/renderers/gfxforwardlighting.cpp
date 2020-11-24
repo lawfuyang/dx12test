@@ -1,13 +1,6 @@
+#include <graphic/pch.h>
 
 #include <system/imguimanager.h>
-
-#include <graphic/renderers/gfxrendererbase.h>
-#include <graphic/visual.h>
-#include <graphic/gfx/gfxmanager.h>
-#include <graphic/gfx/gfxcontext.h>
-#include <graphic/gfx/gfxswapchain.h>
-#include <graphic/gfx/gfxdefaultassets.h>
-#include <graphic/gfx/gfxlightsmanager.h>
 
 #include <application/scene.h>
 

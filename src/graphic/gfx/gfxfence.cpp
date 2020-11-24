@@ -1,8 +1,5 @@
-#include "graphic/gfx/gfxfence.h"
-
-#include "graphic/gfx/gfxmanager.h"
-#include "graphic/dx12utils.h"
-#include "graphic/gfx/gfxdevice.h"
+#include <graphic/gfx/gfxfence.h>
+#include <graphic/pch.h>
 
 void GfxFence::Initialize()
 {
