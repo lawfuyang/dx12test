@@ -1,5 +1,8 @@
 #pragma once
 
+#include <graphic/dx12utils.h>
+#include <graphic/gfx/gfxfence.h>
+
 class GfxCommandList
 {
 public:
@@ -7,19 +10,43 @@ public:
 
     void Initialize(D3D12_COMMAND_LIST_TYPE);
     void BeginRecording();
-    void EndRecording();
 
     D3D12_COMMAND_LIST_TYPE GetType() const { return m_Type; }
 
-    void SetName(const std::string& name) { m_Name = name; };
-
 private:
-    D3D12_COMMAND_LIST_TYPE m_Type = (D3D12_COMMAND_LIST_TYPE)0;
+    D3D12_COMMAND_LIST_TYPE m_Type = (D3D12_COMMAND_LIST_TYPE)0xDEADBEEF;
 
     ComPtr<ID3D12CommandAllocator> m_CommandAllocator;
     ComPtr<ID3D12GraphicsCommandList5> m_CommandList;
 
-    std::string m_Name;
+    friend class GfxCommandListsManager;
+};
+
+class GfxCommandListQueue
+{
+public:
+    static const uint32_t MaxCmdLists = 128;
+
+    ID3D12CommandQueue* Dev() const { return m_CommandQueue.Get(); }
+
+    void Initialize(D3D12_COMMAND_LIST_TYPE type);
+    GfxCommandList* AllocateCommandList(const std::string&);
+    bool HasPendingCommandLists() const { return !m_PendingExecuteCommandLists.empty(); };
+    void ExecutePendingCommandLists();
+    void SignalFence() { m_Fence.IncrementAndSignal(Dev()); }
+    void StallCPUForFence() const { m_Fence.WaitForSignalFromGPU(); }
+    void StallGPUForFence() const { DX12_CALL(m_CommandQueue->Wait(m_Fence.Dev(), m_Fence.GetValue())); }
+
+private:
+    D3D12_COMMAND_LIST_TYPE m_Type = (D3D12_COMMAND_LIST_TYPE)0xDEADBEEF;
+
+    GfxFence m_Fence;
+    ComPtr<ID3D12CommandQueue> m_CommandQueue;
+    ObjectPool<GfxCommandList> m_CommandListsPool;
+
+    std::mutex m_ListsLock;
+    CircularBuffer<GfxCommandList*> m_FreeCommandLists;
+    InplaceArray<GfxCommandList*, MaxCmdLists> m_PendingExecuteCommandLists;
 
     friend class GfxCommandListsManager;
 };
@@ -29,31 +56,23 @@ class GfxCommandListsManager
     DeclareSingletonFunctions(GfxCommandListsManager);
 
 public:
-    static const uint32_t MaxCmdLists = 128;
-
     void Initialize();
     void ShutDown();
 
-    GfxCommandList* Allocate(D3D12_COMMAND_LIST_TYPE, const std::string&);
-    void QueueCommandListToExecute(GfxCommandList&, D3D12_COMMAND_LIST_TYPE);
+    void QueueCommandListToExecute(GfxCommandList*);
     void ExecutePendingCommandLists();
 
-    ID3D12CommandQueue* GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) { return GetPoolFromType(type).m_CommandQueue.Get(); }
+    GfxCommandListQueue& GetMainQueue() { return m_DirectPool; }
+    GfxCommandListQueue& GetCommandQueue(D3D12_COMMAND_LIST_TYPE type)
+    {
+        switch (type)
+        {
+        case D3D12_COMMAND_LIST_TYPE_DIRECT: return m_DirectPool;
+        default: assert(false); return m_DirectPool;
+        }
+    }
 
 private:
-    struct CommandListPool
-    {
-        ComPtr<ID3D12CommandQueue> m_CommandQueue;
-
-        ObjectPool<GfxCommandList> m_CommandListsPool;
-
-        std::mutex m_ListsLock;
-
-        CircularBuffer<GfxCommandList*> m_FreeCommandLists;
-        InplaceArray<GfxCommandList*, MaxCmdLists> m_PendingExecuteCommandLists;
-    };
-    CommandListPool& GetPoolFromType(D3D12_COMMAND_LIST_TYPE);
-
-    CommandListPool m_DirectPool;
+    GfxCommandListQueue m_DirectPool;
 };
 #define g_GfxCommandListsManager GfxCommandListsManager::GetInstance()

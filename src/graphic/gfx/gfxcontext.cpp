@@ -3,7 +3,8 @@
 
 void GfxContext::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, const std::string& name)
 {
-    m_CommandList = g_GfxCommandListsManager.Allocate(cmdListType, name);
+    assert(m_CommandList == nullptr);
+    m_CommandList = g_GfxCommandListsManager.GetCommandQueue(cmdListType).AllocateCommandList(name);
 
     // Just set default viewport/scissor vals that make sense
     const CD3DX12_VIEWPORT viewport{ 0.0f, 0.0f, (float)g_CommandLineOptions.m_WindowWidth, (float)g_CommandLineOptions.m_WindowHeight };

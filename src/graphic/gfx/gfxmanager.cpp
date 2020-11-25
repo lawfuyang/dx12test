@@ -5,10 +5,8 @@
 
 static bool gs_ShowGfxManagerIMGUIWindow = false;
 
-extern GfxRendererBase* g_GfxBackBufferTransitionRenderer;
 extern GfxRendererBase* g_GfxForwardLightingPass;
 extern GfxRendererBase* g_GfxIMGUIRenderer;
-extern GfxTexture g_SceneDepthBuffer;
 
 void InitializeGraphic(tf::Subflow& subFlow)
 {
@@ -57,19 +55,31 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
             m_GfxDevice.Initialize();
         }).name("adapterAndDeviceInit");
 
-    tf::Task miscGfxInitTask = subFlow.emplace([&](tf::Subflow& subFlow)
+    tf::Task miscGfxInitTask = subFlow.emplace([&](tf::Subflow& sf)
         {
             bbeProfile("General Gfx Init");
 
             tf::Task allTasks[] =
             {
-                ADD_SF_TASK(subFlow, g_GfxDefaultAssets.Initialize(sf)),
-                ADD_TF_TASK(subFlow, g_GfxForwardLightingPass->Initialize()),
-                ADD_TF_TASK(subFlow, g_GfxIMGUIRenderer->Initialize()),
+                ADD_SF_TASK(sf, g_GfxDefaultAssets.Initialize(sf)),
+                ADD_TF_TASK(sf, g_GfxForwardLightingPass->Initialize()),
+                ADD_TF_TASK(sf, g_GfxIMGUIRenderer->Initialize()),
             };
 
             // HUGE assumption that all of the above gfx tasks queued their command lists to be executed
-            tf::Task flushAndWaitTask = ADD_TF_TASK(subFlow, m_GfxDevice.Flush(true /* andWait */));
+            //tf::Task flushAndWaitTask = ADD_TF_TASK(subFlow, m_GfxDevice.Flush(true /* andWait */));
+            tf::Task flushAndWaitTask = sf.emplace([this] 
+                {
+                    g_GfxCommandListsManager.ExecutePendingCommandLists();
+
+                    // TODO: check that every other queue except the main Direct queue is empty
+                    g_GfxCommandListsManager.GetMainQueue().SignalFence();
+                    g_GfxCommandListsManager.GetMainQueue().StallCPUForFence();
+
+                    // reset array of GfxContexts to prepare for next frame
+                    std::for_each(m_AllContexts.begin(), m_AllContexts.end(), [this](GfxContext* context) { m_ContextsPool.destroy(context); });
+                    m_AllContexts.clear();
+                });
             for (tf::Task task : allTasks)
             {
                 flushAndWaitTask.succeed(task);
@@ -79,21 +89,22 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
     adapterAndDeviceInit.precede(cmdListInitTask, PSOManagerInitTask, miscGfxInitTask, swapChainInitTask, dynamicDescHeapAllocatorInit);
     miscGfxInitTask.succeed(cmdListInitTask);
     swapChainInitTask.succeed(cmdListInitTask);
-
-    m_AllContexts.reserve(128);
-    m_ScheduledContexts.reserve(128);
 }
 
 void GfxManager::ShutDown()
 {
     bbeProfileFunction();
 
-    m_GfxDevice.IncrementAndSignalFence();
-    m_GfxDevice.WaitForFence();
+    auto ConsumeAllGfxCommandsAndCmdLists = [this]()
+    {
+        m_GfxCommandManager.ConsumeAllCommandsST(true);
+        g_GfxCommandListsManager.ExecutePendingCommandLists();
 
-    // finish all commands before shutting down
-    const bool ConsumeAllCmdsRecursive = true;
-    m_GfxCommandManager.ConsumeAllCommandsST(ConsumeAllCmdsRecursive);
+        // TODO: do this for other queues?
+        g_GfxCommandListsManager.GetMainQueue().StallCPUForFence();
+    };
+
+    ConsumeAllGfxCommandsAndCmdLists();
 
     // get swapchain out of full screen before exiting
     BOOL fs = false;
@@ -107,9 +118,8 @@ void GfxManager::ShutDown()
     g_GfxDefaultAssets.ShutDown();
     g_GfxResourceManager.ShutDown();
 
-    // we must complete the previous GPU frame before exiting the app
-    m_GfxDevice.IncrementAndSignalFence();
-    m_GfxDevice.WaitForFence();
+    ConsumeAllGfxCommandsAndCmdLists();
+
     m_GfxDevice.ShutDown();
 }
 
@@ -117,96 +127,67 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
 
-    // consume all gfx commmands multi-threaded
-    tf::Task gfxCommandsConsumptionTasks = ADD_SF_TASK(subFlow, m_GfxCommandManager.ConsumeAllCommandsMT(sf));
-    tf::Task beginFrameTask              = ADD_TF_TASK(subFlow, BeginFrame());
-    tf::Task endFrameTask                = ADD_TF_TASK(subFlow, EndFrame());
-    tf::Task renderersScheduleTask       = ADD_SF_TASK(subFlow, ScheduleRenderPasses(sf));
-    tf::Task cmdListsExecTask            = ADD_TF_TASK(subFlow, ScheduleCommandListsExecution());
+    tf::Task BEGIN_FRAME_GATE = subFlow.emplace([] {});
+    tf::Task RENDERERS_GATE = subFlow.emplace([] {}).succeed(BEGIN_FRAME_GATE);
 
-    gfxCommandsConsumptionTasks.precede(beginFrameTask);
-    beginFrameTask.precede(renderersScheduleTask);
-    cmdListsExecTask.succeed(renderersScheduleTask);
-    endFrameTask.succeed(cmdListsExecTask);
-}
+    subFlow.emplace([this](tf::Subflow& sf) { m_GfxCommandManager.ConsumeAllCommandsMT(sf); }).precede(BEGIN_FRAME_GATE);
+    subFlow.emplace([this] { BeginFrame(); }).precede(BEGIN_FRAME_GATE);
 
-void GfxManager::ScheduleRenderPasses(tf::Subflow& subFlow)
-{
-    bbeProfileFunction();
-
-    auto ScheduleRenderPass = [&subFlow](GfxRendererBase* renderer)
+    auto PopulateCommandList = [&, this](GfxRendererBase* renderer)
     {
-        GfxContext& context = g_GfxManager.GenerateNewContextInternal();
-        if (renderer->ShouldRender(context))
+        tf::Task tf;
+
+        GfxContext& context = GenerateNewContextInternal();
+        if (renderer->ShouldPopulateCommandList(context))
         {
             // TODO: different cmd list type based on renderer type (async compute or direct)
             context.Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, renderer->GetName());
-            g_GfxManager.m_ScheduledContexts.push_back(&context);
-            subFlow.emplace([&, renderer]() { renderer->PopulateCommandList(context); });// .name(StringFormat("%s::PopulateCommandList", renderer->GetName()));
+            m_ScheduledCmdLists.push_back(&context.GetCommandList());
+            tf = subFlow.emplace([&context, renderer]() { renderer->PopulateCommandList(context); }).name(renderer->GetName());
         }
+
+        // Do nothing if no need to render
+        tf = subFlow.emplace([] {});
+        tf.succeed(BEGIN_FRAME_GATE).precede(RENDERERS_GATE);
     };
+    PopulateCommandList(g_GfxForwardLightingPass);
+    PopulateCommandList(g_GfxIMGUIRenderer);
 
-    // Manual scheduling
-    ScheduleRenderPass(g_GfxForwardLightingPass);
-    ScheduleRenderPass(g_GfxIMGUIRenderer);
-    ScheduleRenderPass(g_GfxBackBufferTransitionRenderer);
-}
-
-void GfxManager::ScheduleCommandListsExecution()
-{
-    bbeProfileFunction();
-
-    // schedule all render passes that were manually scheduled in "ScheduleRenderPasses"
-    for (GfxContext* context : m_ScheduledContexts)
-    {
-        g_GfxCommandListsManager.QueueCommandListToExecute(context->GetCommandList(), context->GetCommandList().GetType());
-    }
-
-    // immediately clear array of scheduled renderers after queueing them for execution
-    m_ScheduledContexts.clear();
-
-    // execute all command lists
-    m_GfxDevice.Flush();
+    subFlow.emplace([this] { EndFrame(); }).succeed(RENDERERS_GATE);
 }
 
 void GfxManager::BeginFrame()
 {
-    bbeProfileFunction();
-
-    // wait for GPU to be done with previous frame
-    m_GfxDevice.WaitForFence();
-
-    // check for DXGI_ERRORs on all GfxDevices
     m_GfxDevice.CheckStatus();
 
     g_GfxGPUDescriptorAllocator.CleanupUsedHeaps();
-
-    // TODO: Remove clearing of BackBuffer when we manage to fill every pixel on screen through various render passes
-    {
-        GfxContext& clearBackBufferContext = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "ClearBackBuffer");
-        clearBackBufferContext.ClearRenderTargetView(g_GfxManager.GetSwapChain().GetCurrentBackBuffer(), bbeVector4{ 0.0f, 0.2f, 0.4f, 1.0f });
-        clearBackBufferContext.ClearDepth(g_SceneDepthBuffer, 1.0f);
-        g_GfxCommandListsManager.QueueCommandListToExecute(clearBackBufferContext.GetCommandList(), clearBackBufferContext.GetCommandList().GetType());
-
-        m_GfxDevice.Flush();
-    }
 }
 
 void GfxManager::EndFrame()
 {
     bbeProfileFunction();
-    bbeMultiThreadDetector();
 
-    m_GfxDevice.EndFrame();
+    // schedule all GfxContexts
+    std::for_each(m_ScheduledCmdLists.begin(), m_ScheduledCmdLists.end(), [](GfxCommandList* cmdList) { g_GfxCommandListsManager.QueueCommandListToExecute(cmdList); });
+    m_ScheduledCmdLists.clear();
+
+    // Before presenting backbuffer, transition to to PRESENT state
+    GfxContext& context = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "TransitionBackBufferForPresent");
+    SetD3DDebugName(context.GetCommandList().Dev(), "TransitionBackBufferForPresent");
+    context.TransitionResource(m_SwapChain.GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, true);
+    g_GfxCommandListsManager.QueueCommandListToExecute(&context.GetCommandList());
+
+    // execute all command lists
+    g_GfxCommandListsManager.ExecutePendingCommandLists();
+
+    // finally, present back buffer
     m_SwapChain.Present();
-    m_GfxDevice.IncrementAndSignalFence();
 
-    assert(m_ScheduledContexts.empty());
-    for (GfxContext* context : m_AllContexts)
-    {
-        m_ContextsPool.destroy(context);
-    }
+    // reset array of GfxContexts to prepare for next frame
+    std::for_each(m_AllContexts.begin(), m_AllContexts.end(), [this](GfxContext* context) { m_ContextsPool.destroy(context); });
     m_AllContexts.clear();
+
+    ++m_GraphicFrameNumber;
 }
 
 GfxContext& GfxManager::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType, const std::string& name)

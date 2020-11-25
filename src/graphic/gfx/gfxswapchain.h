@@ -13,7 +13,7 @@ public:
 
     void ShutDown();
 
-    GfxTexture& GetCurrentBackBuffer() { return m_RenderTargets[m_FrameIndex]; }
+    GfxTexture& GetCurrentBackBuffer() { return m_RenderTargets[Dev()->GetCurrentBackBufferIndex()]; }
 
     void Initialize();
     void Present();
@@ -21,6 +21,4 @@ public:
 private:
     ComPtr<IDXGISwapChain4> m_SwapChain;
     GfxTexture m_RenderTargets[ms_NumFrames];
-
-    uint32_t m_FrameIndex = 0;
 };

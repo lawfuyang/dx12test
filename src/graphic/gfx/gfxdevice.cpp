@@ -9,28 +9,14 @@ static void ConfigureDebugLayerBeforeDeviceCreation()
     bbeProfileFunction();
     g_Log.info("Enabling D3D12 Debug Layer");
 
-    ComPtr<ID3D12Debug> debugController;
-    if (FAILED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
-        return;
+    ComPtr<ID3D12Debug> debugInterface;
+    ComPtr<ID3D12Debug3> debugInterface3;
 
-    debugController->EnableDebugLayer();
+    DX12_CALL(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)));
+    DX12_CALL(debugInterface->QueryInterface(IID_PPV_ARGS(&debugInterface3)));
 
-    ComPtr<ID3D12Debug1> debugController1;
-    if (FAILED(debugController->QueryInterface(IID_PPV_ARGS(&debugController1))))
-        return;
-
-    debugController1->SetEnableGPUBasedValidation(g_CommandLineOptions.m_GfxDebugLayer.m_EnableGPUValidation);
-    debugController1->SetEnableSynchronizedCommandQueueValidation(g_CommandLineOptions.m_GfxDebugLayer.m_SynchronizedCommandQueueValidation);
-
-    ComPtr<ID3D12Debug2> debugController2;
-    if (FAILED(debugController1->QueryInterface(IID_PPV_ARGS(&debugController2))))
-        return;
-
-    debugController2->SetGPUBasedValidationFlags(D3D12_GPU_BASED_VALIDATION_FLAGS_NONE);
-
-    ComPtr<ID3D12Debug3> debugController3;
-    if (FAILED(debugController2->QueryInterface(IID_PPV_ARGS(&debugController3))))
-        return;
+    debugInterface3->EnableDebugLayer();
+    debugInterface3->SetEnableGPUBasedValidation(g_CommandLineOptions.m_GfxDebugLayer.m_EnableGPUValidation);
 }
 
 void GfxDevice::Initialize()
@@ -64,8 +50,6 @@ void GfxDevice::Initialize()
 
     ConfigureDebugLayerAfterDeviceCreation();
 
-    m_GfxFence.Initialize();
-
     CheckFeaturesSupports();
 
     g_GfxMemoryAllocator.Initialize();
@@ -98,25 +82,25 @@ void GfxDevice::ConfigureDebugLayerAfterDeviceCreation()
     bbeProfileFunction();
 
     ComPtr<ID3D12DebugDevice1> debugDevice1;
-    if (SUCCEEDED(Dev()->QueryInterface(IID_PPV_ARGS(&debugDevice1))))
-    {
-        if (g_CommandLineOptions.m_GfxDebugLayer.m_EnableConservativeResourceStateTracking)
-        {
-            const D3D12_DEBUG_FEATURE debugFeatures = D3D12_DEBUG_FEATURE_ALLOW_BEHAVIOR_CHANGING_DEBUG_AIDS | D3D12_DEBUG_FEATURE_CONSERVATIVE_RESOURCE_STATE_TRACKING;
-            debugDevice1->SetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_FEATURE_FLAGS, &debugFeatures, sizeof(debugFeatures));
-        }
+    DX12_CALL(Dev()->QueryInterface(IID_PPV_ARGS(&debugDevice1)));
 
-        if (g_CommandLineOptions.m_GfxDebugLayer.m_EnableGPUValidation)
-        {
-            const D3D12_DEBUG_DEVICE_GPU_BASED_VALIDATION_SETTINGS gpuValidationSettings
-            {
-                256,
-                D3D12_GPU_BASED_VALIDATION_SHADER_PATCH_MODE_GUARDED_VALIDATION, // erroneous instructions are skipped in execution
-                D3D12_GPU_BASED_VALIDATION_PIPELINE_STATE_CREATE_FLAG_NONE       // on the fly creation of patch PSO
-            };
-            debugDevice1->SetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_GPU_BASED_VALIDATION_SETTINGS, &gpuValidationSettings, sizeof(gpuValidationSettings));
-        }
+    if (g_CommandLineOptions.m_GfxDebugLayer.m_EnableConservativeResourceStateTracking)
+    {
+        const D3D12_DEBUG_FEATURE debugFeatures = D3D12_DEBUG_FEATURE_ALLOW_BEHAVIOR_CHANGING_DEBUG_AIDS | D3D12_DEBUG_FEATURE_CONSERVATIVE_RESOURCE_STATE_TRACKING;
+        debugDevice1->SetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_FEATURE_FLAGS, &debugFeatures, sizeof(debugFeatures));
     }
+
+    if (g_CommandLineOptions.m_GfxDebugLayer.m_EnableGPUValidation)
+    {
+        const D3D12_DEBUG_DEVICE_GPU_BASED_VALIDATION_SETTINGS gpuValidationSettings
+        {
+            256,
+            D3D12_GPU_BASED_VALIDATION_SHADER_PATCH_MODE_GUARDED_VALIDATION, // erroneous instructions are skipped in execution
+            D3D12_GPU_BASED_VALIDATION_PIPELINE_STATE_CREATE_FLAG_NONE       // on the fly creation of patch PSO
+        };
+        debugDevice1->SetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_GPU_BASED_VALIDATION_SETTINGS, &gpuValidationSettings, sizeof(gpuValidationSettings));
+    }
+
 
     // Filter unwanted gfx warnings/errors
     ComPtr<ID3D12InfoQueue> debugInfoQueue;
@@ -136,7 +120,7 @@ void GfxDevice::ConfigureDebugLayerAfterDeviceCreation()
         // D3D12MA causes this
         //D3D12_MESSAGE_ID_HEAP_ADDRESS_RANGE_INTERSECTS_MULTIPLE_BUFFERS
     };
-    D3D12_INFO_QUEUE_FILTER ignoreWarningsFilter = {};
+    D3D12_INFO_QUEUE_FILTER ignoreWarningsFilter{};
     ignoreWarningsFilter.DenyList.NumIDs = _countof(warningsToIgnore);
     ignoreWarningsFilter.DenyList.pIDList = warningsToIgnore;
     debugInfoQueue->AddStorageFilterEntries(&ignoreWarningsFilter);
@@ -179,39 +163,6 @@ void GfxDevice::CheckFeaturesSupports()
     DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &m_D3D12Options6, sizeof(m_D3D12Options6)));
     DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &m_D3D12Options7, sizeof(m_D3D12Options7)));
     DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_GPU_VIRTUAL_ADDRESS_SUPPORT, &m_D3D12GPUVirtualAddressSupport, sizeof(m_D3D12GPUVirtualAddressSupport)));
-}
-
-void GfxDevice::Flush(bool andWait)
-{
-    bbeProfileFunction();
-
-    g_GfxCommandListsManager.ExecutePendingCommandLists();
-
-    if (andWait)
-    {
-        IncrementAndSignalFence();
-        WaitForFence();
-    }
-}
-
-void GfxDevice::IncrementAndSignalFence()
-{
-    m_GfxFence.IncrementAndSignal(g_GfxCommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT));
-}
-
-void GfxDevice::WaitForFence()
-{
-    bbeProfileFunction();
-    
-    m_GfxFence.WaitForSignalFromGPU();
-}
-
-void GfxDevice::EndFrame()
-{
-    bbeMultiThreadDetector();
-
-    // execute remaining cmd lists
-    Flush();
 }
 
 void GfxMemoryAllocator::Initialize()

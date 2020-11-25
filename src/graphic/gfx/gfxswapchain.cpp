@@ -25,7 +25,7 @@ void GfxSwapChain::Initialize()
     ComPtr<IDXGISwapChain1> swapChain;
     {
         bbeProfile("CreateSwapChainForHwnd");
-        DX12_CALL(dxgiFactory->CreateSwapChainForHwnd(g_GfxCommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT), // Swap chain needs the queue so that it can force a flush on it.
+        DX12_CALL(dxgiFactory->CreateSwapChainForHwnd(g_GfxCommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT).Dev(), // Swap chain needs the queue so that it can force a flush on it.
                                                       g_System.GetEngineWindowHandle(),
                                                       &swapChainDesc,
                                                       nullptr,
@@ -38,8 +38,6 @@ void GfxSwapChain::Initialize()
 
     DX12_CALL(swapChain.As(&m_SwapChain));
     swapChain->QueryInterface(IID_PPV_ARGS(&m_SwapChain));
-
-    m_FrameIndex = m_SwapChain->GetCurrentBackBufferIndex();
 
     // Create a RTV for each frame.
     for (uint32_t i = 0; i < _countof(m_RenderTargets); ++i)
@@ -65,6 +63,4 @@ void GfxSwapChain::Present()
 
     // Present the frame.
     DX12_CALL(m_SwapChain.Get()->Present(syncInterval, flags));
-
-    m_FrameIndex = m_SwapChain.Get()->GetCurrentBackBufferIndex();
 }

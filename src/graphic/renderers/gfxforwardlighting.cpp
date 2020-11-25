@@ -15,7 +15,7 @@ class GfxForwardLightingPass : public GfxRendererBase
 {
     void Initialize() override;
     void ShutDown() override;
-    bool ShouldRender(GfxContext&) const override;
+    bool ShouldPopulateCommandList(GfxContext&) const override;
     void PopulateCommandList(GfxContext& context) override;
     const char* GetName() const override { return "GfxForwardLightingPass"; }
 
@@ -64,7 +64,7 @@ void GfxForwardLightingPass::ShutDown()
     g_SceneDepthBuffer.Release();
 }
 
-bool GfxForwardLightingPass::ShouldRender(GfxContext&) const
+bool GfxForwardLightingPass::ShouldPopulateCommandList(GfxContext&) const
 {
     return !g_Scene.m_AllVisuals.empty();
 }
@@ -73,6 +73,10 @@ void GfxForwardLightingPass::PopulateCommandList(GfxContext& context)
 {
     bbeProfileFunction();
     bbeProfileGPUFunction(context);
+
+    // TODO: Remove clearing of BackBuffer when we manage to fill every pixel on screen through various render passes
+    context.ClearRenderTargetView(g_GfxManager.GetSwapChain().GetCurrentBackBuffer(), bbeVector4{ 0.0f, 0.2f, 0.4f, 1.0f });
+    context.ClearDepth(g_SceneDepthBuffer, 1.0f);
 
     assert(m_RootSignature);
     context.SetRootSignature(*m_RootSignature);

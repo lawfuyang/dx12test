@@ -4,7 +4,7 @@
   "Items": [
     {
       "Id": "9ff4b9ec-bf73-4a6a-ae4a-d3dfdaca467f",
-      "Command": "--gfxdebuglayer gpuvalidation cmdqueuevalidation resourcestatetracking breakonwarnings breakonerrors"
+      "Command": "--gfxdebuglayer gpuvalidation resourcestatetracking breakonwarnings breakonerrors"
     },
     {
       "Id": "8c076c2c-7802-4a6f-b014-bae20d92a23f",

@@ -84,20 +84,15 @@ void System::Loop()
 
         RunKeyboardCommands();
 
+        // run System commnads first
         tf::Taskflow tf;
+        tf.emplace([this](tf::Subflow& subFlow) { m_SystemCommandManager.ConsumeAllCommandsMT(subFlow); });
+        m_Executor.run(tf).wait();
+        tf.clear();
 
-        tf::Task systemConsumptionTasks = ADD_SF_TASK(tf, m_SystemCommandManager.ConsumeAllCommandsMT(sf));
-
-        InplaceArray<tf::Task, 4> allSystemTasks;
-        allSystemTasks.push_back(ADD_SF_TASK(tf, UpdateGraphic(sf)));
-        allSystemTasks.push_back(ADD_SF_TASK(tf, UpdateApplicationLayer(sf)));
-        allSystemTasks.push_back(ADD_TF_TASK(tf, g_IMGUIManager.Update()));
-
-        for (tf::Task task : allSystemTasks)
-        {
-            systemConsumptionTasks.precede(task);
-        }
-
+        tf.emplace([](tf::Subflow& subFlow) { UpdateGraphic(subFlow); });
+        tf.emplace([](tf::Subflow& subFlow) { UpdateApplicationLayer(subFlow); });
+        tf.emplace([]() { g_IMGUIManager.Update(); });
         m_Executor.run(tf).wait();
 
         // make sure I/O ticks happen last
@@ -149,9 +144,9 @@ void System::Initialize()
 
         tf::Taskflow tf;
 
-        ADD_TF_TASK(tf, g_IMGUIManager.Initialize());
-        ADD_SF_TASK(tf, InitializeGraphic(sf));
-        ADD_SF_TASK(tf, InitializeApplicationLayer(sf));
+        tf.emplace([]() { g_IMGUIManager.Initialize(); });
+        tf.emplace([](tf::Subflow& subFlow) { InitializeGraphic(subFlow); });
+        tf.emplace([](tf::Subflow& subFlow) { InitializeApplicationLayer(subFlow); });
 
         m_Executor.run(tf).wait();
     }
@@ -223,7 +218,6 @@ void CommandLineOptions::Parse()
             if (str.find("breakonwarnings") != std::string::npos) { m_GfxDebugLayer.m_BreakOnWarnings = true; }
             else if (str.find("breakonerrors") != std::string::npos) { m_GfxDebugLayer.m_BreakOnErrors = true; }
             else if (str.find("gpuvalidation") != std::string::npos) { m_GfxDebugLayer.m_EnableGPUValidation = true; }
-            else if (str.find("cmdqueuevalidation") != std::string::npos) { m_GfxDebugLayer.m_SynchronizedCommandQueueValidation = true; }
             else if (str.find("resourcestatetracking") != std::string::npos) { m_GfxDebugLayer.m_EnableConservativeResourceStateTracking = true; }
         }
     }

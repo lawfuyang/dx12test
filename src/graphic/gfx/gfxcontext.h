@@ -48,11 +48,6 @@ public:
     void DrawIndexedInstanced(uint32_t IndexCountPerInstance, uint32_t InstanceCount, uint32_t StartIndexLocation, uint32_t BaseVertexLocation, uint32_t StartInstanceLocation);
 
 private:
-    struct StagedCBV
-    {
-        const char* m_Name;
-        InplaceArray<std::byte, 256> m_CBBytes;
-    };
 
     void CompileAndSetGraphicsPipelineState();
     void PreDraw();
@@ -76,6 +71,12 @@ private:
     GfxRootSignature::RootSigParams m_StagedResources;
 
     std::bitset<GfxRootSignature::MaxRootParams> m_StaleResourcesBitMap;
+
+    struct StagedCBV
+    {
+        const char* m_Name;
+        InplaceArray<std::byte, 256> m_CBBytes;
+    };
     std::unordered_map<uint32_t, StagedCBV> m_StagedCBVs;
 
     std::size_t m_LastUsedPSOHash = 0;

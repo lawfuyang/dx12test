@@ -1,7 +1,5 @@
 #pragma once
 
-class GfxDevice;
-
 class GfxFence
 {
 public:
@@ -14,8 +12,10 @@ public:
 
     void Initialize();
     void IncrementAndSignal(ID3D12CommandQueue* cmdQueue);
-    bool IsSignaledByGPU() const;
     void WaitForSignalFromGPU() const;
+
+    uint64_t GetValue() const { return m_FenceValue; }
+    ::HANDLE GetEvent() const { return m_FenceEvent; }
 
 private:
     ComPtr<ID3D12Fence1> m_Fence;

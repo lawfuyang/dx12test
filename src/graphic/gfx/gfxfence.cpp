@@ -21,27 +21,34 @@ void GfxFence::Initialize()
 void GfxFence::IncrementAndSignal(ID3D12CommandQueue* cmdQueue)
 {
     cmdQueue->Signal(m_Fence.Get(), ++m_FenceValue);
+
+    ::ResetEvent(m_FenceEvent);
     DX12_CALL(m_Fence->SetEventOnCompletion(m_FenceValue, m_FenceEvent));
 }
 
-bool GfxFence::IsSignaledByGPU() const
+static bool IsSignaledByGPU(ID3D12Fence1* fence, uint64_t fenceValue)
 {
-    const UINT64 completedValue = m_Fence->GetCompletedValue();
+    const UINT64 completedValue = fence->GetCompletedValue();
     if (completedValue == UINT64_MAX)
     {
         g_Log.error("Device removed!");
         assert(false);
     }
 
-    assert(completedValue <= m_FenceValue);
-    return completedValue == m_FenceValue;
+    assert(completedValue <= fenceValue);
+    return completedValue == fenceValue;
 }
 
 void GfxFence::WaitForSignalFromGPU() const
 {
-    if (!IsSignaledByGPU())
-    {
-        DX12_CALL(m_Fence->SetEventOnCompletion(m_FenceValue, m_FenceEvent));
-        WaitForSingleObject(m_FenceEvent, INFINITE);
-    }
+    if (IsSignaledByGPU(m_Fence.Get(), m_FenceValue))
+        return;
+
+    ::ResetEvent(m_FenceEvent);
+    DX12_CALL(m_Fence->SetEventOnCompletion(m_FenceValue, m_FenceEvent));
+    const DWORD waitResult = WaitForSingleObject(m_FenceEvent, 1000);
+
+    // GPU hang? Deadlock?
+    // Debug layer held back actual submission of GPU work until all outstanding fence Wait conditions are met? See: ID3D12Debug1::SetEnableSynchronizedCommandQueueValidation
+    assert(waitResult != WAIT_TIMEOUT);
 }

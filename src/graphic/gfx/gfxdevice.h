@@ -1,13 +1,5 @@
 #pragma once
 
-#include <graphic/gfx/gfxcommandlist.h>
-#include <graphic/gfx/gfxcontext.h>
-#include <graphic/gfx/gfxfence.h>
-#include <graphic/gfx/gfxpipelinestateobject.h>
-#include <graphic/gfx/gfxswapchain.h>
-#include <graphic/gfx/gfxdescriptorheap.h>
-#include <graphic/gfx/gfxpipelinestateobject.h>
-
 namespace D3D12MA
 {
     class Allocator;
@@ -16,17 +8,11 @@ namespace D3D12MA
 class GfxDevice
 {
 public:
-    ID3D12Device6* Dev() const { return m_D3DDevice.Get(); }
+    ID3D12Device8* Dev() const { return m_D3DDevice.Get(); }
 
     void Initialize();
     void ShutDown();
     void CheckStatus();
-    void Flush(bool andWait = false);
-    void IncrementAndSignalFence();
-    void WaitForFence();
-    void EndFrame();
-
-    GfxFence& GetFence() { return m_GfxFence; }
 
     D3D_ROOT_SIGNATURE_VERSION GetHighSupportedRootSignature() const { return m_RootSigSupport.HighestVersion; }
 
@@ -34,9 +20,7 @@ private:
     void ConfigureDebugLayerAfterDeviceCreation();
     void CheckFeaturesSupports();
 
-    GfxFence m_GfxFence;
-
-    ComPtr<ID3D12Device6> m_D3DDevice;
+    ComPtr<ID3D12Device8> m_D3DDevice;
 
     bool m_TearingSupported = false;
     D3D12_FEATURE_DATA_D3D12_OPTIONS               m_D3D12Options                  = {};

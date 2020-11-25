@@ -124,7 +124,7 @@ void GfxVertexBuffer::Initialize(const InitParams& initParams)
     Initialize(initContext, initParams);
 
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-    g_GfxCommandListsManager.QueueCommandListToExecute(initContext.GetCommandList(), initContext.GetCommandList().GetType());
+    g_GfxCommandListsManager.QueueCommandListToExecute(&initContext.GetCommandList());
 }
 
 void GfxVertexBuffer::Initialize(GfxContext& initContext, const InitParams& initParams)
@@ -184,7 +184,7 @@ void GfxIndexBuffer::Initialize(const InitParams& initParams)
     Initialize(initContext, initParams);
 
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-    g_GfxCommandListsManager.QueueCommandListToExecute(initContext.GetCommandList(), initContext.GetCommandList().GetType());
+    g_GfxCommandListsManager.QueueCommandListToExecute(&initContext.GetCommandList());
 }
 
 void GfxIndexBuffer::Initialize(GfxContext& initContext, const InitParams& initParams)
@@ -327,7 +327,7 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     case UAV: assert(0); break; // TODO
     }
 
-    g_GfxCommandListsManager.QueueCommandListToExecute(initContext.GetCommandList(), initContext.GetCommandList().GetType());
+    g_GfxCommandListsManager.QueueCommandListToExecute(&initContext.GetCommandList());
 }
 
 void GfxTexture::CreateDSV(const InitParams& initParams)

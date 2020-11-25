@@ -50,7 +50,6 @@ private:
     uint32_t m_SystemFrameNumber = 0;
 };
 #define g_System                    System::GetInstance()
-#define g_TasksExecutor             g_System.GetTasksExecutor()
 #define ADD_TF_TASK(taskFlow, task) taskFlow.emplace([&]() { task; }).name(bbeTOSTRING(task))
 #define ADD_SF_TASK(taskFlow, task) taskFlow.emplace([&](tf::Subflow& sf) { task; }).name(bbeTOSTRING(task))
 
@@ -72,7 +71,6 @@ struct CommandLineOptions
         bool m_BreakOnWarnings                         = false;
         bool m_BreakOnErrors                           = false;
         bool m_EnableGPUValidation                     = false;
-        bool m_SynchronizedCommandQueueValidation      = false;
         bool m_EnableConservativeResourceStateTracking = false;
     } m_GfxDebugLayer;
 };

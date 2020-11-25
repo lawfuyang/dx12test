@@ -7,6 +7,7 @@
 #include <graphic/visual.h>
 
 #include <graphic/gfx/gfxadapter.h>
+#include <graphic/gfx/gfxcommandlist.h>
 #include <graphic/gfx/gfxcommonstates.h>
 #include <graphic/gfx/gfxcontext.h>
 #include <graphic/gfx/gfxdefaultassets.h>

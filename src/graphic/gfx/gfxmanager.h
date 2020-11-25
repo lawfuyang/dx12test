@@ -2,9 +2,9 @@
 
 #include <system/commandmanager.h>
 
+#include <graphic/gfx/gfxcontext.h>
 #include <graphic/gfx/gfxdevice.h>
 #include <graphic/gfx/gfxswapchain.h>
-#include <graphic/gfx/gfxtexturesandbuffers.h>
 
 #include <graphic/view.h>
 
@@ -31,16 +31,18 @@ public:
 
     View& GetMainView() { return m_MainView; }
 
+    uint32_t GetGraphicFrameNumber() const { return m_GraphicFrameNumber; }
+
 private:
     GfxContext& GenerateNewContextInternal();
-    void ScheduleRenderPasses(tf::Subflow& sf);
-    void ScheduleCommandListsExecution();
     void UpdateIMGUIPropertyGrid();
+
+    static const uint32_t NbMaxContexts = 128;
 
     std::mutex m_ContextsLock;
     ObjectPool<GfxContext> m_ContextsPool;
-    std::vector<GfxContext*> m_AllContexts;
-    std::vector<GfxContext*> m_ScheduledContexts;
+    InplaceArray<GfxContext*, NbMaxContexts> m_AllContexts;
+    InplaceArray<GfxCommandList*, NbMaxContexts> m_ScheduledCmdLists;
 
     GfxDevice         m_GfxDevice;
     GfxSwapChain      m_SwapChain;
@@ -48,5 +50,7 @@ private:
     CommandManager m_GfxCommandManager;
 
     View m_MainView;
+
+    uint32_t m_GraphicFrameNumber = 0;
 };
 #define g_GfxManager GfxManager::GetInstance()
