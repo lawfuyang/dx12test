@@ -43,9 +43,10 @@ void AddValidPermutations(Shader& newShader, GfxShaderType shaderType, json shad
             if (!allRulesPassed)
                 break;
 
-            // only apply the rules for affected permutations
-            if ((i & ruleSet.m_AffectedBits) != ruleSet.m_AffectedBits)
-                continue;
+            // TODO:
+            //// only apply the rules for affected permutations
+            //if ((i & ruleSet.m_AffectedBits) != ruleSet.m_AffectedBits)
+            //    continue;
 
             switch (ruleSet.m_Rule)
             {

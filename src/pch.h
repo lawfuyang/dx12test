@@ -73,11 +73,7 @@
     #include <extern/d3d12/d3dx12.h>
 #endif
 
-#if defined(BBE_SHADERCOMPILER)
-    // Quick & Easy JSON parsing
-    #include <extern/json/json.hpp>
-    using json = nlohmann::json;
-#else
+#if !defined(BBE_SHADERCOMPILER)
     // D3D12MA
     #include <extern/d3d12/D3D12MemAlloc.h>
 

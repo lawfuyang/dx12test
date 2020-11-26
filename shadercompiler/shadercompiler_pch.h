@@ -1,5 +1,9 @@
 #pragma once
 
+// Quick & Easy JSON parsing
+#include <extern/json/json.hpp>
+using json = nlohmann::json;
+
 static const uint32_t NbShaderBits = 4;
 
 DEFINE_ENUM_WITH_STRING_CONVERSIONS(GfxShaderType, (VS)(PS)(CS));
