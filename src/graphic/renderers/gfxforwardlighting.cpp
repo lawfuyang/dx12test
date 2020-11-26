@@ -74,10 +74,6 @@ void GfxForwardLightingPass::PopulateCommandList(GfxContext& context)
     bbeProfileFunction();
     bbeProfileGPUFunction(context);
 
-    // TODO: Remove clearing of BackBuffer when we manage to fill every pixel on screen through various render passes
-    context.ClearRenderTargetView(g_GfxManager.GetSwapChain().GetCurrentBackBuffer(), bbeVector4{ 0.0f, 0.2f, 0.4f, 1.0f });
-    context.ClearDepth(g_SceneDepthBuffer, 1.0f);
-
     assert(m_RootSignature);
     context.SetRootSignature(*m_RootSignature);
 

@@ -7,6 +7,7 @@ static bool gs_ShowGfxManagerIMGUIWindow = false;
 
 extern GfxRendererBase* g_GfxForwardLightingPass;
 extern GfxRendererBase* g_GfxIMGUIRenderer;
+extern GfxTexture g_SceneDepthBuffer;
 
 void InitializeGraphic(tf::Subflow& subFlow)
 {
@@ -127,8 +128,8 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
 
-    tf::Task BEGIN_FRAME_GATE = subFlow.emplace([] {});
-    tf::Task RENDERERS_GATE = subFlow.emplace([] {}).succeed(BEGIN_FRAME_GATE);
+    tf::Task BEGIN_FRAME_GATE = subFlow.placeholder();
+    tf::Task RENDERERS_GATE = subFlow.placeholder().succeed(BEGIN_FRAME_GATE);
 
     subFlow.emplace([this](tf::Subflow& sf) { m_GfxCommandManager.ConsumeAllCommandsMT(sf); }).precede(BEGIN_FRAME_GATE);
     subFlow.emplace([this] { BeginFrame(); }).precede(BEGIN_FRAME_GATE);
@@ -145,9 +146,12 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
             m_ScheduledCmdLists.push_back(&context.GetCommandList());
             tf = subFlow.emplace([&context, renderer]() { renderer->PopulateCommandList(context); }).name(renderer->GetName());
         }
+        else
+        {
+            // Do nothing if no need to render
+            tf = subFlow.placeholder();
+        }
 
-        // Do nothing if no need to render
-        tf = subFlow.emplace([] {});
         tf.succeed(BEGIN_FRAME_GATE).precede(RENDERERS_GATE);
     };
     PopulateCommandList(g_GfxForwardLightingPass);
@@ -161,6 +165,11 @@ void GfxManager::BeginFrame()
     m_GfxDevice.CheckStatus();
 
     g_GfxGPUDescriptorAllocator.CleanupUsedHeaps();
+
+    // TODO: Remove clearing of BackBuffer when we manage to fill every pixel on screen through various render passes
+    GfxContext& context = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "TransitionBackBufferForPresent");
+    context.ClearRenderTargetView(m_SwapChain.GetCurrentBackBuffer(), bbeVector4{ 0.0f, 0.2f, 0.4f, 1.0f });
+    context.ClearDepth(g_SceneDepthBuffer, 1.0f);
 }
 
 void GfxManager::EndFrame()
@@ -173,7 +182,6 @@ void GfxManager::EndFrame()
 
     // Before presenting backbuffer, transition to to PRESENT state
     GfxContext& context = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "TransitionBackBufferForPresent");
-    SetD3DDebugName(context.GetCommandList().Dev(), "TransitionBackBufferForPresent");
     context.TransitionResource(m_SwapChain.GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, true);
     g_GfxCommandListsManager.QueueCommandListToExecute(&context.GetCommandList());
 

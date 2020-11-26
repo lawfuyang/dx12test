@@ -15,8 +15,7 @@
             "Rule": "OnlyOneBitSet",
             "AffectedBits": [
               0,
-              1,
-              2
+              1
             ]
           }
         ]
