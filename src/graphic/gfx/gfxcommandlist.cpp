@@ -58,12 +58,35 @@ void GfxCommandListQueue::Initialize(D3D12_COMMAND_LIST_TYPE type)
 
     bbeProfile("CreateCommandQueue");
     DX12_CALL(gfxDevice.Dev()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_CommandQueue)));
-    SetD3DDebugName(m_CommandQueue.Get(), "Main Direct Queue");
+    SetD3DDebugName(Dev(), "Main Direct Queue");
 
-    g_Profiler.InitializeGPUProfiler(gfxDevice.Dev(), m_CommandQueue.Get());
-    g_Profiler.RegisterGPUQueue(m_CommandQueue.Get(), "Direct Queue");
+    static const char* QUEUE_NAMES[] =
+    {
+        "D3D12_COMMAND_LIST_TYPE_DIRECT",
+        "D3D12_COMMAND_LIST_TYPE_BUNDLE",
+        "D3D12_COMMAND_LIST_TYPE_COMPUTE",
+        "D3D12_COMMAND_LIST_TYPE_COPY",
+        "D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE",
+        "D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS",
+        "D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE",
+    };
+
+    g_Profiler.RegisterGPUQueue(gfxDevice.Dev(), Dev(), QUEUE_NAMES[type]);
 
     m_FreeCommandLists.set_capacity(MaxCmdLists);
+    m_InFlightCommandLists.set_capacity(MaxCmdLists);
+}
+
+void GfxCommandListQueue::ShutDown()
+{
+    assert(m_PendingExecuteCommandLists.empty());
+    assert(m_InFlightCommandLists.empty());
+
+    // free all cmd lists
+    for (GfxCommandList* cmdList : m_FreeCommandLists)
+    {
+        m_CommandListsPool.free(cmdList);
+    }
 }
 
 GfxCommandList* GfxCommandListQueue::AllocateCommandList(const std::string& name)
@@ -100,6 +123,7 @@ GfxCommandList* GfxCommandListQueue::AllocateCommandList(const std::string& name
 
     assert(newCmdList->Dev());
     SetD3DDebugName(newCmdList->Dev(), name);
+    SetD3DDebugName(newCmdList->m_CommandAllocator.Get(), name);
 
     newCmdList->BeginRecording();
 
@@ -128,14 +152,14 @@ void GfxCommandListQueue::ExecutePendingCommandLists()
 
     g_Profiler.SubmitAllGPULogsToQueue(m_CommandQueue.Get());
 
-    // add executed cmd lists to free list queue
+    // add executed cmd lists to inflight list queue
     {
         bbeAutoLock(m_ListsLock);
 
-        assert(m_FreeCommandLists.size() + numCmdListsToExec < MaxCmdLists);
+        assert(m_InFlightCommandLists.size() + numCmdListsToExec < MaxCmdLists);
         for (uint32_t i = 0; i < numCmdListsToExec; ++i)
         {
-            m_FreeCommandLists.push_back(ppPendingFreeCommandLists[i]);
+            m_InFlightCommandLists.push_back(ppPendingFreeCommandLists[i]);
         }
     }
 
@@ -153,13 +177,28 @@ void GfxCommandListQueue::ExecutePendingCommandLists()
     m_Fence.IncrementAndSignal(Dev());
 }
 
+void GfxCommandListQueue::GarbageCollect()
+{
+    bbeMultiThreadDetector();
+
+    // free all cmd lists
+    for (GfxCommandList* cmdList : m_InFlightCommandLists)
+    {
+        m_FreeCommandLists.push_back(cmdList);
+    }
+    m_InFlightCommandLists.clear();
+}
+
 void GfxCommandListsManager::Initialize()
 {
     bbeProfileFunction();
     g_Log.info("Initializing GfxCommandListsManager");
 
-    assert(m_DirectPool.m_CommandQueue.Get() == nullptr);
-    m_DirectPool.Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    for (GfxCommandListQueue* queue : m_AllQueues)
+    {
+        assert(queue->m_CommandQueue.Get() == nullptr);
+    }
+    m_DirectQueue.Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT);
 }
 
 void GfxCommandListsManager::ShutDown()
@@ -167,12 +206,9 @@ void GfxCommandListsManager::ShutDown()
     bbeProfileFunction();
     bbeMultiThreadDetector();
 
-    assert(m_DirectPool.m_PendingExecuteCommandLists.empty());
-
-    // free all cmd lists
-    for (GfxCommandList* cmdList : m_DirectPool.m_FreeCommandLists)
+    for (GfxCommandListQueue* queue : m_AllQueues)
     {
-        m_DirectPool.m_CommandListsPool.free(cmdList);
+        queue->ShutDown();
     }
 }
 
@@ -190,5 +226,16 @@ void GfxCommandListsManager::ExecutePendingCommandLists()
 {
     bbeProfileFunction();
 
-    m_DirectPool.ExecutePendingCommandLists();
+    for (GfxCommandListQueue* queue : m_AllQueues)
+    {
+        queue->ExecutePendingCommandLists();
+    }
+}
+
+void GfxCommandListsManager::GarbageCollect()
+{
+    for (GfxCommandListQueue* queue : m_AllQueues)
+    {
+        queue->GarbageCollect();
+    }
 }

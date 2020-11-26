@@ -38,7 +38,7 @@ public:
     const GfxDescriptorHeap& GetInternalHeap() const { return m_InternalDescriptorHeap; }
     void Initialize();
     GfxDescriptorHeapHandle Allocate(uint32_t numHeaps, GfxDescriptorHeapHandle* out = nullptr);
-    void CleanupUsedHeaps();
+    void GarbageCollect();
 
 private:
     GfxDescriptorHeapHandle AllocateInternal(uint32_t numHeaps, GfxDescriptorHeapHandle* out);

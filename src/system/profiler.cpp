@@ -17,17 +17,13 @@ void SystemProfiler::Initialize()
     m_PerThreadGPULogs.reserve(std::thread::hardware_concurrency());
 }
 
-void SystemProfiler::InitializeGPUProfiler(void* pDevice, void* pCommandQueue)
+void SystemProfiler::RegisterGPUQueue(void* pDevice, void* pCommandQueue, const char* queueName)
 {
-    g_Log.info("Initializing GPU Profiler");
-
     MicroProfileGpuInitD3D12(pDevice, 1, (void**)&pCommandQueue);
-    MicroProfileSetCurrentNodeD3D12(0);
-}
-
-void SystemProfiler::RegisterGPUQueue(void* pCommandQueue, const char* queueName)
-{
     m_GPUQueueToProfilerHandle[pCommandQueue] = MICROPROFILE_GPU_INIT_QUEUE(queueName);
+
+    // If we support multiple adapters, need to change this
+    MicroProfileSetCurrentNodeD3D12(0);
 }
 
 void SystemProfiler::ShutDown()

@@ -184,7 +184,7 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
         {
             rtvHandles[i] = m_RTVs[i]->GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart();
 
-            TransitionResource(*m_RTVs[i], D3D12_RESOURCE_STATE_RENDER_TARGET);
+            TransitionResource(*m_RTVs[i], D3D12_RESOURCE_STATE_RENDER_TARGET, false);
         }
 
         D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = {};
@@ -235,16 +235,61 @@ void GfxContext::FlushResourceBarriers()
 
 void GfxContext::TransitionResource(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate)
 {
+    const D3D12_RESOURCE_STATES oldState = resource.m_CurrentResourceState;
+
+    if (oldState != newState)
+    {
+        D3D12_RESOURCE_BARRIER& BarrierDesc = m_ResourceBarriers.emplace_back(D3D12_RESOURCE_BARRIER{});
+
+        BarrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        BarrierDesc.Transition.pResource = resource.m_HazardTrackedResource;
+        BarrierDesc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+        BarrierDesc.Transition.StateBefore = oldState;
+        BarrierDesc.Transition.StateAfter = newState;
+
+        // Insert UAV barrier on SRV<->UAV transitions.
+        if (oldState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS || newState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+            m_ResourceBarriers.push_back(CD3DX12_RESOURCE_BARRIER::UAV(resource.m_HazardTrackedResource));
+
+        // Check to see if we already started the transition
+        if (newState == resource.m_TransitioningState)
+        {
+            BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
+            resource.m_TransitioningState = GfxHazardTrackedResource::INVALID_STATE;
+        }
+        else
+            BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+
+        resource.m_CurrentResourceState = newState;
+    }
+    else if (newState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+        m_ResourceBarriers.push_back(CD3DX12_RESOURCE_BARRIER::UAV(resource.m_HazardTrackedResource));
+
+    if (flushImmediate)
+        FlushResourceBarriers();
+}
+
+void GfxContext::BeginResourceTransition(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate)
+{
     assert(m_CommandList);
+
+    // If it's already transitioning, finish that transition
+    if (resource.m_TransitioningState != GfxHazardTrackedResource::INVALID_STATE)
+        TransitionResource(resource, resource.m_TransitioningState, flushImmediate);
 
     const D3D12_RESOURCE_STATES oldState = resource.m_CurrentResourceState;
 
+    // verify UAV states
     if (m_CommandList->GetType() == D3D12_COMMAND_LIST_TYPE_COMPUTE)
     {
-        const uint32_t VALID_COMPUTE_QUEUE_RESOURCE_STATES = D3D12_RESOURCE_STATE_UNORDERED_ACCESS | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_COPY_DEST | D3D12_RESOURCE_STATE_COPY_SOURCE;
+        static const uint32_t VALID_STATES =
+            D3D12_RESOURCE_STATE_UNORDERED_ACCESS |
+            D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE |
+            D3D12_RESOURCE_STATE_COPY_DEST |
+            D3D12_RESOURCE_STATE_COPY_SOURCE;
 
-        assert((oldState & VALID_COMPUTE_QUEUE_RESOURCE_STATES) == oldState);
-        assert((newState & VALID_COMPUTE_QUEUE_RESOURCE_STATES) == newState);
+        assert((oldState & VALID_STATES) == oldState);
+        assert((newState & VALID_STATES) == newState);
     }
 
     if (oldState != newState)
@@ -256,33 +301,10 @@ void GfxContext::TransitionResource(GfxHazardTrackedResource& resource, D3D12_RE
         BarrierDesc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
         BarrierDesc.Transition.StateBefore = oldState;
         BarrierDesc.Transition.StateAfter = newState;
-        BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+        BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY;
 
-        // Check to see if we already started the transition for this resource from another GfxContext
-        if (newState == resource.m_TransitioningState)
-        {
-            assert(resource.m_TransitioningState != (D3D12_RESOURCE_STATES)-1);
-
-            BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
-            resource.m_TransitioningState = (D3D12_RESOURCE_STATES)-1;
-        }
-
-        resource.m_CurrentResourceState = newState;
+        resource.m_TransitioningState = newState;
     }
-    else if (newState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
-        InsertUAVBarrier(resource, flushImmediate);
-
-    if (flushImmediate)
-        FlushResourceBarriers();
-}
-
-void GfxContext::InsertUAVBarrier(GfxHazardTrackedResource& resource, bool flushImmediate)
-{
-    D3D12_RESOURCE_BARRIER& BarrierDesc = m_ResourceBarriers.emplace_back(D3D12_RESOURCE_BARRIER{});
-
-    BarrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-    BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    BarrierDesc.UAV.pResource = resource.m_HazardTrackedResource;
 
     if (flushImmediate)
         FlushResourceBarriers();
@@ -347,6 +369,7 @@ void GfxContext::CommitStagedResources()
         // init desc heap for cbuffer
         GfxDescriptorHeap descHeap;
         descHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
+        SetD3DDebugName(descHeap.Dev(), stagedCBV.m_Name);
 
         // Describe and create a constant buffer view.
         D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
@@ -364,14 +387,16 @@ void GfxContext::CommitStagedResources()
         const uint32_t RootOffset = 0; // TODO?
         StageDescriptor(descHeap.Dev()->GetCPUDescriptorHandleForHeapStart(), cbRegister, RootOffset);
 
-        // free Descriptor & Upload heaps next gpu frame
-        g_GfxManager.AddGraphicCommand([descHeap, uploadHeap]()
+        // free Descriptor & Upload heaps 2 frames later
+        auto Releaser = [descHeap, uploadHeap]() 
         {
             // release CB heap
             GfxBufferCommon::ReleaseAllocation(uploadHeap);
 
             // descHeap then goes out of scope and decrements the last ref count of ComPtr<ID3D12DescriptorHeap>, destroying it
-        });
+        };
+        auto ReleaserDeferred = [Releaser]() { g_GfxManager.AddGraphicCommand([Releaser]() { Releaser(); }); };
+        g_GfxManager.AddGraphicCommand([ReleaserDeferred]() { ReleaserDeferred(); });
     }
 
     // Resources
@@ -403,8 +428,7 @@ void GfxContext::CommitStagedResources()
 
             if (srcDesc.ptr == 0)
             {
-                D3D12_DESCRIPTOR_RANGE_TYPE srcDescType = resourceDesc.m_Types[i];
-                CreateNullView(srcDescType, destHandle.m_CPUHandle);
+                CreateNullView(resourceDesc.m_Types[i], destHandle.m_CPUHandle);
             }
             else
             {
@@ -429,8 +453,8 @@ void GfxContext::DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t i
 
 void GfxContext::PreDraw()
 {
-    FlushResourceBarriers();
     CompileAndSetGraphicsPipelineState();
+    FlushResourceBarriers();
     CommitStagedResources();
 }
 

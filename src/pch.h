@@ -5,7 +5,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 #if !defined(BBE_SHADERCOMPILER)
-    #define BBE_USE_PROFILER
+    //#define BBE_USE_PROFILER
 #endif
 
 // uncomment to disable all asserts
@@ -117,12 +117,15 @@
 // Math
 #include <extern/simplemath/SimpleMath.h>
 
+// Microprofiler
 #if defined(BBE_USE_PROFILER)
     #define MICROPROFILE_ENABLED 1
     #define MICROPROFILE_GPU_TIMERS_D3D12 1
     #define MICROPROFILE_WEBSERVER_MAXFRAMES 50
-    #include <extern/microprofile/microprofile.h>
+#else
+    #define MICROPROFILE_ENABLED 0
 #endif
+#include <extern/microprofile/microprofile.h>
 
 // typedefs
 using WindowHandle = uint64_t;

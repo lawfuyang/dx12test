@@ -43,17 +43,16 @@ public:
     GfxCommandList&         GetCommandList() { return *m_CommandList; }
     GfxPipelineStateObject& GetPSO()         { return m_PSO; }
 
-    void TransitionResource(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate = false);
+    void TransitionResource(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate);
+    void BeginResourceTransition(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate = false);
 
     void DrawIndexedInstanced(uint32_t IndexCountPerInstance, uint32_t InstanceCount, uint32_t StartIndexLocation, uint32_t BaseVertexLocation, uint32_t StartInstanceLocation);
 
 private:
-
     void CompileAndSetGraphicsPipelineState();
     void PreDraw();
     void PostDraw();
     void FlushResourceBarriers();
-    void InsertUAVBarrier(GfxHazardTrackedResource& resource, bool flushImmediate = false);
     void StageDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptor, uint32_t rootIndex, uint32_t offset);
     void CommitStagedResources();
     void CheckStagingResourceInputs(uint32_t rootIndex, uint32_t offset, D3D12_DESCRIPTOR_RANGE_TYPE);

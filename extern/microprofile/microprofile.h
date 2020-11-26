@@ -78,54 +78,55 @@ typedef uint16_t MicroProfileGroupId;
 #define MICROPROFILE_REGISTER_GROUP(group, color, category)
 #define MICROPROFILE_DECLARE_GPU(var)
 #define MICROPROFILE_DEFINE_GPU(var, name, color)
-#define MICROPROFILE_SCOPE(var) do{}while(0)
-#define MICROPROFILE_SCOPEI(group, name, color) do{}while(0)
-#define MICROPROFILE_SCOPE_TOKEN(token) do {} while(0)
+#define MICROPROFILE_SCOPE(var) __noop
+#define MICROPROFILE_SCOPEI(group, name, color) __noop
+#define MICROPROFILE_SCOPE_TOKEN(token) __noop
 #define MICROPROFILE_SCOPEGPU_TOKEN(token)
-#define MICROPROFILE_SCOPEGPU(var) do{}while(0)
-#define MICROPROFILE_SCOPEGPUI( name, color) do{}while(0)
-#define MICROPROFILE_SCOPEGPU_TOKEN_L(Log, token) do{}while(0)
-#define MICROPROFILE_SCOPEGPU_L(Log, var) do{}while(0)
-#define MICROPROFILE_SCOPEGPUI_L(Log, name, color) do{}while(0)
-#define MICROPROFILE_CONDITIONAL_SCOPEI(condition, group, name, color) do{}while(0)
-#define MICROPROFILE_ENTER(var) do{}while(0)
-#define MICROPROFILE_ENTER_TOKEN(var) do{}while(0)
-#define MICROPROFILE_ENTERI(group, name, color) do{}while(0)
-#define MICROPROFILE_LEAVE() do{}while(0)
-#define MICROPROFILE_GPU_ENTER(var) do{}while(0)
-#define MICROPROFILE_GPU_ENTER_TOKEN(token) do{}while(0)
-#define MICROPROFILE_GPU_ENTERI(group, name, color) do{}while(0)
-#define MICROPROFILE_GPU_LEAVE() do{}while(0)
-#define MICROPROFILE_GPU_ENTER_L(Log, var) do{}while(0)
-#define MICROPROFILE_GPU_ENTER_TOKEN_L(Log, token) do{}while(0)
-#define MICROPROFILE_GPU_ENTERI_L(Log, name, color) do{}while(0)
-#define MICROPROFILE_GPU_LEAVE_L(Log) do{}while(0)
-#define MICROPROFILE_GPU_INIT_QUEUE(QueueName) do {} while(0)
-#define MICROPROFILE_GPU_GET_QUEUE(QueueName) do {} while(0)
-#define MICROPROFILE_GPU_BEGIN(pContext, pLog) do {} while(0)
-#define MICROPROFILE_GPU_SET_CONTEXT(pContext, pLog) do {} while(0)
+#define MICROPROFILE_SCOPEGPU(var) __noop
+#define MICROPROFILE_SCOPEGPUI( name, color) __noop
+#define MICROPROFILE_SCOPEGPU_TOKEN_L(Log, token) __noop
+#define MICROPROFILE_SCOPEGPU_L(Log, var) __noop
+#define MICROPROFILE_SCOPEGPUI_L(Log, name, color) __noop
+#define MICROPROFILE_CONDITIONAL_SCOPEI(condition, group, name, color) __noop
+#define MICROPROFILE_ENTER(var) __noop
+#define MICROPROFILE_ENTER_TOKEN(var) __noop
+#define MICROPROFILE_ENTERI(group, name, color) __noop
+#define MICROPROFILE_LEAVE() __noop
+#define MICROPROFILE_GPU_ENTER(var) __noop
+#define MICROPROFILE_GPU_ENTER_TOKEN(token) __noop
+#define MICROPROFILE_GPU_ENTERI(group, name, color) __noop
+#define MICROPROFILE_GPU_LEAVE() __noop
+#define MICROPROFILE_GPU_ENTER_L(Log, var) __noop
+#define MICROPROFILE_GPU_ENTER_TOKEN_L(Log, token) __noop
+#define MICROPROFILE_GPU_ENTERI_L(Log, name, color) __noop
+#define MICROPROFILE_GPU_LEAVE_L(Log) __noop
+#define MICROPROFILE_GPU_INIT_QUEUE(QueueName) 0xDEADBEEF
+#define MICROPROFILE_GPU_FREE_QUEUE(QueueName) __noop
+#define MICROPROFILE_GPU_GET_QUEUE(QueueName) __noop
+#define MICROPROFILE_GPU_BEGIN(pContext, pLog) __noop
+#define MICROPROFILE_GPU_SET_CONTEXT(pContext, pLog) __noop
 #define MICROPROFILE_GPU_END(pLog) 0
-#define MICROPROFILE_GPU_SUBMIT(Queue, Work) do {} while(0)
-#define MICROPROFILE_TIMELINE_TOKEN(token) do{}while(0)
-#define MICROPROFILE_TIMELINE_ENTER(token, color, name) do{}while(0)
-#define MICROPROFILE_TIMELINE_ENTERF(token, color, fmt, ...) do{}while(0)
-#define MICROPROFILE_TIMELINE_LEAVE(token) do{}while(0)
-#define MICROPROFILE_TIMELINE_ENTER_STATIC(color, name) do{}while(0)
-#define MICROPROFILE_TIMELINE_LEAVE_STATIC(name) do{}while(0)
-#define MICROPROFILE_THREADLOGGPURESET(a) do{}while(0)
+#define MICROPROFILE_GPU_SUBMIT(Queue, Work) __noop
+#define MICROPROFILE_TIMELINE_TOKEN(token) __noop
+#define MICROPROFILE_TIMELINE_ENTER(token, color, name) __noop
+#define MICROPROFILE_TIMELINE_ENTERF(token, color, fmt, ...) __noop
+#define MICROPROFILE_TIMELINE_LEAVE(token) __noop
+#define MICROPROFILE_TIMELINE_ENTER_STATIC(color, name) __noop
+#define MICROPROFILE_TIMELINE_LEAVE_STATIC(name) __noop
+#define MICROPROFILE_THREADLOGGPURESET(a) __noop
 #define MICROPROFILE_META_CPU(name, count)
 #define MICROPROFILE_META_GPU(name, count)
-#define MICROPROFILE_FORCEENABLECPUGROUP(s) do{} while(0)
-#define MICROPROFILE_FORCEDISABLECPUGROUP(s) do{} while(0)
-#define MICROPROFILE_FORCEENABLEGPUGROUP(s) do{} while(0)
-#define MICROPROFILE_FORCEDISABLEGPUGROUP(s) do{} while(0)
-#define MICROPROFILE_COUNTER_ADD(name, count) do{} while(0)
-#define MICROPROFILE_COUNTER_SUB(name, count) do{} while(0)
-#define MICROPROFILE_COUNTER_SET(name, count) do{} while(0)
-#define MICROPROFILE_COUNTER_SET_INT32_PTR(name, ptr) do{} while(0)
-#define MICROPROFILE_COUNTER_SET_INT64_PTR(name, ptr) do{} while(0)
-#define MICROPROFILE_COUNTER_CLEAR_PTR(name) do{} while(0)
-#define MICROPROFILE_COUNTER_SET_LIMIT(name, count) do{} while(0)
+#define MICROPROFILE_FORCEENABLECPUGROUP(s) __noop
+#define MICROPROFILE_FORCEDISABLECPUGROUP(s) __noop
+#define MICROPROFILE_FORCEENABLEGPUGROUP(s) __noop
+#define MICROPROFILE_FORCEDISABLEGPUGROUP(s) __noop
+#define MICROPROFILE_COUNTER_ADD(name, count) __noop
+#define MICROPROFILE_COUNTER_SUB(name, count) __noop
+#define MICROPROFILE_COUNTER_SET(name, count) __noop
+#define MICROPROFILE_COUNTER_SET_INT32_PTR(name, ptr) __noop
+#define MICROPROFILE_COUNTER_SET_INT64_PTR(name, ptr) __noop
+#define MICROPROFILE_COUNTER_CLEAR_PTR(name) __noop
+#define MICROPROFILE_COUNTER_SET_LIMIT(name, count) __noop
 #define MICROPROFILE_CONDITIONAL(expr) 
 #define MICROPROFILE_COUNTER_CONFIG(name, type, limit, flags)
 #define MICROPROFILE_COUNTER_CONFIG_ONCE(name, type, limit, flags)
@@ -133,60 +134,62 @@ typedef uint16_t MicroProfileGroupId;
 #define MICROPROFILE_DEFINE_LOCAL_COUNTER(var, name) 
 #define MICROPROFILE_DECLARE_LOCAL_ATOMIC_COUNTER(var) 
 #define MICROPROFILE_DEFINE_LOCAL_ATOMIC_COUNTER(var, name) 
-#define MICROPROFILE_COUNTER_LOCAL_ADD(var, count) do{}while(0)
-#define MICROPROFILE_COUNTER_LOCAL_SUB(var, count) do{}while(0)
-#define MICROPROFILE_COUNTER_LOCAL_SET(var, count) do{}while(0)
-#define MICROPROFILE_COUNTER_LOCAL_UPDATE_ADD(var) do{}while(0)
-#define MICROPROFILE_COUNTER_LOCAL_UPDATE_SET(var) do{}while(0)
-#define MICROPROFILE_COUNTER_LOCAL_ADD_ATOMIC(var, count) do{}while(0)
-#define MICROPROFILE_COUNTER_LOCAL_SUB_ATOMIC(var, count) do{}while(0)
-#define MICROPROFILE_COUNTER_LOCAL_SET_ATOMIC(var, count) do{}while(0)
-#define MICROPROFILE_COUNTER_LOCAL_UPDATE_ADD_ATOMIC(var) do{}while(0)
-#define MICROPROFILE_COUNTER_LOCAL_UPDATE_SET_ATOMIC(var) do{}while(0)
+#define MICROPROFILE_COUNTER_LOCAL_ADD(var, count) __noop
+#define MICROPROFILE_COUNTER_LOCAL_SUB(var, count) __noop
+#define MICROPROFILE_COUNTER_LOCAL_SET(var, count) __noop
+#define MICROPROFILE_COUNTER_LOCAL_UPDATE_ADD(var) __noop
+#define MICROPROFILE_COUNTER_LOCAL_UPDATE_SET(var) __noop
+#define MICROPROFILE_COUNTER_LOCAL_ADD_ATOMIC(var, count) __noop
+#define MICROPROFILE_COUNTER_LOCAL_SUB_ATOMIC(var, count) __noop
+#define MICROPROFILE_COUNTER_LOCAL_SET_ATOMIC(var, count) __noop
+#define MICROPROFILE_COUNTER_LOCAL_UPDATE_ADD_ATOMIC(var) __noop
+#define MICROPROFILE_COUNTER_LOCAL_UPDATE_SET_ATOMIC(var) __noop
 
 #define MicroProfileGetTime(group, name) 0.f
-#define MicroProfileOnThreadCreate(foo) do{}while(0)
-#define MicroProfileOnThreadExit() do{}while(0)
-#define MicroProfileFlip(pContext) do{}while(0)
-#define MicroProfileFlip_CB(pContext, FreezeCB) do{}while(0)
-#define MicroProfileSetAggregateFrames(a) do{}while(0)
+#define MicroProfileOnThreadCreate(foo) __noop
+#define MicroProfileOnThreadExit() __noop
+#define MicroProfileFlip(pContext) __noop
+#define MicroProfileFlip_CB(pContext, FreezeCB) __noop
+#define MicroProfileSetAggregateFrames(a) __noop
 #define MicroProfileGetAggregateFrames() 0
 #define MicroProfileGetCurrentAggregateFrames() 0
-#define MicroProfileTogglePause() do{}while(0)
-#define MicroProfileToggleAllGroups() do{} while(0)
-#define MicroProfileDumpTimers() do{}while(0)
-#define MicroProfileShutdown() do{}while(0)
-#define MicroProfileSetForceEnable(a) do{} while(0)
+#define MicroProfileTogglePause() __noop
+#define MicroProfileToggleAllGroups() __noop
+#define MicroProfileDumpTimers() __noop
+#define MicroProfileShutdown() __noop
+#define MicroProfileSetForceEnable(a) __noop
 #define MicroProfileGetForceEnable() false
-#define MicroProfileSetEnableAllGroups(b) do{} while(0)
-#define MicroProfileEnableCategory(a) do{} while(0)
-#define MicroProfileDisableCategory(a) do{} while(0)
+#define MicroProfileSetEnableAllGroups(b) __noop
+#define MicroProfileEnableCategory(a) __noop
+#define MicroProfileDisableCategory(a) __noop
 #define MicroProfileGetEnableAllGroups() false
 #define MicroProfileSetForceMetaCounters(a)
 #define MicroProfileGetForceMetaCounters() 0
-#define MicroProfileEnableMetaCounter(c) do{}while(0)
-#define MicroProfileDisableMetaCounter(c) do{}while(0)
-#define MicroProfileDumpFile(html,csv,spikecpu,spikegpu) do{} while(0)
-#define MicroProfileDumpFileImmediately(html,csv,gfcontext) do{} while(0)
+#define MicroProfileEnableMetaCounter(c) __noop
+#define MicroProfileDisableMetaCounter(c) __noop
+#define MicroProfileDumpFile(html,csv,spikecpu,spikegpu) __noop
+#define MicroProfileDumpFileImmediately(html,csv,gfcontext) __noop
 #define MicroProfileWebServerPort() ((uint32_t)-1)
-#define MicroProfileStartContextSwitchTrace() do{}while(0)
+#define MicroProfileStartContextSwitchTrace() __noop
 #define MicroProfileWebServerPort() ((uint32_t)-1)
 #define MicroProfileGpuInsertTimeStamp(a) 1
 #define MicroProfileGpuGetTimeStamp(a) 0
 #define MicroProfileTicksPerSecondGpu() 1
 #define MicroProfileGetGpuTickReference(a,b) 0
-#define MicroProfileGpuInitD3D12(pDevice,nNodeCount,pCommandQueue) do{}while(0)
-#define MicroProfileGpuInitD3D11(pDevice,pDeviceContext) do{}while(0)
-#define MicroProfileGpuShutdown() do{}while(0)
-#define MicroProfileGpuInitGL() do{}while(0)
-#define MicroProfileSetCurrentNodeD3D12(nNode) do{}while(0)
+#define MicroProfileGpuInitD3D12(pDevice,nNodeCount,pCommandQueue) __noop
+#define MicroProfileGpuInitD3D11(pDevice,pDeviceContext) __noop
+#define MicroProfileGpuShutdown() __noop
+#define MicroProfileGpuInitGL() __noop
+#define MicroProfileSetCurrentNodeD3D12(nNode) __noop
 #define MicroProfilePlatformMarkersGetEnabled() 0
-#define MicroProfilePlatformMarkersSetEnabled(bEnabled) do{}while(0)
+#define MicroProfilePlatformMarkersSetEnabled(bEnabled) __noop
 #define MicroProfileTickToMsMultiplierCpu() 1.f
 #define MicroProfileTickToMsMultiplierGpu() 0.f
 #define MicroProfileTicksPerSecondCpu() 1
 #define MicroProfileTick() 0
 #define MicroProfileEnabled() 0
+#define MicroProfileThreadLogGpuFree(pLog) __noop
+#define MicroProfileThreadLogGpuAlloc() nullptr
 
 #else
 
@@ -268,7 +271,7 @@ typedef void (*MicroProfileOnFreeze)(int nFrozen);
  // use only with static string literals
 #define MICROPROFILE_TIMELINE_LEAVE_STATIC(name) MicroProfileTimelineLeaveStatic(name)
 #define MICROPROFILE_THREADLOGGPURESET(a) MicroProfileThreadLogGpuReset(a)
-#define MICROPROFILE_META_CPU(name, count) do{}while(0)//static MicroProfileToken MICROPROFILE_TOKEN_PASTE(g_mp_meta,__LINE__) = MicroProfileGetMetaToken(name); MicroProfileMetaUpdate(MICROPROFILE_TOKEN_PASTE(g_mp_meta,__LINE__), count, MicroProfileTokenTypeCpu)
+#define MICROPROFILE_META_CPU(name, count) __noop//static MicroProfileToken MICROPROFILE_TOKEN_PASTE(g_mp_meta,__LINE__) = MicroProfileGetMetaToken(name); MicroProfileMetaUpdate(MICROPROFILE_TOKEN_PASTE(g_mp_meta,__LINE__), count, MicroProfileTokenTypeCpu)
 #define MICROPROFILE_COUNTER_ADD(name, count) static MicroProfileToken MICROPROFILE_TOKEN_PASTE(g_mp_counter,__LINE__) = MicroProfileGetCounterToken(name); MicroProfileCounterAdd(MICROPROFILE_TOKEN_PASTE(g_mp_counter,__LINE__), count)
 #define MICROPROFILE_COUNTER_SUB(name, count) static MicroProfileToken MICROPROFILE_TOKEN_PASTE(g_mp_counter,__LINE__) = MicroProfileGetCounterToken(name); MicroProfileCounterAdd(MICROPROFILE_TOKEN_PASTE(g_mp_counter,__LINE__), -(int64_t)count)
 #define MICROPROFILE_COUNTER_SET(name, count) static MicroProfileToken MICROPROFILE_TOKEN_PASTE(g_mp_counter_set,__LINE__) = MicroProfileGetCounterToken(name); MicroProfileCounterSet(MICROPROFILE_TOKEN_PASTE(g_mp_counter_set,__LINE__), count)
@@ -308,7 +311,7 @@ typedef void (*MicroProfileOnFreeze)(int nFrozen);
 #define MICROPROFILE_PLATFORM_MARKER_END() MicroProfilePlatformMarkerEnd()
 #else
 #define MICROPROFILE_PLATFORM_MARKER_BEGIN(color,marker) do{(void)color;(void)marker;}while(0)
-#define MICROPROFILE_PLATFORM_MARKER_END() do{}while(0)
+#define MICROPROFILE_PLATFORM_MARKER_END() __noop
 #define MICROPROFILE_PLATFORM_MARKERS_ENABLED 0
 #endif
 
@@ -669,7 +672,7 @@ MICROPROFILE_API void MicroProfileGpuShutdown();
 #define MicroProfileTicksPerSecondGpu() 1
 #define MicroProfileGetGpuTickReference(a,b) 0
 #define MicroProfileGpuFlip(a) 0
-#define MicroProfileGpuShutdown() do{}while(0)
+#define MicroProfileGpuShutdown() __noop
 
 #endif
 

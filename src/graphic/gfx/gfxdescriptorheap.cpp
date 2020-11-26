@@ -77,7 +77,7 @@ GfxDescriptorHeapHandle GfxGPUDescriptorAllocator::AllocateInternal(uint32_t num
     return ret;
 }
 
-void GfxGPUDescriptorAllocator::CleanupUsedHeaps()
+void GfxGPUDescriptorAllocator::GarbageCollect()
 {
     bbeMultiThreadDetector();
 

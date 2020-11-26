@@ -20,6 +20,7 @@ private:
     ComPtr<ID3D12GraphicsCommandList5> m_CommandList;
 
     friend class GfxCommandListsManager;
+    friend class GfxCommandListQueue;
 };
 
 class GfxCommandListQueue
@@ -30,9 +31,11 @@ public:
     ID3D12CommandQueue* Dev() const { return m_CommandQueue.Get(); }
 
     void Initialize(D3D12_COMMAND_LIST_TYPE type);
+    void ShutDown();
     GfxCommandList* AllocateCommandList(const std::string&);
     bool HasPendingCommandLists() const { return !m_PendingExecuteCommandLists.empty(); };
     void ExecutePendingCommandLists();
+    void GarbageCollect();
     void SignalFence() { m_Fence.IncrementAndSignal(Dev()); }
     void StallCPUForFence() const { m_Fence.WaitForSignalFromGPU(); }
     void StallGPUForFence() const { DX12_CALL(m_CommandQueue->Wait(m_Fence.Dev(), m_Fence.GetValue())); }
@@ -46,6 +49,7 @@ private:
 
     std::mutex m_ListsLock;
     CircularBuffer<GfxCommandList*> m_FreeCommandLists;
+    CircularBuffer<GfxCommandList*> m_InFlightCommandLists;
     InplaceArray<GfxCommandList*, MaxCmdLists> m_PendingExecuteCommandLists;
 
     friend class GfxCommandListsManager;
@@ -61,18 +65,22 @@ public:
 
     void QueueCommandListToExecute(GfxCommandList*);
     void ExecutePendingCommandLists();
+    void GarbageCollect();
 
-    GfxCommandListQueue& GetMainQueue() { return m_DirectPool; }
+    GfxCommandListQueue& GetMainQueue() { return m_DirectQueue; }
     GfxCommandListQueue& GetCommandQueue(D3D12_COMMAND_LIST_TYPE type)
     {
         switch (type)
         {
-        case D3D12_COMMAND_LIST_TYPE_DIRECT: return m_DirectPool;
-        default: assert(false); return m_DirectPool;
+        case D3D12_COMMAND_LIST_TYPE_DIRECT: return m_DirectQueue;
+        default: assert(false); return m_DirectQueue;
         }
     }
 
 private:
-    GfxCommandListQueue m_DirectPool;
+    GfxCommandListQueue m_DirectQueue;
+
+    // convenience array of all queues
+    GfxCommandListQueue* m_AllQueues[1] = { &m_DirectQueue };
 };
 #define g_GfxCommandListsManager GfxCommandListsManager::GetInstance()
