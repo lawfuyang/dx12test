@@ -72,9 +72,6 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
             tf::Task flushAndWaitTask = sf.emplace([this] 
                 {
                     g_GfxCommandListsManager.ExecutePendingCommandLists();
-
-                    // TODO: check that every other queue except the main Direct queue is empty
-                    g_GfxCommandListsManager.GetMainQueue().SignalFence();
                     g_GfxCommandListsManager.GetMainQueue().StallCPUForFence();
 
                     // reset array of GfxContexts to prepare for next frame
@@ -156,9 +153,6 @@ void GfxManager::BeginFrame()
     m_GfxDevice.CheckStatus();
 
     g_GfxGPUDescriptorAllocator.GarbageCollect();
-
-    // TODO: Get rid of this
-    g_GfxCommandListsManager.GetMainQueue().StallCPUForFence();
 
     // TODO: Remove clearing of BackBuffer when we manage to fill every pixel on screen through various render passes
     GfxContext& context = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "TransitionBackBufferForPresent");

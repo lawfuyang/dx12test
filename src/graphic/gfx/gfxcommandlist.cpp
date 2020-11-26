@@ -118,7 +118,6 @@ GfxCommandList* GfxCommandListQueue::AllocateCommandList(const std::string& name
     }
 
     assert(newCmdList->Dev());
-    g_Log.info("*** GfxCommandListQueue::Allocate: {}. m_FreeCommandLists:{}, newCmdList:{}", name, m_FreeCommandLists.size(), (uint64_t)newCmdList);
     SetD3DDebugName(newCmdList->Dev(), name);
     SetD3DDebugName(newCmdList->m_CommandAllocator.Get(), name);
 
@@ -165,9 +164,8 @@ void GfxCommandListQueue::ExecutePendingCommandLists()
     // execute cmd lists
     if (numCmdListsToExec > 0)
     {
-        // TODO
         // Before submitting any cmd lists, wait for prev submission to complete first
-        //StallGPUForFence();
+        StallGPUForFence();
 
         Dev()->ExecuteCommandLists(numCmdListsToExec, ppCommandLists);
     }
