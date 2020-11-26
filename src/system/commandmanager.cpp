@@ -25,10 +25,10 @@ void CommandManager::ConsumeAllCommandsMT(tf::Subflow& subFlow)
                 m_ExecutingCommands.swap(m_PendingCommands);
             }
 
-            tf::Task clearTask = ADD_TF_TASK(sf, m_ExecutingCommands.clear());
+            tf::Task clearTask = sf.emplace([this] { m_ExecutingCommands.clear(); });
             for (const std::function<void()>& cmd : m_ExecutingCommands)
             {
-                clearTask.succeed(ADD_TF_TASK(sf, cmd()));
+                sf.emplace([this, &cmd] { cmd(); }).precede(clearTask);
             }
         });
 }

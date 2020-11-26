@@ -40,53 +40,37 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
     g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUIPropertyGrid(); });
 
     // independent tasks
-    ADD_SF_TASK(subFlow, g_GfxShaderManager.Initialize(sf));
-    ADD_TF_TASK(subFlow, g_GfxDefaultVertexFormats.Initialize());
+    subFlow.emplace([](tf::Subflow& sf) { g_GfxShaderManager.Initialize(sf); });
+    subFlow.emplace([] { g_GfxDefaultVertexFormats.Initialize(); });
+    subFlow.emplace([] { g_GfxLightsManager.Initialize(); });
+
+    auto PRE_INIT_GATE = subFlow.emplace([this] { PreInit(); });
+    auto POST_INIT_GATE = subFlow.emplace([this] { PostInit(); }).succeed(PRE_INIT_GATE);
     
     // tasks with dependencies
-    tf::Task cmdListInitTask              = ADD_TF_TASK(subFlow, g_GfxCommandListsManager.Initialize());
-    tf::Task swapChainInitTask            = ADD_TF_TASK(subFlow, m_SwapChain.Initialize());
-    tf::Task PSOManagerInitTask           = ADD_TF_TASK(subFlow, g_GfxPSOManager.Initialize());
-    tf::Task dynamicDescHeapAllocatorInit = ADD_TF_TASK(subFlow, g_GfxGPUDescriptorAllocator.Initialize());
-    tf::Task lightsManagerInit            = ADD_TF_TASK(subFlow, g_GfxLightsManager.Initialize());
+    subFlow.emplace([this] { m_SwapChain.Initialize(); }).succeed(PRE_INIT_GATE).precede(POST_INIT_GATE);
+    subFlow.emplace([] { g_GfxPSOManager.Initialize(); }).succeed(PRE_INIT_GATE).precede(POST_INIT_GATE);
+    subFlow.emplace([] { g_GfxGPUDescriptorAllocator.Initialize(); }).succeed(PRE_INIT_GATE).precede(POST_INIT_GATE);
+    subFlow.emplace([](tf::Subflow& sf) { g_GfxDefaultAssets.Initialize(sf); }).succeed(PRE_INIT_GATE).precede(POST_INIT_GATE);
+    subFlow.emplace([] { g_GfxForwardLightingPass->Initialize(); }).succeed(PRE_INIT_GATE).precede(POST_INIT_GATE);
+    subFlow.emplace([] { g_GfxIMGUIRenderer->Initialize(); }).succeed(PRE_INIT_GATE).precede(POST_INIT_GATE);
+}
 
-    tf::Task adapterAndDeviceInit = subFlow.emplace([&](tf::Subflow& sf)
-        {
-            g_GfxAdapter.Initialize();
-            m_GfxDevice.Initialize();
-        }).name("adapterAndDeviceInit");
+void GfxManager::PreInit()
+{
+    g_GfxAdapter.Initialize();
+    m_GfxDevice.Initialize();
+    g_GfxCommandListsManager.Initialize();
+}
 
-    tf::Task miscGfxInitTask = subFlow.emplace([&](tf::Subflow& sf)
-        {
-            bbeProfile("General Gfx Init");
+void GfxManager::PostInit()
+{
+    g_GfxCommandListsManager.ExecutePendingCommandLists();
+    g_GfxCommandListsManager.GetMainQueue().StallCPUForFence();
 
-            tf::Task allTasks[] =
-            {
-                ADD_SF_TASK(sf, g_GfxDefaultAssets.Initialize(sf)),
-                ADD_TF_TASK(sf, g_GfxForwardLightingPass->Initialize()),
-                ADD_TF_TASK(sf, g_GfxIMGUIRenderer->Initialize()),
-            };
-
-            // HUGE assumption that all of the above gfx tasks queued their command lists to be executed
-            //tf::Task flushAndWaitTask = ADD_TF_TASK(subFlow, m_GfxDevice.Flush(true /* andWait */));
-            tf::Task flushAndWaitTask = sf.emplace([this] 
-                {
-                    g_GfxCommandListsManager.ExecutePendingCommandLists();
-                    g_GfxCommandListsManager.GetMainQueue().StallCPUForFence();
-
-                    // reset array of GfxContexts to prepare for next frame
-                    std::for_each(m_AllContexts.begin(), m_AllContexts.end(), [this](GfxContext* context) { m_ContextsPool.destroy(context); });
-                    m_AllContexts.clear();
-                });
-            for (tf::Task task : allTasks)
-            {
-                flushAndWaitTask.succeed(task);
-            }
-        }).name("generalGfxInitTask");
-
-    adapterAndDeviceInit.precede(cmdListInitTask, PSOManagerInitTask, miscGfxInitTask, swapChainInitTask, dynamicDescHeapAllocatorInit);
-    miscGfxInitTask.succeed(cmdListInitTask);
-    swapChainInitTask.succeed(cmdListInitTask);
+    // reset array of GfxContexts to prepare for next frame
+    std::for_each(m_AllContexts.begin(), m_AllContexts.end(), [this](GfxContext* context) { m_ContextsPool.destroy(context); });
+    m_AllContexts.clear();
 }
 
 void GfxManager::ShutDown()

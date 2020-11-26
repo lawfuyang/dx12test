@@ -41,6 +41,8 @@ public:
     uint32_t GetGraphicFrameNumber() const { return m_GraphicFrameNumber; }
 
 private:
+    void PreInit();
+    void PostInit();
     GfxContext& GenerateNewContextInternal();
     void UpdateIMGUIPropertyGrid();
 

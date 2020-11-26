@@ -49,9 +49,7 @@ private:
     Timer m_FrameTimer;
     uint32_t m_SystemFrameNumber = 0;
 };
-#define g_System                    System::GetInstance()
-#define ADD_TF_TASK(taskFlow, task) taskFlow.emplace([&]() { task; }).name(bbeTOSTRING(task))
-#define ADD_SF_TASK(taskFlow, task) taskFlow.emplace([&](tf::Subflow& sf) { task; }).name(bbeTOSTRING(task))
+#define g_System System::GetInstance()
 
 struct CommandLineOptions
 {

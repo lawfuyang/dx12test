@@ -18,7 +18,7 @@ void GfxContext::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, const std::stri
 
     static const D3D12_VERTEX_BUFFER_VIEW NullVertexBufferView = {};
     static const D3D12_INDEX_BUFFER_VIEW NullIndexBufferView = {};
-    m_CommandList->Dev()->IASetVertexBuffers(0, 1, &NullVertexBufferView);
+    m_CommandList->Dev()->IASetVertexBuffers(0, 0, &NullVertexBufferView);
     m_CommandList->Dev()->IASetIndexBuffer(&NullIndexBufferView);
 }
 

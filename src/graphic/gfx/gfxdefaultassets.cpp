@@ -3,17 +3,17 @@
 
 #include <tmp/shaders/autogen/cpp/ShaderPermutations/ForwardLighting.h>
 
-void GfxDefaultAssets::Initialize(tf::Subflow& sf)
+void GfxDefaultAssets::Initialize(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
 
-    ADD_TF_TASK(sf, CreateCheckerboardTexture());
-    ADD_TF_TASK(sf, CreateSolidColorTexture(White2D, bbeColor{ 1.0f, 1.0f, 1.0f }, "Default White2D Texture"));
-    ADD_TF_TASK(sf, CreateSolidColorTexture(Black2D, bbeColor{ 0.0f, 0.0f, 0.0f }, "Default Black2D Texture"));
-    ADD_TF_TASK(sf, CreateSolidColorTexture(Red2D, bbeColor{ 1.0f, 0.0f, 0.0f }, "Default Red2D Texture"));
-    ADD_TF_TASK(sf, CreateSolidColorTexture(Yellow2D, bbeColor{ 1.0f, 1.0f, 0.0f }, "Default Yellow2D Texture"));
-    ADD_TF_TASK(sf, CreateSolidColorTexture(FlatNormal, bbeColor{ 0.5f, 0.5f, 0.0f }, "Flat Normal Texture"));
-    ADD_TF_TASK(sf, CreateUnitCubeMesh());
+    subFlow.emplace([this] { CreateCheckerboardTexture(); });
+    subFlow.emplace([this] { CreateSolidColorTexture(White2D, bbeColor{ 1.0f, 1.0f, 1.0f }, "Default White2D Texture"); });
+    subFlow.emplace([this] { CreateSolidColorTexture(Black2D, bbeColor{ 0.0f, 0.0f, 0.0f }, "Default Black2D Texture"); });
+    subFlow.emplace([this] { CreateSolidColorTexture(Red2D, bbeColor{ 1.0f, 0.0f, 0.0f }, "Default Red2D Texture"); });
+    subFlow.emplace([this] { CreateSolidColorTexture(Yellow2D, bbeColor{ 1.0f, 1.0f, 0.0f }, "Default Yellow2D Texture"); });
+    subFlow.emplace([this] { CreateSolidColorTexture(FlatNormal, bbeColor{ 0.5f, 0.5f, 0.0f }, "Flat Normal Texture"); });
+    subFlow.emplace([this] { CreateUnitCubeMesh(); });
 }
 
 void GfxDefaultAssets::ShutDown()

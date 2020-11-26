@@ -5,16 +5,16 @@ void InitializeApplicationLayer(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
 
-    ADD_TF_TASK(subFlow, g_CameraController.Initialize());
-    ADD_TF_TASK(subFlow, g_Scene.Initialize());
+    subFlow.emplace([] { g_CameraController.Initialize(); });
+    subFlow.emplace([] { g_Scene.Initialize(); });
 }
 
 void UpdateApplicationLayer(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
 
-    ADD_TF_TASK(subFlow, g_CameraController.Update());
-    ADD_TF_TASK(subFlow, g_Scene.Update());
+    subFlow.emplace([] { g_CameraController.Update(); });
+    subFlow.emplace([] { g_Scene.Update(); });
 }
 
 void ShutdownApplicationLayer()
