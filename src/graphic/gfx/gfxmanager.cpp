@@ -96,16 +96,7 @@ void GfxManager::ShutDown()
 {
     bbeProfileFunction();
 
-    auto ConsumeAllGfxCommandsAndCmdLists = [this]()
-    {
-        m_GfxCommandManager.ConsumeAllCommandsST(true);
-        g_GfxCommandListsManager.ExecutePendingCommandLists();
-
-        // TODO: do this for other queues?
-        g_GfxCommandListsManager.GetMainQueue().StallCPUForFence();
-    };
-
-    ConsumeAllGfxCommandsAndCmdLists();
+    m_GfxCommandManager.ConsumeAllCommandsST(true);
 
     // get swapchain out of full screen before exiting
     BOOL fs = false;
@@ -119,7 +110,7 @@ void GfxManager::ShutDown()
     g_GfxDefaultAssets.ShutDown();
     g_GfxResourceManager.ShutDown();
 
-    ConsumeAllGfxCommandsAndCmdLists();
+    m_GfxCommandManager.ConsumeAllCommandsST(true);
 
     m_GfxDevice.ShutDown();
 }
@@ -165,14 +156,15 @@ void GfxManager::BeginFrame()
     m_GfxDevice.CheckStatus();
 
     g_GfxGPUDescriptorAllocator.GarbageCollect();
-    g_GfxCommandListsManager.GarbageCollect();
+
+    // TODO: Get rid of this
+    g_GfxCommandListsManager.GetMainQueue().StallCPUForFence();
 
     // TODO: Remove clearing of BackBuffer when we manage to fill every pixel on screen through various render passes
     GfxContext& context = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "TransitionBackBufferForPresent");
     context.ClearRenderTargetView(m_SwapChain.GetCurrentBackBuffer(), bbeVector4{ 0.0f, 0.2f, 0.4f, 1.0f });
     context.ClearDepth(g_SceneDepthBuffer, 1.0f);
     g_GfxCommandListsManager.QueueCommandListToExecute(&context.GetCommandList());
-    g_GfxCommandListsManager.ExecutePendingCommandLists();
 }
 
 void GfxManager::EndFrame()
@@ -182,12 +174,13 @@ void GfxManager::EndFrame()
     // execute all Renderers' cmd lists
     std::for_each(m_ScheduledCmdLists.begin(), m_ScheduledCmdLists.end(), [](GfxCommandList* cmdList) { g_GfxCommandListsManager.QueueCommandListToExecute(cmdList); });
     m_ScheduledCmdLists.clear();
-    g_GfxCommandListsManager.ExecutePendingCommandLists();
 
     // Before presenting backbuffer, transition to to PRESENT state
     GfxContext& context = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "TransitionBackBufferForPresent");
     context.TransitionResource(m_SwapChain.GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, true);
     g_GfxCommandListsManager.QueueCommandListToExecute(&context.GetCommandList());
+
+    // Finally, execute all cmd lists for this frame
     g_GfxCommandListsManager.ExecutePendingCommandLists();
 
     // finally, present back buffer

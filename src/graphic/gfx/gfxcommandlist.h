@@ -35,7 +35,6 @@ public:
     GfxCommandList* AllocateCommandList(const std::string&);
     bool HasPendingCommandLists() const { return !m_PendingExecuteCommandLists.empty(); };
     void ExecutePendingCommandLists();
-    void GarbageCollect();
     void SignalFence() { m_Fence.IncrementAndSignal(Dev()); }
     void StallCPUForFence() const { m_Fence.WaitForSignalFromGPU(); }
     void StallGPUForFence() const { DX12_CALL(m_CommandQueue->Wait(m_Fence.Dev(), m_Fence.GetValue())); }
@@ -49,7 +48,6 @@ private:
 
     std::mutex m_ListsLock;
     CircularBuffer<GfxCommandList*> m_FreeCommandLists;
-    CircularBuffer<GfxCommandList*> m_InFlightCommandLists;
     InplaceArray<GfxCommandList*, MaxCmdLists> m_PendingExecuteCommandLists;
 
     friend class GfxCommandListsManager;
@@ -65,7 +63,6 @@ public:
 
     void QueueCommandListToExecute(GfxCommandList*);
     void ExecutePendingCommandLists();
-    void GarbageCollect();
 
     GfxCommandListQueue& GetMainQueue() { return m_DirectQueue; }
     GfxCommandListQueue& GetCommandQueue(D3D12_COMMAND_LIST_TYPE type)

@@ -58,7 +58,6 @@ void GfxCommandListQueue::Initialize(D3D12_COMMAND_LIST_TYPE type)
 
     bbeProfile("CreateCommandQueue");
     DX12_CALL(gfxDevice.Dev()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_CommandQueue)));
-    SetD3DDebugName(Dev(), "Main Direct Queue");
 
     static const char* QUEUE_NAMES[] =
     {
@@ -71,16 +70,15 @@ void GfxCommandListQueue::Initialize(D3D12_COMMAND_LIST_TYPE type)
         "D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE",
     };
 
+    SetD3DDebugName(Dev(), QUEUE_NAMES[type]);
     g_Profiler.RegisterGPUQueue(gfxDevice.Dev(), Dev(), QUEUE_NAMES[type]);
 
     m_FreeCommandLists.set_capacity(MaxCmdLists);
-    m_InFlightCommandLists.set_capacity(MaxCmdLists);
 }
 
 void GfxCommandListQueue::ShutDown()
 {
     assert(m_PendingExecuteCommandLists.empty());
-    assert(m_InFlightCommandLists.empty());
 
     // free all cmd lists
     for (GfxCommandList* cmdList : m_FreeCommandLists)
@@ -92,8 +90,6 @@ void GfxCommandListQueue::ShutDown()
 GfxCommandList* GfxCommandListQueue::AllocateCommandList(const std::string& name)
 {
     bbeProfileFunction();
-
-    g_Log.info("*** GfxCommandListQueue::Allocate: {}", name);
 
     assert(m_FreeCommandLists.capacity());
 
@@ -122,6 +118,7 @@ GfxCommandList* GfxCommandListQueue::AllocateCommandList(const std::string& name
     }
 
     assert(newCmdList->Dev());
+    g_Log.info("*** GfxCommandListQueue::Allocate: {}. m_FreeCommandLists:{}, newCmdList:{}", name, m_FreeCommandLists.size(), (uint64_t)newCmdList);
     SetD3DDebugName(newCmdList->Dev(), name);
     SetD3DDebugName(newCmdList->m_CommandAllocator.Get(), name);
 
@@ -156,10 +153,10 @@ void GfxCommandListQueue::ExecutePendingCommandLists()
     {
         bbeAutoLock(m_ListsLock);
 
-        assert(m_InFlightCommandLists.size() + numCmdListsToExec < MaxCmdLists);
+        assert(m_FreeCommandLists.size() + numCmdListsToExec < MaxCmdLists);
         for (uint32_t i = 0; i < numCmdListsToExec; ++i)
         {
-            m_InFlightCommandLists.push_back(ppPendingFreeCommandLists[i]);
+            m_FreeCommandLists.push_back(ppPendingFreeCommandLists[i]);
         }
     }
 
@@ -168,25 +165,14 @@ void GfxCommandListQueue::ExecutePendingCommandLists()
     // execute cmd lists
     if (numCmdListsToExec > 0)
     {
+        // TODO
         // Before submitting any cmd lists, wait for prev submission to complete first
-        StallGPUForFence();
+        //StallGPUForFence();
 
         Dev()->ExecuteCommandLists(numCmdListsToExec, ppCommandLists);
     }
 
-    m_Fence.IncrementAndSignal(Dev());
-}
-
-void GfxCommandListQueue::GarbageCollect()
-{
-    bbeMultiThreadDetector();
-
-    // free all cmd lists
-    for (GfxCommandList* cmdList : m_InFlightCommandLists)
-    {
-        m_FreeCommandLists.push_back(cmdList);
-    }
-    m_InFlightCommandLists.clear();
+    SignalFence();
 }
 
 void GfxCommandListsManager::Initialize()
@@ -229,13 +215,5 @@ void GfxCommandListsManager::ExecutePendingCommandLists()
     for (GfxCommandListQueue* queue : m_AllQueues)
     {
         queue->ExecutePendingCommandLists();
-    }
-}
-
-void GfxCommandListsManager::GarbageCollect()
-{
-    for (GfxCommandListQueue* queue : m_AllQueues)
-    {
-        queue->GarbageCollect();
     }
 }
