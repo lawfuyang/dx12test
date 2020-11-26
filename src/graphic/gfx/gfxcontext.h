@@ -76,7 +76,7 @@ private:
         const char* m_Name;
         InplaceArray<std::byte, 256> m_CBBytes;
     };
-    std::unordered_map<uint32_t, StagedCBV> m_StagedCBVs;
+    StagedCBV m_StagedCBVs[gs_MaxRootSigParams]{};
 
     std::size_t m_LastUsedPSOHash = 0;
 

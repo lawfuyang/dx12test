@@ -110,8 +110,8 @@ void GfxBufferCommon::InitializeBufferWithInitData(GfxContext& context, uint32_t
     // upload init data via CopyBufferRegion
     UploadInitData(context, initData, rowPitch, slicePitch, m_D3D12MABufferAllocation->GetResource(), uploadHeapAlloc->GetResource());
 
-    // we don't need this upload heap anymore... release it 1 frame later.
-    g_GfxManager.AddGraphicCommand([uploadHeapAlloc]() { GfxBufferCommon::ReleaseAllocation(uploadHeapAlloc); });
+    // we don't need this upload heap anymore... release it 2 frames later.
+    g_GfxManager.AddDoubleDeferredGraphicCommand([uploadHeapAlloc]() { GfxBufferCommon::ReleaseAllocation(uploadHeapAlloc); });
 }
 
 void GfxVertexBuffer::Initialize(const InitParams& initParams)

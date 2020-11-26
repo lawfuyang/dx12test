@@ -351,10 +351,13 @@ void GfxContext::CommitStagedResources()
     //bbeProfileFunction();
 
     // Upload CBV bytes
-    for (const auto& elem : m_StagedCBVs)
+    for (uint32_t i = 0; i < _countof(m_StagedCBVs); ++i)
     {
-        const uint32_t cbRegister = elem.first;
-        const StagedCBV& stagedCBV = elem.second;
+        const uint32_t cbRegister = i;
+        const StagedCBV& stagedCBV = m_StagedCBVs[i];
+
+        if (stagedCBV.m_CBBytes.empty())
+            continue;
 
         // Create upload heap for constant buffer
         GfxBufferCommon::HeapDesc heapDesc;
@@ -388,15 +391,7 @@ void GfxContext::CommitStagedResources()
         StageDescriptor(descHeap.Dev()->GetCPUDescriptorHandleForHeapStart(), cbRegister, RootOffset);
 
         // free Descriptor & Upload heaps 2 frames later
-        auto Releaser = [descHeap, uploadHeap]() 
-        {
-            // release CB heap
-            GfxBufferCommon::ReleaseAllocation(uploadHeap);
-
-            // descHeap then goes out of scope and decrements the last ref count of ComPtr<ID3D12DescriptorHeap>, destroying it
-        };
-        auto ReleaserDeferred = [Releaser]() { g_GfxManager.AddGraphicCommand([Releaser]() { Releaser(); }); };
-        g_GfxManager.AddGraphicCommand([ReleaserDeferred]() { ReleaserDeferred(); });
+        g_GfxManager.AddDoubleDeferredGraphicCommand([descHeap, uploadHeap]() { GfxBufferCommon::ReleaseAllocation(uploadHeap); });
     }
 
     // Resources
@@ -464,5 +459,9 @@ void GfxContext::PostDraw()
     m_DirtyBuffers = false;
 
     m_StaleResourcesBitMap.reset();
-    m_StagedCBVs.clear();
+
+    for (uint32_t i = 0; i < gs_MaxRootSigParams; ++i)
+    {
+        m_StagedCBVs[i].m_CBBytes.clear();
+    }
 }
