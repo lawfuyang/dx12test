@@ -22,21 +22,23 @@ void GfxPSOManager::Initialize()
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
     // Create a Pipeline Library from the serialized blob.
-    const HRESULT hr = gfxDevice.Dev()->CreatePipelineLibrary(m_MemoryMappedCacheFile.GetData(), m_MemoryMappedCacheFile.GetSize(), IID_PPV_ARGS(&m_PipelineLibrary));
+    HRESULT hr = gfxDevice.Dev()->CreatePipelineLibrary(m_MemoryMappedCacheFile.GetData(), m_MemoryMappedCacheFile.GetSize(), IID_PPV_ARGS(&m_PipelineLibrary));
     switch (hr)
     {
     case DXGI_ERROR_UNSUPPORTED:
         g_Log.critical("The driver doesn't support Pipeline libraries. WDDM2.1 drivers must support it");
-        assert(false);
+        break;
 
     case E_INVALIDARG: // The provided Library is corrupted or unrecognized.
     case D3D12_ERROR_ADAPTER_NOT_FOUND:
-        g_Log.info("The provided Library contains data for different hardware (Don't really need to clear the cache, could have a cache per adapter)");
+        g_Log.critical("The provided Library contains data for different hardware (Don't really need to clear the cache, could have a cache per adapter)");
+        break;
+
     case D3D12_ERROR_DRIVER_VERSION_MISMATCH:
         g_Log.info("The provided Library contains data from an old driver or runtime. We need to re-create it");
         m_MemoryMappedCacheFile.Destroy(true);
         m_MemoryMappedCacheFile.Init(cacheDir.c_str());
-        DX12_CALL(gfxDevice.Dev()->CreatePipelineLibrary(m_MemoryMappedCacheFile.GetData(), m_MemoryMappedCacheFile.GetSize(), IID_PPV_ARGS(&m_PipelineLibrary)));
+        hr = gfxDevice.Dev()->CreatePipelineLibrary(m_MemoryMappedCacheFile.GetData(), m_MemoryMappedCacheFile.GetSize(), IID_PPV_ARGS(&m_PipelineLibrary));
     }
 
     assert(m_PipelineLibrary);

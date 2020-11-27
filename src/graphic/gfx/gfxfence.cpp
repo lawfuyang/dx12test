@@ -32,7 +32,7 @@ static bool IsSignaledByGPU(ID3D12Fence1* fence, uint64_t fenceValue)
     if (completedValue == UINT64_MAX)
     {
         g_Log.error("Device removed!");
-        assert(false);
+        DeviceRemovedHandler();
     }
 
     assert(completedValue <= fenceValue);

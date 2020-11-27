@@ -50,3 +50,5 @@ private:
     D3D12MA::Allocator* m_D3D12MemoryAllocator = nullptr;
 };
 #define g_GfxMemoryAllocator GfxMemoryAllocator::GetInstance()
+
+void DeviceRemovedHandler();

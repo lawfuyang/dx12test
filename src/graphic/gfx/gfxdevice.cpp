@@ -17,6 +17,13 @@ static void ConfigureDebugLayerBeforeDeviceCreation()
 
     debugInterface3->EnableDebugLayer();
     debugInterface3->SetEnableGPUBasedValidation(g_CommandLineOptions.m_GfxDebugLayer.m_EnableGPUValidation);
+
+    ComPtr<ID3D12DeviceRemovedExtendedDataSettings> pDredSettings;
+    DX12_CALL(D3D12GetDebugInterface(IID_PPV_ARGS(&pDredSettings)));
+
+    // Turn on auto-breadcrumbs and page fault reporting.
+    pDredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+    pDredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
 }
 
 void GfxDevice::Initialize()
@@ -66,6 +73,9 @@ void GfxDevice::ShutDown()
 void GfxDevice::CheckStatus()
 {
     const ::HRESULT result = m_D3DDevice->GetDeviceRemovedReason();
+
+    if (result == DXGI_ERROR_DEVICE_REMOVED)
+        DeviceRemovedHandler();
 
     assert(result != DXGI_ERROR_DEVICE_HUNG);
     assert(result != DXGI_ERROR_DEVICE_REMOVED);
@@ -201,3 +211,25 @@ void GfxMemoryAllocator::Release()
     m_D3D12MemoryAllocator->Release();
     m_D3D12MemoryAllocator = nullptr;
 }
+
+BBE_OPTIMIZE_OFF;
+void DeviceRemovedHandler()
+{
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+
+    ComPtr<ID3D12DeviceRemovedExtendedData> pDred;
+    DX12_CALL(gfxDevice.Dev()->QueryInterface(IID_PPV_ARGS(&pDred)));
+
+    D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT DredAutoBreadcrumbsOutput{};
+    D3D12_DRED_PAGE_FAULT_OUTPUT DredPageFaultOutput{};
+    DX12_CALL(pDred->GetAutoBreadcrumbsOutput(&DredAutoBreadcrumbsOutput));
+    DX12_CALL(pDred->GetPageFaultAllocationOutput(&DredPageFaultOutput));
+
+    // Custom processing of DRED data can be done here.
+    // Produce telemetry...
+    // Log information to console...
+    // break into a debugger...
+
+    assert(false);
+}
+BBE_OPTIMIZE_ON;

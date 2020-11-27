@@ -68,7 +68,7 @@ private:
     bool LoadPSOInternal(LPCWSTR pName, const D3D12_COMPUTE_PIPELINE_STATE_DESC& pDesc, ID3D12PipelineState*& pso) { return m_PipelineLibrary->LoadComputePipeline(pName, &pDesc, IID_PPV_ARGS(&pso)) != E_INVALIDARG; }
 
     std::mutex m_PipelineLibraryLock;
-    ComPtr<ID3D12PipelineLibrary> m_PipelineLibrary;
+    ComPtr<ID3D12PipelineLibrary1> m_PipelineLibrary;
 
     MemoryMappedFile m_MemoryMappedCacheFile;
 
