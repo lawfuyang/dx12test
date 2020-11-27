@@ -197,9 +197,9 @@ void CommandLineOptions::Parse()
         g_Log.error("CommandLineOptions::Parse error: {}", ex.what());
     }
 
-    m_PIXCapture                      = parser.exists("pixcapture");
-    m_ProfileInit                     = parser.exists("profileinit");
-    m_ProfileShutdown                 = parser.exists("profileshutdown");
+    m_PIXCapture      = parser.exists("pixcapture");
+    m_ProfileInit     = parser.exists("profileinit");
+    m_ProfileShutdown = parser.exists("profileshutdown");
 
     if (parser.exists("resolution"))
     {

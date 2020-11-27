@@ -5,6 +5,14 @@
 #include <graphic/gfx/gfxcontext.h>
 #include <graphic/gfx/gfxcommandlist.h>
 
+struct GPULog
+{
+    MicroProfileThreadLogGpu* m_GPULog = nullptr;
+    D3D12_COMMAND_LIST_TYPE m_Type = (D3D12_COMMAND_LIST_TYPE)0xDEADBEEF;
+    bool m_Recording = false;
+};
+thread_local GPULog tl_GPULog;
+
 void SystemProfiler::Initialize()
 {
     g_Log.info("Initializing CPU Profiler");
@@ -12,32 +20,35 @@ void SystemProfiler::Initialize()
     //turn on profiling
     MicroProfileOnThreadCreate("Main");
     MicroProfileSetEnableAllGroups(true);
-
-    m_GPUQueueToProfilerHandle.reserve(D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE + 1);
-    m_PerThreadGPULogs.reserve(std::thread::hardware_concurrency());
 }
 
 void SystemProfiler::RegisterGPUQueue(void* pDevice, void* pCommandQueue, const char* queueName)
 {
-    MicroProfileGpuInitD3D12(pDevice, 1, (void**)&pCommandQueue);
-    m_GPUQueueToProfilerHandle[pCommandQueue] = MICROPROFILE_GPU_INIT_QUEUE(queueName);
+#if defined(BBE_USE_GPU_PROFILER)
+    assert(pDevice);
+    assert(pCommandQueue);
+    assert(queueName);
+
+    MicroProfileGpuInitD3D12(pDevice, 1, &pCommandQueue);
+    m_GPUProfileHandles.push_back({ pCommandQueue, MICROPROFILE_GPU_INIT_QUEUE(queueName) });
 
     // If we support multiple adapters, need to change this
     MicroProfileSetCurrentNodeD3D12(0);
+#endif
 }
 
 void SystemProfiler::ShutDown()
 {
     g_Log.info("Shutting down profiler");
 
-    for (auto& handles : m_GPUQueueToProfilerHandle)
+    for (const GPUQueueAndHandle& elem : m_GPUProfileHandles)
     {
-        MICROPROFILE_GPU_FREE_QUEUE(handles.second);
+        MICROPROFILE_GPU_FREE_QUEUE(elem.m_Handle);
     }
 
-    for (const auto& gpuLog : m_PerThreadGPULogs)
+    for (MicroProfileThreadLogGpu* gpuLog : m_AllGPULogs)
     {
-        MicroProfileThreadLogGpuFree(gpuLog.second.m_Log);
+        MicroProfileThreadLogGpuFree(gpuLog);
     }
 
     MicroProfileShutdown();
@@ -67,36 +78,59 @@ void SystemProfiler::DumpProfilerBlocks(bool condition, bool immediately)
     }
 }
 
-void SystemProfiler::SubmitAllGPULogsToQueue(void* queue)
+int SystemProfiler::GetHandleForQueue(void* pCommandQueue) const
 {
-    for (auto& gpuLog : m_PerThreadGPULogs)
-    {
-        const uint64_t token = MICROPROFILE_GPU_END(gpuLog.second.m_Log);
-        MICROPROFILE_GPU_SUBMIT(m_GPUQueueToProfilerHandle.at(queue), token);
+    // Linear search... because we never will have more than 2+ queues
+    auto it = std::find_if(m_GPUProfileHandles.begin(), m_GPUProfileHandles.end(), [pCommandQueue](const GPUQueueAndHandle& elem) { return elem.m_Queue == pCommandQueue; });
+    assert(it != m_GPUProfileHandles.end());
 
-        gpuLog.second.m_Begun = false;
+    return it->m_Handle;
+}
+
+void SystemProfiler::SubmitGPULog()
+{
+    assert(tl_GPULog.m_GPULog);
+    assert(tl_GPULog.m_Type != 0xDEADBEEF);
+    assert(tl_GPULog.m_Recording);
+
+    void* pCommandQueue = g_GfxCommandListsManager.GetCommandQueue(tl_GPULog.m_Type).Dev();
+    int queueHandle = GetHandleForQueue(pCommandQueue);
+    MICROPROFILE_GPU_SUBMIT(queueHandle, MICROPROFILE_GPU_END(tl_GPULog.m_GPULog));
+
+    tl_GPULog.m_Type = (D3D12_COMMAND_LIST_TYPE)0xDEADBEEF;
+    tl_GPULog.m_Recording = false;
+}
+
+void SystemProfiler::ResetAllGPULogs()
+{
+    assert(!tl_GPULog.m_Recording);
+
+    for (MicroProfileThreadLogGpu* gpuLog : m_AllGPULogs)
+    {
+        MICROPROFILE_THREADLOGGPURESET(gpuLog);
     }
 }
 
-thread_local MicroProfileThreadLogGpu* tl_GPULog = nullptr;
-
-MicroProfileThreadLogGpu* SystemProfiler::GetGPULogForCurrentThread(const GfxCommandList& cmdList)
+void SystemProfiler::BeginGPURecording(const GfxCommandList& cmdList)
 {
-    const std::thread::id thisThreadID = std::this_thread::get_id();
-
-    if (!tl_GPULog)
+    // This branch should only go in the very first call to a GPU profiling macro
+    if (!tl_GPULog.m_GPULog)
     {
-        tl_GPULog = MicroProfileThreadLogGpuAlloc();
+        tl_GPULog.m_GPULog = MicroProfileThreadLogGpuAlloc();
 
-        bbeAutoLock(m_GPULogsMutex);
-        m_PerThreadGPULogs[thisThreadID].m_Log = tl_GPULog;
+        static std::mutex GPULogsMutex;
+        bbeAutoLock(GPULogsMutex);
+        m_AllGPULogs.push_back(tl_GPULog.m_GPULog);
     }
+    assert(tl_GPULog.m_Type == 0xDEADBEEF);
+    assert(!tl_GPULog.m_Recording);
 
-    if (!m_PerThreadGPULogs[thisThreadID].m_Begun)
-    {
-        MICROPROFILE_GPU_BEGIN(cmdList.Dev(), tl_GPULog);
-        m_PerThreadGPULogs[thisThreadID].m_Begun = true;
-    }
+    tl_GPULog.m_Type = cmdList.GetType();
+    tl_GPULog.m_Recording = true;
+    MICROPROFILE_GPU_BEGIN(cmdList.Dev(), tl_GPULog.m_GPULog);
+}
 
-    return tl_GPULog;
+MicroProfileThreadLogGpu* SystemProfiler::GetGPULogForThread()
+{
+    return tl_GPULog.m_GPULog;
 }

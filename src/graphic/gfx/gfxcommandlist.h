@@ -58,6 +58,8 @@ class GfxCommandListsManager
     DeclareSingletonFunctions(GfxCommandListsManager);
 
 public:
+    static const uint32_t NbQueues = 1;
+
     void Initialize();
     void ShutDown();
 
@@ -78,6 +80,6 @@ private:
     GfxCommandListQueue m_DirectQueue;
 
     // convenience array of all queues
-    GfxCommandListQueue* m_AllQueues[1] = { &m_DirectQueue };
+    GfxCommandListQueue* m_AllQueues[NbQueues] = { &m_DirectQueue };
 };
 #define g_GfxCommandListsManager GfxCommandListsManager::GetInstance()

@@ -5,7 +5,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 #if !defined(BBE_SHADERCOMPILER)
-    //#define BBE_USE_PROFILER
+    #define BBE_USE_PROFILER
 #endif
 
 // uncomment to disable all asserts
@@ -120,8 +120,14 @@
 // Microprofiler
 #if defined(BBE_USE_PROFILER)
     #define MICROPROFILE_ENABLED 1
-    #define MICROPROFILE_GPU_TIMERS_D3D12 1
     #define MICROPROFILE_WEBSERVER_MAXFRAMES 50
+
+    //#define BBE_USE_GPU_PROFILER
+    #if defined(BBE_USE_GPU_PROFILER)
+        #define MICROPROFILE_GPU_TIMERS_D3D12 1
+    #else
+        #define MICROPROFILE_GPU_TIMERS 0
+    #endif
 #else
     #define MICROPROFILE_ENABLED 0
 #endif

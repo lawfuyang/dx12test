@@ -146,8 +146,6 @@ void GfxCommandListQueue::ExecutePendingCommandLists()
         m_PendingExecuteCommandLists.clear();
     }
 
-    g_Profiler.SubmitAllGPULogsToQueue(m_CommandQueue.Get());
-
     // add executed cmd lists to inflight list queue
     {
         bbeAutoLock(m_ListsLock);
@@ -167,7 +165,7 @@ void GfxCommandListQueue::ExecutePendingCommandLists()
         // Before submitting any cmd lists, wait for prev submission to complete first
         StallGPUForFence();
 
-        Dev()->ExecuteCommandLists(numCmdListsToExec, ppCommandLists);
+        Dev()->ExecuteCommandLists(numCmdListsToExec, ppCommandLists);    
     }
 
     SignalFence();
