@@ -28,8 +28,8 @@ public:
     void ClearDepthStencil(GfxTexture&, float depth, uint8_t stencil);
     void SetRenderTarget(uint32_t idx, GfxTexture&);
     void SetDepthStencil(GfxTexture& tex);
-    void SetVertexBuffer(GfxVertexBuffer& vBuffer);
-    void SetIndexBuffer(GfxIndexBuffer& iBuffer);
+    void SetVertexBuffer(GfxVertexBuffer& vBuffer) { m_VertexBuffer = &vBuffer; }
+    void SetIndexBuffer(GfxIndexBuffer& iBuffer) { m_IndexBuffer = &iBuffer; }
     void SetRootSignature(GfxRootSignature&);
     void StageSRV(GfxTexture&, uint32_t rootIndex, uint32_t offset);
 
@@ -78,9 +78,8 @@ private:
     };
     StagedCBV m_StagedCBVs[gs_MaxRootSigParams]{};
 
+    std::size_t m_LastBuffersHash = 0;
     std::size_t m_LastUsedPSOHash = 0;
-
-    bool m_DirtyBuffers = true;
 
     friend class GfxManager;
 };

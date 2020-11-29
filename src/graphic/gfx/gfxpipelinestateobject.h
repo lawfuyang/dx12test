@@ -11,7 +11,7 @@
 class GfxRootSignature;
 class GfxShader;
 
-class GfxPipelineStateObject
+struct GfxPipelineStateObject
 {
 public:
     void SetRootSignature(GfxRootSignature& rootSig) { m_RootSig = &rootSig; }
@@ -41,6 +41,9 @@ private:
     CD3DX12_RASTERIZER_DESC     m_RasterizerStates{ GfxCommonStates::CullCounterClockwise };
     D3D12_RT_FORMAT_ARRAY       m_RenderTargets = {};
     DXGI_SAMPLE_DESC            m_SampleDescriptors = DefaultSampleDesc{};
+
+    // TODO
+    // CD3DX12_PIPELINE_STATE_STREAM2 m_States{};
 
     std::size_t m_Hash = 0;
 

@@ -71,24 +71,6 @@ void GfxContext::SetDepthStencil(GfxTexture& tex)
     m_DSV = &tex;
 }
 
-void GfxContext::SetVertexBuffer(GfxVertexBuffer& vBuffer)
-{
-    if (m_VertexBuffer != &vBuffer)
-    {
-        m_VertexBuffer = &vBuffer;
-        m_DirtyBuffers = true;
-    }
-}
-
-void GfxContext::SetIndexBuffer(GfxIndexBuffer& iBuffer)
-{
-    if (m_IndexBuffer != &iBuffer)
-    {
-        m_IndexBuffer = &iBuffer;
-        m_DirtyBuffers = true;
-    }
-}
-
 void GfxContext::SetRootSignature(GfxRootSignature& rootSig)
 {
     // do check to prevent needless descriptor heap allocation
@@ -196,10 +178,13 @@ void GfxContext::CompileAndSetGraphicsPipelineState()
         m_CommandList->Dev()->OMSetRenderTargets(m_PSO.m_RenderTargets.NumRenderTargets, rtvHandles, FALSE, m_DSV ? &dsvHandle : nullptr);
     }
 
-
-    if (m_DirtyBuffers && m_VertexBuffer)
+    std::size_t buffersHash = std::hash<void*>{}(m_VertexBuffer);
+    boost::hash_combine(buffersHash, m_IndexBuffer);
+    if (m_LastBuffersHash != buffersHash)
     {
         bbeProfile("Set Buffer Params");
+
+        m_LastBuffersHash = buffersHash;
 
         D3D12_VERTEX_BUFFER_VIEW vBufferView{};
         vBufferView.BufferLocation = m_VertexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
@@ -455,9 +440,6 @@ void GfxContext::PreDraw()
 
 void GfxContext::PostDraw()
 {
-    // reset dirty flag for Vertex/Index buffers
-    m_DirtyBuffers = false;
-
     m_StaleResourcesBitMap.reset();
 
     for (uint32_t i = 0; i < gs_MaxRootSigParams; ++i)
