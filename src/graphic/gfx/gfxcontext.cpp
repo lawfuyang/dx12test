@@ -204,19 +204,24 @@ std::size_t GfxContext::GetPSOHash()
             boost::hash_combine(finalHash, m_Shaders[PS]->GetHash());
 
         // Blend States
-        boost::hash_combine(finalHash, (&m_PSO.BlendState));
+        boost::hash_combine(finalHash, (&m_PSO.BlendState)->AlphaToCoverageEnable);
+        boost::hash_combine(finalHash, (&m_PSO.BlendState)->IndependentBlendEnable);
+        for (uint32_t i = 0; i < m_RTVs.size(); ++i)
+        {
+            boost::hash_combine(finalHash, GenericTypeHash((&m_PSO.BlendState)->RenderTarget[i]));
+        }
 
         // Rasterizer States
-        boost::hash_combine(finalHash, (&m_PSO.RasterizerState));
+        boost::hash_combine(finalHash, GenericTypeHash(*(&m_PSO.RasterizerState)));
 
         // Depth Stencil State
-        boost::hash_combine(finalHash, (&m_PSO.DepthStencilState));
+        boost::hash_combine(finalHash, GenericTypeHash(*(&m_PSO.DepthStencilState)));
 
         // Vertex Input Layout
         boost::hash_combine(finalHash, m_VertexFormat->GetHash());
 
         // Primitive Topology
-        boost::hash_combine(finalHash, (&m_PSO.PrimitiveTopologyType));
+        boost::hash_combine(finalHash, *(&m_PSO.PrimitiveTopologyType));
 
         boost::hash_combine(finalHash, m_RTVs.size()); // strictly needed?
         // RTV Formats
@@ -226,10 +231,10 @@ std::size_t GfxContext::GetPSOHash()
         }
 
         // DSV Format
-        boost::hash_combine(finalHash, (&m_PSO.DSVFormat));
+        boost::hash_combine(finalHash, *(&m_PSO.DSVFormat));
 
         // Sample Desccriptors
-        boost::hash_combine(finalHash, (&m_PSO.SampleDesc));
+        boost::hash_combine(finalHash, GenericTypeHash (*(&m_PSO.SampleDesc)));
     }
     else if (m_Shaders[CS])
     {
