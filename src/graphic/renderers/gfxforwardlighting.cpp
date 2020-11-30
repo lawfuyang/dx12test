@@ -88,26 +88,24 @@ void GfxForwardLightingPass::PopulateCommandList(GfxContext& context)
     frameConsts.m_ConstPBRRoughness = m_ConstPBRRoughness;
     context.StageCBV(frameConsts);
 
-    context.SetRenderTarget(0, g_GfxManager.GetSwapChain().GetCurrentBackBuffer());
+    context.SetRenderTarget(g_GfxManager.GetSwapChain().GetCurrentBackBuffer());
     context.SetDepthStencil(g_SceneDepthBuffer);
-
-    GfxPipelineStateObject& pso = context.GetPSO();
 
     Shaders::PS_ForwardLighting psPerms;
     psPerms.USE_PBR_CONSTS = m_UsePBRConsts;
-    pso.SetPixelShader(g_GfxShaderManager.GetShader(psPerms));
+    context.SetShader(g_GfxShaderManager.GetShader(psPerms));
 
     for (Visual* visual : g_Scene.m_AllVisuals)
     {
         assert(visual->IsValid());
 
         GfxVertexFormat& vFormat = visual->m_Mesh->GetVertexFormat();
-        pso.SetVertexFormat(vFormat);
+        context.SetVertexFormat(vFormat);
 
         Shaders::VS_ForwardLighting vsPerms;
         vsPerms.VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f = vFormat == GfxDefaultVertexFormats::Position3f_Normal3f_Texcoord2f;
         vsPerms.VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f = vFormat == GfxDefaultVertexFormats::Position3f_Normal3f_Texcoord2f_Tangent3f;
-        pso.SetVertexShader(g_GfxShaderManager.GetShader(vsPerms));
+        context.SetShader(g_GfxShaderManager.GetShader(vsPerms));
 
         context.SetVertexBuffer(visual->m_Mesh->GetVertexBuffer());
         context.SetIndexBuffer(visual->m_Mesh->GetIndexBuffer());

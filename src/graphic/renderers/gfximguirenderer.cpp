@@ -1,9 +1,6 @@
+#include <graphic/pch.h>
 
 #include <system/imguimanager.h>
-
-#include <graphic/renderers/gfxrendererbase.h>
-#include <graphic/gfx/gfxmanager.h>
-#include <graphic/gfx/gfxcontext.h>
 
 #include <tmp/shaders/autogen/cpp/ShaderInputs/IMGUIConsts.h>
 #include <tmp/shaders/autogen/cpp/ShaderPermutations/IMGUI.h>
@@ -140,23 +137,21 @@ void GfxIMGUIRenderer::UploadBufferData(const IMGUIDrawData& imguiDrawData)
 
 void GfxIMGUIRenderer::SetupRenderStates(GfxContext& context, const IMGUIDrawData& imguiDrawData)
 {
-    GfxPipelineStateObject& pso = context.GetPSO();
-
     {
-        CD3DX12_BLEND_DESC& desc = pso.GetBlendStates();
-        desc.AlphaToCoverageEnable = false;
-        desc.RenderTarget[0].BlendEnable = true;
-        desc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
-        desc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-        desc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
-        desc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_INV_SRC_ALPHA;
-        desc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
-        desc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
-        desc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+        D3D12_RENDER_TARGET_BLEND_DESC desc{};
+        desc.BlendEnable = true;
+        desc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+        desc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+        desc.BlendOp = D3D12_BLEND_OP_ADD;
+        desc.SrcBlendAlpha = D3D12_BLEND_INV_SRC_ALPHA;
+        desc.DestBlendAlpha = D3D12_BLEND_ZERO;
+        desc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+        desc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+        context.SetBlendStates(0, desc);
     }
 
     {
-        CD3DX12_RASTERIZER_DESC& desc = pso.GetRasterizerStates();
+        CD3DX12_RASTERIZER_DESC desc{};
         desc.FillMode = D3D12_FILL_MODE_SOLID;
         desc.CullMode = D3D12_CULL_MODE_NONE;
         desc.FrontCounterClockwise = FALSE;
@@ -168,10 +163,11 @@ void GfxIMGUIRenderer::SetupRenderStates(GfxContext& context, const IMGUIDrawDat
         desc.AntialiasedLineEnable = FALSE;
         desc.ForcedSampleCount = 0;
         desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+        context.SetRasterizerStates(desc);
     }
 
     {
-        CD3DX12_DEPTH_STENCIL_DESC1& desc = pso.GetDepthStencilStates();
+        CD3DX12_DEPTH_STENCIL_DESC1 desc{};
         desc.DepthEnable = false;
         desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
         desc.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
@@ -179,6 +175,7 @@ void GfxIMGUIRenderer::SetupRenderStates(GfxContext& context, const IMGUIDrawDat
         desc.FrontFace.StencilFailOp = desc.FrontFace.StencilDepthFailOp = desc.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
         desc.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
         desc.BackFace = desc.FrontFace;
+        context.SetDepthStencilStates(desc);
     }
 
     // Setup viewport
@@ -189,7 +186,7 @@ void GfxIMGUIRenderer::SetupRenderStates(GfxContext& context, const IMGUIDrawDat
         vp.MinDepth = 0.0f;
         vp.MaxDepth = 1.0f;
         vp.TopLeftX = vp.TopLeftY = 0.0f;
-        context.GetCommandList().Dev()->RSSetViewports(1, &vp);
+        context.SetViewport(vp);
     }
 }
 
@@ -251,16 +248,16 @@ void GfxIMGUIRenderer::PopulateCommandList(GfxContext& context)
         context.StageCBV(consts);
     }
 
-    GfxPipelineStateObject& pso = context.GetPSO();
-    pso.SetVertexShader(g_GfxShaderManager.GetShader(Shaders::VS_IMGUI{}));
-    pso.SetPixelShader(g_GfxShaderManager.GetShader(Shaders::PS_IMGUI{}));
+    context.SetShader(g_GfxShaderManager.GetShader(Shaders::VS_IMGUI{}));
+    context.SetShader(g_GfxShaderManager.GetShader(Shaders::PS_IMGUI{}));
+
     // pso.SetVertexFormat(GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub); // It's default to be this
 
     context.StageSRV(m_FontsTexture, 1, 0);
 
     context.SetVertexBuffer(m_VertexBuffer);
     context.SetIndexBuffer(m_IndexBuffer);
-    context.SetRenderTarget(0, g_GfxManager.GetSwapChain().GetCurrentBackBuffer());
+    context.SetRenderTarget(g_GfxManager.GetSwapChain().GetCurrentBackBuffer());
 
     // Render command lists
     // (Because we merged all buffers into a single one, we maintain our own offset into them)
@@ -280,7 +277,7 @@ void GfxIMGUIRenderer::PopulateCommandList(GfxContext& context)
             r.top = (LONG)(cmd.ClipRect.y - clip_off.y);
             r.right = (LONG)(cmd.ClipRect.z - clip_off.x);
             r.bottom = (LONG)(cmd.ClipRect.w - clip_off.y);
-            context.GetCommandList().Dev()->RSSetScissorRects(1, &r);
+            context.SetRect(r);
 
             context.DrawIndexedInstanced(cmd.ElemCount, 1, cmd.IdxOffset + global_idx_offset, cmd.VtxOffset + global_vtx_offset, 0);
 

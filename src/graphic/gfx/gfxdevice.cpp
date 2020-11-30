@@ -31,16 +31,6 @@ static void ConfigureDebugLayerBeforeDeviceCreation()
     pDredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
 }
 
-/// <summary>
-/// This struct takes in Pandas and defines Tilapias. =)
-/// </summary>
-struct PANDACMT
-{
-    int PANDA;
-    bool isTilapia;
-    char output[64];
-};
-
 void GfxDevice::Initialize()
 {
     bbeProfileFunction();

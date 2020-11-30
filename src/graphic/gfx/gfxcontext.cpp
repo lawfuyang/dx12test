@@ -1,6 +1,28 @@
 #include <graphic/gfx/gfxcontext.h>
 #include <graphic/pch.h>
 
+CD3DX12_PIPELINE_STATE_STREAM2 GfxContext::DefaultGraphicPSO()
+{
+    static CD3DX12_PIPELINE_STATE_STREAM2 s_Desc = []()
+    {
+        CD3DX12_PIPELINE_STATE_STREAM2 d;
+        d.PrimitiveTopologyType = GetD3D12PrimitiveTopologyType(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        d.InputLayout = GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub.Dev();
+        memcpy(&d.BlendState, &GfxCommonStates::Opaque, sizeof(GfxCommonStates::Opaque));
+        memcpy(&d.DepthStencilState, &GfxCommonStates::DepthNone, sizeof(GfxCommonStates::DepthNone));
+        memcpy(&d.RasterizerState, &GfxCommonStates::CullCounterClockwise, sizeof(GfxCommonStates::CullCounterClockwise));
+
+        return d;
+    }();
+    return s_Desc;
+}
+
+CD3DX12_PIPELINE_STATE_STREAM2 GfxContext::DefaultComputePSO()
+{
+    static CD3DX12_PIPELINE_STATE_STREAM2 s_Desc;
+    return s_Desc;
+}
+
 void GfxContext::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, std::string_view name)
 {
     assert(m_CommandList == nullptr);
@@ -36,52 +58,93 @@ void GfxContext::ClearRenderTargetView(GfxTexture& tex, const bbeVector4& clearC
     m_CommandList->Dev()->ClearRenderTargetView(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), (const FLOAT*)&clearColor, numRects, pRects);
 }
 
-static void ClearDepthStencilInternal(GfxContext& gfxContext, GfxTexture& tex, float depth, uint8_t stencil, D3D12_CLEAR_FLAGS flags)
-{
-    bbeProfileFunction();
-    bbeProfileGPUFunction(gfxContext);
-
-    const UINT numRects = 0;
-    const D3D12_RECT* pRects = nullptr;
-
-    gfxContext.GetCommandList().Dev()->ClearDepthStencilView(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), flags, depth, stencil, numRects, pRects);
-}
-
 void GfxContext::ClearDepth(GfxTexture& tex, float depth)
 {
-    ClearDepthStencilInternal(*this, tex, depth, 0, D3D12_CLEAR_FLAG_DEPTH);
+    bbeProfileGPUFunction((*this));
+    m_CommandList->Dev()->ClearDepthStencilView(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
 }
 
 void GfxContext::ClearDepthStencil(GfxTexture& tex, float depth, uint8_t stencil)
 {
-    ClearDepthStencilInternal(*this, tex, depth, stencil, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL);
+    bbeProfileGPUFunction((*this));
+    m_CommandList->Dev()->ClearDepthStencilView(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, depth, stencil, 0, nullptr);
 }
 
-void GfxContext::SetRenderTarget(uint32_t idx, GfxTexture& tex)
+template <uint32_t NbRTs>
+void GfxContext::SetRTVHelper(GfxTexture* (&RTVs)[NbRTs])
 {
-    assert(idx < _countof(m_RTVs));
+    m_RTVs.resize(NbRTs);
+    (&m_PSO.RTVFormats)->NumRenderTargets = NbRTs;
 
-    m_PSO.SetRenderTargetFormat(idx, tex.GetFormat());
-    m_RTVs[idx] = &tex;
+    for (uint32_t i = 0; i < NbRTs; ++i)
+    {
+        m_RTVs[i] = RTVs[i];
+        (&m_PSO.RTVFormats)->RTFormats[i] = RTVs[i]->GetFormat();
+    }
+}
+
+void GfxContext::SetRenderTarget(GfxTexture& rt1)
+{
+    GfxTexture* RTsArr[] = { &rt1 };
+    SetRTVHelper(RTsArr);
+}
+
+void GfxContext::SetRenderTargets(GfxTexture& rt1, GfxTexture& rt2)
+{
+    GfxTexture* RTsArr[] = { &rt1, &rt2 };
+    SetRTVHelper(RTsArr);
+}
+
+void GfxContext::SetRenderTargets(GfxTexture& rt1, GfxTexture& rt2, GfxTexture& rt3)
+{
+    GfxTexture* RTsArr[] = { &rt1, &rt2, &rt3 };
+    SetRTVHelper(RTsArr);
+}
+
+void GfxContext::SetBlendStates(uint32_t renderTarget, const D3D12_RENDER_TARGET_BLEND_DESC& blendState)
+{
+    assert(renderTarget < _countof(D3D12_BLEND_DESC::RenderTarget));
+    (&m_PSO.BlendState)->RenderTarget[renderTarget] = blendState;
+}
+
+void GfxContext::SetShader(const GfxShader& shader)
+{
+    m_Shaders[shader.GetType()] = &shader;
+
+    D3D12_SHADER_BYTECODE* byteCodeArr[GfxShaderType_Count] = { &m_PSO.VS, &m_PSO.PS, &m_PSO.CS };
+    byteCodeArr[shader.GetType()]->BytecodeLength = shader.GetBlob()->GetBufferSize();
+    byteCodeArr[shader.GetType()]->pShaderBytecode = shader.GetBlob()->GetBufferPointer();
 }
 
 void GfxContext::SetDepthStencil(GfxTexture& tex)
 {
-    m_PSO.SetDepthStencilFormat(tex.GetFormat());
+    m_PSO.DSVFormat = tex.GetFormat();
     m_DSV = &tex;
+}
+
+void GfxContext::SetViewport(const D3D12_VIEWPORT& vp)
+{
+    m_CommandList->Dev()->RSSetViewports(1, &vp);
+}
+
+void GfxContext::SetRect(const D3D12_RECT& rect)
+{
+    m_CommandList->Dev()->RSSetScissorRects(1, &rect);
 }
 
 void GfxContext::SetRootSignature(GfxRootSignature& rootSig)
 {
     // do check to prevent needless descriptor heap allocation
-    if (m_PSO.m_RootSig == &rootSig)
+    if (m_RootSig == &rootSig)
         return;
 
     // Upon setting a new Root Signature, ALL staged resources will be set to null views!
     // Make sure you double check after setting a new root sig
     m_StagedResources = rootSig.m_Params;
 
-    m_PSO.SetRootSignature(rootSig);
+    //m_PSO.SetRootSignature(rootSig);
+    m_PSO.pRootSignature = rootSig.Dev();
+    m_RootSig = &rootSig;
     m_CommandList->Dev()->SetGraphicsRootSignature(rootSig.Dev());
 }
 
@@ -126,56 +189,100 @@ void GfxContext::StageDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptor, uint
     m_StaleResourcesBitMap.set(rootIndex);
 }
 
-void GfxContext::CompileAndSetGraphicsPipelineState()
+std::size_t GfxContext::GetPSOHash()
+{
+    std::size_t finalHash = 0;
+
+    // RootSig
+    boost::hash_combine(finalHash, m_RootSig->GetHash());
+
+    if (m_Shaders[VS])
+    {
+        // VS/PS Shaders
+        boost::hash_combine(finalHash, m_Shaders[VS]->GetHash());
+        if (m_Shaders[PS])
+            boost::hash_combine(finalHash, m_Shaders[PS]->GetHash());
+
+        // Blend States
+        boost::hash_combine(finalHash, (&m_PSO.BlendState));
+
+        // Rasterizer States
+        boost::hash_combine(finalHash, (&m_PSO.RasterizerState));
+
+        // Depth Stencil State
+        boost::hash_combine(finalHash, (&m_PSO.DepthStencilState));
+
+        // Vertex Input Layout
+        boost::hash_combine(finalHash, m_VertexFormat->GetHash());
+
+        // Primitive Topology
+        boost::hash_combine(finalHash, (&m_PSO.PrimitiveTopologyType));
+
+        boost::hash_combine(finalHash, m_RTVs.size()); // strictly needed?
+        // RTV Formats
+        for (uint32_t i = 0; i < m_RTVs.size(); ++i)
+        {
+            boost::hash_combine(finalHash, m_RTVs[i]->GetFormat());
+        }
+
+        // DSV Format
+        boost::hash_combine(finalHash, (&m_PSO.DSVFormat));
+
+        // Sample Desccriptors
+        boost::hash_combine(finalHash, (&m_PSO.SampleDesc));
+    }
+    else if (m_Shaders[CS])
+    {
+        // We only need to hash CS shader
+        boost::hash_combine(finalHash, m_Shaders[CS]->GetHash());
+    }
+
+    return finalHash;
+}
+
+void GfxContext::PrepareGraphicsStates()
 {
     //bbeProfileFunction();
 
-    assert(m_PSO.m_RootSig && m_PSO.m_RootSig->Dev());
+    assert(m_RootSig && m_RootSig->Dev());
     assert(m_CommandList);
 
     if (m_VertexBuffer)
     {
-        assert(m_PSO.m_VertexFormat);
+        assert(m_VertexFormat);
         assert(m_VertexBuffer->GetD3D12Resource());
         assert(m_VertexBuffer->GetStrideInBytes() > 0);
         assert(m_VertexBuffer->GetSizeInBytes() > 0);
     }
 
-    for (uint32_t i = 0; i < m_PSO.m_RenderTargets.NumRenderTargets; ++i)
+    for (uint32_t i = 0; i < m_RTVs.size(); ++i)
     {
         assert(m_RTVs[i] != nullptr);
-        assert(m_PSO.m_RenderTargets.RTFormats[i] != DXGI_FORMAT_UNKNOWN);
+        assert((&m_PSO.RTVFormats)->RTFormats[i] != DXGI_FORMAT_UNKNOWN);
     }
 
-    m_PSO.m_Hash = std::hash<GfxPipelineStateObject>{}(m_PSO);
-    if (m_LastUsedPSOHash != m_PSO.m_Hash)
+    std::size_t psoHash = GetPSOHash();
+    if (m_PSOHash != psoHash)
     {
         bbeProfile("Set PSO Params");
 
-        m_LastUsedPSOHash = m_PSO.m_Hash;
+        m_PSOHash = psoHash;
 
         // PSO
-        m_CommandList->Dev()->SetPipelineState(g_GfxPSOManager.GetGraphicsPSO(m_PSO));
+        m_CommandList->Dev()->SetPipelineState(g_GfxPSOManager.GetPSO(*this, m_PSO, m_PSOHash));
 
         // Input Assembler
-        m_CommandList->Dev()->IASetPrimitiveTopology(m_PSO.m_PrimitiveTopology);
+        m_CommandList->Dev()->IASetPrimitiveTopology(GetD3D12PrimitiveTopology(m_PSO.PrimitiveTopologyType));
 
         // Output Merger
-        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[_countof(D3D12_RT_FORMAT_ARRAY::RTFormats)] = {};
-        for (uint32_t i = 0; i < m_PSO.m_RenderTargets.NumRenderTargets; ++i)
+        InplaceArray<D3D12_CPU_DESCRIPTOR_HANDLE, 3> rtvHandles{ m_RTVs.size() };
+        for (uint32_t i = 0; i < m_RTVs.size(); ++i)
         {
             rtvHandles[i] = m_RTVs[i]->GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart();
 
             TransitionResource(*m_RTVs[i], D3D12_RESOURCE_STATE_RENDER_TARGET, false);
         }
-
-        D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = {};
-        if (m_DSV)
-        {
-            dsvHandle = m_DSV->GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart();
-        }
-
-        m_CommandList->Dev()->OMSetRenderTargets(m_PSO.m_RenderTargets.NumRenderTargets, rtvHandles, FALSE, m_DSV ? &dsvHandle : nullptr);
+        m_CommandList->Dev()->OMSetRenderTargets(m_RTVs.size(), rtvHandles.data(), FALSE, m_DSV ? &m_DSV->GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart() : nullptr);
     }
 
     std::size_t buffersHash = std::hash<void*>{}(m_VertexBuffer);
@@ -433,7 +540,7 @@ void GfxContext::DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t i
 
 void GfxContext::PreDraw()
 {
-    CompileAndSetGraphicsPipelineState();
+    PrepareGraphicsStates();
     FlushResourceBarriers();
     CommitStagedResources();
 }

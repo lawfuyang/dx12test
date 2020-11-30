@@ -1,8 +1,5 @@
 #pragma once
 
-#include <string>
-#include <assert.h>
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 #define DX12_CALL(call)                                                                                            \
     {                                                                                                              \
@@ -34,6 +31,7 @@ void SetD3DDebugName(ID3D12Object* object, std::string_view name);
 void SetD3DDebugParent(ID3D12Object* object, const void* parentPointer);
 void* GetD3DResourceParent(ID3D12Object* resource);
 D3D12_PRIMITIVE_TOPOLOGY_TYPE GetD3D12PrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY primitiveTopology);
+D3D12_PRIMITIVE_TOPOLOGY GetD3D12PrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType);
 uint32_t GetBitsPerPixel(DXGI_FORMAT fmt);
 uint32_t GetBytesPerPixel(DXGI_FORMAT fmt);
 bool IsBlockFormat(DXGI_FORMAT fmt);
