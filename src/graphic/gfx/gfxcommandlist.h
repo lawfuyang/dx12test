@@ -32,7 +32,7 @@ public:
 
     void Initialize(D3D12_COMMAND_LIST_TYPE type);
     void ShutDown();
-    GfxCommandList* AllocateCommandList(const std::string&);
+    GfxCommandList* AllocateCommandList(std::string_view name);
     bool HasPendingCommandLists() const { return !m_PendingExecuteCommandLists.empty(); };
     void ExecutePendingCommandLists();
     void SignalFence() { m_Fence.IncrementAndSignal(Dev()); }

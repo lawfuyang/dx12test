@@ -31,7 +31,7 @@ public:
         AddGraphicCommand(deferredCmd);
     }
 
-    GfxContext& GenerateNewContext(D3D12_COMMAND_LIST_TYPE, const std::string& name);
+    GfxContext& GenerateNewContext(D3D12_COMMAND_LIST_TYPE, std::string_view name);
 
     GfxDevice& GetGfxDevice() { return m_GfxDevice; }
     GfxSwapChain& GetSwapChain() { return m_SwapChain; }

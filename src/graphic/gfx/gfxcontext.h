@@ -21,7 +21,7 @@ class GfxBufferCommon;
 class GfxContext
 {
 public:
-    void Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, const std::string& name);
+    void Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, std::string_view name);
 
     void ClearRenderTargetView(GfxTexture&, const bbeVector4& clearColor);
     void ClearDepth(GfxTexture&, float depth);

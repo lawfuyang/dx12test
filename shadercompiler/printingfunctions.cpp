@@ -1,8 +1,8 @@
 
-void PrintToConsoleAndLogFile(const std::string& str)
+void PrintToConsoleAndLogFile(std::string_view str)
 {
-    printf("%s\n", str.c_str());
-    g_Log.info("{}", str.c_str());
+    printf("%s\n", str.data());
+    g_Log.info("{}", str.data());
 }
 
 static void OverrideExistingFileIfNecessary(const std::string& generatedString, const std::string& dirFull)

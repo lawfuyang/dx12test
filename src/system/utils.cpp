@@ -2,19 +2,14 @@
 
 const char* StringFormat(const char* format, ...)
 {
-    // Increase this when consecutive StringFormat calls start to return garbage
-    const uint32_t NbStrBuffers = 8;
-
-    thread_local char tl_StrBuffers[BBE_KB(1)][NbStrBuffers];
-    thread_local uint32_t tl_BuffersCursor = 0;
-    tl_BuffersCursor = (tl_BuffersCursor + 1) % _countof(tl_StrBuffers);
+    thread_local StaticString<BBE_KB(1)> tl_Dest;
 
     va_list marker;
     va_start(marker, format);
-    _vsnprintf_s(tl_StrBuffers[tl_BuffersCursor], BBE_KB(1), BBE_KB(1), format, marker);
+    _vsnprintf_s(tl_Dest.data(), BBE_KB(1), BBE_KB(1), format, marker);
     va_end(marker);
 
-    return tl_StrBuffers[tl_BuffersCursor];
+    return tl_Dest.data();
 }
 
 void BreakIntoDebugger()
@@ -180,7 +175,7 @@ void ReadDataFromFile(const char* filename, std::vector<std::byte>& data)
     extendedParams.lpSecurityAttributes = nullptr;
     extendedParams.hTemplateFile = nullptr;
 
-    StaticWString<FILENAME_MAX> fileNameW = StringUtils::Utf8ToWide(filename).c_str();
+    StaticWString<FILENAME_MAX> fileNameW = StringUtils::Utf8ToWide(filename);
 
     Wrappers::FileHandle file(CreateFile2(fileNameW.c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &extendedParams));
     if (file.Get() == INVALID_HANDLE_VALUE)
@@ -218,73 +213,24 @@ namespace StringUtils
     constexpr DWORD MBConversionFlags = MB_ERR_INVALID_CHARS;
     constexpr DWORD WCConversionFlags = WC_ERR_INVALID_CHARS;
 
-    // Get the wchar length of a utf8 string
-    static size_t GetWideLength(const char* utf8String, size_t utf8Length)
+    const wchar_t* Utf8ToWide(std::string_view strView)
     {
-        const int newLen = ::MultiByteToWideChar(
-            CP_UTF8,
-            MBConversionFlags,
-            utf8String,
-            static_cast<int>(utf8Length),
-            nullptr,
-            0
-        );
+        thread_local StaticWString<BBE_KB(1)> MultiByteToWideChar;
+        const size_t wideLength = ::MultiByteToWideChar(CP_UTF8, MBConversionFlags, strView.data(), (int)strView.length(), nullptr, 0);
+        MultiByteToWideChar.resize(wideLength);
+        ::MultiByteToWideChar(CP_UTF8, MBConversionFlags, strView.data(), (int)strView.length(), MultiByteToWideChar.data(), (int)wideLength);
 
-        return static_cast<size_t>(newLen);
+        return MultiByteToWideChar.data();
     }
 
-    // Get the utf8 length of a wchar string
-    static size_t GetUtf8Length(const wchar_t* wideString, size_t wideLength)
+    const char* WideToUtf8(std::wstring_view strView)
     {
-        const int newLen = ::WideCharToMultiByte(
-            CP_UTF8,
-            WCConversionFlags,
-            wideString,
-            static_cast<int>(wideLength),
-            nullptr,
-            0,
-            nullptr,
-            nullptr
-        );
+        thread_local StaticString<BBE_KB(1)> MultiByteToWideChar;
+        const size_t wideLength = ::WideCharToMultiByte(CP_UTF8, WCConversionFlags, strView.data(), (int)strView.length(), nullptr, 0, nullptr, nullptr);
+        MultiByteToWideChar.resize(wideLength);
+        ::WideCharToMultiByte(CP_UTF8, WCConversionFlags, strView.data(), (int)strView.length(), MultiByteToWideChar.data(), (int)wideLength, nullptr, nullptr);
 
-        return static_cast<size_t>(newLen);
-    }
-
-    std::wstring Utf8ToWide(const char* utf8String, size_t utf8Length)
-    {
-        std::wstring dest;
-        const size_t wideLength = GetWideLength(utf8String, utf8Length);
-        dest.resize(wideLength);
-        ::MultiByteToWideChar(
-            CP_UTF8,
-            MBConversionFlags,
-            utf8String,
-            static_cast<int>(utf8Length),
-            &dest[0],
-            static_cast<int>(wideLength)
-        );
-
-        return dest;
-    }
-
-    std::string WideToUtf8(const wchar_t* wideString, size_t wideLength)
-    {
-        std::string dest;
-        const size_t utf8Length = GetUtf8Length(wideString, wideLength);
-        dest.resize(utf8Length);
-
-        ::WideCharToMultiByte(
-            CP_UTF8,
-            WCConversionFlags,
-            wideString,
-            static_cast<int>(wideLength),
-            &dest[0],
-            static_cast<int>(utf8Length),
-            nullptr,
-            nullptr
-        );
-
-        return dest;
+        return MultiByteToWideChar.data();
     }
 }
 

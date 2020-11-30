@@ -50,9 +50,9 @@ const std::string GetD3DDebugName(ID3D12Object* object)
     return name;
 }
 
-void SetD3DDebugName(ID3D12Object* object, const std::string& name)
+void SetD3DDebugName(ID3D12Object* object, std::string_view name)
 {
-    object->SetPrivateData(WKPDID_D3DDebugObjectName, (UINT)name.size(), name.c_str());
+    object->SetPrivateData(WKPDID_D3DDebugObjectName, (UINT)name.length(), name.data());
 }
 
 void SetD3DDebugParent(ID3D12Object* object, const void* parentPointer)

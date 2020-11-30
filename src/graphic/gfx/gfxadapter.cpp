@@ -24,7 +24,7 @@ void GfxAdapter::Initialize()
             continue;
         }
 
-        g_Log.info("Graphic Adapter found: {}", StringUtils::WideToUtf8(desc.Description).c_str());
+        g_Log.info("Graphic Adapter found: {}", StringUtils::WideToUtf8(desc.Description));
         m_AllAdapters.push_back(hardwareAdapter);
     }
 

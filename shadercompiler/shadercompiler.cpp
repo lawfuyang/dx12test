@@ -151,7 +151,7 @@ int main()
     InitializeGlobals();
 
     std::vector<std::string> allJSONs;
-    GetFilesInDirectory(allJSONs, g_GlobalDirs.m_ShadersSrcDir.c_str());
+    GetFilesInDirectory(allJSONs, g_GlobalDirs.m_ShadersSrcDir);
 
     tf::Executor executor;
     tf::Taskflow tf;

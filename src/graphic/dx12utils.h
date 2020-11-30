@@ -30,7 +30,7 @@ static const D3D12_FEATURE_DATA_SHADER_MODEL gs_AllD3D12ShaderModels[] =
 const char* GetD3DFeatureLevelName(D3D_FEATURE_LEVEL FeatureLevel);
 const char* GetD3DShaderModelName(D3D_SHADER_MODEL shaderModel);
 const std::string GetD3DDebugName(ID3D12Object* resource);
-void SetD3DDebugName(ID3D12Object* object, const std::string& name);
+void SetD3DDebugName(ID3D12Object* object, std::string_view name);
 void SetD3DDebugParent(ID3D12Object* object, const void* parentPointer);
 void* GetD3DResourceParent(ID3D12Object* resource);
 D3D12_PRIMITIVE_TOPOLOGY_TYPE GetD3D12PrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY primitiveTopology);

@@ -16,7 +16,7 @@ void GfxPSOManager::Initialize()
     assert(!m_PipelineLibrary);
 
     // Init the memory mapped file.
-    StaticWString<MAX_PATH> cacheDir = StringUtils::Utf8ToWide(StringFormat("%sD3D12PipelineLibraryCache.cache", GetTempDirectory())).c_str();
+    StaticWString<MAX_PATH> cacheDir = StringUtils::Utf8ToWide(StringFormat("%sD3D12PipelineLibraryCache.cache", GetTempDirectory()));
     m_MemoryMappedCacheFile.Init(cacheDir.c_str());
 
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();

@@ -280,11 +280,8 @@ static std::string ToString(ObjectID id) { return boost::uuids::to_string(id); }
 
 namespace StringUtils
 {
-    std::wstring Utf8ToWide(const char* str, size_t utf8Length);
-    std::string WideToUtf8(const wchar_t* str, size_t wideLength);
-
-    static std::wstring Utf8ToWide(const std::string& str) { return Utf8ToWide(str.c_str(), str.length()); }
-    static std::string WideToUtf8(const std::wstring& str) { return WideToUtf8(str.c_str(), str.length()); }
+    const wchar_t* Utf8ToWide(std::string_view strView);
+    const char* WideToUtf8(std::wstring_view strView);
 
     using ConvertFuncType = int(int); // std::tolower & std::toupper has same signature
 

@@ -87,7 +87,7 @@ void GfxCommandListQueue::ShutDown()
     }
 }
 
-GfxCommandList* GfxCommandListQueue::AllocateCommandList(const std::string& name)
+GfxCommandList* GfxCommandListQueue::AllocateCommandList(std::string_view name)
 {
     bbeProfileFunction();
 

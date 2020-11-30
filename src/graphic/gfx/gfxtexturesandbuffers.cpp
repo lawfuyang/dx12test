@@ -57,7 +57,7 @@ D3D12MA::Allocation* GfxBufferCommon::CreateHeap(const GfxBufferCommon::HeapDesc
     assert(allocHandle);
     assert(newHeap);
 
-    const StaticWString<256> resourceNameW = StringUtils::Utf8ToWide(heapDesc.m_ResourceName).c_str();
+    const StaticWString<BBE_KB(1)> resourceNameW = StringUtils::Utf8ToWide(heapDesc.m_ResourceName);
     allocHandle->SetName(resourceNameW.c_str());
     allocHandle->GetResource()->SetName(resourceNameW.c_str());
 
@@ -414,7 +414,7 @@ void GfxTexture::InitializeForSwapChain(ComPtr<IDXGISwapChain4>& swapChain, DXGI
 
     m_GfxDescriptorHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
 
-    m_HazardTrackedResource->SetName(StringUtils::Utf8ToWide(StringFormat("Back Buffer RTV %d", backBufferIdx)).c_str());
+    m_HazardTrackedResource->SetName(StringUtils::Utf8ToWide(StringFormat("Back Buffer RTV %d", backBufferIdx)));
 
     gfxDevice.Dev()->CreateRenderTargetView(m_HazardTrackedResource, nullptr, m_GfxDescriptorHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
 }

@@ -101,8 +101,8 @@ struct GlobalDirs
 };
 #define g_GlobalDirs GlobalDirs::GetInstance()
 
+void PrintToConsoleAndLogFile(std::string_view str);
 void AddValidPermutations(Shader& newShader, GfxShaderType shaderType, json shaderPermsForTypeJSON);
-void PrintToConsoleAndLogFile(const std::string& str);
 void PrintAutogenFilesForShaderInput(const ShaderInputs& inputs);
 void PrintAutogenFileForShaderPermutationStructs(const Shader& shader);
 void CompilePermutation(const Shader& parentShader, Shader::Permutation& permutation, GfxShaderType shaderType);

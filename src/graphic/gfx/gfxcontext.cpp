@@ -1,7 +1,7 @@
 #include <graphic/gfx/gfxcontext.h>
 #include <graphic/pch.h>
 
-void GfxContext::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, const std::string& name)
+void GfxContext::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, std::string_view name)
 {
     assert(m_CommandList == nullptr);
     m_CommandList = g_GfxCommandListsManager.GetCommandQueue(cmdListType).AllocateCommandList(name);

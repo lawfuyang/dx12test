@@ -171,7 +171,7 @@ void GfxManager::EndFrame()
     ++m_GraphicFrameNumber;
 }
 
-GfxContext& GfxManager::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType, const std::string& name)
+GfxContext& GfxManager::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType, std::string_view name)
 {
     GfxContext& newContext = GenerateNewContextInternal();
     newContext.Initialize(cmdListType, name);
