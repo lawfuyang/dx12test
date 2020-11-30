@@ -18,6 +18,11 @@ static void ConfigureDebugLayerBeforeDeviceCreation()
     debugInterface3->EnableDebugLayer();
     debugInterface3->SetEnableGPUBasedValidation(g_CommandLineOptions.m_GfxDebugLayer.m_EnableGPUValidation);
 
+    // TODO: Investigate why MicroProfiler will have infinite ID3D12Fence wait?
+#if defined(BBE_USE_GPU_PROFILER)
+    debugInterface3->SetEnableSynchronizedCommandQueueValidation(false);
+#endif
+
     ComPtr<ID3D12DeviceRemovedExtendedDataSettings> pDredSettings;
     DX12_CALL(D3D12GetDebugInterface(IID_PPV_ARGS(&pDredSettings)));
 
@@ -25,6 +30,16 @@ static void ConfigureDebugLayerBeforeDeviceCreation()
     pDredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
     pDredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
 }
+
+/// <summary>
+/// This struct takes in Pandas and defines Tilapias. =)
+/// </summary>
+struct PANDACMT
+{
+    int PANDA;
+    bool isTilapia;
+    char output[64];
+};
 
 void GfxDevice::Initialize()
 {
