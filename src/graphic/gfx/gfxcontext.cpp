@@ -124,11 +124,13 @@ void GfxContext::SetDepthStencil(GfxTexture& tex)
 
 void GfxContext::SetViewport(const D3D12_VIEWPORT& vp)
 {
+    // No plans to cache/hash this due to low frequency of usage...
     m_CommandList->Dev()->RSSetViewports(1, &vp);
 }
 
 void GfxContext::SetRect(const D3D12_RECT& rect)
 {
+    // No plans to cache/hash this due to low frequency of usage...
     m_CommandList->Dev()->RSSetScissorRects(1, &rect);
 }
 
@@ -514,6 +516,7 @@ void GfxContext::CommitStagedResources()
         const GfxRootSignature::StagedResourcesDescriptors& resourceDesc = m_StagedResources[rootIndex];
 
         // copy descriptors to shader visible heaps 1 by 1
+        // TODO: is this ineffcient? Better to use the full "CopyDescriptors" method?
         for (uint32_t i = 0; i < resourceDesc.m_Descriptors.size(); ++i)
         {
             D3D12_CPU_DESCRIPTOR_HANDLE srcDesc = resourceDesc.m_Descriptors[i];

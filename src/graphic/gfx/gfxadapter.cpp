@@ -1,6 +1,11 @@
 #include <graphic/gfx/gfxadapter.h>
 #include <graphic/pch.h>
 
+void EnumerateAdapter()
+{
+
+}
+
 void GfxAdapter::Initialize()
 {
     bbeProfileFunction();
@@ -13,7 +18,7 @@ void GfxAdapter::Initialize()
 
     m_AllAdapters.reserve(4);
     ComPtr<IDXGIAdapter1> hardwareAdapter;
-    for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != m_DXGIFactory->EnumAdapters1(adapterIndex, &hardwareAdapter); ++adapterIndex)
+    for (UINT i = 0; m_DXGIFactory->EnumAdapterByGpuPreference(i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&hardwareAdapter)) != DXGI_ERROR_NOT_FOUND; ++i)
     {
         DXGI_ADAPTER_DESC1 desc;
         hardwareAdapter->GetDesc1(&desc);
@@ -27,6 +32,5 @@ void GfxAdapter::Initialize()
         g_Log.info("Graphic Adapter found: {}", StringUtils::WideToUtf8(desc.Description));
         m_AllAdapters.push_back(hardwareAdapter);
     }
-
     assert(m_AllAdapters.empty() == false);
 }

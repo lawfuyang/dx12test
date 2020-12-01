@@ -1,14 +1,12 @@
 #pragma once
 
-extern const bool g_EnableGfxDebugLayer;
-
-using GfxAdapterArray = boost::container::small_vector<ComPtr<IDXGIAdapter1>, 4>;
-
 class GfxAdapter
 {
     DeclareSingletonFunctions(GfxAdapter);
 
 public:
+    using GfxAdapterArray = InplaceArray<ComPtr<IDXGIAdapter1>, 2>;
+
     void Initialize();
 
     IDXGIFactory7* GetDXGIFactory() const { return m_DXGIFactory.Get(); }
