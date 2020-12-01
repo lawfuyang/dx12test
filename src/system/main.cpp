@@ -61,7 +61,7 @@ private:
 
         if (FAILED(RegisterClass(&wc)))
         {
-            g_Log.error("ApplicationWin : Failed to create window: {}", GetLastErrorAsString().c_str());
+            g_Log.error("ApplicationWin : Failed to create window: {}", GetLastErrorAsString());
             assert(false);
         }
 
@@ -87,7 +87,7 @@ private:
 
         if (engineWindowHandle == 0)
         {
-            g_Log.error("ApplicationWin : Failed to create window: {}", GetLastErrorAsString().c_str());
+            g_Log.error("ApplicationWin : Failed to create window: {}", GetLastErrorAsString());
             assert(false);
         }
 
@@ -102,8 +102,8 @@ private:
         {
             if (bRet == -1)
             {
-                g_Log.error("Can't get new message: {}", GetLastErrorAsString().c_str());
-                _exit(0);
+                g_Log.error("Can't get new message: {}", GetLastErrorAsString());
+                assert(false);
             }
             else
             {
