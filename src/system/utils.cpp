@@ -1,15 +1,15 @@
-#include "system/utils.h"
+#include <system/utils.h>
 
 const char* StringFormat(const char* format, ...)
 {
-    thread_local StaticString<BBE_KB(1)> tl_Dest;
+    thread_local char buffer[BBE_KB(1)]{};
 
     va_list marker;
     va_start(marker, format);
-    _vsnprintf_s(tl_Dest.data(), BBE_KB(1), BBE_KB(1), format, marker);
+    _vsnprintf_s(buffer, BBE_KB(1), BBE_KB(1), format, marker);
     va_end(marker);
 
-    return tl_Dest.data();
+    return buffer;
 }
 
 void BreakIntoDebugger()
@@ -34,18 +34,17 @@ const std::string GetTimeStamp()
     return dateStr;
 }
 
-const std::string GetLastErrorAsString()
+const char* GetLastErrorAsString()
 {
     // Get the error message, if any.
-    DWORD errorMessageID = ::GetLastError();
+    const DWORD errorMessageID = ::GetLastError();
     if (errorMessageID == 0)
-        return ""; //No error message has been recorded
+        return ""; // No error message has been recorded
 
-    LPSTR messageBuffer = nullptr;
-    FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+    thread_local char buffer[BBE_KB(1)]{};
+    FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buffer, sizeof(buffer), NULL);
 
-    return std::string{ messageBuffer };
+    return buffer;
 }
 
 const char* GetApplicationDirectory()
@@ -142,21 +141,6 @@ CFileWrapper::~CFileWrapper()
         fclose(m_File);
         m_File = nullptr;
     }
-}
-
-void MultithreadDetector::Enter(std::thread::id newID)
-{
-    if (m_CurrentID != std::thread::id{} && newID != m_CurrentID)
-    {
-        assert(false); // Multi-thread detected!
-    }
-
-    m_CurrentID = newID;
-}
-
-void MultithreadDetector::Exit()
-{
-    m_CurrentID = std::thread::id{};
 }
 
 void ReadDataFromFile(const char* filename, std::vector<std::byte>& data)

@@ -161,8 +161,7 @@ constexpr uint32_t GetCompileTimeCRC32(const char* str)
     return ~UtilsPrivate::ConstExpr_CRC32(str, UtilsPrivate::ConstExpr_String_Length(str), ~uint32_t(0));
 }
 
-const std::string GetLastErrorAsString();
-
+const char* GetLastErrorAsString();
 const char* GetApplicationDirectory();
 const char* GetTempDirectory();
 const char* GetAssetsDirectory();
@@ -208,8 +207,14 @@ struct CFileWrapper
 class MultithreadDetector
 {
 public:
-    void Enter(std::thread::id newID);
-    void Exit();
+    void Enter(std::thread::id newID)
+    {
+        if (m_CurrentID != std::thread::id{} && newID != m_CurrentID)
+            assert(false); // Multi-thread detected!
+        m_CurrentID = newID;
+    }
+
+    void Exit() { m_CurrentID = std::thread::id{}; }
 
 private:
     std::atomic<std::thread::id> m_CurrentID = {};
