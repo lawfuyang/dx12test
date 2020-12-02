@@ -43,7 +43,10 @@ public:
     GfxRootSignature* GetOrCreateRootSig(CD3DX12_DESCRIPTOR_RANGE1* ranges, uint32_t nbRanges, D3D12_ROOT_SIGNATURE_FLAGS flags, const char* rootSigName);
 
 private:
-    std::unordered_map<std::size_t, GfxRootSignature> m_CachedRootSigs;
+    // use contiguous memory chunk for our cached RootSignatures
+    std::byte buf[BBE_KB(2)];
+    std::pmr::monotonic_buffer_resource pool{ buf, sizeof(buf), std::pmr::null_memory_resource() };
+    std::pmr::unordered_map<std::size_t, GfxRootSignature> m_CachedRootSigs{&pool};
     std::mutex m_CachedRootSigsLock;
 };
 #define g_GfxRootSignatureManager GfxRootSignatureManager::GetInstance()

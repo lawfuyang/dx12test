@@ -10,7 +10,7 @@ class GfxTexture;
 class GfxVertexBuffer;
 class GfxIndexBuffer;
 class GfxHazardTrackedResource;
-class GfxShader;
+struct GfxShader;
 
 class GfxContext
 {
