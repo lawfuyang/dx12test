@@ -34,13 +34,9 @@ void GfxContext::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, std::string_vie
     m_CommandList->Dev()->RSSetViewports(1, &viewport);
     m_CommandList->Dev()->RSSetScissorRects(1, &scissorRect);
 
-    // set descriptor heap for this commandlist from the shader visible descriptor heap allocator
-    ID3D12DescriptorHeap* ppHeaps[] = { g_GfxGPUDescriptorAllocator.GetInternalHeap().Dev() };
-    m_CommandList->Dev()->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-
     static const D3D12_VERTEX_BUFFER_VIEW NullVertexBufferView = {};
     static const D3D12_INDEX_BUFFER_VIEW NullIndexBufferView = {};
-    m_CommandList->Dev()->IASetVertexBuffers(0, 0, &NullVertexBufferView);
+    m_CommandList->Dev()->IASetVertexBuffers(0, 1, &NullVertexBufferView);
     m_CommandList->Dev()->IASetIndexBuffer(&NullIndexBufferView);
 }
 
@@ -109,11 +105,11 @@ void GfxContext::SetBlendStates(uint32_t renderTarget, const D3D12_RENDER_TARGET
 
 void GfxContext::SetShader(const GfxShader& shader)
 {
-    m_Shaders[shader.GetType()] = &shader;
+    m_Shaders[shader.m_Type] = &shader;
 
     D3D12_SHADER_BYTECODE* byteCodeArr[GfxShaderType_Count] = { &m_PSO.VS, &m_PSO.PS, &m_PSO.CS };
-    byteCodeArr[shader.GetType()]->BytecodeLength = shader.GetBlob()->GetBufferSize();
-    byteCodeArr[shader.GetType()]->pShaderBytecode = shader.GetBlob()->GetBufferPointer();
+    byteCodeArr[shader.m_Type]->BytecodeLength = shader.m_ShaderBlob->GetBufferSize();
+    byteCodeArr[shader.m_Type]->pShaderBytecode = shader.m_ShaderBlob->GetBufferPointer();
 }
 
 void GfxContext::SetDepthStencil(GfxTexture& tex)
@@ -196,14 +192,14 @@ std::size_t GfxContext::GetPSOHash()
     std::size_t finalHash = 0;
 
     // RootSig
-    boost::hash_combine(finalHash, m_RootSig->GetHash());
+    boost::hash_combine(finalHash, m_RootSig->m_Hash);
 
     if (m_Shaders[VS])
     {
         // VS/PS Shaders
-        boost::hash_combine(finalHash, m_Shaders[VS]->GetHash());
+        boost::hash_combine(finalHash, m_Shaders[VS]->m_Hash);
         if (m_Shaders[PS])
-            boost::hash_combine(finalHash, m_Shaders[PS]->GetHash());
+            boost::hash_combine(finalHash, m_Shaders[PS]->m_Hash);
 
         // Blend States
         boost::hash_combine(finalHash, (&m_PSO.BlendState)->AlphaToCoverageEnable);
@@ -241,7 +237,7 @@ std::size_t GfxContext::GetPSOHash()
     else if (m_Shaders[CS])
     {
         // We only need to hash CS shader
-        boost::hash_combine(finalHash, m_Shaders[CS]->GetHash());
+        boost::hash_combine(finalHash, m_Shaders[CS]->m_Hash);
     }
 
     return finalHash;
@@ -506,7 +502,9 @@ void GfxContext::CommitStagedResources()
     // allocate shader visible heaps
     GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.Allocate(numHeapsNeeded);
 
-    static const uint32_t descriptorSize = gfxDevice.Dev()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    // set descriptor heap for this commandlist from the shader visible descriptor heap allocator
+    ID3D12DescriptorHeap* ppHeaps[] = { g_GfxGPUDescriptorAllocator.GetInternalHeap().Dev() };
+    m_CommandList->Dev()->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
     RunOnAllBits(m_StaleResourcesBitMap.to_ulong(), [&](uint32_t rootIndex)
     {
@@ -530,6 +528,7 @@ void GfxContext::CommitStagedResources()
                 gfxDevice.Dev()->CopyDescriptorsSimple(1, destHandle.m_CPUHandle, srcDesc, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
             }
 
+            static const uint32_t descriptorSize = gfxDevice.Dev()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
             destHandle.Offset(1, descriptorSize);
         }
     });
