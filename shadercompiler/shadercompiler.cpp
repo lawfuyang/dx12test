@@ -119,13 +119,30 @@ static void ProcessShaderInputs(json baseJSON)
             }
         }
 
-        // SRVs, UAVs
-        for (json resource : shaderInput["Resources"])
+        // global structs
+        for (json structureJSON : shaderInput["GlobalStructures"])
         {
-            const std::string& resourceTypeStr = resource.at("Type");
+            ShaderInputs::Structure& newStruct = inputs.m_GlobalStructures.emplace_back();
+            newStruct.m_Name = structureJSON.at("Name");
+
+            for (json structConstsJSON : structureJSON["Constants"])
+            {
+                newStruct.m_Constants.push_back({ structConstsJSON.at("Type"), structConstsJSON.at("Name") });
+            }
+        }
+
+        // SRVs, UAVs
+        for (json resourceJSON : shaderInput["Resources"])
+        {
+            const std::string resourceTypeStr = resourceJSON.at("Type");
             const ResourceType resourceType = gs_ResourceTraitsMap.at(resourceTypeStr).m_Type;
 
-            inputs.m_Resources[resourceType].push_back({ resourceTypeStr, resource.at("Register"), resource.at("Name") });
+            std::string UAVStructureType;
+            json UAVStructureTypeJSON = resourceJSON["UAVStructureType"];
+            if (!UAVStructureTypeJSON.empty())
+                UAVStructureType = UAVStructureTypeJSON.get<std::string>();
+
+            inputs.m_Resources[resourceType].push_back({ resourceTypeStr, UAVStructureType, resourceJSON.at("Register"), resourceJSON.at("Name") });
         }
 
         PrintAutogenFilesForShaderInput(inputs);

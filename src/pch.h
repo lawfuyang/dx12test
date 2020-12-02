@@ -55,7 +55,6 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include <memory_resource>
 
 // windows
 #include <concurrent_queue.h>

@@ -34,11 +34,14 @@ static const std::unordered_map<std::string_view, HLSLTypesTraits> gs_TypesTrait
 
 struct ResourceTraits
 {
+    bool m_IsStructured;
     ResourceType m_Type;
 };
 static const std::unordered_map<std::string_view, ResourceTraits> gs_ResourceTraitsMap =
 {
-    { "Texture2D", { SRV } },
+    { "Texture2D"         , { false, SRV } },
+    { "StructuredBuffer"  , { true, SRV } },
+    { "RWStructuredBuffer", { true, UAV } },
 };
 
 struct ShaderInputs
@@ -48,6 +51,11 @@ struct ShaderInputs
         std::string m_Type;
         std::string m_Name;
     };
+    struct Structure
+    {
+        std::string m_Name;
+        std::vector<Constant> m_Constants;
+    };
     struct ConstantBuffer
     {
         uint32_t m_Register = 0xDEADBEEF;
@@ -56,14 +64,15 @@ struct ShaderInputs
     struct Resource
     {
         std::string m_Type;
+        std::string m_UAVStructureType;
         uint32_t m_Register = 0xDEADBEEF;
         std::string m_Name;
     };
 
     std::string m_Name;
-    ConstantBuffer m_ConstantBuffer;
-
+    std::vector<Structure> m_GlobalStructures;
     std::vector<Resource> m_Resources[ResourceType_Count];
+    ConstantBuffer m_ConstantBuffer;
 };
 
 struct Shader

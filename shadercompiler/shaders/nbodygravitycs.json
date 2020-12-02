@@ -1,0 +1,62 @@
+{
+  "Shader": {
+    "ShaderName": "NBodyGravity",
+    "FileName": "nbodygravitycs.hlsl",
+    "CSEntryPoint": "CSMain"
+  },
+  "ShaderInputs": [
+    {
+      "Name": "NBodyGravityConsts",
+      "ConstantBuffer": {
+        "Register": 0,
+        "Constants": [
+          {
+            "Type": "uint",
+            "Name": "MaxParticles"
+          },
+          {
+            "Type": "uint",
+            "Name": "TileSize"
+          },
+          {
+            "Type": "float",
+            "Name": "DeltaTime"
+          },
+          {
+            "Type": "float",
+            "Name": "ParticlesDamping"
+          }
+        ]
+      },
+      "GlobalStructures": [
+        {
+          "Name": "BodyGravityPosVelo",
+          "Constants": [
+            {
+              "Type": "float4",
+              "Name": "Pos"
+            },
+            {
+              "Type": "float4",
+              "Name": "Velocity"
+            }
+          ]
+        }
+      ],
+      "Resources": [
+        {
+          "Type": "StructuredBuffer",
+          "UAVStructureType": "BodyGravityPosVelo",
+          "Register": 0,
+          "Name": "OldPosVelo"
+        },
+        {
+          "Type": "RWStructuredBuffer",
+          "UAVStructureType": "BodyGravityPosVelo",
+          "Register": 0,
+          "Name": "NewPosVelo"
+        }
+      ]
+    }
+  ]
+}

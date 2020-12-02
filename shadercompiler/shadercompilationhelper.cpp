@@ -65,6 +65,30 @@ static bool RunDXCCompiler(const std::string& inputCommandLine, std::string& err
     return totalRead == 0;
 }
 
+// Brute force method in retrieving the Shader's hash via the output byte code file
+static std::size_t GetShaderPermutationHash(std::string_view dir)
+{
+    CFileWrapper file{ dir.data() };
+    
+    const char* strToFind = "; shader hash: ";
+    StaticString<BBE_KB(1)> buffer;
+    buffer.resize(64);
+    while (std::fgets(buffer.data(), BBE_KB(1), file)) 
+    {
+        std::size_t findPos = buffer.find(strToFind);
+        if (findPos != std::string::npos)
+        {
+            buffer.erase(0, std::strlen(strToFind));
+            buffer.erase(buffer.find('\n'));
+
+            return boost::hash_range(buffer.data(), buffer.data() + buffer.length());
+        }
+    }
+
+    assert(false);
+    return 0;
+}
+
 void CompilePermutation(const Shader& parentShader, Shader::Permutation& permutation, GfxShaderType shaderType)
 {
     if (gs_CompileFailureDetected)
@@ -99,7 +123,8 @@ void CompilePermutation(const Shader& parentShader, Shader::Permutation& permuta
     std::string errorMsg;
     if (!RunDXCCompiler(commandLine, errorMsg))
     {
-        PrintToConsoleAndLogFile(StringFormat("%s: %s", parentShader.m_FileName.c_str(), errorMsg.c_str()));
+        errorMsg = parentShader.m_FileName + ": " + errorMsg; // can't use StringFormat here, errorMsg will most probably burst the internal 1KB buffer
+        PrintToConsoleAndLogFile(errorMsg);
         gs_CompileFailureDetected = true;
         return;
     }
@@ -107,6 +132,6 @@ void CompilePermutation(const Shader& parentShader, Shader::Permutation& permuta
     PrintToConsoleAndLogFile(StringFormat("Compiled %s", shaderNameWithPrefix.c_str()));
 
     // compute permutation hash
-    permutation.m_Hash = GetFileContentsHash(permutation.m_ShaderObjCodeFileDir.c_str());
+    permutation.m_Hash = GetShaderPermutationHash(permutation.m_ShaderObjCodeFileDir);
     assert(permutation.m_Hash != 0);
 }
