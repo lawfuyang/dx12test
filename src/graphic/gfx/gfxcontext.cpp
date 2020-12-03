@@ -17,12 +17,6 @@ CD3DX12_PIPELINE_STATE_STREAM2 GfxContext::DefaultGraphicPSO()
     return s_Desc;
 }
 
-CD3DX12_PIPELINE_STATE_STREAM2 GfxContext::DefaultComputePSO()
-{
-    static CD3DX12_PIPELINE_STATE_STREAM2 s_Desc;
-    return s_Desc;
-}
-
 void GfxContext::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, std::string_view name)
 {
     assert(m_CommandList == nullptr);
@@ -42,10 +36,7 @@ void GfxContext::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, std::string_vie
 
 void GfxContext::ClearRenderTargetView(GfxTexture& tex, const bbeVector4& clearColor)
 {
-    bbeProfileFunction();
-
-    GfxContext& gfxContext = *this;
-    bbeProfileGPUFunction(gfxContext);
+    bbeProfileGPUFunction((*this));
 
     TransitionResource(tex, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
 
@@ -64,6 +55,28 @@ void GfxContext::ClearDepthStencil(GfxTexture& tex, float depth, uint8_t stencil
 {
     bbeProfileGPUFunction((*this));
     m_CommandList->Dev()->ClearDepthStencilView(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, depth, stencil, 0, nullptr);
+}
+
+void GfxContext::ClearUAVF(GfxTexture& tex, const bbeVector4& clearValue)
+{
+    TransitionResource(tex, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
+    SetDescriptorHeapIfNeeded();
+
+    GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.Allocate(1);
+    g_GfxManager.GetGfxDevice().Dev()->CopyDescriptorsSimple(1, destHandle.m_CPUHandle, tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    m_CommandList->Dev()->ClearUnorderedAccessViewFloat(destHandle.m_GPUHandle, tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), tex.GetD3D12Resource(), (const FLOAT*)&clearValue, 0, nullptr);
+}
+
+void GfxContext::ClearUAVU(GfxTexture& tex, const bbeVector4U& clearValue)
+{
+    TransitionResource(tex, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
+    SetDescriptorHeapIfNeeded();
+
+    GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.Allocate(1);
+    g_GfxManager.GetGfxDevice().Dev()->CopyDescriptorsSimple(1, destHandle.m_CPUHandle, tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    m_CommandList->Dev()->ClearUnorderedAccessViewUint(destHandle.m_GPUHandle, tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), tex.GetD3D12Resource(), (const UINT*)&clearValue, 0, nullptr);
 }
 
 template <uint32_t NbRTs>
@@ -118,18 +131,6 @@ void GfxContext::SetDepthStencil(GfxTexture& tex)
     m_DSV = &tex;
 }
 
-void GfxContext::SetViewport(const D3D12_VIEWPORT& vp)
-{
-    // No plans to cache/hash this due to low frequency of usage...
-    m_CommandList->Dev()->RSSetViewports(1, &vp);
-}
-
-void GfxContext::SetRect(const D3D12_RECT& rect)
-{
-    // No plans to cache/hash this due to low frequency of usage...
-    m_CommandList->Dev()->RSSetScissorRects(1, &rect);
-}
-
 void GfxContext::SetRootSignature(GfxRootSignature& rootSig)
 {
     // do check to prevent needless descriptor heap allocation
@@ -160,6 +161,16 @@ void GfxContext::StageCBVInternal(const void* data, uint32_t bufferSize, uint32_
     // copy over bytes to upload later
     stagedCBV.m_CBBytes.resize(sizeInBytes);
     memcpy(stagedCBV.m_CBBytes.data(), data, bufferSize);
+}
+
+void GfxContext::SetDescriptorHeapIfNeeded()
+{
+    if (!m_DescHeapsSet)
+    {
+        ID3D12DescriptorHeap* ppHeaps[] = { g_GfxGPUDescriptorAllocator.GetInternalHeap().Dev() };
+        m_CommandList->Dev()->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+        m_DescHeapsSet = true;
+    }
 }
 
 void GfxContext::CheckStagingResourceInputs(uint32_t rootIndex, uint32_t offset, D3D12_DESCRIPTOR_RANGE_TYPE type)
@@ -312,6 +323,25 @@ void GfxContext::PrepareGraphicsStates()
 
             m_CommandList->Dev()->IASetIndexBuffer(&indexBufferView);
         }
+    }
+}
+
+void GfxContext::PrepareComputeStates()
+{
+    //bbeProfileFunction();
+
+    assert(m_RootSig && m_RootSig->Dev());
+    assert(m_CommandList);
+
+    std::size_t psoHash = GetPSOHash();
+    if (m_PSOHash != psoHash)
+    {
+        bbeProfile("Set PSO Params");
+
+        m_PSOHash = psoHash;
+
+        // PSO
+        m_CommandList->Dev()->SetPipelineState(g_GfxPSOManager.GetPSO(*this, m_PSO, m_PSOHash));
     }
 }
 
@@ -501,13 +531,7 @@ void GfxContext::CommitStagedResources()
     // allocate shader visible heaps
     GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.Allocate(numHeapsNeeded);
 
-    // set descriptor heap for this commandlist from the shader visible descriptor heap allocator
-    if (!m_DescHeapsSet)
-    {
-        ID3D12DescriptorHeap* ppHeaps[] = { g_GfxGPUDescriptorAllocator.GetInternalHeap().Dev() };
-        m_CommandList->Dev()->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-        m_DescHeapsSet = true;
-    }
+    SetDescriptorHeapIfNeeded();
 
     RunOnAllBits(m_StaleResourcesBitMap.to_ulong(), [&](uint32_t rootIndex)
     {
@@ -537,22 +561,35 @@ void GfxContext::CommitStagedResources()
     });
 }
 
+void GfxContext::DrawInstanced(uint32_t vertexCountPerInstance, uint32_t instanceCount, uint32_t startVertexLocation, uint32_t startInstanceLocation)
+{
+    PrepareGraphicsStates();
+    FlushResourceBarriers();
+    CommitStagedResources();
+    m_CommandList->Dev()->DrawInstanced(vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
+    PostDraw();
+}
+
 void GfxContext::DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation, uint32_t baseVertexLocation, uint32_t startInstanceLocation)
 {
     //bbeProfileFunction();
 
     assert(m_IndexBuffer);
 
-    PreDraw();
+    PrepareGraphicsStates();
+    FlushResourceBarriers();
+    CommitStagedResources();
     m_CommandList->Dev()->DrawIndexedInstanced(indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
     PostDraw();
 }
 
-void GfxContext::PreDraw()
+void GfxContext::Dispatch(uint32_t threadGroupCountX, uint32_t threadGroupCountY, uint32_t threadGroupCountZ)
 {
-    PrepareGraphicsStates();
+    PrepareComputeStates();
     FlushResourceBarriers();
     CommitStagedResources();
+    m_CommandList->Dev()->Dispatch(threadGroupCountX, threadGroupCountY, threadGroupCountZ);
+    PostDraw();
 }
 
 void GfxContext::PostDraw()

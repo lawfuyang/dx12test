@@ -1,11 +1,11 @@
 #pragma once
 
+#include <graphic/gfx/gfxcommandlist.h>
 #include <graphic/gfx/gfxrootsignature.h>
 #include <graphic/gfx/gfxvertexformat.h>
 #include <graphic/gfx/gfxshadermanager.h>
 
 class GfxManager;
-class GfxCommandList;
 class GfxTexture;
 class GfxVertexBuffer;
 class GfxIndexBuffer;
@@ -17,12 +17,13 @@ class GfxContext
 public:
     void Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, std::string_view name);
 
-    void ResetToDefaultGraphicStates() { m_PSO = DefaultGraphicPSO(); }
-    void ResetToDefaultComputeStates() { m_PSO = DefaultComputePSO(); }
+    void ResetStates() { m_PSO = DefaultGraphicPSO(); }
 
     void ClearRenderTargetView(GfxTexture&, const bbeVector4& clearColor);
     void ClearDepth(GfxTexture&, float depth);
     void ClearDepthStencil(GfxTexture&, float depth, uint8_t stencil);
+    void ClearUAVF(GfxTexture&, const bbeVector4& clearValue);
+    void ClearUAVU(GfxTexture&, const bbeVector4U& clearValue);
 
     // Interfaces for multiple render targets. Add more if needed
     void SetRenderTarget(GfxTexture&);
@@ -32,8 +33,8 @@ public:
     void SetBlendStates(uint32_t renderTarget, const D3D12_RENDER_TARGET_BLEND_DESC& blendStates);
     void SetRasterizerStates(const CD3DX12_RASTERIZER_DESC& desc) { m_PSO.RasterizerState = desc; }
     void SetDepthStencilStates(const CD3DX12_DEPTH_STENCIL_DESC1& desc) { m_PSO.DepthStencilState = desc; }
-    void SetViewport(const D3D12_VIEWPORT& vp);
-    void SetRect(const D3D12_RECT& rect);
+    void SetViewport(const D3D12_VIEWPORT& vp) { m_CommandList->Dev()->RSSetViewports(1, &vp); }
+    void SetRect(const D3D12_RECT& rect) { m_CommandList->Dev()->RSSetScissorRects(1, &rect); }
     void SetShader(const GfxShader&);
     void SetVertexFormat(const GfxVertexFormat& vertexFormat) { m_PSO.InputLayout = vertexFormat.Dev(); }
     void SetDepthStencil(GfxTexture& tex);
@@ -54,24 +55,26 @@ public:
     void TransitionResource(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate);
     void BeginResourceTransition(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate = false);
 
-    void DrawIndexedInstanced(uint32_t IndexCountPerInstance, uint32_t InstanceCount, uint32_t StartIndexLocation, uint32_t BaseVertexLocation, uint32_t StartInstanceLocation);
+    void DrawInstanced(uint32_t vertexCountPerInstance, uint32_t instanceCount, uint32_t startVertexLocation, uint32_t startInstanceLocation);
+    void DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation, uint32_t baseVertexLocation, uint32_t startInstanceLocation);
 
+    void Dispatch(uint32_t threadGroupCountX, uint32_t threadGroupCountY, uint32_t threadGroupCountZ);
 private:
     void PrepareGraphicsStates();
-    void PreDraw();
+    void PrepareComputeStates();
     void PostDraw();
     void FlushResourceBarriers();
     void StageDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptor, uint32_t rootIndex, uint32_t offset);
     void CommitStagedResources();
     void CheckStagingResourceInputs(uint32_t rootIndex, uint32_t offset, D3D12_DESCRIPTOR_RANGE_TYPE);
     void StageCBVInternal(const void* data, uint32_t bufferSize, uint32_t cbRegister, const char* CBName);
+    void SetDescriptorHeapIfNeeded();
     std::size_t GetPSOHash();
 
     template <uint32_t NbRTs>
     void SetRTVHelper(GfxTexture*(&RTVs)[NbRTs]);
 
     static CD3DX12_PIPELINE_STATE_STREAM2 DefaultGraphicPSO();
-    static CD3DX12_PIPELINE_STATE_STREAM2 DefaultComputePSO();
 
     GfxRootSignature*            m_RootSig                      = nullptr;
     GfxVertexFormat*             m_VertexFormat                 = &GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub;
