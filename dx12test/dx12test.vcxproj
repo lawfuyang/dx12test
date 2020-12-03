@@ -102,6 +102,7 @@
     <ClCompile Include="..\src\graphic\renderers\gfxbodygravityparticles.cpp" />
     <ClCompile Include="..\src\graphic\renderers\gfxforwardlighting.cpp" />
     <ClCompile Include="..\src\graphic\renderers\gfximguirenderer.cpp" />
+    <ClCompile Include="..\src\graphic\renderers\gfxrendererbase.cpp" />
     <ClCompile Include="..\src\graphic\shapes.cpp" />
     <ClCompile Include="..\src\graphic\view.cpp" />
     <ClCompile Include="..\src\graphic\visual.cpp" />

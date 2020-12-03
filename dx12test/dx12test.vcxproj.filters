@@ -151,6 +151,9 @@
     <ClCompile Include="..\src\graphic\renderers\gfxbodygravityparticles.cpp">
       <Filter>graphic\renderers</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\renderers\gfxrendererbase.cpp">
+      <Filter>graphic\renderers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">

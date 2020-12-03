@@ -7,6 +7,8 @@ static bool gs_ShowGfxManagerIMGUIWindow = false;
 
 extern GfxRendererBase* g_GfxForwardLightingPass;
 extern GfxRendererBase* g_GfxIMGUIRenderer;
+extern GfxRendererBase* g_GfxBodyGravityParticlesUpdate;
+extern GfxRendererBase* g_GfxBodyGravityParticlesRender;
 extern GfxTexture g_SceneDepthBuffer;
 
 void InitializeGraphic(tf::Subflow& subFlow)
@@ -52,8 +54,11 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
     subFlow.emplace([] { g_GfxPSOManager.Initialize(); }).succeed(PRE_INIT_GATE).precede(POST_INIT_GATE);
     subFlow.emplace([] { g_GfxGPUDescriptorAllocator.Initialize(); }).succeed(PRE_INIT_GATE).precede(POST_INIT_GATE);
     subFlow.emplace([](tf::Subflow& sf) { g_GfxDefaultAssets.Initialize(sf); }).succeed(PRE_INIT_GATE).precede(POST_INIT_GATE);
-    subFlow.emplace([] { g_GfxForwardLightingPass->Initialize(); }).succeed(PRE_INIT_GATE).precede(POST_INIT_GATE);
-    subFlow.emplace([] { g_GfxIMGUIRenderer->Initialize(); }).succeed(PRE_INIT_GATE).precede(POST_INIT_GATE);
+
+    for (GfxRendererBase* renderer : GfxRendererBase::ms_AllRenderers)
+    {
+        subFlow.emplace([renderer] { renderer->Initialize(); }).succeed(PRE_INIT_GATE).precede(POST_INIT_GATE);
+    }
 }
 
 void GfxManager::PreInit()
@@ -85,9 +90,12 @@ void GfxManager::ShutDown()
     if (fs)
         m_SwapChain.Dev()->SetFullscreenState(false, NULL);
 
+    for (GfxRendererBase* renderer : GfxRendererBase::ms_AllRenderers)
+    {
+        renderer->ShutDown();
+    }
+
     g_GfxPSOManager.ShutDown();
-    g_GfxForwardLightingPass->ShutDown();
-    g_GfxIMGUIRenderer->ShutDown();
     g_GfxDefaultAssets.ShutDown();
     g_GfxResourceManager.ShutDown();
 
@@ -128,6 +136,8 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
     };
     PopulateCommandList(g_GfxForwardLightingPass);
     PopulateCommandList(g_GfxIMGUIRenderer);
+    PopulateCommandList(g_GfxBodyGravityParticlesUpdate);
+    PopulateCommandList(g_GfxBodyGravityParticlesRender);
 
     subFlow.emplace([this] { EndFrame(); }).succeed(RENDERERS_GATE);
 }

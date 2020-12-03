@@ -141,5 +141,4 @@ void GfxForwardLightingPass::UpdateIMGUI()
     }
 }
 
-static GfxForwardLightingPass gs_GfxForwardLightingPass;
-GfxRendererBase* g_GfxForwardLightingPass = &gs_GfxForwardLightingPass;
+REGISTER_RENDERER(GfxForwardLightingPass);

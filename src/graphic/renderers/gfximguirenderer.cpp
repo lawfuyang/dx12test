@@ -287,5 +287,4 @@ void GfxIMGUIRenderer::PopulateCommandList(GfxContext& context)
     }
 }
 
-static GfxIMGUIRenderer gs_GfxIMGUIRenderer;
-GfxRendererBase* g_GfxIMGUIRenderer = &gs_GfxIMGUIRenderer;
+REGISTER_RENDERER(GfxIMGUIRenderer);
