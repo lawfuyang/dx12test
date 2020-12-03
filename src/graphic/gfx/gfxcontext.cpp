@@ -445,6 +445,8 @@ void GfxContext::CommitStagedResources()
 {
     //bbeProfileFunction();
 
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+
     // Upload CBV bytes
     for (uint32_t i = 0; i < _countof(m_StagedCBVs); ++i)
     {
@@ -474,7 +476,6 @@ void GfxContext::CommitStagedResources()
         cbvDesc.BufferLocation = uploadHeap->GetResource()->GetGPUVirtualAddress();
         cbvDesc.SizeInBytes = stagedCBV.m_CBBytes.size();
 
-        GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
         gfxDevice.Dev()->CreateConstantBufferView(&cbvDesc, descHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
 
         void* mappedMemory = nullptr;
@@ -497,14 +498,16 @@ void GfxContext::CommitStagedResources()
     RunOnAllBits(m_StaleResourcesBitMap.to_ulong(), [&](uint32_t rootIndex) { numHeapsNeeded += m_StagedResources[rootIndex].m_Descriptors.size(); });
     assert(numHeapsNeeded > 0);
 
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-
     // allocate shader visible heaps
     GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.Allocate(numHeapsNeeded);
 
     // set descriptor heap for this commandlist from the shader visible descriptor heap allocator
-    ID3D12DescriptorHeap* ppHeaps[] = { g_GfxGPUDescriptorAllocator.GetInternalHeap().Dev() };
-    m_CommandList->Dev()->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+    if (!m_DescHeapsSet)
+    {
+        ID3D12DescriptorHeap* ppHeaps[] = { g_GfxGPUDescriptorAllocator.GetInternalHeap().Dev() };
+        m_CommandList->Dev()->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+        m_DescHeapsSet = true;
+    }
 
     RunOnAllBits(m_StaleResourcesBitMap.to_ulong(), [&](uint32_t rootIndex)
     {

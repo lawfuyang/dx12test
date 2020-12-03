@@ -99,5 +99,7 @@ private:
     std::size_t m_LastBuffersHash = 0;
     std::size_t m_PSOHash = 0;
 
+    bool m_DescHeapsSet = false;
+
     friend class GfxManager;
 };

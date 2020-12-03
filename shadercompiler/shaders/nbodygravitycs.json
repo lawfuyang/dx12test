@@ -1,12 +1,29 @@
 {
+  "GlobalStructures": [
+    {
+      "Name": "BodyGravityPosVelo",
+      "Constants": [
+        {
+          "Type": "float4",
+          "Name": "Pos"
+        },
+        {
+          "Type": "float4",
+          "Name": "Velocity"
+        }
+      ]
+    }
+  ],
   "Shader": {
     "ShaderName": "NBodyGravity",
-    "FileName": "nbodygravitycs.hlsl",
+    "FileName": "nbodygravity.hlsl",
+    "VSEntryPoint": "VSMain",
+    "PSEntryPoint": "PSMain",
     "CSEntryPoint": "CSMain"
   },
   "ShaderInputs": [
     {
-      "Name": "NBodyGravityConsts",
+      "Name": "NBodyGravityCSConsts",
       "ConstantBuffer": {
         "Register": 0,
         "Constants": [
@@ -28,21 +45,6 @@
           }
         ]
       },
-      "GlobalStructures": [
-        {
-          "Name": "BodyGravityPosVelo",
-          "Constants": [
-            {
-              "Type": "float4",
-              "Name": "Pos"
-            },
-            {
-              "Type": "float4",
-              "Name": "Velocity"
-            }
-          ]
-        }
-      ],
       "Resources": [
         {
           "Type": "StructuredBuffer",
@@ -55,6 +57,17 @@
           "UAVStructureType": "BodyGravityPosVelo",
           "Register": 0,
           "Name": "NewPosVelo"
+        }
+      ]
+    },
+    {
+      "Name": "NBodyGravityVSPSConsts",
+      "Resources": [
+        {
+          "Type": "StructuredBuffer",
+          "UAVStructureType": "BodyGravityPosVelo",
+          "Register": 0,
+          "Name": "PosVelo"
         }
       ]
     }

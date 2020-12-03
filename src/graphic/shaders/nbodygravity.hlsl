@@ -1,15 +1,15 @@
 
 #include "common.hlsl"
 
-#include "autogen/hlsl/NBodyGravityConsts.h"
+#include "autogen/hlsl/NBodyGravityCSConsts.h"
 
-static const uint g_MaxParticles      = NBodyGravityConsts::GetMaxParticles();
-static const uint g_TileSize          = NBodyGravityConsts::GetTileSize();
-static const float g_DeltaTime        = NBodyGravityConsts::GetDeltaTime();
-static const float g_ParticlesDamping = NBodyGravityConsts::GetParticlesDamping();
+static const uint g_MaxParticles      = NBodyGravityCSConsts::GetMaxParticles();
+static const uint g_TileSize          = NBodyGravityCSConsts::GetTileSize();
+static const float g_DeltaTime        = NBodyGravityCSConsts::GetDeltaTime();
+static const float g_ParticlesDamping = NBodyGravityCSConsts::GetParticlesDamping();
 
-static StructuredBuffer<BodyGravityPosVelo> g_OldPosVelo   = NBodyGravityConsts::GetOldPosVelo();
-static RWStructuredBuffer<BodyGravityPosVelo> g_NewPosVelo = NBodyGravityConsts::GetNewPosVelo();
+static StructuredBuffer<BodyGravityPosVelo> g_OldPosVelo   = NBodyGravityCSConsts::GetOldPosVelo();
+static RWStructuredBuffer<BodyGravityPosVelo> g_NewPosVelo = NBodyGravityCSConsts::GetNewPosVelo();
 
 static const float softeningSquared    = 0.0012500000f * 0.0012500000f;
 static const float g_fG                = 6.67300e-11f * 10000.0f;
@@ -53,16 +53,9 @@ void CSMain(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, uint3 GTid
        
         GroupMemoryBarrierWithGroupSync();
 
-        for (uint counter = 0; counter < blocksize; counter += 8 ) 
+        for (uint i = 0; i < blocksize; ++i) 
         {
-            bodyBodyInteraction(accel, sharedPos[counter], pos, mass, 1);
-            bodyBodyInteraction(accel, sharedPos[counter+1], pos, mass, 1);
-            bodyBodyInteraction(accel, sharedPos[counter+2], pos, mass, 1);
-            bodyBodyInteraction(accel, sharedPos[counter+3], pos, mass, 1);
-            bodyBodyInteraction(accel, sharedPos[counter+4], pos, mass, 1);
-            bodyBodyInteraction(accel, sharedPos[counter+5], pos, mass, 1);
-            bodyBodyInteraction(accel, sharedPos[counter+6], pos, mass, 1);
-            bodyBodyInteraction(accel, sharedPos[counter+7], pos, mass, 1);
+            bodyBodyInteraction(accel, sharedPos[i], pos, mass, 1);
         }
         
         GroupMemoryBarrierWithGroupSync();
@@ -87,4 +80,26 @@ void CSMain(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, uint3 GTid
         g_NewPosVelo[DTid.x].m_Pos = pos;
         g_NewPosVelo[DTid.x].m_Velocity = float4(vel.xyz, length(accel));
     }
+}
+
+struct VS_IN
+{
+    uint vertexID : SV_VertexID;
+    uint instanceID : SV_InstanceID;
+};
+
+struct VS_OUT
+{
+    float4 m_Position  : SV_POSITION;
+};
+
+VS_OUT VSMain(VS_IN input)
+{
+    VS_OUT result = (VS_OUT)0;
+    return result;
+}
+
+float4 PSMain(VS_OUT input) : SV_TARGET
+{
+    return 0;
 }

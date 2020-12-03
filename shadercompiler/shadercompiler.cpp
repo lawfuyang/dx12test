@@ -49,7 +49,7 @@ static void InitializeGlobals()
     }
 }
 
-static void ProcessShaderPermutations(concurrency::concurrent_vector<Shader>& allShaders, json baseJSON)
+static void ProcessShaderPermutations(ConcurrentVector<Shader>& allShaders, json baseJSON)
 {
     json shaderJSON = baseJSON["Shader"];
     if (shaderJSON.empty())
@@ -92,6 +92,20 @@ static void ProcessShaderPermutations(concurrency::concurrent_vector<Shader>& al
     PrintAutogenFileForShaderPermutationStructs(newShader);
 }
 
+static void ProcessGlobalStructures(json baseJSON)
+{
+    for (json structJSON : baseJSON["GlobalStructures"])
+    {
+        GlobalStructure newStruct{ structJSON.at("Name") };
+        for (json constantJSON : structJSON["Constants"])
+        {
+            newStruct.m_Constants.push_back({ constantJSON["Type"], constantJSON["Name"] });
+        }
+
+        PrintAutogenFilesForGlobalStructure(newStruct);
+    }
+}
+
 static void ProcessShaderInputs(json baseJSON)
 {
     for (json shaderInput : baseJSON["ShaderInputs"])
@@ -119,18 +133,6 @@ static void ProcessShaderInputs(json baseJSON)
             }
         }
 
-        // global structs
-        for (json structureJSON : shaderInput["GlobalStructures"])
-        {
-            ShaderInputs::Structure& newStruct = inputs.m_GlobalStructures.emplace_back();
-            newStruct.m_Name = structureJSON.at("Name");
-
-            for (json structConstsJSON : structureJSON["Constants"])
-            {
-                newStruct.m_Constants.push_back({ structConstsJSON.at("Type"), structConstsJSON.at("Name") });
-            }
-        }
-
         // SRVs, UAVs
         for (json resourceJSON : shaderInput["Resources"])
         {
@@ -140,7 +142,10 @@ static void ProcessShaderInputs(json baseJSON)
             std::string UAVStructureType;
             json UAVStructureTypeJSON = resourceJSON["UAVStructureType"];
             if (!UAVStructureTypeJSON.empty())
+            {
                 UAVStructureType = UAVStructureTypeJSON.get<std::string>();
+                inputs.m_GlobalStructureDependencies.insert(GlobalStructure{ UAVStructureType });
+            }
 
             inputs.m_Resources[resourceType].push_back({ resourceTypeStr, UAVStructureType, resourceJSON.at("Register"), resourceJSON.at("Name") });
         }
@@ -149,7 +154,7 @@ static void ProcessShaderInputs(json baseJSON)
     }
 }
 
-static void ProcessShaderJSONFile(concurrency::concurrent_vector<Shader>& allShaders, const std::string& file)
+static void ProcessShaderJSONFile(ConcurrentVector<Shader>& allShaders, const std::string& file)
 {
     PrintToConsoleAndLogFile(StringFormat("Processing '%s'...", GetFileNameFromPath(file).c_str()));
 
@@ -157,6 +162,7 @@ static void ProcessShaderJSONFile(concurrency::concurrent_vector<Shader>& allSha
     json baseJSON = json::parse(jsonFile);
 
     ProcessShaderPermutations(allShaders, baseJSON);
+    ProcessGlobalStructures(baseJSON);
     ProcessShaderInputs(baseJSON);
 }
 
@@ -173,8 +179,7 @@ int main()
     tf::Executor executor;
     tf::Taskflow tf;
 
-    concurrency::concurrent_vector<Shader> allShaders;
-    allShaders.reserve(allJSONs.size());
+    ConcurrentVector<Shader> allShaders;
 
     // Parse all JSON files Multi-Threaded
     for (const std::string& file : allJSONs)

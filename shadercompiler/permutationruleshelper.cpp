@@ -59,11 +59,11 @@ void AddValidPermutations(Shader& newShader, GfxShaderType shaderType, json shad
                 break;
 
             case OnlyOneBitSet:
-                allRulesPassed &= (std::bitset<NbShaderBits>{ i }.count() == 1);
+                allRulesPassed &= (std::bitset<64>{ i }.count() == 1);
                 break;
 
             case MaxOneBitSet:
-                allRulesPassed &= (std::bitset<NbShaderBits>{ i }.count() <= 1);
+                allRulesPassed &= (std::bitset<64>{ i }.count() <= 1);
                 break;
             }
         }

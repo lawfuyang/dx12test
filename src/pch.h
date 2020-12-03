@@ -3,6 +3,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
+#define _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING // for concurrency::concurrent_unordered_set
 
 #if !defined(BBE_SHADERCOMPILER)
     #define BBE_USE_PROFILER
@@ -59,6 +60,7 @@
 // windows
 #include <concurrent_queue.h>
 #include <concurrent_unordered_map.h>
+#include <concurrent_unordered_set.h>
 #include <concurrent_vector.h>
 #include <windows.h>
 #include <winuser.h>
@@ -135,6 +137,12 @@
 
 // typedefs
 using WindowHandle = uint64_t;
+
+template <typename T>
+using ConcurrentVector = concurrency::concurrent_vector<T>;
+
+template <typename T>
+using ConcurrentUnorderedSet = concurrency::concurrent_unordered_set<T>;
 
 template <typename T, uint32_t N>
 using InplaceArray = boost::container::small_vector<T, N>;

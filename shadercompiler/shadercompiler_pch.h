@@ -4,8 +4,6 @@
 #include <extern/json/json.hpp>
 using json = nlohmann::json;
 
-static const uint32_t NbShaderBits = 4;
-
 DEFINE_ENUM_WITH_STRING_CONVERSIONS(GfxShaderType, (VS)(PS)(CS));
 DEFINE_ENUM_WITH_STRING_CONVERSIONS(ResourceType, (SRV)(UAV));
 DEFINE_ENUM_WITH_STRING_CONVERSIONS(PermutationRule, (AnyBitSet)(AllBitsSet)(OnlyOneBitSet)(MaxOneBitSet));
@@ -44,22 +42,29 @@ static const std::unordered_map<std::string_view, ResourceTraits> gs_ResourceTra
     { "RWStructuredBuffer", { true, UAV } },
 };
 
+struct ShaderConstant
+{
+    std::string m_Type;
+    std::string m_Name;
+};
+
+struct GlobalStructure
+{
+    std::string m_Name;
+    std::vector<ShaderConstant> m_Constants;
+};
+namespace std
+{
+    template<> struct equal_to<GlobalStructure> { bool operator()(const GlobalStructure& lhs, const GlobalStructure& rhs) const { return lhs.m_Name == rhs.m_Name; } };
+    template<> struct hash<GlobalStructure> { std::size_t operator()(const GlobalStructure& s) const { return std::hash<std::string>{}(s.m_Name); } }; 
+}
+
 struct ShaderInputs
 {
-    struct Constant
-    {
-        std::string m_Type;
-        std::string m_Name;
-    };
-    struct Structure
-    {
-        std::string m_Name;
-        std::vector<Constant> m_Constants;
-    };
     struct ConstantBuffer
     {
         uint32_t m_Register = 0xDEADBEEF;
-        std::vector<Constant> m_Constants;
+        std::vector<ShaderConstant> m_Constants;
     };
     struct Resource
     {
@@ -70,9 +75,9 @@ struct ShaderInputs
     };
 
     std::string m_Name;
-    std::vector<Structure> m_GlobalStructures;
     std::vector<Resource> m_Resources[ResourceType_Count];
     ConstantBuffer m_ConstantBuffer;
+    std::unordered_set<GlobalStructure> m_GlobalStructureDependencies;
 };
 
 struct Shader
@@ -113,9 +118,10 @@ struct GlobalDirs
 void PrintToConsoleAndLogFile(std::string_view str);
 void AddValidPermutations(Shader& newShader, GfxShaderType shaderType, json shaderPermsForTypeJSON);
 void PrintAutogenFilesForShaderInput(const ShaderInputs& inputs);
+void PrintAutogenFilesForGlobalStructure(const GlobalStructure& s);
 void PrintAutogenFileForShaderPermutationStructs(const Shader& shader);
 void CompilePermutation(const Shader& parentShader, Shader::Permutation& permutation, GfxShaderType shaderType);
-void PrintAutogenByteCodeHeadersFile(const concurrency::concurrent_vector<Shader>& allShaders);
+void PrintAutogenByteCodeHeadersFile(const ConcurrentVector<Shader>& allShaders);
 
 static bool gs_CompileFailureDetected = false;
 static std::string gs_ShaderModelToUse = "6_4";
