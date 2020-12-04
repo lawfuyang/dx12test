@@ -31,8 +31,13 @@ public:
     void SetRenderTargets(GfxTexture&, GfxTexture&, GfxTexture&);
 
     void SetBlendStates(uint32_t renderTarget, const D3D12_RENDER_TARGET_BLEND_DESC& blendStates);
-    void SetRasterizerStates(const CD3DX12_RASTERIZER_DESC& desc) { m_PSO.RasterizerState = desc; }
-    void SetDepthStencilStates(const CD3DX12_DEPTH_STENCIL_DESC1& desc) { m_PSO.DepthStencilState = desc; }
+
+    template <typename T>
+    void SetRasterizerStates(const T& desc) { m_PSO.RasterizerState = (CD3DX12_RASTERIZER_DESC)desc; }
+
+    template <typename T>
+    void SetDepthStencilStates(const T& desc) { m_PSO.DepthStencilState = (CD3DX12_DEPTH_STENCIL_DESC1)desc; }
+
     void SetViewport(const D3D12_VIEWPORT& vp) { m_CommandList->Dev()->RSSetViewports(1, &vp); }
     void SetRect(const D3D12_RECT& rect) { m_CommandList->Dev()->RSSetScissorRects(1, &rect); }
     void SetShader(const GfxShader&);

@@ -12,6 +12,18 @@ const char* StringFormat(const char* format, ...)
     return buffer;
 }
 
+const char* StringFormatBig(const char* format, ...)
+{
+    thread_local char buffer[BBE_MB(1)]{};
+
+    va_list marker;
+    va_start(marker, format);
+    _vsnprintf_s(buffer, BBE_MB(1), BBE_MB(1), format, marker);
+    va_end(marker);
+
+    return buffer;
+}
+
 void BreakIntoDebugger()
 {
     if (!::IsDebuggerPresent())
@@ -197,25 +209,32 @@ namespace StringUtils
     constexpr DWORD MBConversionFlags = MB_ERR_INVALID_CHARS;
     constexpr DWORD WCConversionFlags = WC_ERR_INVALID_CHARS;
 
-    const wchar_t* Utf8ToWide(std::string_view strView)
+    template <uint32_t BufferSize>
+    const wchar_t* Utf8ToWideInternal(std::string_view strView)
     {
-        thread_local StaticWString<BBE_KB(1)> MultiByteToWideChar;
+        thread_local StaticWString<BufferSize> result;
         const size_t wideLength = ::MultiByteToWideChar(CP_UTF8, MBConversionFlags, strView.data(), (int)strView.length(), nullptr, 0);
-        MultiByteToWideChar.resize(wideLength);
-        ::MultiByteToWideChar(CP_UTF8, MBConversionFlags, strView.data(), (int)strView.length(), MultiByteToWideChar.data(), (int)wideLength);
+        result.resize(wideLength);
+        ::MultiByteToWideChar(CP_UTF8, MBConversionFlags, strView.data(), (int)strView.length(), result.data(), (int)wideLength);
 
-        return MultiByteToWideChar.data();
+        return result.data();
     }
 
-    const char* WideToUtf8(std::wstring_view strView)
+    template <uint32_t BufferSize>
+    const char* WideToUtf8Internal(std::wstring_view strView)
     {
-        thread_local StaticString<BBE_KB(1)> MultiByteToWideChar;
+        thread_local StaticString<BufferSize> result;
         const size_t wideLength = ::WideCharToMultiByte(CP_UTF8, WCConversionFlags, strView.data(), (int)strView.length(), nullptr, 0, nullptr, nullptr);
-        MultiByteToWideChar.resize(wideLength);
-        ::WideCharToMultiByte(CP_UTF8, WCConversionFlags, strView.data(), (int)strView.length(), MultiByteToWideChar.data(), (int)wideLength, nullptr, nullptr);
+        result.resize(wideLength);
+        ::WideCharToMultiByte(CP_UTF8, WCConversionFlags, strView.data(), (int)strView.length(), result.data(), (int)wideLength, nullptr, nullptr);
 
-        return MultiByteToWideChar.data();
+        return result.data();
     }
+
+    const wchar_t* Utf8ToWide(std::string_view strView) { return Utf8ToWideInternal<BBE_KB(1)>(strView); }
+    const char* WideToUtf8(std::wstring_view strView) { return WideToUtf8Internal<BBE_KB(1)>(strView); }
+    const wchar_t* Utf8ToWideBig(std::string_view strView) { return Utf8ToWideInternal<BBE_MB(1)>(strView); }
+    const char* WideToUtf8Big(std::wstring_view strView) { return WideToUtf8Internal<BBE_MB(1)>(strView); }
 }
 
 template<typename T>

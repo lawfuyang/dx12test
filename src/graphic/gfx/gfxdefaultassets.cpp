@@ -68,8 +68,8 @@ void GfxDefaultAssets::CreateCheckerboardTexture()
 
     GfxTexture::InitParams initParams;
     initParams.m_Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    initParams.m_Width = TextureWidth;
-    initParams.m_Height = TextureHeight;
+    initParams.m_TexParams.m_Width = TextureWidth;
+    initParams.m_TexParams.m_Height = TextureHeight;
     initParams.m_InitData = data.data();
     initParams.m_ResourceName = "Default Checkboard Texture";
 
@@ -90,8 +90,8 @@ void GfxDefaultAssets::CreateSolidColorTexture(GfxTexture& result, const bbeColo
 
     GfxTexture::InitParams initParams;
     initParams.m_Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    initParams.m_Width = TextureWidth;
-    initParams.m_Height = TextureHeight;
+    initParams.m_TexParams.m_Width = TextureWidth;
+    initParams.m_TexParams.m_Height = TextureHeight;
     initParams.m_InitData = data.data();
     initParams.m_ResourceName = colorName;
 

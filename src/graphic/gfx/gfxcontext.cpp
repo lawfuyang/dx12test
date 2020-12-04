@@ -7,11 +7,6 @@ CD3DX12_PIPELINE_STATE_STREAM2 GfxContext::DefaultGraphicPSO()
     {
         CD3DX12_PIPELINE_STATE_STREAM2 d;
         d.PrimitiveTopologyType = GetD3D12PrimitiveTopologyType(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        d.InputLayout = GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub.Dev();
-        memcpy(&d.BlendState, &GfxCommonStates::Opaque, sizeof(GfxCommonStates::Opaque));
-        memcpy(&d.DepthStencilState, &GfxCommonStates::DepthNone, sizeof(GfxCommonStates::DepthNone));
-        memcpy(&d.RasterizerState, &GfxCommonStates::CullCounterClockwise, sizeof(GfxCommonStates::CullCounterClockwise));
-
         return d;
     }();
     return s_Desc;
@@ -303,25 +298,28 @@ void GfxContext::PrepareGraphicsStates()
     boost::hash_combine(buffersHash, m_IndexBuffer);
     if (m_LastBuffersHash != buffersHash)
     {
-        bbeProfile("Set Buffer Params");
-
         m_LastBuffersHash = buffersHash;
 
-        D3D12_VERTEX_BUFFER_VIEW vBufferView{};
-        vBufferView.BufferLocation = m_VertexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
-        vBufferView.StrideInBytes = m_VertexBuffer->GetStrideInBytes();
-        vBufferView.SizeInBytes = m_VertexBuffer->GetSizeInBytes();
-
-        m_CommandList->Dev()->IASetVertexBuffers(0, 1, &vBufferView);
-
-        if (m_IndexBuffer)
+        if (m_VertexBuffer)
         {
-            D3D12_INDEX_BUFFER_VIEW indexBufferView{};
-            indexBufferView.BufferLocation = m_IndexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
-            indexBufferView.Format = m_IndexBuffer->GetFormat();
-            indexBufferView.SizeInBytes = m_IndexBuffer->GetSizeInBytes();
+            bbeProfile("Set Buffer Params");
 
-            m_CommandList->Dev()->IASetIndexBuffer(&indexBufferView);
+            D3D12_VERTEX_BUFFER_VIEW vBufferView{};
+            vBufferView.BufferLocation = m_VertexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
+            vBufferView.StrideInBytes = m_VertexBuffer->GetStrideInBytes();
+            vBufferView.SizeInBytes = m_VertexBuffer->GetSizeInBytes();
+
+            m_CommandList->Dev()->IASetVertexBuffers(0, 1, &vBufferView);
+
+            if (m_IndexBuffer)
+            {
+                D3D12_INDEX_BUFFER_VIEW indexBufferView{};
+                indexBufferView.BufferLocation = m_IndexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
+                indexBufferView.Format = m_IndexBuffer->GetFormat();
+                indexBufferView.SizeInBytes = m_IndexBuffer->GetSizeInBytes();
+
+                m_CommandList->Dev()->IASetIndexBuffer(&indexBufferView);
+            }
         }
     }
 }

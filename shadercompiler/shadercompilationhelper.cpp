@@ -123,8 +123,7 @@ void CompilePermutation(const Shader& parentShader, Shader::Permutation& permuta
     std::string errorMsg;
     if (!RunDXCCompiler(commandLine, errorMsg))
     {
-        errorMsg = parentShader.m_FileName + ": " + errorMsg; // can't use StringFormat here, errorMsg will most probably burst the internal 1KB buffer
-        PrintToConsoleAndLogFile(errorMsg);
+        PrintToConsoleAndLogFile(StringFormatBig("%s: %s", parentShader.m_FileName.c_str(), errorMsg.c_str()));
         gs_CompileFailureDetected = true;
         return;
     }

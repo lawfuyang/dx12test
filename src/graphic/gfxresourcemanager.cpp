@@ -110,8 +110,8 @@ void ManagedGfxResources<GfxTexture>::Load(const std::string& filePath, const Gf
     {
         GfxTexture::InitParams params;
         params.m_Format = texDesc.Format;
-        params.m_Width = (uint32_t)texDesc.Width;
-        params.m_Height = texDesc.Height;
+        params.m_TexParams.m_Width = (uint32_t)texDesc.Width;
+        params.m_TexParams.m_Height = texDesc.Height;
         params.m_InitData = initData.data();
         params.m_ResourceName = GetFileNameFromPath(filePath).c_str();
 

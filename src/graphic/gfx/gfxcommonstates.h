@@ -1,12 +1,3 @@
-//--------------------------------------------------------------------------------------
-// File: CommonStates.h
-//
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-//
-// http://go.microsoft.com/fwlink/?LinkID=615561
-//--------------------------------------------------------------------------------------
-
 #pragma once
 
 class GfxCommonStates
@@ -14,10 +5,13 @@ class GfxCommonStates
 public:
 
     // Blend states.
-    static const D3D12_BLEND_DESC Opaque;
-    static const D3D12_BLEND_DESC AlphaBlend;
-    static const D3D12_BLEND_DESC Additive;
-    static const D3D12_BLEND_DESC NonPremultiplied;
+    static const D3D12_RENDER_TARGET_BLEND_DESC BlendOpaque;
+    static const D3D12_RENDER_TARGET_BLEND_DESC BlendModulate;
+    static const D3D12_RENDER_TARGET_BLEND_DESC BlendAlpha;
+    static const D3D12_RENDER_TARGET_BLEND_DESC BlendAdditive;
+    static const D3D12_RENDER_TARGET_BLEND_DESC BlendAlphaAdditive;
+    static const D3D12_RENDER_TARGET_BLEND_DESC BlendDestAlpha;
+    static const D3D12_RENDER_TARGET_BLEND_DESC BlendPremultipliedAlpha;
 
     // Depth stencil states.
     static const D3D12_DEPTH_STENCIL_DESC DepthNone;

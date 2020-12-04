@@ -142,14 +142,17 @@ private:
 #define bbeSimpleSwitchCaseString(x) case(x): return bbeTOSTRING(x);
 
 // Size for convenience...
-#define BBE_KB(Nb)                   ((Nb)*1024ULL)           ///< Define for kilobytes prefix (2 ^ 10)
-#define BBE_MB(Nb)                   BBE_KB((Nb)*1024ULL)     ///< Define for megabytes prefix (2 ^ 20)
-#define BBE_GB(Nb)                   BBE_MB((Nb)*1024ULL)     ///< Define for gigabytes prefix (2 ^ 30)
-#define BBE_TB(Nb)                   BBE_GB((Nb)*1024ULL)     ///< Define for terabytes prefix (2 ^ 40)
-#define BBE_PB(Nb)                   BBE_TB((Nb)*1024ULL)     ///< Define for petabytes prefix (2 ^ 50)
+#define BBE_KB(Nb)                   ((Nb)*1024ULL)           // Define for kilobytes prefix (2 ^ 10)
+#define BBE_MB(Nb)                   BBE_KB((Nb)*1024ULL)     // Define for megabytes prefix (2 ^ 20)
+#define BBE_GB(Nb)                   BBE_MB((Nb)*1024ULL)     // Define for gigabytes prefix (2 ^ 30)
+#define BBE_TB(Nb)                   BBE_GB((Nb)*1024ULL)     // Define for terabytes prefix (2 ^ 40)
+#define BBE_PB(Nb)                   BBE_TB((Nb)*1024ULL)     // Define for petabytes prefix (2 ^ 50)
 
-// WARNING! DO NOT STORE RESULT FOR LONG!
+#define BBE_TO_KB(Nb)                ((Nb) * (1.0f / 1024))          // Define to convert bytes to kilobyte
+#define BBE_TO_MB(Nb)                (BBE_TO_KB(Nb) * (1.0f / 1024)) // Define to convert bytes to megabytes
+
 const char* StringFormat(const char* format, ...);
+const char* StringFormatBig(const char* format, ...); // In case you need to format huge strings > 1kb (but <1mb) in length
 
 void BreakIntoDebugger();
 
@@ -287,6 +290,10 @@ namespace StringUtils
 {
     const wchar_t* Utf8ToWide(std::string_view strView);
     const char* WideToUtf8(std::wstring_view strView);
+
+    // In case you need to convert huge strings > 1kb (but <1mb) in length
+    const wchar_t* Utf8ToWideBig(std::string_view strView);
+    const char* WideToUtf8Big(std::wstring_view strView);
 
     using ConvertFuncType = int(int); // std::tolower & std::toupper has same signature
 

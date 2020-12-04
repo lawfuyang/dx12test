@@ -58,8 +58,8 @@ void GfxIMGUIRenderer::InitFontsTexture()
 
     GfxTexture::InitParams initParams;
     initParams.m_Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    initParams.m_Width = width;
-    initParams.m_Height = height;
+    initParams.m_TexParams.m_Width = width;
+    initParams.m_TexParams.m_Height = height;
     initParams.m_InitData = pixels;
     initParams.m_ResourceName = "IMGUI Fonts Texture";
 
@@ -137,50 +137,23 @@ void GfxIMGUIRenderer::UploadBufferData(const IMGUIDrawData& imguiDrawData)
 
 void GfxIMGUIRenderer::SetupRenderStates(GfxContext& context, const IMGUIDrawData& imguiDrawData)
 {
-    {
-        D3D12_RENDER_TARGET_BLEND_DESC desc{};
-        desc.BlendEnable = true;
-        desc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-        desc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-        desc.BlendOp = D3D12_BLEND_OP_ADD;
-        desc.SrcBlendAlpha = D3D12_BLEND_INV_SRC_ALPHA;
-        desc.DestBlendAlpha = D3D12_BLEND_ZERO;
-        desc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
-        desc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-        context.SetBlendStates(0, desc);
-    }
+    D3D12_RENDER_TARGET_BLEND_DESC desc{};
+    desc.BlendEnable = true;
+    desc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+    desc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+    desc.BlendOp = D3D12_BLEND_OP_ADD;
+    desc.SrcBlendAlpha = D3D12_BLEND_INV_SRC_ALPHA;
+    desc.DestBlendAlpha = D3D12_BLEND_ZERO;
+    desc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+    desc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+    context.SetBlendStates(0, desc);
 
-    {
-        CD3DX12_RASTERIZER_DESC desc{};
-        desc.FillMode = D3D12_FILL_MODE_SOLID;
-        desc.CullMode = D3D12_CULL_MODE_NONE;
-        desc.FrontCounterClockwise = FALSE;
-        desc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
-        desc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
-        desc.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
-        desc.DepthClipEnable = true;
-        desc.MultisampleEnable = FALSE;
-        desc.AntialiasedLineEnable = FALSE;
-        desc.ForcedSampleCount = 0;
-        desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
-        context.SetRasterizerStates(desc);
-    }
-
-    {
-        CD3DX12_DEPTH_STENCIL_DESC1 desc{};
-        desc.DepthEnable = false;
-        desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-        desc.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
-        desc.StencilEnable = false;
-        desc.FrontFace.StencilFailOp = desc.FrontFace.StencilDepthFailOp = desc.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
-        desc.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
-        desc.BackFace = desc.FrontFace;
-        context.SetDepthStencilStates(desc);
-    }
+    context.SetRasterizerStates(GfxCommonStates::CullNone);
+    context.SetDepthStencilStates(GfxCommonStates::DepthNone);
 
     // Setup viewport
     {
-        D3D12_VIEWPORT vp;
+        D3D12_VIEWPORT vp{};
         vp.Width = imguiDrawData.m_Size.x;
         vp.Height = imguiDrawData.m_Size.y;
         vp.MinDepth = 0.0f;
@@ -251,7 +224,7 @@ void GfxIMGUIRenderer::PopulateCommandList(GfxContext& context)
     context.SetShader(g_GfxShaderManager.GetShader(Shaders::VS_IMGUI{}));
     context.SetShader(g_GfxShaderManager.GetShader(Shaders::PS_IMGUI{}));
 
-    // pso.SetVertexFormat(GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub); // It's default to be this
+    context.SetVertexFormat(GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub);
 
     context.StageSRV(m_FontsTexture, 1, 0);
 

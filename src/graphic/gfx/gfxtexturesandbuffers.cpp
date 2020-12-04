@@ -41,7 +41,7 @@ D3D12MA::Allocation* GfxBufferCommon::CreateHeap(const GfxBufferCommon::HeapDesc
 {
     bbeProfileFunction();
 
-    D3D12MA::ALLOCATION_DESC bufferAllocDesc = {};
+    D3D12MA::ALLOCATION_DESC bufferAllocDesc{};
     bufferAllocDesc.HeapType = heapDesc.m_HeapType;
 
     D3D12MA::Allocation* allocHandle = nullptr;
@@ -77,7 +77,7 @@ void GfxBufferCommon::UploadInitData(GfxContext& context, const void* dataSrc, u
     GfxCommandList& cmdList = context.GetCommandList();
 
     // store buffer in upload heap
-    D3D12_SUBRESOURCE_DATA data = {};
+    D3D12_SUBRESOURCE_DATA data{};
     data.pData = dataSrc;
     data.RowPitch = rowPitch;
     data.SlicePitch = slicePitch;
@@ -232,6 +232,64 @@ void GfxIndexBuffer::Initialize(GfxContext& initContext, const InitParams& initP
 
 ForwardDeclareSerializerFunctions(GfxTexture);
 
+static D3D12_DESCRIPTOR_HEAP_TYPE GfxTextureViewTypeToHeapType(GfxTexture::ViewType viewType)
+{
+    switch (viewType)
+    {
+    case GfxTexture::SRV:
+    case GfxTexture::UAV:
+        return D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+
+    case GfxTexture::DSV: return D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+    case GfxTexture::RTV: return D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+    }
+
+    assert(false);
+    return (D3D12_DESCRIPTOR_HEAP_TYPE)0xDEADBEEF;
+}
+
+D3D12_RESOURCE_DESC GfxTexture::GetDescForGfxTexture(const GfxTexture::InitParams& i)
+{
+    // TODO: D3D12_RESOURCE_DIMENSION_TEXTURE1D, D3D12_RESOURCE_DIMENSION_TEXTURE3D
+    switch (i.m_Dimension)
+    {
+    case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
+        assert(i.m_Format != DXGI_FORMAT_UNKNOWN);
+        assert(i.m_TexParams.m_Width > 0 && i.m_TexParams.m_Width <= D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION);
+        assert(i.m_TexParams.m_Height > 0 && i.m_TexParams.m_Height <= D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION);
+
+        // TODO: Texture2DArray, Mips
+        return CD3DX12_RESOURCE_DESC::Tex2D(i.m_Format, i.m_TexParams.m_Width, i.m_TexParams.m_Height, m_ArraySize, m_MipLevels, 1, 0, i.m_Flags);
+
+    case D3D12_RESOURCE_DIMENSION_BUFFER:
+    {
+        const uint32_t width = i.m_BufferParams.m_NumElements * i.m_BufferParams.m_StructureByteStride;
+        static const float s_SizeLimitMb = [] 
+        {
+            D3D12MA::Budget gpuBudget{};
+            g_GfxMemoryAllocator.Dev().GetBudget(&gpuBudget, nullptr);
+
+            static const float A_TERM = 128.0f;
+            static const float B_TERM = 0.25f;
+            static const float C_TERM = 2048.0f;
+            static_assert(A_TERM == D3D12_REQ_RESOURCE_SIZE_IN_MEGABYTES_EXPRESSION_A_TERM);
+            static_assert(B_TERM == D3D12_REQ_RESOURCE_SIZE_IN_MEGABYTES_EXPRESSION_B_TERM);
+            static_assert(C_TERM == D3D12_REQ_RESOURCE_SIZE_IN_MEGABYTES_EXPRESSION_C_TERM);
+
+            return std::min(std::max(A_TERM, B_TERM * BBE_MB(gpuBudget.BudgetBytes)), C_TERM);
+        }();
+
+        assert(i.m_Format == DXGI_FORMAT_UNKNOWN);
+        assert(BBE_TO_MB(width) < s_SizeLimitMb);
+
+        return CD3DX12_RESOURCE_DESC::Buffer(width, i.m_Flags);
+    }
+    }
+
+    assert(false);
+    return D3D12_RESOURCE_DESC{};
+}
+
 void GfxTexture::Initialize(const InitParams& initParams)
 {
     GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName);
@@ -244,50 +302,26 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     bbeProfileGPUFunction(initContext);
 
     assert(!m_D3D12MABufferAllocation);
-    assert(initParams.m_Format != DXGI_FORMAT_UNKNOWN);
-    assert(initParams.m_Width > 0);
-    assert(initParams.m_Height > 0);
-
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
     m_Format = initParams.m_Format;
-    m_ArraySize = 1; // TODO: Texture2DArray
-    m_NumMips = 1; // TODO: Mips
 
     // init desc heap for texture
-    D3D12_DESCRIPTOR_HEAP_TYPE heapType;
-    switch (initParams.m_ViewType)
-    {
-    case SRV:
-    case UAV:
-        heapType = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV; break;
+    m_GfxDescriptorHeap.Initialize(GfxTextureViewTypeToHeapType(initParams.m_ViewType), D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
 
-    case DSV: heapType = D3D12_DESCRIPTOR_HEAP_TYPE_DSV; break;
-    case RTV: heapType = D3D12_DESCRIPTOR_HEAP_TYPE_RTV; break;
-    }
-    m_GfxDescriptorHeap.Initialize(heapType, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
+    const D3D12_RESOURCE_DESC desc = GetDescForGfxTexture(initParams);
 
-    D3D12_RESOURCE_DESC desc = {};
-    desc.Dimension = initParams.m_Dimension;
-    desc.Width = initParams.m_Width;
-    desc.Height = initParams.m_Height;
-    desc.DepthOrArraySize = 1; // TODO: Texture2DArray & Texture3D
-    desc.MipLevels = m_NumMips; // TODO: Mips
-    desc.Format = initParams.m_Format;
-    desc.SampleDesc.Count = 1;
-    desc.SampleDesc.Quality = 0;
-    desc.Flags = initParams.m_Flags;
-
-    UINT FirstSubresource = 0;
-    UINT NumSubresources = 1;
-    const UINT64 BaseOffset = 0;
-    D3D12_PLACED_SUBRESOURCE_FOOTPRINT layouts = {};
-    UINT numRows = 0;
     UINT64 rowSizeInBytes = 0;
-    UINT64 totalBytes = 0;
-    gfxDevice.Dev()->GetCopyableFootprints(&desc, FirstSubresource, NumSubresources, BaseOffset, &layouts, &numRows, &rowSizeInBytes, &totalBytes);
+    {
+        UINT FirstSubresource = 0;
+        UINT NumSubresources = 1;
+        const UINT64 BaseOffset = 0;
+        D3D12_PLACED_SUBRESOURCE_FOOTPRINT layouts{};
+        UINT numRows = 0;
+        UINT64 totalBytes = 0;
+        g_GfxManager.GetGfxDevice().Dev()->GetCopyableFootprints(&desc, FirstSubresource, NumSubresources, BaseOffset, &layouts, &numRows, &rowSizeInBytes, &totalBytes);
 
-    m_SizeInBytes = (uint32_t)totalBytes;
+        m_SizeInBytes = (uint32_t)totalBytes;
+    }
 
     const bool hasInitData = initParams.m_InitData != nullptr;
 
@@ -297,7 +331,6 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     heapDesc.m_ResourceDesc = desc;
     heapDesc.m_InitialState = hasInitData ? D3D12_RESOURCE_STATE_COPY_DEST : initParams.m_InitialState;
     heapDesc.m_ClearValue = initParams.m_ClearValue;
-    heapDesc.m_AllocationFlags = heapDesc.m_AllocationFlags;
     heapDesc.m_ResourceName = initParams.m_ResourceName.c_str();
 
     m_D3D12MABufferAllocation = CreateHeap(heapDesc);
@@ -321,7 +354,7 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     case RTV: CreateRTV(initParams); break;
     case DSV: CreateDSV(initParams); break;
     case SRV: CreateSRV(initParams); break;
-    case UAV: assert(0); break; // TODO
+    case UAV: CreateUAV(initParams); break;
     }
 
     g_GfxCommandListsManager.QueueCommandListToExecute(&initContext.GetCommandList());
@@ -333,7 +366,7 @@ void GfxTexture::CreateDSV(const InitParams& initParams)
 
     assert(initParams.m_Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D);
 
-    D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
+    D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc{};
     depthStencilDesc.Format = initParams.m_Format;
     depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
     depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
@@ -357,26 +390,22 @@ void GfxTexture::UpdateIMGUI()
 
 void GfxTexture::CreateRTV(const InitParams& initParams)
 {
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-
     assert(initParams.m_Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D);
 
     CD3D12_RENDER_TARGET_VIEW_DESC desc{ D3D12_RTV_DIMENSION_TEXTURE2D, initParams.m_Format };
-    gfxDevice.Dev()->CreateRenderTargetView(GetD3D12Resource(), &desc, m_GfxDescriptorHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
+    g_GfxManager.GetGfxDevice().Dev()->CreateRenderTargetView(GetD3D12Resource(), &desc, m_GfxDescriptorHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
 }
 
 void GfxTexture::CreateSRV(const InitParams& initParams)
 {
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-
-    D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
+    D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc{};
     SRVDesc.Format = m_Format;
     SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
     if (m_ArraySize > 1)
     {
         SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-        SRVDesc.Texture2DArray.MipLevels = m_NumMips;
+        SRVDesc.Texture2DArray.MipLevels = m_MipLevels;
         SRVDesc.Texture2DArray.MostDetailedMip = 0;
         SRVDesc.Texture2DArray.FirstArraySlice = 0;
         SRVDesc.Texture2DArray.ArraySize = (UINT)m_ArraySize;
@@ -391,11 +420,31 @@ void GfxTexture::CreateSRV(const InitParams& initParams)
     else
     {
         SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-        SRVDesc.Texture2D.MipLevels = m_NumMips;
+        SRVDesc.Texture2D.MipLevels = m_MipLevels;
         SRVDesc.Texture2D.MostDetailedMip = 0;
     }
 
-    gfxDevice.Dev()->CreateShaderResourceView(GetD3D12Resource(), &SRVDesc, m_GfxDescriptorHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
+    g_GfxManager.GetGfxDevice().Dev()->CreateShaderResourceView(GetD3D12Resource(), &SRVDesc, m_GfxDescriptorHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
+}
+
+void GfxTexture::CreateUAV(const InitParams& initParams)
+{
+    assert(initParams.m_Dimension == D3D12_RESOURCE_DIMENSION_BUFFER);
+    assert(initParams.m_BufferParams.m_NumElements != 0);
+    assert(initParams.m_BufferParams.m_StructureByteStride != 0);
+
+    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+
+    D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc{};
+    uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+    uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+    uavDesc.Buffer.FirstElement = 0;
+    uavDesc.Buffer.NumElements = initParams.m_BufferParams.m_NumElements;
+    uavDesc.Buffer.StructureByteStride = initParams.m_BufferParams.m_StructureByteStride;
+    uavDesc.Buffer.CounterOffsetInBytes = 0;
+    uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE; // TOOD: D3D12_BUFFER_UAV_FLAG_RAW
+
+    g_GfxManager.GetGfxDevice().Dev()->CreateUnorderedAccessView(GetD3D12Resource(), nullptr, &uavDesc, m_GfxDescriptorHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
 }
 
 void GfxTexture::InitializeForSwapChain(ComPtr<IDXGISwapChain4>& swapChain, DXGI_FORMAT format, uint32_t backBufferIdx)

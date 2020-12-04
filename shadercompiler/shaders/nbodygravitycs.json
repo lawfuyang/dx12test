@@ -69,6 +69,15 @@
     },
     {
       "Name": "NBodyGravityVSPSConsts",
+      "ConstantBuffer": {
+        "Register": 0,
+        "Constants": [
+          {
+            "Type": "float",
+            "Name": "ParticleRadius"
+          }
+        ]
+      },
       "Resources": [
         {
           "Type": "StructuredBuffer",

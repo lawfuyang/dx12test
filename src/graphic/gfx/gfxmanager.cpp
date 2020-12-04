@@ -82,6 +82,8 @@ void GfxManager::ShutDown()
 {
     bbeProfileFunction();
 
+    g_GfxCommandListsManager.GetMainQueue().StallCPUForFence();
+
     m_GfxCommandManager.ConsumeAllCommandsST(true);
 
     // get swapchain out of full screen before exiting
@@ -244,10 +246,10 @@ void GfxManager::UpdateIMGUIPropertyGrid()
     {
         WCHAR* statsStringW = NULL;
         allocator.BuildStatsString(&statsStringW, allocator.GetD3D12Options().ResourceHeapTier == D3D12_RESOURCE_HEAP_TIER_2);
-        const std::string statsString = StringUtils::WideToUtf8(statsStringW);
+        const char* statsString = StringUtils::WideToUtf8Big(statsStringW);
         allocator.FreeStatsString(statsStringW);
 
         ScopedIMGUIWindow window{ "Detailed Gfx Stats" };
-        ImGui::Text("%s", statsString.c_str());
+        ImGui::Text("%s", statsString);
     }
 }

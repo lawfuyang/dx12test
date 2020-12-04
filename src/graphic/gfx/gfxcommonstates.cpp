@@ -1,90 +1,106 @@
-//--------------------------------------------------------------------------------------
-// File: CommonStates.cpp
-//
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-//
-// http://go.microsoft.com/fwlink/?LinkID=615561
-//--------------------------------------------------------------------------------------
-
 #include <graphic/gfx/gfxcommonstates.h>
 
 // --------------------------------------------------------------------------
 // Blend States
 // --------------------------------------------------------------------------
 
-const D3D12_BLEND_DESC GfxCommonStates::Opaque =
+const D3D12_RENDER_TARGET_BLEND_DESC GfxCommonStates::BlendOpaque =
 {
-    FALSE, // AlphaToCoverageEnable
-    FALSE, // IndependentBlendEnable
-    { {
-        FALSE, // BlendEnable
-        FALSE, // LogicOpEnable
-        D3D12_BLEND_ONE, // SrcBlend
-        D3D12_BLEND_ZERO, // DestBlend
-        D3D12_BLEND_OP_ADD, // BlendOp
-        D3D12_BLEND_ONE, // SrcBlendAlpha
-        D3D12_BLEND_ZERO, // DestBlendAlpha
-        D3D12_BLEND_OP_ADD, // BlendOpAlpha
-        D3D12_LOGIC_OP_NOOP,
-        D3D12_COLOR_WRITE_ENABLE_ALL
-    } }
+    FALSE, // BlendEnable
+    FALSE, // LogicOpEnable
+    D3D12_BLEND_ONE, // SrcBlend
+    D3D12_BLEND_ZERO, // DestBlend
+    D3D12_BLEND_OP_ADD, // BlendOp
+    D3D12_BLEND_ONE, // SrcBlendAlpha
+    D3D12_BLEND_ZERO, // DestBlendAlpha
+    D3D12_BLEND_OP_ADD, // BlendOpAlpha
+    D3D12_LOGIC_OP_NOOP,
+    D3D12_COLOR_WRITE_ENABLE_ALL
 };
 
-const D3D12_BLEND_DESC GfxCommonStates::AlphaBlend =
+const D3D12_RENDER_TARGET_BLEND_DESC GfxCommonStates::BlendModulate =
 {
-    FALSE, // AlphaToCoverageEnable
-    FALSE, // IndependentBlendEnable
-    { {
-        TRUE, // BlendEnable
-        FALSE, // LogicOpEnable
-        D3D12_BLEND_ONE, // SrcBlend
-        D3D12_BLEND_INV_SRC_ALPHA, // DestBlend
-        D3D12_BLEND_OP_ADD, // BlendOp
-        D3D12_BLEND_ONE, // SrcBlendAlpha
-        D3D12_BLEND_INV_SRC_ALPHA, // DestBlendAlpha
-        D3D12_BLEND_OP_ADD, // BlendOpAlpha
-        D3D12_LOGIC_OP_NOOP,
-        D3D12_COLOR_WRITE_ENABLE_ALL
-    } }
+    TRUE, // BlendEnable
+    FALSE, // LogicOpEnable
+    D3D12_BLEND_DEST_COLOR, // SrcBlend
+    D3D12_BLEND_ZERO, // DestBlend
+    D3D12_BLEND_OP_ADD, // BlendOp
+    D3D12_BLEND_DEST_ALPHA, // SrcBlendAlpha
+    D3D12_BLEND_ZERO, // DestBlendAlpha
+    D3D12_BLEND_OP_ADD, // BlendOpAlpha
+    D3D12_LOGIC_OP_NOOP,
+    D3D12_COLOR_WRITE_ENABLE_ALL
 };
 
-const D3D12_BLEND_DESC GfxCommonStates::Additive =
+const D3D12_RENDER_TARGET_BLEND_DESC GfxCommonStates::BlendAlpha =
 {
-    FALSE, // AlphaToCoverageEnable
-    FALSE, // IndependentBlendEnable
-    { {
-        TRUE, // BlendEnable
-        FALSE, // LogicOpEnable
-        D3D12_BLEND_SRC_ALPHA, // SrcBlend
-        D3D12_BLEND_ONE, // DestBlend
-        D3D12_BLEND_OP_ADD, // BlendOp
-        D3D12_BLEND_SRC_ALPHA, // SrcBlendAlpha
-        D3D12_BLEND_ONE, // DestBlendAlpha
-        D3D12_BLEND_OP_ADD, // BlendOpAlpha
-        D3D12_LOGIC_OP_NOOP,
-        D3D12_COLOR_WRITE_ENABLE_ALL
-    } }
+    TRUE, // BlendEnable
+    FALSE, // LogicOpEnable
+    D3D12_BLEND_SRC_ALPHA, // SrcBlend
+    D3D12_BLEND_INV_SRC_ALPHA, // DestBlend
+    D3D12_BLEND_OP_ADD, // BlendOp
+    D3D12_BLEND_SRC_ALPHA, // SrcBlendAlpha
+    D3D12_BLEND_INV_SRC_ALPHA, // DestBlendAlpha
+    D3D12_BLEND_OP_ADD, // BlendOpAlpha
+    D3D12_LOGIC_OP_NOOP,
+    D3D12_COLOR_WRITE_ENABLE_ALL
 };
 
-const D3D12_BLEND_DESC GfxCommonStates::NonPremultiplied =
+const D3D12_RENDER_TARGET_BLEND_DESC GfxCommonStates::BlendAdditive =
 {
-    FALSE, // AlphaToCoverageEnable
-    FALSE, // IndependentBlendEnable
-    { {
-        TRUE, // BlendEnable
-        FALSE, // LogicOpEnable
-        D3D12_BLEND_SRC_ALPHA, // SrcBlend
-        D3D12_BLEND_INV_SRC_ALPHA, // DestBlend
-        D3D12_BLEND_OP_ADD, // BlendOp
-        D3D12_BLEND_SRC_ALPHA, // SrcBlendAlpha
-        D3D12_BLEND_INV_SRC_ALPHA, // DestBlendAlpha
-        D3D12_BLEND_OP_ADD, // BlendOpAlpha
-        D3D12_LOGIC_OP_NOOP,
-        D3D12_COLOR_WRITE_ENABLE_ALL
-    } }
+    TRUE, // BlendEnable
+    FALSE, // LogicOpEnable
+    D3D12_BLEND_ONE, // SrcBlend
+    D3D12_BLEND_ONE, // DestBlend
+    D3D12_BLEND_OP_ADD, // BlendOp
+    D3D12_BLEND_ONE, // SrcBlendAlpha
+    D3D12_BLEND_ONE, // DestBlendAlpha
+    D3D12_BLEND_OP_ADD, // BlendOpAlpha
+    D3D12_LOGIC_OP_NOOP,
+    D3D12_COLOR_WRITE_ENABLE_ALL
 };
 
+const D3D12_RENDER_TARGET_BLEND_DESC GfxCommonStates::BlendAlphaAdditive =
+{
+    TRUE, // BlendEnable
+    FALSE, // LogicOpEnable
+    D3D12_BLEND_SRC_ALPHA, // SrcBlend
+    D3D12_BLEND_ONE, // DestBlend
+    D3D12_BLEND_OP_ADD, // BlendOp
+    D3D12_BLEND_SRC_ALPHA, // SrcBlendAlpha
+    D3D12_BLEND_ONE, // DestBlendAlpha
+    D3D12_BLEND_OP_ADD, // BlendOpAlpha
+    D3D12_LOGIC_OP_NOOP,
+    D3D12_COLOR_WRITE_ENABLE_ALL
+};
+
+const D3D12_RENDER_TARGET_BLEND_DESC GfxCommonStates::BlendDestAlpha =
+{
+    TRUE, // BlendEnable
+    FALSE, // LogicOpEnable
+    D3D12_BLEND_DEST_ALPHA, // SrcBlend
+    D3D12_BLEND_INV_DEST_ALPHA, // DestBlend
+    D3D12_BLEND_OP_ADD, // BlendOp
+    D3D12_BLEND_DEST_ALPHA, // SrcBlendAlpha
+    D3D12_BLEND_INV_DEST_ALPHA, // DestBlendAlpha
+    D3D12_BLEND_OP_ADD, // BlendOpAlpha
+    D3D12_LOGIC_OP_NOOP,
+    D3D12_COLOR_WRITE_ENABLE_ALL
+};
+
+const D3D12_RENDER_TARGET_BLEND_DESC GfxCommonStates::BlendPremultipliedAlpha =
+{
+    TRUE, // BlendEnable
+    FALSE, // LogicOpEnable
+    D3D12_BLEND_ONE, // SrcBlend
+    D3D12_BLEND_INV_SRC_ALPHA, // DestBlend
+    D3D12_BLEND_OP_ADD, // BlendOp
+    D3D12_BLEND_ONE, // SrcBlendAlpha
+    D3D12_BLEND_INV_SRC_ALPHA, // DestBlendAlpha
+    D3D12_BLEND_OP_ADD, // BlendOpAlpha
+    D3D12_LOGIC_OP_NOOP,
+    D3D12_COLOR_WRITE_ENABLE_ALL
+};
 
 // --------------------------------------------------------------------------
 // Depth-Stencil States
@@ -185,7 +201,7 @@ const D3D12_RASTERIZER_DESC GfxCommonStates::CullClockwise =
     D3D12_DEFAULT_DEPTH_BIAS_CLAMP,
     D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS,
     TRUE, // DepthClipEnable
-    TRUE, // MultisampleEnable
+    FALSE, // MultisampleEnable
     FALSE, // AntialiasedLineEnable
     0, // ForcedSampleCount
     D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF
@@ -200,7 +216,7 @@ const D3D12_RASTERIZER_DESC GfxCommonStates::CullCounterClockwise =
     D3D12_DEFAULT_DEPTH_BIAS_CLAMP,
     D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS,
     TRUE, // DepthClipEnable
-    TRUE, // MultisampleEnable
+    FALSE, // MultisampleEnable
     FALSE, // AntialiasedLineEnable
     0, // ForcedSampleCount
     D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF
@@ -215,7 +231,7 @@ const D3D12_RASTERIZER_DESC GfxCommonStates::Wireframe =
     D3D12_DEFAULT_DEPTH_BIAS_CLAMP,
     D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS,
     TRUE, // DepthClipEnable
-    TRUE, // MultisampleEnable
+    FALSE, // MultisampleEnable
     FALSE, // AntialiasedLineEnable
     0, // ForcedSampleCount
     D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF

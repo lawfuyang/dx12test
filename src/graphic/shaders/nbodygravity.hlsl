@@ -2,14 +2,12 @@
 #include "common.hlsl"
 
 #include "autogen/hlsl/NBodyGravityCSConsts.h"
-#include "autogen/hlsl/NBodyGravityVSPSConsts.h"
-
-static const uint g_MaxParticles      = NBodyGravityCSConsts::GetMaxParticles();
-static const uint g_TileSize          = NBodyGravityCSConsts::GetTileSize();
+static const uint  g_MaxParticles     = NBodyGravityCSConsts::GetMaxParticles();
+static const uint  g_TileSize         = NBodyGravityCSConsts::GetTileSize();
 static const float g_DeltaTime        = NBodyGravityCSConsts::GetDeltaTime();
 static const float g_ParticlesDamping = NBodyGravityCSConsts::GetParticlesDamping();
 
-static StructuredBuffer<BodyGravityPosVelo> g_OldPosVelo   = NBodyGravityCSConsts::GetOldPosVelo();
+static StructuredBuffer<BodyGravityPosVelo>   g_OldPosVelo = NBodyGravityCSConsts::GetOldPosVelo();
 static RWStructuredBuffer<BodyGravityPosVelo> g_NewPosVelo = NBodyGravityCSConsts::GetNewPosVelo();
 
 static const float softeningSquared    = 0.0012500000f * 0.0012500000f;
@@ -81,6 +79,9 @@ void CSMain(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, uint3 GTid
         g_NewPosVelo[DTid.x].m_Velocity = float4(vel.xyz, length(accel));
     }
 }
+
+#include "autogen/hlsl/NBodyGravityVSPSConsts.h"
+static const float g_ParticleRadius = NBodyGravityVSPSConsts::GetParticleRadius();
 
 struct VS_IN
 {

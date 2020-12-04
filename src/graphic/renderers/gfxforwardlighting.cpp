@@ -45,8 +45,8 @@ void GfxForwardLightingPass::Initialize()
 
     GfxTexture::InitParams depthBufferInitParams;
     depthBufferInitParams.m_Format = DXGI_FORMAT_D32_FLOAT;
-    depthBufferInitParams.m_Width = g_CommandLineOptions.m_WindowWidth;
-    depthBufferInitParams.m_Height = g_CommandLineOptions.m_WindowHeight;
+    depthBufferInitParams.m_TexParams.m_Width = g_CommandLineOptions.m_WindowWidth;
+    depthBufferInitParams.m_TexParams.m_Height = g_CommandLineOptions.m_WindowHeight;
     depthBufferInitParams.m_Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
     depthBufferInitParams.m_InitData = nullptr;
     depthBufferInitParams.m_ResourceName = "GfxManager Depth Buffer";

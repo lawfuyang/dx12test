@@ -121,9 +121,21 @@ public:
 
     struct InitParams
     {
+        union
+        {
+            // TODO: TexArray, Mips
+            struct TexParams
+            {
+                uint32_t m_Width;
+                uint32_t m_Height;
+            } m_TexParams;
+            struct BufferParams
+            {
+                uint32_t m_NumElements;
+                uint32_t m_StructureByteStride;
+            } m_BufferParams;
+        };
         DXGI_FORMAT              m_Format       = DXGI_FORMAT_UNKNOWN;
-        uint32_t                 m_Width        = 0;
-        uint32_t                 m_Height       = 0;
         D3D12_RESOURCE_DIMENSION m_Dimension    = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
         D3D12_RESOURCE_FLAGS     m_Flags        = D3D12_RESOURCE_FLAG_NONE;
         const void*              m_InitData     = nullptr;
@@ -141,17 +153,19 @@ public:
 
     DXGI_FORMAT GetFormat() const { return m_Format; }
     uint32_t GetArraySize() const { return m_ArraySize; }
-    uint32_t GetNumMips() const { return m_NumMips; }
+    uint32_t GetMipLevels() const { return m_MipLevels; }
 
     void UpdateIMGUI();
 
 private:
+    D3D12_RESOURCE_DESC GetDescForGfxTexture(const GfxTexture::InitParams& i);
     void CreateRTV(const InitParams& initParams);
     void CreateDSV(const InitParams& initParams);
     void CreateSRV(const InitParams& initParams);
+    void CreateUAV(const InitParams& initParams);
 
     GfxDescriptorHeap m_GfxDescriptorHeap;
     DXGI_FORMAT m_Format = DXGI_FORMAT_UNKNOWN;
     uint32_t m_ArraySize = 1;
-    uint32_t m_NumMips = 1;
+    uint32_t m_MipLevels = 1;
 };
