@@ -58,6 +58,13 @@
           "Register": 0,
           "Name": "NewPosVelo"
         }
+      ],
+      "Consts": [
+        {
+          "Type": "uint",
+          "Name": "BlockSize",
+          "Value": "128"
+        }
       ]
     },
     {

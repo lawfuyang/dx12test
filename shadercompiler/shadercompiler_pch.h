@@ -46,6 +46,7 @@ struct ShaderConstant
 {
     std::string m_Type;
     std::string m_Name;
+    std::string m_ConstValue;
 };
 
 struct GlobalStructure
@@ -78,6 +79,7 @@ struct ShaderInputs
     std::vector<Resource> m_Resources[ResourceType_Count];
     ConstantBuffer m_ConstantBuffer;
     std::unordered_set<GlobalStructure> m_GlobalStructureDependencies;
+    std::vector<ShaderConstant> m_Consts;
 };
 
 struct Shader

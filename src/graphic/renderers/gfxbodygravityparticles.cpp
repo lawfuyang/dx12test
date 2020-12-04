@@ -79,6 +79,8 @@ void GfxBodyGravityParticlesRender::PopulateCommandList(GfxContext& context)
 
     assert(m_RootSignature);
     context.SetRootSignature(*m_RootSignature);
+
+    context.SetVertexFormat(GfxDefaultVertexFormats::Null);
 }
 
 REGISTER_RENDERER(GfxBodyGravityParticlesUpdate);

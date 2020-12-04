@@ -2,6 +2,7 @@
 #include "common.hlsl"
 
 #include "autogen/hlsl/NBodyGravityCSConsts.h"
+#include "autogen/hlsl/NBodyGravityVSPSConsts.h"
 
 static const uint g_MaxParticles      = NBodyGravityCSConsts::GetMaxParticles();
 static const uint g_TileSize          = NBodyGravityCSConsts::GetTileSize();
@@ -15,8 +16,7 @@ static const float softeningSquared    = 0.0012500000f * 0.0012500000f;
 static const float g_fG                = 6.67300e-11f * 10000.0f;
 static const float g_fParticleMass    = g_fG * 10000.0f * 10000.0f;
 
-#define blocksize 128
-groupshared float4 sharedPos[blocksize];
+groupshared float4 sharedPos[NBodyGravityCSConsts::BlockSize];
 
 // Body to body interaction, acceleration of the particle at position 
 // bi is updated.
@@ -35,7 +35,7 @@ void bodyBodyInteraction(inout float3 ai, float4 bj, float4 bi, float mass, int 
     ai += r * s;
 }
 
-[numthreads(blocksize, 1, 1)]
+[numthreads(NBodyGravityCSConsts::BlockSize, 1, 1)]
 void CSMain(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, uint3 GTid : SV_GroupThreadID, uint GI : SV_GroupIndex)
 {
     // Each thread of the CS updates one of the particles.
@@ -49,11 +49,11 @@ void CSMain(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, uint3 GTid
     for (uint tile = 0; tile < g_TileSize; tile++)
     {
         // Cache a tile of particles unto shared memory to increase IO efficiency.
-        sharedPos[GI] = g_OldPosVelo[tile * blocksize + GI].m_Pos;
+        sharedPos[GI] = g_OldPosVelo[tile * NBodyGravityCSConsts::BlockSize + GI].m_Pos;
        
         GroupMemoryBarrierWithGroupSync();
 
-        for (uint i = 0; i < blocksize; ++i) 
+        for (uint i = 0; i < NBodyGravityCSConsts::BlockSize; ++i)
         {
             bodyBodyInteraction(accel, sharedPos[i], pos, mass, 1);
         }
@@ -66,7 +66,7 @@ void CSMain(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, uint3 GTid
     // occur in the process above, which means there will be tooManyParticles 
     // "phantom" particles generating false gravity at position (0, 0, 0), so 
     // we have to subtract them here. NOTE, out of bound reads always return 0 in CS.
-    const int tooManyParticles = g_TileSize * blocksize - g_MaxParticles;
+    const int tooManyParticles = g_TileSize * NBodyGravityCSConsts::BlockSize - g_MaxParticles;
     bodyBodyInteraction(accel, float4(0, 0, 0, 0), pos, mass, -tooManyParticles);
 
     // Update the velocity and position of current particle using the 

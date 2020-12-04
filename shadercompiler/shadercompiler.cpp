@@ -150,6 +150,12 @@ static void ProcessShaderInputs(json baseJSON)
             inputs.m_Resources[resourceType].push_back({ resourceTypeStr, UAVStructureType, resourceJSON.at("Register"), resourceJSON.at("Name") });
         }
 
+        // consts
+        for (json constsJSON : shaderInput["Consts"])
+        {
+            inputs.m_Consts.push_back({ constsJSON.at("Type"), constsJSON.at("Name"), constsJSON.at("Value") });
+        }
+
         PrintAutogenFilesForShaderInput(inputs);
     }
 }
@@ -158,12 +164,20 @@ static void ProcessShaderJSONFile(ConcurrentVector<Shader>& allShaders, const st
 {
     PrintToConsoleAndLogFile(StringFormat("Processing '%s'...", GetFileNameFromPath(file).c_str()));
 
-    CFileWrapper jsonFile{ file.c_str() };
-    json baseJSON = json::parse(jsonFile);
+    try
+    {
+        CFileWrapper jsonFile{ file.c_str() };
+        json baseJSON = json::parse(jsonFile);
 
-    ProcessShaderPermutations(allShaders, baseJSON);
-    ProcessGlobalStructures(baseJSON);
-    ProcessShaderInputs(baseJSON);
+        ProcessShaderPermutations(allShaders, baseJSON);
+        ProcessGlobalStructures(baseJSON);
+        ProcessShaderInputs(baseJSON);
+    }
+    catch (const std::exception& e)
+    {
+        PrintToConsoleAndLogFile(e.what());
+        gs_CompileFailureDetected = true;
+    }
 }
 
 int main()
@@ -196,7 +210,18 @@ int main()
         {
             for (Shader::Permutation& permutation : shader.m_Permutations[i])
             {
-                tf.emplace([&, i] { CompilePermutation(shader, permutation, (GfxShaderType)i); });
+                tf.emplace([&, i]
+                    {
+                        try
+                        {
+                            CompilePermutation(shader, permutation, (GfxShaderType)i);
+                        }
+                        catch (const std::exception& e)
+                        {
+                            PrintToConsoleAndLogFile(e.what());
+                            gs_CompileFailureDetected = true;
+                        }
+                    });
             }
         }
     }

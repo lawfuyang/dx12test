@@ -24,6 +24,7 @@ struct GfxDefaultVertexFormats
 
     void Initialize();
 
+    inline static GfxVertexFormat Null;
     inline static GfxVertexFormat Position2f_TexCoord2f_Color4ub;
     inline static GfxVertexFormat Position3f_Color4ub;
     inline static GfxVertexFormat Position3f_TexCoord2f;
