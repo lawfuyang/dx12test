@@ -206,16 +206,13 @@ std::size_t GetFileContentsHash(const char* dir)
 
 namespace StringUtils
 {
-    constexpr DWORD MBConversionFlags = MB_ERR_INVALID_CHARS;
-    constexpr DWORD WCConversionFlags = WC_ERR_INVALID_CHARS;
+    static std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt;
 
     template <uint32_t BufferSize>
     const wchar_t* Utf8ToWideInternal(std::string_view strView)
     {
         thread_local StaticWString<BufferSize> result;
-        const size_t wideLength = ::MultiByteToWideChar(CP_UTF8, MBConversionFlags, strView.data(), (int)strView.length(), nullptr, 0);
-        result.resize(wideLength);
-        ::MultiByteToWideChar(CP_UTF8, MBConversionFlags, strView.data(), (int)strView.length(), result.data(), (int)wideLength);
+        result = cvt.from_bytes(strView.data());
 
         return result.data();
     }
@@ -224,9 +221,7 @@ namespace StringUtils
     const char* WideToUtf8Internal(std::wstring_view strView)
     {
         thread_local StaticString<BufferSize> result;
-        const size_t wideLength = ::WideCharToMultiByte(CP_UTF8, WCConversionFlags, strView.data(), (int)strView.length(), nullptr, 0, nullptr, nullptr);
-        result.resize(wideLength);
-        ::WideCharToMultiByte(CP_UTF8, WCConversionFlags, strView.data(), (int)strView.length(), result.data(), (int)wideLength, nullptr, nullptr);
+        result = cvt.to_bytes(strView.data());
 
         return result.data();
     }

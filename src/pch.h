@@ -3,7 +3,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
+
 #define _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING // for concurrency::concurrent_unordered_set
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // for std::wstring_convert
 
 #if !defined(BBE_SHADERCOMPILER)
     #define BBE_USE_PROFILER
@@ -56,6 +58,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <codecvt>
 
 // windows
 #include <concurrent_queue.h>
