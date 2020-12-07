@@ -46,8 +46,8 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
     subFlow.emplace([] { g_GfxDefaultVertexFormats.Initialize(); });
     subFlow.emplace([] { g_GfxLightsManager.Initialize(); });
 
-    auto PRE_INIT_GATE = subFlow.emplace([this] { PreInit(); });
-    auto POST_INIT_GATE = subFlow.emplace([this] { PostInit(); }).succeed(PRE_INIT_GATE);
+    tf::Task PRE_INIT_GATE = subFlow.emplace([this] { PreInit(); });
+    tf::Task POST_INIT_GATE = subFlow.emplace([this] { PostInit(); }).succeed(PRE_INIT_GATE);
     
     // tasks with dependencies
     subFlow.emplace([this] { m_SwapChain.Initialize(); }).succeed(PRE_INIT_GATE).precede(POST_INIT_GATE);

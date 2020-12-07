@@ -144,6 +144,9 @@ using WindowHandle = uint64_t;
 template <typename T>
 using ConcurrentVector = concurrency::concurrent_vector<T>;
 
+template <typename KeyType, typename ValueType>
+using ConcurrentUnorderedMap = concurrency::concurrent_unordered_map<KeyType, ValueType>;
+
 template <typename T>
 using ConcurrentUnorderedSet = concurrency::concurrent_unordered_set<T>;
 

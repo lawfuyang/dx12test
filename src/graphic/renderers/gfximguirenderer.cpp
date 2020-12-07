@@ -40,7 +40,7 @@ void GfxIMGUIRenderer::Initialize()
     GrowBuffers(*(const IMGUIDrawData*)dummyDrawData);
 
     // Perfomance TIP: Order from most frequent to least frequent.
-    CD3DX12_DESCRIPTOR_RANGE1 ranges[2];
+    CD3DX12_DESCRIPTOR_RANGE1 ranges[2]{};
     ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
     ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 
@@ -117,11 +117,12 @@ void GfxIMGUIRenderer::GrowBuffers(const IMGUIDrawData& imguiDrawData, GfxContex
 
 void GfxIMGUIRenderer::UploadBufferData(const IMGUIDrawData& imguiDrawData)
 {
-    ImDrawVert* vtx_dst;
-    ImDrawIdx* idx_dst;
+    ImDrawVert* vtx_dst = nullptr;
+    ImDrawIdx* idx_dst = nullptr;
     D3D12_RANGE range = {};
     DX12_CALL(m_VertexBuffer.GetD3D12Resource()->Map(0, &range, &(void*)vtx_dst));
     DX12_CALL(m_IndexBuffer.GetD3D12Resource()->Map(0, &range, &(void*)idx_dst));
+    assert(vtx_dst && idx_dst);
 
     for (uint32_t n = 0; n < imguiDrawData.m_DrawList.size(); n++)
     {
@@ -245,7 +246,7 @@ void GfxIMGUIRenderer::PopulateCommandList(GfxContext& context)
             const ImDrawCmd& cmd = cmd_list.m_DrawCmd[cmd_i];
 
             // Apply Scissor, Bind texture, Draw
-            D3D12_RECT r;
+            D3D12_RECT r{};
             r.left = (LONG)(cmd.ClipRect.x - clip_off.x);
             r.top = (LONG)(cmd.ClipRect.y - clip_off.y);
             r.right = (LONG)(cmd.ClipRect.z - clip_off.x);

@@ -1,17 +1,6 @@
 #include <graphic/gfx/gfxcontext.h>
 #include <graphic/pch.h>
 
-CD3DX12_PIPELINE_STATE_STREAM2 GfxContext::DefaultGraphicPSO()
-{
-    static CD3DX12_PIPELINE_STATE_STREAM2 s_Desc = []()
-    {
-        CD3DX12_PIPELINE_STATE_STREAM2 d;
-        d.PrimitiveTopologyType = GetD3D12PrimitiveTopologyType(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        return d;
-    }();
-    return s_Desc;
-}
-
 void GfxContext::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, std::string_view name)
 {
     assert(m_CommandList == nullptr);
@@ -27,6 +16,8 @@ void GfxContext::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, std::string_vie
     static const D3D12_INDEX_BUFFER_VIEW NullIndexBufferView = {};
     m_CommandList->Dev()->IASetVertexBuffers(0, 1, &NullVertexBufferView);
     m_CommandList->Dev()->IASetIndexBuffer(&NullIndexBufferView);
+
+    m_PSO.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 }
 
 void GfxContext::ClearRenderTargetView(GfxTexture& tex, const bbeVector4& clearColor)
@@ -208,37 +199,50 @@ std::size_t GfxContext::GetPSOHash()
             boost::hash_combine(finalHash, m_Shaders[PS]->m_Hash);
 
         // Blend States
-        boost::hash_combine(finalHash, (&m_PSO.BlendState)->AlphaToCoverageEnable);
-        boost::hash_combine(finalHash, (&m_PSO.BlendState)->IndependentBlendEnable);
-        for (uint32_t i = 0; i < m_RTVs.size(); ++i)
-        {
-            boost::hash_combine(finalHash, GenericTypeHash((&m_PSO.BlendState)->RenderTarget[i]));
-        }
+        boost::hash_combine(finalHash, GenericTypeHash(m_PSO.BlendState));
 
         // Rasterizer States
-        boost::hash_combine(finalHash, GenericTypeHash(*(&m_PSO.RasterizerState)));
+        boost::hash_combine(finalHash, GenericTypeHash(m_PSO.RasterizerState));
 
         // Depth Stencil State
-        boost::hash_combine(finalHash, GenericTypeHash(*(&m_PSO.DepthStencilState)));
+        // Note: Have to manually extract each Depth Stencil State 1-by-1 to achieve consistent hash and I have no fking idea why
+        const CD3DX12_DEPTH_STENCIL_DESC1 depthStencilState = (CD3DX12_DEPTH_STENCIL_DESC1)m_PSO.DepthStencilState;
+        if (depthStencilState.DepthEnable)
+        {
+            boost::hash_combine(finalHash, depthStencilState.DepthWriteMask);
+            boost::hash_combine(finalHash, depthStencilState.DepthFunc);
+            boost::hash_combine(finalHash, depthStencilState.StencilEnable);
+            boost::hash_combine(finalHash, depthStencilState.StencilReadMask);
+            boost::hash_combine(finalHash, depthStencilState.StencilWriteMask);
+            boost::hash_combine(finalHash, depthStencilState.FrontFace.StencilFailOp);
+            boost::hash_combine(finalHash, depthStencilState.FrontFace.StencilDepthFailOp);
+            boost::hash_combine(finalHash, depthStencilState.FrontFace.StencilPassOp);
+            boost::hash_combine(finalHash, depthStencilState.FrontFace.StencilFunc);
+            boost::hash_combine(finalHash, depthStencilState.BackFace.StencilFailOp);
+            boost::hash_combine(finalHash, depthStencilState.BackFace.StencilDepthFailOp);
+            boost::hash_combine(finalHash, depthStencilState.BackFace.StencilPassOp);
+            boost::hash_combine(finalHash, depthStencilState.BackFace.StencilFunc);
+            boost::hash_combine(finalHash, depthStencilState.DepthBoundsTestEnable);
+        }
+
+        // DSV Format
+        boost::hash_combine(finalHash, GenericTypeHash(m_PSO.DSVFormat));
 
         // Vertex Input Layout
         boost::hash_combine(finalHash, m_VertexFormat->GetHash());
 
         // Primitive Topology
-        boost::hash_combine(finalHash, *(&m_PSO.PrimitiveTopologyType));
+        boost::hash_combine(finalHash, GenericTypeHash(m_PSO.PrimitiveTopologyType));
 
-        boost::hash_combine(finalHash, m_RTVs.size()); // strictly needed?
         // RTV Formats
+        boost::hash_combine(finalHash, m_RTVs.size());
         for (uint32_t i = 0; i < m_RTVs.size(); ++i)
         {
             boost::hash_combine(finalHash, m_RTVs[i]->GetFormat());
         }
 
-        // DSV Format
-        boost::hash_combine(finalHash, *(&m_PSO.DSVFormat));
-
         // Sample Desccriptors
-        boost::hash_combine(finalHash, GenericTypeHash (*(&m_PSO.SampleDesc)));
+        boost::hash_combine(finalHash, GenericTypeHash(m_PSO.SampleDesc));
     }
     else if (m_Shaders[CS])
     {

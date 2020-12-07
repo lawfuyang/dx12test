@@ -15,9 +15,10 @@ struct GfxShader;
 class GfxContext
 {
 public:
-    void Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, std::string_view name);
+    GfxCommandList& GetCommandList() { return *m_CommandList; }
 
-    void ResetStates() { m_PSO = DefaultGraphicPSO(); }
+    void Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, std::string_view name);
+    void ResetStates() { m_PSO = CD3DX12_PIPELINE_STATE_STREAM2{}; }
 
     void ClearRenderTargetView(GfxTexture&, const bbeVector4& clearColor);
     void ClearDepth(GfxTexture&, float depth);
@@ -33,10 +34,10 @@ public:
     void SetBlendStates(uint32_t renderTarget, const D3D12_RENDER_TARGET_BLEND_DESC& blendStates);
 
     template <typename T>
-    void SetRasterizerStates(const T& desc) { m_PSO.RasterizerState = (CD3DX12_RASTERIZER_DESC)desc; }
+    void SetRasterizerStates(const T& desc) { m_PSO.RasterizerState = CD3DX12_RASTERIZER_DESC{ desc }; }
 
     template <typename T>
-    void SetDepthStencilStates(const T& desc) { m_PSO.DepthStencilState = (CD3DX12_DEPTH_STENCIL_DESC1)desc; }
+    void SetDepthStencilStates(const T& desc) { m_PSO.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC1{ desc }; }
 
     void SetViewport(const D3D12_VIEWPORT& vp) { m_CommandList->Dev()->RSSetViewports(1, &vp); }
     void SetRect(const D3D12_RECT& rect) { m_CommandList->Dev()->RSSetScissorRects(1, &rect); }
@@ -54,8 +55,6 @@ public:
         static_assert(CBType::ConstantBufferRegister != 0xDEADBEEF);
         StageCBVInternal((const void*)&cb, sizeof(CBType), CBType::ConstantBufferRegister, CBType::Name);
     }
-
-    GfxCommandList& GetCommandList() { return *m_CommandList; }
 
     void TransitionResource(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate);
     void BeginResourceTransition(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate = false);
@@ -79,8 +78,6 @@ private:
     template <uint32_t NbRTs>
     void SetRTVHelper(GfxTexture*(&RTVs)[NbRTs]);
 
-    static CD3DX12_PIPELINE_STATE_STREAM2 DefaultGraphicPSO();
-
     GfxRootSignature*            m_RootSig                      = nullptr;
     GfxVertexFormat*             m_VertexFormat                 = &GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub;
     GfxCommandList*              m_CommandList                  = nullptr;
@@ -90,7 +87,7 @@ private:
     GfxTexture*                  m_DSV                          = nullptr;
     const GfxShader*             m_Shaders[GfxShaderType_Count] = {};
 
-    CD3DX12_PIPELINE_STATE_STREAM2 m_PSO = DefaultGraphicPSO();
+    CD3DX12_PIPELINE_STATE_STREAM2 m_PSO;
 
     InplaceArray<D3D12_RESOURCE_BARRIER, 16> m_ResourceBarriers;
     GfxRootSignature::RootSigParams m_StagedResources;

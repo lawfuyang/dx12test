@@ -110,6 +110,7 @@ void CompilePermutation(const Shader& parentShader, Shader::Permutation& permuta
     commandLine += StringFormat(" -Vn %s_ObjCode", shaderNameWithPrefix.c_str());
     commandLine += " -nologo ";
     commandLine += " -WX ";
+    commandLine += " -all_resources_bound ";
     commandLine += StringFormat(" -I%s", g_GlobalDirs.m_ShadersTmpDir.c_str());
 
     for (const std::string& define : permutation.m_Defines)

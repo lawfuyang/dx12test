@@ -57,6 +57,7 @@ struct CommandLineOptions
 
     void Parse();
 
+    uint32_t m_FPSLimit        = 200;
     bool     m_PIXCapture      = false;
     bool     m_ProfileInit     = false;
     bool     m_ProfileShutdown = false;

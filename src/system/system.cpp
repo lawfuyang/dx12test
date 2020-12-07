@@ -63,10 +63,8 @@ static void BusyWaitUntilFPSLimit(Timer& timer)
 {
     bbeProfileFunction();
 
-    const uint32_t FPSLimit = 200;
-
     // busy wait until hard cap of 200 FPS
-    const uint64_t FPSFrameEndTime = Timer::MilliSecondsToTicks(1000.0 / FPSLimit);
+    const uint64_t FPSFrameEndTime = Timer::MilliSecondsToTicks(1000.0 / g_CommandLineOptions.m_FPSLimit);
 
     while (timer.GetElapsedTicks() < FPSFrameEndTime)
     {
@@ -182,6 +180,7 @@ void CommandLineOptions::Parse()
 {
     ArgumentParser parser("Argument Parser");
 
+    parser.add_argument("--fpslimit", "fpslimit");
     parser.add_argument("--pixcapture", "pixcapture");
     parser.add_argument("--profileinit", "profileinit");
     parser.add_argument("--profileshutdown", "profileshutdown");
@@ -200,6 +199,11 @@ void CommandLineOptions::Parse()
     m_PIXCapture      = parser.exists("pixcapture");
     m_ProfileInit     = parser.exists("profileinit");
     m_ProfileShutdown = parser.exists("profileshutdown");
+
+    if (parser.exists("fpslimit"))
+    {
+        m_FPSLimit = parser.get<uint32_t>("fpslimit");
+    }
 
     if (parser.exists("resolution"))
     {
