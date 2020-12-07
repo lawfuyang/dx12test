@@ -39,12 +39,12 @@ const char* GetD3DShaderModelName(D3D_SHADER_MODEL shaderModel)
     }
 }
 
-const std::string GetD3DDebugName(ID3D12Object* object)
+const char* GetD3DDebugName(ID3D12Object* object)
 {
     UINT size = MAX_PATH;
-    char name[MAX_PATH] = {};
-    DX12_CALL(object->GetPrivateData(WKPDID_D3DDebugObjectName, &size, &name));
-    return name;
+    thread_local char tl_Name[MAX_PATH]{};
+    DX12_CALL(object->GetPrivateData(WKPDID_D3DDebugObjectName, &size, &tl_Name));
+    return tl_Name;
 }
 
 void SetD3DDebugName(ID3D12Object* object, std::string_view name)

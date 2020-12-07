@@ -5,6 +5,8 @@
 
 static bool gs_ShowGfxManagerIMGUIWindow = false;
 
+extern void CheckAllD3D12AllocsReleased();
+
 extern GfxRendererBase* g_GfxForwardLightingPass;
 extern GfxRendererBase* g_GfxIMGUIRenderer;
 extern GfxRendererBase* g_GfxBodyGravityParticlesUpdate;
@@ -63,13 +65,18 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
 
 void GfxManager::PreInit()
 {
+    bbeProfileFunction();
+
     g_GfxAdapter.Initialize();
     m_GfxDevice.Initialize();
+    g_GfxMemoryAllocator.Initialize();
     g_GfxCommandListsManager.Initialize();
 }
 
 void GfxManager::PostInit()
 {
+    bbeProfileFunction();
+
     g_GfxCommandListsManager.ExecutePendingCommandLists();
     g_GfxCommandListsManager.GetMainQueue().StallCPUForFence();
 
@@ -103,7 +110,8 @@ void GfxManager::ShutDown()
 
     m_GfxCommandManager.ConsumeAllCommandsST(true);
 
-    m_GfxDevice.ShutDown();
+    CheckAllD3D12AllocsReleased();
+    g_GfxMemoryAllocator.Dev().Release();
 }
 
 void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)

@@ -63,16 +63,6 @@ void GfxDevice::Initialize()
     ConfigureDebugLayerAfterDeviceCreation();
 
     CheckFeaturesSupports();
-
-    g_GfxMemoryAllocator.Initialize();
-}
-
-void GfxDevice::ShutDown()
-{
-    bbeProfileFunction();
-    g_Log.info("Shutting Down GfxDevice");
-
-    g_GfxMemoryAllocator.Release();
 }
 
 void GfxDevice::CheckStatus()
@@ -182,10 +172,6 @@ void GfxDevice::CheckFeaturesSupports()
 
 void GfxMemoryAllocator::Initialize()
 {
-    bbeProfileFunction();
-
-    g_Log.info("Initializing D3D12 Memory Allocator");
-
     static bool s_AlwaysCommitedMemory = false;
 
     D3D12MA::ALLOCATOR_DESC desc{};
@@ -207,14 +193,6 @@ void GfxMemoryAllocator::Initialize()
     default:
         assert(0);
     }
-}
-
-void GfxMemoryAllocator::Release()
-{
-    g_Log.info("Releasing D3D12 Memory Allocator");
-    assert(m_D3D12MemoryAllocator);
-    m_D3D12MemoryAllocator->Release();
-    m_D3D12MemoryAllocator = nullptr;
 }
 
 BBE_OPTIMIZE_OFF;

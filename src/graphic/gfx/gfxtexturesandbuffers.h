@@ -16,8 +16,6 @@ class GfxHazardTrackedResource
 public:
     static const D3D12_RESOURCE_STATES INVALID_STATE = (D3D12_RESOURCE_STATES)0xDEADBEEF;
 
-    virtual ~GfxHazardTrackedResource() {}
-
     D3D12_RESOURCE_STATES GetResourceCurrentState() const { return m_CurrentResourceState; }
     D3D12_RESOURCE_STATES GetResourceTransitioningState() const { return m_TransitioningState; }
 
@@ -33,8 +31,6 @@ protected:
 class GfxBufferCommon
 {
 public:
-    virtual ~GfxBufferCommon();
-
     ID3D12Resource* GetD3D12Resource() const { return m_D3D12MABufferAllocation->GetResource(); }
 
     void Release();

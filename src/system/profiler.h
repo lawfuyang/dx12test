@@ -37,9 +37,7 @@ private:
 #define bbePIXEvent(gfxContext) const ScopedPixEvent bbeUniqueVariable(pixEvent) { gfxContext.GetCommandList().Dev() }
 
 #if defined(BBE_USE_PROFILER)
-    #define bbeAutoLock(lck) \
-        bbeProfileLock(lck); \
-        const AutoScopeCaller bbeUniqueVariable(ScopedLock){ [&](){ lck.lock(); }, [&](){ lck.unlock(); } };
+    #define bbeAutoLock(lck) const AutoScopeCaller bbeUniqueVariable(ScopedLock){ [&](){ bbeProfileLock(lck); lck.lock(); }, [&](){ lck.unlock(); } };
 
     #define bbeDefineProfilerToken(var, group, name, color) MICROPROFILE_DEFINE(var, group, name, color)
     #define bbeProfile(str)                                 MICROPROFILE_SCOPEI("", str, GetCompileTimeCRC32(str))

@@ -3,18 +3,39 @@
 
 #include <system/imguimanager.h>
 
-//#define DEBUG_GFX_MEMORY_ALLOCS
+#define TRACK_GFX_HEAP_ALLOCS
+//#define DEBUG_PRINT_GFX_MEMORY_ALLOCS
 
-#if defined(DEBUG_GFX_MEMORY_ALLOCS)
+#if defined(TRACK_GFX_HEAP_ALLOCS) && defined(DEBUG_PRINT_GFX_MEMORY_ALLOCS)
     #define bbeLogGfxAlloc(StrFormat, ...) g_Log.info(StrFormat, __VA_ARGS__);
 #else
     #define bbeLogGfxAlloc(...) __noop
 #endif
 
-GfxBufferCommon::~GfxBufferCommon()
-{
-    assert(m_D3D12MABufferAllocation == nullptr);
-}
+#if defined(TRACK_GFX_HEAP_ALLOCS)
+    static ConcurrentUnorderedMap<D3D12MA::Allocation*, uint32_t> gs_HeapAllocs;
+
+    #define TRACK_GFX_ALLOC_REF_COUNT(allocHandle) ++gs_HeapAllocs[allocHandle]
+    #define UNTRACK_GFX_ALLOC_REF_COUNT(allocHandle) --gs_HeapAllocs[allocHandle]
+
+    void CheckAllD3D12AllocsReleased()
+    {
+        uint32_t numLeaks = 0;
+        for (const auto& elem : gs_HeapAllocs)
+        {
+            if (elem.second)
+            {
+                ++numLeaks;
+                g_Log.critical("\nUnreleased D3D12MA Allocation: '{}'\n", StringUtils::WideToUtf8(elem.first->GetName()));
+            }
+        }
+        assert(numLeaks == 0);
+    }
+#else
+    #define TRACK_GFX_ALLOC_REF_COUNT(obj, name) __noop
+    #define UNTRACK_GFX_ALLOC_REF_COUNT(obj) __noop
+    void CheckAllD3D12AllocsReleased() {}
+#endif // #define TRACK_GFX_HEAP_ALLOCS
 
 void GfxBufferCommon::Release()
 {
@@ -31,7 +52,9 @@ void GfxBufferCommon::ReleaseAllocation(D3D12MA::Allocation* allocation)
 {
     bbeProfileFunction();
 
-    bbeLogGfxAlloc("Destroying D3D12MA::Allocation '{}'", MakeStrFromWStr(allocation->GetName()));
+    bbeLogGfxAlloc("Destroying D3D12MA::Allocation '{}'", StringUtils::WideToUtf8(allocation->GetName()));
+
+    UNTRACK_GFX_ALLOC_REF_COUNT(allocation);
 
     allocation->GetResource()->Release();
     allocation->Release();
@@ -46,6 +69,7 @@ D3D12MA::Allocation* GfxBufferCommon::CreateHeap(const GfxBufferCommon::HeapDesc
 
     D3D12MA::Allocation* allocHandle = nullptr;
     ID3D12Resource* newHeap = nullptr;
+
     DX12_CALL(g_GfxMemoryAllocator.Dev().CreateResource(
         &bufferAllocDesc,
         &heapDesc.m_ResourceDesc,
@@ -63,7 +87,10 @@ D3D12MA::Allocation* GfxBufferCommon::CreateHeap(const GfxBufferCommon::HeapDesc
 
     StaticString<256> heapName = heapDesc.m_ResourceName;
     heapName += " Heap";
+    SetD3DDebugName(allocHandle->GetHeap(), heapName.c_str());
     SetD3DDebugName(newHeap, heapName.c_str());
+
+    TRACK_GFX_ALLOC_REF_COUNT(allocHandle);
 
     bbeLogGfxAlloc("Created D3D12MA::Allocation '{}'", heapDesc.m_ResourceName);
 
@@ -381,7 +408,7 @@ void GfxTexture::UpdateIMGUI()
     ID3D12Resource* gfxResource = m_D3D12MABufferAllocation->GetResource();
     D3D12_RESOURCE_DESC desc = gfxResource->GetDesc();
 
-    StaticString<256> nameBuffer = GetD3DDebugName(gfxResource).c_str();
+    StaticString<256> nameBuffer = GetD3DDebugName(gfxResource);
     ImGui::InputText("Name", nameBuffer.data(), nameBuffer.capacity(), ImGuiInputTextFlags_ReadOnly);
 
     const bbeVector2U dims{ (uint32_t)desc.Width, desc.Height };

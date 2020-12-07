@@ -11,7 +11,6 @@ public:
     ID3D12Device8* Dev() const { return m_D3DDevice.Get(); }
 
     void Initialize();
-    void ShutDown();
     void CheckStatus();
 
     D3D_ROOT_SIGNATURE_VERSION GetHighSupportedRootSignature() const { return m_RootSigSupport.HighestVersion; }
@@ -42,7 +41,6 @@ class GfxMemoryAllocator
 
 public:
     void Initialize();
-    void Release();
 
     D3D12MA::Allocator& Dev() { assert(m_D3D12MemoryAllocator); return *m_D3D12MemoryAllocator; }
 

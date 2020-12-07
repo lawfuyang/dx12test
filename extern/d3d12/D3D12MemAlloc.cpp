@@ -350,6 +350,7 @@ namespace D3D12MA
         {
             if (m_pMutex)
             {
+                bbeProfileFunction();
                 m_pMutex->Lock();
             }
         }
@@ -375,6 +376,7 @@ namespace D3D12MA
         {
             if (m_pMutex)
             {
+                bbeProfileLock(D3D12MA::MutexLockRead);
                 m_pMutex->LockRead();
             }
         }
@@ -400,6 +402,7 @@ namespace D3D12MA
         {
             if (m_pMutex)
             {
+                bbeProfileLock(D3D12MA::MutexLockWrite);
                 m_pMutex->LockWrite();
             }
         }

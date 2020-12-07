@@ -83,6 +83,8 @@ void GfxRootSignature::Compile(CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t num
 
 GfxRootSignature* GfxRootSignatureManager::GetOrCreateRootSig(CD3DX12_DESCRIPTOR_RANGE1* ranges, uint32_t nbRanges, D3D12_ROOT_SIGNATURE_FLAGS flags, const char* rootSigName)
 {
+    bbeProfileFunction();
+
     assert(nbRanges < GfxRootSignature::MaxRootParams);
     CD3DX12_ROOT_PARAMETER1 rootParams[GfxRootSignature::MaxRootParams];
 
