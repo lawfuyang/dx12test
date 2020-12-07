@@ -310,6 +310,9 @@
     <ClInclude Include="..\src\graphic\pch.h">
       <Filter>graphic</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\system\criticalsection.h">
+      <Filter>system</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="system">

@@ -152,12 +152,22 @@ private:
 #define BBE_TO_MB(Nb)                (BBE_TO_KB(Nb) * (1.0f / 1024)) // Define to convert bytes to megabytes
 
 const char* StringFormat(const char* format, ...);
-const char* StringFormatBig(const char* format, ...); // In case you need to format huge strings > 1kb (but <1mb) in length
+
+// In case you need to format huge strings > 1kb (but <1mb) in length
+template<typename... Args>
+static const char* StringFormatBig(const char* format, Args&&... args)
+{
+    thread_local std::string tl_Result;
+    const size_t size = snprintf(nullptr, 0, format, args...) + 1; // Extra space for '\0'
+    tl_Result.resize(size);
+    snprintf(tl_Result.data(), size, format, args ...);
+    return tl_Result.c_str();
+}
 
 void BreakIntoDebugger();
 
 // Returning the time in this format (yyyy_mm_dd_hh_mm_ss) allows for easy sorting of filenames
-const std::string GetTimeStamp();
+const char* GetTimeStamp();
 
 constexpr uint32_t GetCompileTimeCRC32(const char* str)
 {
@@ -287,7 +297,7 @@ namespace StringUtils
     const wchar_t* Utf8ToWide(std::string_view strView);
     const char* WideToUtf8(std::wstring_view strView);
 
-    // In case you need to convert huge strings > 1kb (but <1mb) in length
+    // In case you need to convert huge strings > 1kb in length
     const wchar_t* Utf8ToWideBig(std::string_view strView);
     const char* WideToUtf8Big(std::wstring_view strView);
 

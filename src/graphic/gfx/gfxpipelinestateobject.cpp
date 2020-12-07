@@ -102,8 +102,7 @@ ID3D12PipelineState* GfxPSOManager::GetPSO(GfxContext& gfxContext, CD3DX12_PIPEL
 
     D3D12_PIPELINE_STATE_STREAM_DESC psoStreamDesc{ sizeof(pso), &pso };
 
-    // TODO: RWLock? Study perf...
-    bbeAutoLock(m_PipelineLibraryLock);
+    bbeAutoLockRead(m_PipelineLibraryRWLock);
     ::HRESULT result = m_PipelineLibrary->LoadPipeline(psoHashStr.data(), &psoStreamDesc, IID_PPV_ARGS(&psoToReturn));
     if (result == E_INVALIDARG)
     {
@@ -111,6 +110,8 @@ ID3D12PipelineState* GfxPSOManager::GetPSO(GfxContext& gfxContext, CD3DX12_PIPEL
         g_Log.info("Creating & Storing new PSO '{0:X}' into PipelineLibrary", psoHash);
 
         DX12_CALL(gfxDevice.Dev()->CreatePipelineState(&psoStreamDesc, IID_PPV_ARGS(&psoToReturn)));
+
+        bbeAutoLockScopedRWUpgrade(m_PipelineLibraryRWLock);
         DX12_CALL(m_PipelineLibrary->StorePipeline(psoHashStr.c_str(), psoToReturn));
         ++m_NewPSOs;
     }

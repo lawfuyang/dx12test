@@ -44,6 +44,6 @@ public:
 
 private:
     std::unordered_map<std::size_t, GfxRootSignature> m_CachedRootSigs;
-    std::mutex m_CachedRootSigsLock;
+    std::shared_mutex m_CachedRootSigsRWLock;
 };
 #define g_GfxRootSignatureManager GfxRootSignatureManager::GetInstance()

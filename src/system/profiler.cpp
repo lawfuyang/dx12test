@@ -64,7 +64,7 @@ void SystemProfiler::DumpProfilerBlocks(bool condition, bool immediately)
     if (!condition)
         return;
 
-    const std::string dumpFilePath = StringFormat("..\\bin\\Profiler_Results_%s.html", GetTimeStamp().c_str());
+    const std::string dumpFilePath = StringFormat("..\\bin\\Profiler_Results_%s.html", GetTimeStamp());
     g_Log.info("Dumping profile capture {}", dumpFilePath.c_str());
 
     if (immediately)

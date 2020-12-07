@@ -177,6 +177,7 @@ using Microsoft::WRL::ComPtr;
 #include <system/system.h>
 #include <system/logger.h>
 #include <system/profiler.h>
+#include <system/criticalsection.h>
 
 #if !defined(BBE_SHADERCOMPILER)
     #include <system/memcpy.h>

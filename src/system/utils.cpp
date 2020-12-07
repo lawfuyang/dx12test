@@ -12,18 +12,6 @@ const char* StringFormat(const char* format, ...)
     return buffer;
 }
 
-const char* StringFormatBig(const char* format, ...)
-{
-    thread_local char buffer[BBE_MB(1)]{};
-
-    va_list marker;
-    va_start(marker, format);
-    _vsnprintf_s(buffer, BBE_MB(1), BBE_MB(1), format, marker);
-    va_end(marker);
-
-    return buffer;
-}
-
 void BreakIntoDebugger()
 {
     if (!::IsDebuggerPresent())
@@ -36,9 +24,9 @@ void BreakIntoDebugger()
     __debugbreak();
 }
 
-const std::string GetTimeStamp()
+const char* GetTimeStamp()
 {
-    char dateStr[32] = { 0 };
+    thread_local char dateStr[32]{};
     ::time_t t;
     ::time(&t);
     ::strftime(dateStr, sizeof(dateStr), "%Y_%m_%d_%H_%M_%S", localtime(&t));
@@ -208,28 +196,33 @@ namespace StringUtils
 {
     static std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt;
 
-    template <uint32_t BufferSize>
-    const wchar_t* Utf8ToWideInternal(std::string_view strView)
+    const wchar_t* Utf8ToWide(std::string_view strView)
     {
-        thread_local StaticWString<BufferSize> result;
+        thread_local StaticWString<BBE_KB(1)> result;
         result = cvt.from_bytes(strView.data());
-
-        return result.data();
+        return result.c_str();
     }
 
-    template <uint32_t BufferSize>
-    const char* WideToUtf8Internal(std::wstring_view strView)
+    const wchar_t* Utf8ToWideBig(std::string_view strView)
     {
-        thread_local StaticString<BufferSize> result;
-        result = cvt.to_bytes(strView.data());
-
-        return result.data();
+        thread_local std::wstring result;
+        result = std::wstring{ strView.data(), strView.data() + strView.length() };
+        return result.c_str();
     }
 
-    const wchar_t* Utf8ToWide(std::string_view strView) { return Utf8ToWideInternal<BBE_KB(1)>(strView); }
-    const char* WideToUtf8(std::wstring_view strView) { return WideToUtf8Internal<BBE_KB(1)>(strView); }
-    const wchar_t* Utf8ToWideBig(std::string_view strView) { return Utf8ToWideInternal<BBE_MB(1)>(strView); }
-    const char* WideToUtf8Big(std::wstring_view strView) { return WideToUtf8Internal<BBE_MB(1)>(strView); }
+    const char* WideToUtf8(std::wstring_view strView)
+    {
+        thread_local StaticString<BBE_KB(1)> result;
+        result = cvt.to_bytes(strView.data());
+        return result.c_str();
+    }
+
+    const char* WideToUtf8Big(std::wstring_view strView)
+    {
+        thread_local std::string result;
+        result = cvt.to_bytes(strView.data());
+        return result.c_str();
+    }
 }
 
 template<typename T>

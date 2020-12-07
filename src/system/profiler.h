@@ -37,8 +37,6 @@ private:
 #define bbePIXEvent(gfxContext) const ScopedPixEvent bbeUniqueVariable(pixEvent) { gfxContext.GetCommandList().Dev() }
 
 #if defined(BBE_USE_PROFILER)
-    #define bbeAutoLock(lck) const AutoScopeCaller bbeUniqueVariable(ScopedLock){ [&](){ bbeProfileLock(lck); lck.lock(); }, [&](){ lck.unlock(); } };
-
     #define bbeDefineProfilerToken(var, group, name, color) MICROPROFILE_DEFINE(var, group, name, color)
     #define bbeProfile(str)                                 MICROPROFILE_SCOPEI("", str, GetCompileTimeCRC32(str))
     #define bbeProfileToken(token)                          MICROPROFILE_SCOPE(token)
@@ -47,7 +45,6 @@ private:
     #define bbeProfileBlockEnd()                            MICROPROFILE_LEAVE()
     #define bbeProfileLock(lck)                             MICROPROFILE_SCOPEI("Locks", bbeTOSTRING(lck), 0xFF0000);
 #else
-    #define bbeAutoLock(lck)                                std::lock_guard bbeUniqueVariable(ScopedLock){lck};
     #define bbeDefineProfilerToken(var, group, name, color) __noop
     #define bbeProfile(str)                                 __noop
     #define bbeProfileToken(token)                          __noop
@@ -56,7 +53,6 @@ private:
     #define bbeProfileBlockEnd()                            __noop
     #define bbeProfileLock(lck)                             __noop
 #endif
-
 
 #if defined(BBE_USE_GPU_PROFILER)
     #define bbeProfileGPU(gfxContext, name)                                                             \

@@ -15,7 +15,7 @@ public:
     ID3D12PipelineState* GetPSO(GfxContext&, CD3DX12_PIPELINE_STATE_STREAM2&, std::size_t psoHash);
 
 private:
-    std::mutex m_PipelineLibraryLock;
+    std::shared_mutex m_PipelineLibraryRWLock;
     ComPtr<ID3D12PipelineLibrary1> m_PipelineLibrary;
 
     MemoryMappedFile m_MemoryMappedCacheFile;

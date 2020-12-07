@@ -99,18 +99,23 @@ GfxRootSignature* GfxRootSignatureManager::GetOrCreateRootSig(CD3DX12_DESCRIPTOR
         boost::hash_combine(hash, rootParams[i].ShaderVisibility);
     }
 
-    bbeAutoLock(m_CachedRootSigsLock);
-    GfxRootSignature& rootSig = m_CachedRootSigs[hash];
-
-    // It's cached. Return it
-    if (rootSig.m_RootSignature.Get() != nullptr)
+    bbeAutoLockRead(m_CachedRootSigsRWLock);
+    auto it = m_CachedRootSigs.find(hash);
+    if (it != m_CachedRootSigs.end())
     {
+        GfxRootSignature& rootSig = it->second;
         assert(rootSig.m_Hash != 0);
         assert(!rootSig.m_Params.empty());
         return &rootSig;
     }
 
-    rootSig.m_Hash = hash;
-    rootSig.Compile(rootParams, nbRanges, flags, rootSigName);
-    return &rootSig;
+    bbeAutoLockScopedRWUpgrade(m_CachedRootSigsRWLock);
+    GfxRootSignature& newRootSig = m_CachedRootSigs[hash];
+
+    assert(newRootSig.m_Hash == 0);
+    assert(newRootSig.m_Params.empty());
+
+    newRootSig.m_Hash = hash;
+    newRootSig.Compile(rootParams, nbRanges, flags, rootSigName);
+    return &newRootSig;
 }
