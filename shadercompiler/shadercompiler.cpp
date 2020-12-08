@@ -50,6 +50,36 @@ static void InitializeGlobals()
     }
 }
 
+static void RetrieveDependenciesRecursive(std::unordered_set<std::string>& dependencies, std::string_view fileDir)
+{
+    CFileWrapper file{ fileDir.data() };
+
+    std::string buffer;
+    buffer.resize(BBE_KB(1));
+    while (fgets(buffer.data(), buffer.size(), file))
+    {
+        static const std::regex IncludeRegex{ "^\\s*\\#include\\s+[\" < ]([^ \">]+)*[\" > ]" };
+
+        std::smatch matchResult;
+        std::regex_search(buffer, matchResult, IncludeRegex);
+
+        if (matchResult.empty())
+            continue;
+
+        std::string newFileDependency = matchResult[1];
+        
+        // ignore auto-generated resource binding files. we rely on dirty JSON files for them
+        // Plus, they are not in the same directory as the shader src files anyway
+        if (newFileDependency.find("autogen/") != std::string::npos)
+            continue;
+
+        dependencies.insert(newFileDependency);
+
+        newFileDependency = StringFormat("%s\\%s", g_GlobalDirs.m_ShadersSrcDir.c_str(), newFileDependency.c_str());
+        RetrieveDependenciesRecursive(dependencies, newFileDependency);
+    }
+}
+
 static void InitializeShaderFilesDependencies()
 {
     std::vector<std::string> allShaderFiles;
@@ -59,23 +89,7 @@ static void InitializeShaderFilesDependencies()
     for (std::string_view shaderFileDir : allShaderFiles)
     {
         std::unordered_set<std::string>& dependencies = allFilesDependencies[GetFileNameFromPath(shaderFileDir.data())];
-
-        CFileWrapper file{ shaderFileDir.data() };
-
-        std::string buffer;
-        buffer.resize(BBE_KB(1));
-        while (fgets(buffer.data(), buffer.size(), file))
-        {
-            static const std::regex IncludeRegex{ "^\\s*\\#include\\s+[\" < ]([^ \">]+)*[\" > ]" };
-
-            std::smatch matchResult;
-            std::regex_search(buffer, matchResult, IncludeRegex);
-
-            if (matchResult.empty())
-                continue;
-
-            dependencies.insert(matchResult[1]);
-        }
+        RetrieveDependenciesRecursive(dependencies, shaderFileDir);
     }
 }
 
