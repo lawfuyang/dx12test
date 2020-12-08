@@ -63,6 +63,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\system\utils.cpp" />
+    <ClCompile Include="jsonparsingfunctions.cpp" />
     <ClCompile Include="permutationruleshelper.cpp" />
     <ClCompile Include="printingfunctions.cpp" />
     <ClCompile Include="shadercompilationhelper.cpp" />

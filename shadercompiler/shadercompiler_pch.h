@@ -121,6 +121,7 @@ struct GlobalDirs
 #define g_GlobalDirs GlobalDirs::GetInstance()
 
 void PrintToConsoleAndLogFile(std::string_view str);
+void ProcessShaderJSONFile(ConcurrentVector<Shader>& allShaders, const std::string& file);
 void AddValidPermutations(Shader& newShader, GfxShaderType shaderType, json shaderPermsForTypeJSON);
 void PrintAutogenFilesForShaderInput(const ShaderInputs& inputs);
 void PrintAutogenFilesForGlobalStructure(const GlobalStructure& s);
