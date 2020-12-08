@@ -96,14 +96,13 @@ void CompilePermutation(const Shader& parentShader, Shader::Permutation& permuta
 
     const char* shaderTypeStr = EnumToString(shaderType);
 
-    const std::string shadersSrcDir = StringFormat("%s..\\src\\graphic\\shaders\\", GetApplicationDirectory());
     const std::string shaderNameWithPrefix = StringFormat("%s_%s", shaderTypeStr, permutation.m_Name.c_str());
 
     std::string shaderModelStr = StringFormat("%s_%s", shaderTypeStr, gs_ShaderModelToUse.c_str());
     StringUtils::ToLower(shaderModelStr);
     shaderModelStr = StringFormat(" -T %s", shaderModelStr.c_str());
 
-    std::string commandLine = StringFormat("%s%s", shadersSrcDir.c_str(), parentShader.m_FileName.c_str());
+    std::string commandLine = StringFormat("%s\\%s", g_GlobalDirs.m_ShadersSrcDir.c_str(), parentShader.m_FileName.c_str());
     commandLine += StringFormat(" -E %s", parentShader.m_EntryPoints[shaderType].c_str());
     commandLine += shaderModelStr;
     commandLine += StringFormat(" -Fh %s", permutation.m_ShaderObjCodeFileDir.c_str());

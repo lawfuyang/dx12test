@@ -1,10 +1,13 @@
 
+BBE_OPTIMIZE_OFF;
+
 static void InitializeGlobals()
 {
     const std::string tmpDir = StringFormat("%s..\\tmp\\", GetApplicationDirectory());
 
     // init dirs
-    g_GlobalDirs.m_ShadersSrcDir                             = StringFormat("%s..\\shadercompiler\\shaders", GetApplicationDirectory());
+    g_GlobalDirs.m_ShadersSrcDir                             = StringFormat("%s..\\src\\graphic\\shaders", GetApplicationDirectory());
+    g_GlobalDirs.m_ShadersJSONSrcDir                         = StringFormat("%s..\\shadercompiler\\shaders", GetApplicationDirectory());
     g_GlobalDirs.m_ShadersTmpDir                             = StringFormat("%sshaders\\", tmpDir.c_str());
     g_GlobalDirs.m_ShadersTmpAutoGenDir                      = g_GlobalDirs.m_ShadersTmpDir + "autogen\\";
     g_GlobalDirs.m_ShadersTmpCPPAutogenDir                   = g_GlobalDirs.m_ShadersTmpAutoGenDir + "cpp\\";
@@ -180,6 +183,35 @@ static void ProcessShaderJSONFile(ConcurrentVector<Shader>& allShaders, const st
     }
 }
 
+static void InitializeShaderFilesDependencies()
+{
+    std::vector<std::string> allShaderFiles;
+    GetFilesInDirectory(allShaderFiles, g_GlobalDirs.m_ShadersSrcDir);
+
+    std::unordered_map<std::string, std::unordered_set<std::string>> allFilesDependencies;
+    for (std::string_view shaderFileDir : allShaderFiles)
+    {
+        std::unordered_set<std::string>& dependencies = allFilesDependencies[GetFileNameFromPath(shaderFileDir.data())];
+
+        CFileWrapper file{ shaderFileDir.data() };
+
+        std::string buffer;
+        buffer.resize(BBE_KB(1));
+        while (fgets(buffer.data(), buffer.size(), file))
+        {
+            static const std::regex IncludeRegex{ "^\\s*\\#include\\s+[\" < ]([^ \">]+)*[\" > ]" };
+
+            std::smatch matchResult;
+            std::regex_search(buffer, matchResult, IncludeRegex);
+
+            if (matchResult.empty())
+                continue;
+
+            dependencies.insert(matchResult[1]);
+        }
+    }
+}
+
 int main()
 {
     // first, Init the logger
@@ -187,8 +219,11 @@ int main()
 
     InitializeGlobals();
 
+    // TODO
+    //InitializeShaderFilesDependencies();
+
     std::vector<std::string> allJSONs;
-    GetFilesInDirectory(allJSONs, g_GlobalDirs.m_ShadersSrcDir);
+    GetFilesInDirectory(allJSONs, g_GlobalDirs.m_ShadersJSONSrcDir);
 
     tf::Executor executor;
     tf::Taskflow tf;

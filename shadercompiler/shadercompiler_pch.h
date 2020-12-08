@@ -1,5 +1,7 @@
 #pragma once
 
+#include <regex>
+
 // Quick & Easy JSON parsing
 #include <extern/json/json.hpp>
 using json = nlohmann::json;
@@ -107,6 +109,7 @@ struct GlobalDirs
     DeclareSingletonFunctions(GlobalDirs);
 
     std::string m_ShadersSrcDir;
+    std::string m_ShadersJSONSrcDir;
     std::string m_ShadersTmpDir;
     std::string m_ShadersTmpAutoGenDir;
     std::string m_ShadersTmpCPPAutogenDir;
