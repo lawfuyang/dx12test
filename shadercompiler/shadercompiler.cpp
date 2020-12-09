@@ -54,14 +54,7 @@ struct ShaderFileMetaData
 {
     bool m_Dirty = false;
     std::size_t m_FullHash = 0;
-    std::set<std::string> m_UniqueDependencies; // not unordered_set, because they need to be sorted for consistent hashing
-
-    void AddDependency(std::string_view file)
-    {
-        static std::mutex lck;
-        std::lock_guard<std::mutex> autoLock{ lck };
-        m_UniqueDependencies.insert(file.data());
-    }
+    ConcurrentUnorderedSet<std::string> m_UniqueDependencies;
 };
 
 static void RetrieveFileDependencies(ShaderFileMetaData& fileMetaData, std::string_view fileDirFull)
@@ -87,7 +80,7 @@ static void RetrieveFileDependencies(ShaderFileMetaData& fileMetaData, std::stri
         else
             newFileDependency = StringFormat("%s\\%s", g_GlobalDirs.m_ShadersSrcDir.c_str(), newFileDependency.c_str());
 
-        fileMetaData.AddDependency(newFileDependency);
+        fileMetaData.m_UniqueDependencies.insert(newFileDependency);
 
         RetrieveFileDependencies(fileMetaData, newFileDependency);
     }
