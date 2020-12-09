@@ -198,6 +198,11 @@ void GfxMemoryAllocator::Initialize()
 BBE_OPTIMIZE_OFF;
 void DeviceRemovedHandler()
 {
+    g_Log.critical("Device removed!");
+
+    if (!g_CommandLineOptions.m_GfxDebugLayer.m_Enabled)
+        return;
+
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
     ComPtr<ID3D12DeviceRemovedExtendedData> pDred;
