@@ -118,10 +118,10 @@ GfxCommandList* GfxCommandListQueue::AllocateCommandList(std::string_view name)
     }
 
     assert(newCmdList->Dev());
+    newCmdList->BeginRecording();
+
     SetD3DDebugName(newCmdList->Dev(), name);
     SetD3DDebugName(newCmdList->m_CommandAllocator.Get(), name);
-
-    newCmdList->BeginRecording();
 
     return newCmdList;
 }
@@ -162,9 +162,6 @@ void GfxCommandListQueue::ExecutePendingCommandLists()
     // execute cmd lists
     if (numCmdListsToExec > 0)
     {
-        // Before submitting any cmd lists, wait for prev submission to complete first
-        StallGPUForFence();
-
         Dev()->ExecuteCommandLists(numCmdListsToExec, ppCommandLists);    
     }
 

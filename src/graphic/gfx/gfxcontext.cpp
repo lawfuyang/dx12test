@@ -48,7 +48,7 @@ void GfxContext::ClearUAVF(GfxTexture& tex, const bbeVector4& clearValue)
     TransitionResource(tex, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
     SetDescriptorHeapIfNeeded();
 
-    GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.Allocate(1);
+    GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.AllocateVolatile(D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, 1);
     g_GfxManager.GetGfxDevice().Dev()->CopyDescriptorsSimple(1, destHandle.m_CPUHandle, tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     m_CommandList->Dev()->ClearUnorderedAccessViewFloat(destHandle.m_GPUHandle, tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), tex.GetD3D12Resource(), (const FLOAT*)&clearValue, 0, nullptr);
@@ -59,7 +59,7 @@ void GfxContext::ClearUAVU(GfxTexture& tex, const bbeVector4U& clearValue)
     TransitionResource(tex, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
     SetDescriptorHeapIfNeeded();
 
-    GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.Allocate(1);
+    GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.AllocateVolatile(D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, 1);
     g_GfxManager.GetGfxDevice().Dev()->CopyDescriptorsSimple(1, destHandle.m_CPUHandle, tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     m_CommandList->Dev()->ClearUnorderedAccessViewUint(destHandle.m_GPUHandle, tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), tex.GetD3D12Resource(), (const UINT*)&clearValue, 0, nullptr);
@@ -153,7 +153,7 @@ void GfxContext::SetDescriptorHeapIfNeeded()
 {
     if (!m_DescHeapsSet)
     {
-        ID3D12DescriptorHeap* ppHeaps[] = { g_GfxGPUDescriptorAllocator.GetInternalHeap().Dev() };
+        ID3D12DescriptorHeap* ppHeaps[] = { g_GfxGPUDescriptorAllocator.GetInternalHeap(D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE).Dev() };
         m_CommandList->Dev()->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
         m_DescHeapsSet = true;
     }
@@ -171,6 +171,11 @@ void GfxContext::StageSRV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
 {
     CheckStagingResourceInputs(rootIndex, offset, D3D12_DESCRIPTOR_RANGE_TYPE_SRV);
     StageDescriptor(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), rootIndex, offset);
+}
+
+void GfxContext::StageUAV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
+{
+    CheckStagingResourceInputs(rootIndex, offset, D3D12_DESCRIPTOR_RANGE_TYPE_UAV);
 }
 
 void GfxContext::StageDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptor, uint32_t rootIndex, uint32_t offset)
@@ -360,6 +365,26 @@ void GfxContext::FlushResourceBarriers()
     }
 }
 
+void GfxContext::CreateRTV(const GfxTexture&)
+{
+
+}
+
+void GfxContext::CreateDSV(const GfxTexture&)
+{
+
+}
+
+void GfxContext::CreateSRV(const GfxTexture&)
+{
+
+}
+
+void GfxContext::CreateUAV(const GfxTexture&)
+{
+
+}
+
 void GfxContext::TransitionResource(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate)
 {
     const D3D12_RESOURCE_STATES oldState = resource.m_CurrentResourceState;
@@ -531,7 +556,7 @@ void GfxContext::CommitStagedResources()
     assert(numHeapsNeeded > 0);
 
     // allocate shader visible heaps
-    GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.Allocate(numHeapsNeeded);
+    GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.AllocateVolatile(D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, numHeapsNeeded);
 
     SetDescriptorHeapIfNeeded();
 

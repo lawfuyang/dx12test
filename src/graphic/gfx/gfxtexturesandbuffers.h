@@ -62,25 +62,22 @@ class GfxVertexBuffer : public GfxHazardTrackedResource,
                         public GfxBufferCommon
 {
 public:
-
     struct InitParams
     {
         const void*       m_InitData     = nullptr;
         uint32_t          m_NumVertices  = 0;
         uint32_t          m_VertexSize   = 0;
-        StaticString<128> m_ResourceName;
         D3D12_HEAP_TYPE   m_HeapType     = D3D12_HEAP_TYPE_DEFAULT;
+        StaticString<128> m_ResourceName;
     };
 
     void Initialize(GfxContext& initContext, const InitParams&);
     void Initialize(const InitParams&);
 
-    uint32_t GetStrideInBytes() const { return m_StrideInBytes; }
-    uint32_t GetNumVertices() const { return m_NumVertices; }
+    uint32_t GetStrideInBytes() const { return m_InitParams.m_VertexSize; }
+    uint32_t GetNumVertices() const { return m_InitParams.m_NumVertices; }
 
-private:
-    uint32_t m_StrideInBytes = 0;
-    uint32_t m_NumVertices = 0;
+    InitParams m_InitParams;
 };
 
 class GfxIndexBuffer : public GfxHazardTrackedResource,
@@ -92,19 +89,17 @@ public:
         const void*       m_InitData     = nullptr;
         uint32_t          m_NumIndices   = 0;
         uint32_t          m_IndexSize    = 0;
-        StaticString<128> m_ResourceName;
         D3D12_HEAP_TYPE   m_HeapType     = D3D12_HEAP_TYPE_DEFAULT;
+        StaticString<128> m_ResourceName;
     };
 
     void Initialize(GfxContext& initContext, const InitParams&);
     void Initialize(const InitParams&);
 
-    DXGI_FORMAT GetFormat() const { return m_Format; }
-    uint32_t GetNumIndices() const { return m_NumIndices; }
+    DXGI_FORMAT GetFormat() const { return m_InitParams.m_IndexSize == 2 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT; }
+    uint32_t GetNumIndices() const { return m_InitParams.m_NumIndices; }
 
-private:
-    DXGI_FORMAT m_Format = DXGI_FORMAT_R16_UINT;
-    uint32_t m_NumIndices = 0;
+    InitParams m_InitParams;
 };
 
 class GfxTexture : public GfxHazardTrackedResource,
@@ -135,10 +130,10 @@ public:
         D3D12_RESOURCE_DIMENSION m_Dimension    = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
         D3D12_RESOURCE_FLAGS     m_Flags        = D3D12_RESOURCE_FLAG_NONE;
         const void*              m_InitData     = nullptr;
-        StaticString<128>        m_ResourceName;
         D3D12_RESOURCE_STATES    m_InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
         D3D12_CLEAR_VALUE        m_ClearValue   = {};
         ViewType                 m_ViewType     = SRV;
+        StaticString<128>        m_ResourceName;
     };
 
     void Initialize(GfxContext& initContext, const InitParams&);
@@ -147,9 +142,9 @@ public:
 
     GfxDescriptorHeap& GetDescriptorHeap() { return m_GfxDescriptorHeap; }
 
-    DXGI_FORMAT GetFormat() const { return m_Format; }
-    uint32_t GetArraySize() const { return m_ArraySize; }
-    uint32_t GetMipLevels() const { return m_MipLevels; }
+    DXGI_FORMAT GetFormat() const { return m_InitParams.m_Format; }
+
+    InitParams m_InitParams;
 
     void UpdateIMGUI();
 
@@ -161,7 +156,4 @@ private:
     void CreateUAV(const InitParams& initParams);
 
     GfxDescriptorHeap m_GfxDescriptorHeap;
-    DXGI_FORMAT m_Format = DXGI_FORMAT_UNKNOWN;
-    uint32_t m_ArraySize = 1;
-    uint32_t m_MipLevels = 1;
 };

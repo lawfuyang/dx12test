@@ -33,21 +33,22 @@ class GfxGPUDescriptorAllocator
     DeclareSingletonFunctions(GfxGPUDescriptorAllocator);
 
 public:
-    static const uint32_t NumDynamicDescriptors = 1024;
+    static const uint32_t NbDescriptors = 1024;
+    static const uint32_t NbDescHeapContexts = 2;
 
-    const GfxDescriptorHeap& GetInternalHeap() const { return m_InternalDescriptorHeap; }
+    const GfxDescriptorHeap& GetInternalHeap(D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags) const { return m_InternalDescriptorHeap[heapFlags]; }
     void Initialize();
-    GfxDescriptorHeapHandle Allocate(uint32_t numHeaps, GfxDescriptorHeapHandle* out = nullptr);
+    GfxDescriptorHeapHandle AllocateVolatile(D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags, uint32_t numHeaps, GfxDescriptorHeapHandle* out = nullptr);
     void GarbageCollect();
 
 private:
-    GfxDescriptorHeapHandle AllocateInternal(uint32_t numHeaps, GfxDescriptorHeapHandle* out);
+    GfxDescriptorHeapHandle AllocateVolatileInternal(D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags, uint32_t numHeaps, GfxDescriptorHeapHandle* out);
 
-    std::mutex m_GfxGPUDescriptorAllocatorLock;
-    uint32_t m_AllocationCounter = 0;
-    CircularBuffer<GfxDescriptorHeapHandle> m_FreeHeaps;
-    InplaceArray<GfxDescriptorHeapHandle, NumDynamicDescriptors> m_UsedHeaps;
+    std::mutex m_GfxGPUDescriptorAllocatorLock[NbDescHeapContexts];
+    uint32_t m_AllocationCounter[NbDescHeapContexts]{};
+    CircularBuffer<GfxDescriptorHeapHandle> m_FreeHeaps[NbDescHeapContexts];
+    InplaceArray<GfxDescriptorHeapHandle, NbDescriptors> m_UsedHeaps[NbDescHeapContexts];
 
-    GfxDescriptorHeap m_InternalDescriptorHeap;
+    GfxDescriptorHeap m_InternalDescriptorHeap[NbDescHeapContexts];
 };
 #define g_GfxGPUDescriptorAllocator GfxGPUDescriptorAllocator::GetInstance()

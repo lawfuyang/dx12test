@@ -160,8 +160,7 @@ void GfxVertexBuffer::Initialize(GfxContext& initContext, const InitParams& init
     assert(initParams.m_NumVertices > 0);
     assert(initParams.m_VertexSize > 0);
 
-    m_NumVertices = initParams.m_NumVertices;
-    m_StrideInBytes = initParams.m_VertexSize;
+    m_InitParams = initParams;
     m_SizeInBytes = initParams.m_VertexSize * initParams.m_NumVertices;
 
     if (m_SizeInBytes > D3D12_REQ_RESOURCE_SIZE_IN_MEGABYTES_EXPRESSION_A_TERM * 1024 * 1024)
@@ -220,8 +219,7 @@ void GfxIndexBuffer::Initialize(GfxContext& initContext, const InitParams& initP
     assert(initParams.m_NumIndices);
     assert(initParams.m_IndexSize == 2 || initParams.m_IndexSize == 4);
 
-    m_NumIndices = initParams.m_NumIndices;
-    m_Format = initParams.m_IndexSize == 2 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
+    m_InitParams = initParams;
     m_SizeInBytes = initParams.m_NumIndices * initParams.m_IndexSize;
 
     // identify resource initial state
@@ -281,13 +279,16 @@ D3D12_RESOURCE_DESC GfxTexture::GetDescForGfxTexture(const GfxTexture::InitParam
     switch (i.m_Dimension)
     {
     case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
+    {
         assert(i.m_Format != DXGI_FORMAT_UNKNOWN);
         assert(i.m_TexParams.m_Width > 0 && i.m_TexParams.m_Width <= D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION);
         assert(i.m_TexParams.m_Height > 0 && i.m_TexParams.m_Height <= D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION);
 
         // TODO: Texture2DArray, Mips
-        return CD3DX12_RESOURCE_DESC::Tex2D(i.m_Format, i.m_TexParams.m_Width, i.m_TexParams.m_Height, m_ArraySize, m_MipLevels, 1, 0, i.m_Flags);
-
+        const uint32_t ArraySize = 1;
+        const uint32_t MipLevels = 1;
+        return CD3DX12_RESOURCE_DESC::Tex2D(i.m_Format, i.m_TexParams.m_Width, i.m_TexParams.m_Height, ArraySize, MipLevels, 1, 0, i.m_Flags);
+    }
     case D3D12_RESOURCE_DIMENSION_BUFFER:
     {
         const uint32_t width = i.m_BufferParams.m_NumElements * i.m_BufferParams.m_StructureByteStride;
@@ -330,7 +331,7 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
 
     assert(!m_D3D12MABufferAllocation);
 
-    m_Format = initParams.m_Format;
+    m_InitParams = initParams;
 
     // init desc heap for texture
     m_GfxDescriptorHeap.Initialize(GfxTextureViewTypeToHeapType(initParams.m_ViewType), D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
@@ -425,18 +426,23 @@ void GfxTexture::CreateRTV(const InitParams& initParams)
 
 void GfxTexture::CreateSRV(const InitParams& initParams)
 {
+    // TODO: Mips
+
     D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc{};
-    SRVDesc.Format = m_Format;
+    SRVDesc.Format = initParams.m_Format;
     SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-    if (m_ArraySize > 1)
-    {
-        SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-        SRVDesc.Texture2DArray.MipLevels = m_MipLevels;
-        SRVDesc.Texture2DArray.MostDetailedMip = 0;
-        SRVDesc.Texture2DArray.FirstArraySlice = 0;
-        SRVDesc.Texture2DArray.ArraySize = (UINT)m_ArraySize;
-    }
+    const uint32_t MipLevels = 1;
+
+    // TODO: Texture2DArray
+    //if (m_ArraySize > 1)
+    //{
+    //    SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+    //    SRVDesc.Texture2DArray.MipLevels = MipLevels;
+    //    SRVDesc.Texture2DArray.MostDetailedMip = 0;
+    //    SRVDesc.Texture2DArray.FirstArraySlice = 0;
+    //    SRVDesc.Texture2DArray.ArraySize = (UINT)m_ArraySize;
+    //}
 
     // TODO: MSAA SRV
     //else if (m_FragmentCount > 1)
@@ -444,10 +450,10 @@ void GfxTexture::CreateSRV(const InitParams& initParams)
     //    SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
     //}
 
-    else
+    //else
     {
         SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-        SRVDesc.Texture2D.MipLevels = m_MipLevels;
+        SRVDesc.Texture2D.MipLevels = MipLevels;
         SRVDesc.Texture2D.MostDetailedMip = 0;
     }
 
@@ -484,7 +490,7 @@ void GfxTexture::InitializeForSwapChain(ComPtr<IDXGISwapChain4>& swapChain, DXGI
     assert(backBufferIdx <= 3); // you dont need more than 3 back buffers...
 
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-    m_Format = format;
+    m_InitParams.m_Format = format;
 
     DX12_CALL(swapChain->GetBuffer(backBufferIdx, IID_PPV_ARGS(&m_HazardTrackedResource)));
 

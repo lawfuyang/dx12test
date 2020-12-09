@@ -154,6 +154,10 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
 
 void GfxManager::BeginFrame()
 {
+    // TODO: This will kill performance with gpu debug layer enabled!
+    // Implement a proper way of handling previous frame gpu resources
+    g_GfxCommandListsManager.GetMainQueue().StallCPUForFence();
+
     m_GfxDevice.CheckStatus();
 
     g_GfxGPUDescriptorAllocator.GarbageCollect();

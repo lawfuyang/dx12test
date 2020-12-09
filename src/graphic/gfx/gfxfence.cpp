@@ -41,6 +41,8 @@ void GfxFence::WaitForSignalFromGPU() const
     if (IsSignaledByGPU(m_Fence.Get(), m_FenceValue))
         return;
 
+    bbeProfileFunction();
+
     ::ResetEvent(m_FenceEvent);
     DX12_CALL(m_Fence->SetEventOnCompletion(m_FenceValue, m_FenceEvent));
     const DWORD waitResult = WaitForSingleObject(m_FenceEvent, 1000);

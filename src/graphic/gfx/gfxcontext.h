@@ -48,6 +48,7 @@ public:
     void SetIndexBuffer(GfxIndexBuffer& iBuffer) { m_IndexBuffer = &iBuffer; }
     void SetRootSignature(GfxRootSignature&);
     void StageSRV(GfxTexture&, uint32_t rootIndex, uint32_t offset);
+    void StageUAV(GfxTexture&, uint32_t rootIndex, uint32_t offset);
 
     template <typename CBType>
     void StageCBV(const CBType& cb)
@@ -55,6 +56,11 @@ public:
         static_assert(CBType::ConstantBufferRegister != 0xDEADBEEF);
         StageCBVInternal((const void*)&cb, sizeof(CBType), CBType::ConstantBufferRegister, CBType::Name);
     }
+
+    void CreateRTV(const GfxTexture&);
+    void CreateDSV(const GfxTexture&);
+    void CreateSRV(const GfxTexture&);
+    void CreateUAV(const GfxTexture&);
 
     void TransitionResource(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate);
     void BeginResourceTransition(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate = false);
