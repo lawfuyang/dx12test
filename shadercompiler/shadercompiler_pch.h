@@ -108,6 +108,7 @@ struct GlobalDirs
 {
     DeclareSingletonFunctions(GlobalDirs);
 
+    std::string m_TmpDir;
     std::string m_ShadersSrcDir;
     std::string m_ShadersJSONSrcDir;
     std::string m_ShadersTmpDir;
