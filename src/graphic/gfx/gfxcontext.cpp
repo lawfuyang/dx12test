@@ -270,7 +270,7 @@ void GfxContext::PrepareGraphicsStates()
         assert(m_VertexFormat);
         assert(m_VertexBuffer->GetD3D12Resource());
         assert(m_VertexBuffer->GetStrideInBytes() > 0);
-        assert(m_VertexBuffer->GetSizeInBytes() > 0);
+        assert(m_VertexBuffer->GetNumVertices() > 0);
     }
 
     for (uint32_t i = 0; i < m_RTVs.size(); ++i)
@@ -316,7 +316,7 @@ void GfxContext::PrepareGraphicsStates()
             D3D12_VERTEX_BUFFER_VIEW vBufferView{};
             vBufferView.BufferLocation = m_VertexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
             vBufferView.StrideInBytes = m_VertexBuffer->GetStrideInBytes();
-            vBufferView.SizeInBytes = m_VertexBuffer->GetSizeInBytes();
+            vBufferView.SizeInBytes = m_VertexBuffer->GetNumVertices() * m_VertexBuffer->GetStrideInBytes();
 
             m_CommandList->Dev()->IASetVertexBuffers(0, 1, &vBufferView);
 
@@ -324,8 +324,8 @@ void GfxContext::PrepareGraphicsStates()
             {
                 D3D12_INDEX_BUFFER_VIEW indexBufferView{};
                 indexBufferView.BufferLocation = m_IndexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
-                indexBufferView.Format = m_IndexBuffer->GetFormat();
-                indexBufferView.SizeInBytes = m_IndexBuffer->GetSizeInBytes();
+                indexBufferView.Format = DXGI_FORMAT_R16_UINT;
+                indexBufferView.SizeInBytes = m_IndexBuffer->GetNumIndices() * 2;
 
                 m_CommandList->Dev()->IASetIndexBuffer(&indexBufferView);
             }
@@ -514,13 +514,13 @@ void GfxContext::CommitStagedResources()
             continue;
 
         // Create upload heap for constant buffer
-        GfxBufferCommon::HeapDesc heapDesc;
+        GfxHeap::HeapDesc heapDesc;
         heapDesc.m_HeapType = D3D12_HEAP_TYPE_UPLOAD;
         heapDesc.m_ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(stagedCBV.m_CBBytes.size());
         heapDesc.m_InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
         heapDesc.m_ResourceName = stagedCBV.m_Name;
 
-        D3D12MA::Allocation* uploadHeap = GfxBufferCommon::CreateHeap(heapDesc);
+        D3D12MA::Allocation* uploadHeap = GfxHeap::Create(heapDesc);
         assert(uploadHeap);
 
         // init desc heap for cbuffer
@@ -544,7 +544,7 @@ void GfxContext::CommitStagedResources()
         StageDescriptor(descHeap.Dev()->GetCPUDescriptorHandleForHeapStart(), cbRegister, RootOffset);
 
         // free Descriptor & Upload heaps 2 frames later
-        g_GfxManager.AddDoubleDeferredGraphicCommand([descHeap, uploadHeap]() { GfxBufferCommon::ReleaseAllocation(uploadHeap); });
+        g_GfxManager.AddDoubleDeferredGraphicCommand([descHeap, uploadHeap]() { GfxHeap::Release(uploadHeap); });
     }
 
     // Resources

@@ -102,7 +102,6 @@ void GfxIMGUIRenderer::GrowBuffers(const IMGUIDrawData& imguiDrawData, GfxContex
         GfxIndexBuffer::InitParams initParams;
         initParams.m_InitData = nullptr;
         initParams.m_NumIndices = isInitPhase ? gs_IBufferGrowSize : AlignUp(imguiDrawData.m_IdxCount + gs_IBufferGrowSize, 4); // the indexbuffer copy requires alignment
-        initParams.m_IndexSize = sizeof(uint16_t);
         initParams.m_HeapType = D3D12_HEAP_TYPE_UPLOAD;
 
         bufferNames = StringFormat("IMGUI GfxIndexBuffer%u", initParams.m_NumIndices);

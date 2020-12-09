@@ -195,7 +195,6 @@ void GfxDefaultAssets::CreateUnitCubeMesh()
     GfxIndexBuffer::InitParams& IBInitParams = meshInitParams.m_IBInitParams;
     IBInitParams.m_InitData = indices.data();
     IBInitParams.m_NumIndices = indices.size();
-    IBInitParams.m_IndexSize = sizeof(uint16_t);
     IBInitParams.m_ResourceName = "GfxDefaultGeometry::UnitCube Index Buffer";
 
     GfxDefaultAssets::UnitCube.Initialize(meshInitParams);

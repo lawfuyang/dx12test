@@ -11,6 +11,23 @@ namespace D3D12MA
 class GfxCommandList;
 class GfxContext;
 
+struct GfxHeap
+{
+    struct HeapDesc
+    {
+        D3D12_HEAP_TYPE           m_HeapType = D3D12_HEAP_TYPE_DEFAULT;
+        D3D12_RESOURCE_DESC       m_ResourceDesc = {};
+        D3D12_RESOURCE_STATES     m_InitialState = D3D12_RESOURCE_STATE_COMMON;
+        D3D12_CLEAR_VALUE         m_ClearValue = {};
+        D3D12MA::ALLOCATION_FLAGS m_AllocationFlags = D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET;
+        StaticString<128>         m_ResourceName;
+    };
+    static D3D12MA::Allocation* Create(const HeapDesc&);
+    static void Release(D3D12MA::Allocation*);
+
+    D3D12MA::Allocation* m_HeapAllocation = nullptr;
+};
+
 class GfxHazardTrackedResource
 {
 public:
@@ -34,25 +51,9 @@ public:
     ID3D12Resource* GetD3D12Resource() const { return m_D3D12MABufferAllocation->GetResource(); }
 
     void Release();
-    static void ReleaseAllocation(D3D12MA::Allocation*);
-
-    uint32_t GetSizeInBytes() const { return m_SizeInBytes; }
-
-    struct HeapDesc
-    {
-        D3D12_HEAP_TYPE           m_HeapType        = D3D12_HEAP_TYPE_DEFAULT;
-        D3D12_RESOURCE_DESC       m_ResourceDesc    = {};
-        D3D12_RESOURCE_STATES     m_InitialState    = D3D12_RESOURCE_STATE_COMMON;
-        D3D12_CLEAR_VALUE         m_ClearValue      = {};
-        D3D12MA::ALLOCATION_FLAGS m_AllocationFlags = D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET;
-        StaticString<128>         m_ResourceName;
-    };
-    static D3D12MA::Allocation* CreateHeap(const HeapDesc&);
-
 protected:
 
     void InitializeBufferWithInitData(GfxContext& context, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* initData, const char* resourceName);
-    void UploadInitData(GfxContext& context, const void* dataSrc, uint32_t rowPitch, uint32_t slicePitch, ID3D12Resource* dest, ID3D12Resource* src);
 
     D3D12MA::Allocation* m_D3D12MABufferAllocation = nullptr;
     uint32_t             m_SizeInBytes = 0;
@@ -88,7 +89,6 @@ public:
     {
         const void*       m_InitData     = nullptr;
         uint32_t          m_NumIndices   = 0;
-        uint32_t          m_IndexSize    = 0;
         D3D12_HEAP_TYPE   m_HeapType     = D3D12_HEAP_TYPE_DEFAULT;
         StaticString<128> m_ResourceName;
     };
@@ -96,7 +96,7 @@ public:
     void Initialize(GfxContext& initContext, const InitParams&);
     void Initialize(const InitParams&);
 
-    DXGI_FORMAT GetFormat() const { return m_InitParams.m_IndexSize == 2 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT; }
+    DXGI_FORMAT GetFormat() const { DXGI_FORMAT_R16_UINT; } // only support 16 bit indices for now
     uint32_t GetNumIndices() const { return m_InitParams.m_NumIndices; }
 
     InitParams m_InitParams;
