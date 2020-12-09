@@ -41,7 +41,7 @@ public:
     uint32_t GetGraphicFrameNumber() const { return m_GraphicFrameNumber; }
 
 private:
-    void PreInit();
+    void PreInit(tf::Subflow& sf);
     void PostInit();
     GfxContext& GenerateNewContextInternal();
     void UpdateIMGUIPropertyGrid();

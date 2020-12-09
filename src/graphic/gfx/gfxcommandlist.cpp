@@ -17,7 +17,7 @@ void GfxCommandList::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType)
     // So there's little cost in not setting the initial pipeline state parameter, as its really inconvenient.
     ID3D12PipelineState* initialState = nullptr;
 
-    DX12_CALL(gfxDevice.Dev()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_CommandAllocator)));
+    DX12_CALL(gfxDevice.Dev()->CreateCommandAllocator(cmdListType, IID_PPV_ARGS(&m_CommandAllocator)));
 
     assert(m_CommandList == nullptr);
 
@@ -43,6 +43,8 @@ void GfxCommandList::BeginRecording()
 
 void GfxCommandListQueue::Initialize(D3D12_COMMAND_LIST_TYPE type)
 {
+    bbeProfileFunction();
+
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
     m_Type = type;
@@ -51,13 +53,15 @@ void GfxCommandListQueue::Initialize(D3D12_COMMAND_LIST_TYPE type)
 
     // Describe and create the command queue.
     D3D12_COMMAND_QUEUE_DESC queueDesc = {};
-    queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+    queueDesc.Type = type;
     queueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
     queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     queueDesc.NodeMask = 0; // For single-adapter, set to 0. Else, set a bit to identify the node
 
-    bbeProfile("CreateCommandQueue");
-    DX12_CALL(gfxDevice.Dev()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_CommandQueue)));
+    {
+        bbeProfile("CreateCommandQueue");
+        DX12_CALL(gfxDevice.Dev()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_CommandQueue)));
+    }
 
     static const char* QUEUE_NAMES[] =
     {
@@ -73,7 +77,14 @@ void GfxCommandListQueue::Initialize(D3D12_COMMAND_LIST_TYPE type)
     SetD3DDebugName(Dev(), QUEUE_NAMES[type]);
     g_Profiler.RegisterGPUQueue(gfxDevice.Dev(), Dev(), QUEUE_NAMES[type]);
 
+    // init a bunch of free cmd lists first
     m_FreeCommandLists.set_capacity(MaxCmdLists);
+    for (uint32_t i = 0; i < MaxCmdLists; ++i)
+    {
+        GfxCommandList* newCmdList = m_CommandListsPool.construct();
+        newCmdList->Initialize(type);
+        m_FreeCommandLists.push_back(newCmdList);
+    }
 }
 
 void GfxCommandListQueue::ShutDown()
@@ -92,32 +103,19 @@ GfxCommandList* GfxCommandListQueue::AllocateCommandList(std::string_view name)
     bbeProfileFunction();
 
     assert(m_FreeCommandLists.capacity());
+    assert(!m_FreeCommandLists.empty());
 
-    GfxCommandList* newCmdList = nullptr;
-    bool isNewCmdList = false;
+    GfxCommandList* newCmdList = [this]()
     {
         bbeAutoLock(m_ListsLock);
 
-        // if no free list, create a new one
-        if (m_FreeCommandLists.empty())
-        {
-            newCmdList = m_CommandListsPool.construct();
-            isNewCmdList = true;
-        }
-        else
-        {
-            newCmdList = m_FreeCommandLists.front();
-            m_FreeCommandLists.pop_front();
-        }
-    }
-
+        GfxCommandList* toRet = m_FreeCommandLists.front();
+        m_FreeCommandLists.pop_front();
+        return toRet;
+    }();
     assert(newCmdList);
-    if (isNewCmdList)
-    {
-        newCmdList->Initialize(m_Type);
-    }
-
     assert(newCmdList->Dev());
+
     newCmdList->BeginRecording();
 
     SetD3DDebugName(newCmdList->Dev(), name);
@@ -150,14 +148,12 @@ void GfxCommandListQueue::ExecutePendingCommandLists()
     {
         bbeAutoLock(m_ListsLock);
 
-        assert(m_FreeCommandLists.size() + numCmdListsToExec < MaxCmdLists);
+        assert(m_FreeCommandLists.size() + numCmdListsToExec <= MaxCmdLists);
         for (uint32_t i = 0; i < numCmdListsToExec; ++i)
         {
             m_FreeCommandLists.push_back(ppPendingFreeCommandLists[i]);
         }
     }
-
-    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
     // execute cmd lists
     if (numCmdListsToExec > 0)
@@ -168,16 +164,14 @@ void GfxCommandListQueue::ExecutePendingCommandLists()
     SignalFence();
 }
 
-void GfxCommandListsManager::Initialize()
+void GfxCommandListsManager::Initialize(tf::Subflow& sf)
 {
-    bbeProfileFunction();
-    g_Log.info("Initializing GfxCommandListsManager");
-
     for (GfxCommandListQueue* queue : m_AllQueues)
     {
         assert(queue->m_CommandQueue.Get() == nullptr);
     }
-    m_DirectQueue.Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    sf.emplace([this] { m_DirectQueue.Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT); });
+    sf.emplace([this] { m_AsyncComputeQueue.Initialize(D3D12_COMMAND_LIST_TYPE_COMPUTE); });
 }
 
 void GfxCommandListsManager::ShutDown()

@@ -48,7 +48,7 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
     subFlow.emplace([] { g_GfxDefaultVertexFormats.Initialize(); });
     subFlow.emplace([] { g_GfxLightsManager.Initialize(); });
 
-    tf::Task PRE_INIT_GATE = subFlow.emplace([this] { PreInit(); });
+    tf::Task PRE_INIT_GATE = subFlow.emplace([this](tf::Subflow& sf) { PreInit(sf); });
     tf::Task POST_INIT_GATE = subFlow.emplace([this] { PostInit(); }).succeed(PRE_INIT_GATE);
     
     // tasks with dependencies
@@ -63,14 +63,14 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
     }
 }
 
-void GfxManager::PreInit()
+void GfxManager::PreInit(tf::Subflow& sf)
 {
     bbeProfileFunction();
 
     g_GfxAdapter.Initialize();
     m_GfxDevice.Initialize();
     g_GfxMemoryAllocator.Initialize();
-    g_GfxCommandListsManager.Initialize();
+    g_GfxCommandListsManager.Initialize(sf);
 }
 
 void GfxManager::PostInit()
