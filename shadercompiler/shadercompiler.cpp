@@ -29,6 +29,8 @@ static void InitializeGlobals()
     // use default shader if no json file found
     if (!jsonFile)
     {
+        gs_FullRebuild = true;
+
         json defaultJSON;
         defaultJSON["ShaderModel"] = gs_ShaderModelToUse;
         
@@ -41,6 +43,7 @@ static void InitializeGlobals()
     {
         json optionsJSON = json::parse(jsonFile);
         gs_ShaderModelToUse = optionsJSON.at("ShaderModel");
+        gs_FullRebuild = optionsJSON.at("gs_FullRebuild");
     }
     catch (const std::exception& e)
     {
@@ -50,9 +53,15 @@ static void InitializeGlobals()
     }
 }
 
-static void RetrieveDependenciesRecursive(std::unordered_set<std::string>& dependencies, std::string_view fileDir)
+struct ShaderFileMetaData
 {
-    CFileWrapper file{ fileDir.data() };
+    std::size_t m_FullHash = 0;
+    std::unordered_set<std::string> m_UniqueDependencies;
+};
+
+static void RetrieveFileDependencies(ShaderFileMetaData& fileMetaData, std::string_view fileDirFull)
+{
+    CFileWrapper file{ fileDirFull.data() };
 
     std::string buffer;
     buffer.resize(BBE_KB(1));
@@ -68,15 +77,14 @@ static void RetrieveDependenciesRecursive(std::unordered_set<std::string>& depen
 
         std::string newFileDependency = matchResult[1];
         
-        // ignore auto-generated resource binding files. we rely on dirty JSON files for them
-        // Plus, they are not in the same directory as the shader src files anyway
         if (newFileDependency.find("autogen/") != std::string::npos)
-            continue;
+            newFileDependency = StringFormat("%s%s", g_GlobalDirs.m_ShadersTmpDir.c_str(), newFileDependency.c_str());
+        else
+            newFileDependency = StringFormat("%s\\%s", g_GlobalDirs.m_ShadersSrcDir.c_str(), newFileDependency.c_str());
 
-        dependencies.insert(newFileDependency);
+        fileMetaData.m_UniqueDependencies.insert(newFileDependency);
 
-        newFileDependency = StringFormat("%s\\%s", g_GlobalDirs.m_ShadersSrcDir.c_str(), newFileDependency.c_str());
-        RetrieveDependenciesRecursive(dependencies, newFileDependency);
+        RetrieveFileDependencies(fileMetaData, newFileDependency);
     }
 }
 
@@ -85,11 +93,22 @@ static void InitializeShaderFilesDependencies()
     std::vector<std::string> allShaderFiles;
     GetFilesInDirectory(allShaderFiles, g_GlobalDirs.m_ShadersSrcDir);
 
-    std::unordered_map<std::string, std::unordered_set<std::string>> allFilesDependencies;
+    std::unordered_map<std::string, ShaderFileMetaData> allShaderFilesMetaData;
     for (std::string_view shaderFileDir : allShaderFiles)
     {
-        std::unordered_set<std::string>& dependencies = allFilesDependencies[GetFileNameFromPath(shaderFileDir.data())];
-        RetrieveDependenciesRecursive(dependencies, shaderFileDir);
+        ShaderFileMetaData& thisShaderFileMetaData = allShaderFilesMetaData[GetFileNameFromPath(shaderFileDir.data())];
+
+        RetrieveFileDependencies(thisShaderFileMetaData, shaderFileDir);
+
+        thisShaderFileMetaData.m_FullHash = GetFileContentsHash(shaderFileDir.data());
+    }
+
+    for (auto& elem : allShaderFilesMetaData)
+    {
+        for (std::string_view shaderFileDir : elem.second.m_UniqueDependencies)
+        {
+             boost::hash_combine(elem.second.m_FullHash, GetFileContentsHash(shaderFileDir.data()));
+        }
     }
 }
 

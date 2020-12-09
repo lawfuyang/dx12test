@@ -93,7 +93,7 @@ static void PrintShaderInputHLSLFile(const ShaderInputs& inputs)
     for (const GlobalStructure& s : inputs.m_GlobalStructureDependencies)
     {
         generatedString += StringFormat("// struct %s\n", s.m_Name.c_str());
-        generatedString += StringFormat("#include \"%s%s.h\"\n\n", g_GlobalDirs.m_ShadersTmpHLSLAutogenDir.c_str(), s.m_Name.c_str());
+        generatedString += StringFormat("#include \"autogen/hlsl/%s.h\"\n\n", s.m_Name.c_str());
     }
 
     // CBV, SRVs & UAVs bindings

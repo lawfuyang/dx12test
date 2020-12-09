@@ -129,5 +129,6 @@ void PrintAutogenFileForShaderPermutationStructs(const Shader& shader);
 void CompilePermutation(const Shader& parentShader, Shader::Permutation& permutation, GfxShaderType shaderType);
 void PrintAutogenByteCodeHeadersFile(const ConcurrentVector<Shader>& allShaders);
 
+static bool gs_FullRebuild = false;
 static bool gs_CompileFailureDetected = false;
 static std::string gs_ShaderModelToUse = "6_4";
