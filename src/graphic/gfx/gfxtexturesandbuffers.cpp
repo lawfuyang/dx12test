@@ -81,7 +81,7 @@ D3D12MA::Allocation* GfxBufferCommon::CreateHeap(const GfxBufferCommon::HeapDesc
     assert(allocHandle);
     assert(newHeap);
 
-    const StaticWString<BBE_KB(1)> resourceNameW = StringUtils::Utf8ToWide(heapDesc.m_ResourceName);
+    const StaticWString<128> resourceNameW = StringUtils::Utf8ToWide(heapDesc.m_ResourceName.c_str());
     allocHandle->SetName(resourceNameW.c_str());
     allocHandle->GetResource()->SetName(resourceNameW.c_str());
 
@@ -143,7 +143,7 @@ void GfxBufferCommon::InitializeBufferWithInitData(GfxContext& context, uint32_t
 
 void GfxVertexBuffer::Initialize(const InitParams& initParams)
 {
-    GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName);
+    GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName.c_str());
 
     Initialize(initContext, initParams);
 
@@ -203,7 +203,7 @@ void GfxVertexBuffer::Initialize(GfxContext& initContext, const InitParams& init
 
 void GfxIndexBuffer::Initialize(const InitParams& initParams)
 {
-    GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName);
+    GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName.c_str());
 
     Initialize(initContext, initParams);
 
@@ -319,7 +319,7 @@ D3D12_RESOURCE_DESC GfxTexture::GetDescForGfxTexture(const GfxTexture::InitParam
 
 void GfxTexture::Initialize(const InitParams& initParams)
 {
-    GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName);
+    GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName.c_str());
     Initialize(initContext, initParams);
 }
 

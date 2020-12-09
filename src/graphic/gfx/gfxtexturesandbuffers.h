@@ -45,7 +45,7 @@ public:
         D3D12_RESOURCE_STATES     m_InitialState    = D3D12_RESOURCE_STATE_COMMON;
         D3D12_CLEAR_VALUE         m_ClearValue      = {};
         D3D12MA::ALLOCATION_FLAGS m_AllocationFlags = D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET;
-        const char*               m_ResourceName    = "";
+        StaticString<128>         m_ResourceName;
     };
     static D3D12MA::Allocation* CreateHeap(const HeapDesc&);
 
@@ -65,11 +65,11 @@ public:
 
     struct InitParams
     {
-        const void*     m_InitData     = nullptr;
-        uint32_t        m_NumVertices  = 0;
-        uint32_t        m_VertexSize   = 0;
-        std::string     m_ResourceName;
-        D3D12_HEAP_TYPE m_HeapType     = D3D12_HEAP_TYPE_DEFAULT;
+        const void*       m_InitData     = nullptr;
+        uint32_t          m_NumVertices  = 0;
+        uint32_t          m_VertexSize   = 0;
+        StaticString<128> m_ResourceName;
+        D3D12_HEAP_TYPE   m_HeapType     = D3D12_HEAP_TYPE_DEFAULT;
     };
 
     void Initialize(GfxContext& initContext, const InitParams&);
@@ -89,11 +89,11 @@ class GfxIndexBuffer : public GfxHazardTrackedResource,
 public:
     struct InitParams
     {
-        const void*     m_InitData     = nullptr;
-        uint32_t        m_NumIndices   = 0;
-        uint32_t        m_IndexSize    = 0;
-        std::string     m_ResourceName = "";
-        D3D12_HEAP_TYPE m_HeapType     = D3D12_HEAP_TYPE_DEFAULT;
+        const void*       m_InitData     = nullptr;
+        uint32_t          m_NumIndices   = 0;
+        uint32_t          m_IndexSize    = 0;
+        StaticString<128> m_ResourceName;
+        D3D12_HEAP_TYPE   m_HeapType     = D3D12_HEAP_TYPE_DEFAULT;
     };
 
     void Initialize(GfxContext& initContext, const InitParams&);
@@ -135,7 +135,7 @@ public:
         D3D12_RESOURCE_DIMENSION m_Dimension    = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
         D3D12_RESOURCE_FLAGS     m_Flags        = D3D12_RESOURCE_FLAG_NONE;
         const void*              m_InitData     = nullptr;
-        std::string              m_ResourceName = "";
+        StaticString<128>        m_ResourceName;
         D3D12_RESOURCE_STATES    m_InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
         D3D12_CLEAR_VALUE        m_ClearValue   = {};
         ViewType                 m_ViewType     = SRV;
