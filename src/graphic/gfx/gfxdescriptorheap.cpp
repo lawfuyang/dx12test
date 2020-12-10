@@ -1,11 +1,6 @@
 #include <graphic/gfx/gfxdescriptorheap.h>
 #include <graphic/pch.h>
 
-// using d3d12 enums for array idx
-static_assert(D3D12_DESCRIPTOR_HEAP_FLAG_NONE == 0);
-static_assert(D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE == 1);
-static_assert(GfxGPUDescriptorAllocator::NbDescHeapContexts == D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE + 1);
-
 void GfxDescriptorHeap::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags, uint32_t numHeaps)
 {
     bbeProfileFunction();
@@ -25,59 +20,56 @@ void GfxDescriptorHeap::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DE
 
 void GfxGPUDescriptorAllocator::Initialize()
 {
-    for (uint32_t i = 0; i < NbDescHeapContexts; ++i)
+    m_ShaderVisibleDescriptorHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, NbShaderVisibleDescriptors);
+
+    static const uint32_t descHeapSize = g_GfxManager.GetGfxDevice().Dev()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    // allocate shader visible heaps
+    m_FreeShaderVisibleHeaps.set_capacity(NbShaderVisibleDescriptors);
+    for (uint32_t i = 0; i < NbShaderVisibleDescriptors; ++i)
     {
-        m_InternalDescriptorHeap[i].Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, (D3D12_DESCRIPTOR_HEAP_FLAGS)i, NbDescriptors);
+        GfxDescriptorHeapHandle newHandle{};
+        newHandle.m_CPUHandle.InitOffsetted(m_ShaderVisibleDescriptorHeap.Dev()->GetCPUDescriptorHandleForHeapStart(), i, descHeapSize);
+        newHandle.m_GPUHandle.InitOffsetted(m_ShaderVisibleDescriptorHeap.Dev()->GetGPUDescriptorHandleForHeapStart(), i, descHeapSize);
 
-        static const uint32_t descHeapSize = g_GfxManager.GetGfxDevice().Dev()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-        m_FreeHeaps[i].set_capacity(NbDescriptors);
-        for (uint32_t j = 0; j < NbDescriptors; ++j)
-        {
-            GfxDescriptorHeapHandle newHandle{};
-            newHandle.m_CPUHandle.InitOffsetted(m_InternalDescriptorHeap[i].Dev()->GetCPUDescriptorHandleForHeapStart(), j, descHeapSize);
-
-            if (i == D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
-                newHandle.m_GPUHandle.InitOffsetted(m_InternalDescriptorHeap[i].Dev()->GetGPUDescriptorHandleForHeapStart(), j, descHeapSize);
-
-            m_FreeHeaps[i].push_back(newHandle);
-        }
+        m_FreeShaderVisibleHeaps.push_back(newHandle);
     }
 }
 
-GfxDescriptorHeapHandle GfxGPUDescriptorAllocator::AllocateVolatile(D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags, uint32_t numHeaps, GfxDescriptorHeapHandle* out)
+GfxDescriptorHeapHandle GfxGPUDescriptorAllocator::AllocateShaderVisible(uint32_t numHeaps, GfxDescriptorHeapHandle* out)
 {
     assert(numHeaps > 0);
 
-    bbeAutoLock(m_GfxGPUDescriptorAllocatorLock[heapFlags]);
+    static std::mutex ShaderVisibleAllocatorLock;
+    bbeAutoLock(ShaderVisibleAllocatorLock);
 
     // Requested shader visible heaps are assumed to be needed to be contiguous
     // In the event that we do a full circle around the CircularBuffer, and the number of requested heaps overflows back into the start, simply allocate and discard the tail heaps
-    if ((m_AllocationCounter[heapFlags] + numHeaps) > NbDescriptors)
+    if ((m_AllocationCounter + numHeaps) > NbShaderVisibleDescriptors)
     {
-        const int32_t allocationOverflow = NbDescriptors - m_AllocationCounter[heapFlags];
-        AllocateVolatileInternal(heapFlags, allocationOverflow, nullptr);
+        const int32_t allocationOverflow = NbShaderVisibleDescriptors - m_AllocationCounter;
+        AllocateShaderVisibleInternal(allocationOverflow, nullptr);
     }
 
-    return AllocateVolatileInternal(heapFlags, numHeaps, out);
+    return AllocateShaderVisibleInternal(numHeaps, out);
 }
 
-GfxDescriptorHeapHandle GfxGPUDescriptorAllocator::AllocateVolatileInternal(D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags, uint32_t numHeaps, GfxDescriptorHeapHandle* out)
+GfxDescriptorHeapHandle GfxGPUDescriptorAllocator::AllocateShaderVisibleInternal(uint32_t numHeaps, GfxDescriptorHeapHandle* out)
 {
-    assert(m_FreeHeaps[heapFlags].size() >= numHeaps);
+    assert(m_FreeShaderVisibleHeaps.size() >= numHeaps);
 
     // return only the first descriptor
-    GfxDescriptorHeapHandle ret = m_FreeHeaps[heapFlags].front();
+    GfxDescriptorHeapHandle ret = m_FreeShaderVisibleHeaps.front();
 
     for (uint32_t i = 0; i < numHeaps; ++i)
     {
-        GfxDescriptorHeapHandle nextDesc = m_FreeHeaps[heapFlags].front();
+        GfxDescriptorHeapHandle nextDesc = m_FreeShaderVisibleHeaps.front();
         assert(nextDesc.m_CPUHandle.ptr != D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN);
         assert(nextDesc.m_GPUHandle.ptr != D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN);
 
-        m_AllocationCounter[heapFlags] = ++m_AllocationCounter[heapFlags] % NbDescriptors;
-        m_UsedHeaps[heapFlags].push_back(nextDesc);
-        m_FreeHeaps[heapFlags].pop_front();
+        m_AllocationCounter = ++m_AllocationCounter % NbShaderVisibleDescriptors;
+        m_UsedHeaps.push_back(nextDesc);
+        m_FreeShaderVisibleHeaps.pop_front();
 
         if (out)
         {
@@ -92,12 +84,9 @@ void GfxGPUDescriptorAllocator::GarbageCollect()
 {
     bbeMultiThreadDetector();
 
-    for (uint32_t i = 0; i < NbDescHeapContexts; ++i)
-    {
-        std::for_each(m_UsedHeaps[i].begin(), m_UsedHeaps[i].end(), [&](const GfxDescriptorHeapHandle& handle)
-            {
-                m_FreeHeaps[i].push_back(handle);
-            });
-        m_UsedHeaps[i].clear();
-    }
+    std::for_each(m_UsedHeaps.begin(), m_UsedHeaps.end(), [&](const GfxDescriptorHeapHandle& handle)
+        {
+            m_FreeShaderVisibleHeaps.push_back(handle);
+        });
+    m_UsedHeaps.clear();
 }

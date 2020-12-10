@@ -48,7 +48,7 @@ void GfxContext::ClearUAVF(GfxTexture& tex, const bbeVector4& clearValue)
     TransitionResource(tex, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
     SetDescriptorHeapIfNeeded();
 
-    GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.AllocateVolatile(D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, 1);
+    GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.AllocateShaderVisible(1);
     g_GfxManager.GetGfxDevice().Dev()->CopyDescriptorsSimple(1, destHandle.m_CPUHandle, tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     m_CommandList->Dev()->ClearUnorderedAccessViewFloat(destHandle.m_GPUHandle, tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), tex.GetD3D12Resource(), (const FLOAT*)&clearValue, 0, nullptr);
@@ -59,7 +59,7 @@ void GfxContext::ClearUAVU(GfxTexture& tex, const bbeVector4U& clearValue)
     TransitionResource(tex, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
     SetDescriptorHeapIfNeeded();
 
-    GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.AllocateVolatile(D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, 1);
+    GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.AllocateShaderVisible(1);
     g_GfxManager.GetGfxDevice().Dev()->CopyDescriptorsSimple(1, destHandle.m_CPUHandle, tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     m_CommandList->Dev()->ClearUnorderedAccessViewUint(destHandle.m_GPUHandle, tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), tex.GetD3D12Resource(), (const UINT*)&clearValue, 0, nullptr);
@@ -153,7 +153,7 @@ void GfxContext::SetDescriptorHeapIfNeeded()
 {
     if (!m_DescHeapsSet)
     {
-        ID3D12DescriptorHeap* ppHeaps[] = { g_GfxGPUDescriptorAllocator.GetInternalHeap(D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE).Dev() };
+        ID3D12DescriptorHeap* ppHeaps[] = { g_GfxGPUDescriptorAllocator.GetInternalShaderVisibleHeap().Dev() };
         m_CommandList->Dev()->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
         m_DescHeapsSet = true;
     }
@@ -556,7 +556,7 @@ void GfxContext::CommitStagedResources()
     assert(numHeapsNeeded > 0);
 
     // allocate shader visible heaps
-    GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.AllocateVolatile(D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, numHeapsNeeded);
+    GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.AllocateShaderVisible(numHeapsNeeded);
 
     SetDescriptorHeapIfNeeded();
 

@@ -33,22 +33,20 @@ class GfxGPUDescriptorAllocator
     DeclareSingletonFunctions(GfxGPUDescriptorAllocator);
 
 public:
-    static const uint32_t NbDescriptors = 1024;
-    static const uint32_t NbDescHeapContexts = 2;
+    static const uint32_t NbShaderVisibleDescriptors = BBE_KB(1);
 
-    const GfxDescriptorHeap& GetInternalHeap(D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags) const { return m_InternalDescriptorHeap[heapFlags]; }
+    const GfxDescriptorHeap& GetInternalShaderVisibleHeap() const { return m_ShaderVisibleDescriptorHeap; }
     void Initialize();
-    GfxDescriptorHeapHandle AllocateVolatile(D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags, uint32_t numHeaps, GfxDescriptorHeapHandle* out = nullptr);
+    GfxDescriptorHeapHandle AllocateShaderVisible(uint32_t numHeaps, GfxDescriptorHeapHandle* out = nullptr);
     void GarbageCollect();
 
 private:
-    GfxDescriptorHeapHandle AllocateVolatileInternal(D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags, uint32_t numHeaps, GfxDescriptorHeapHandle* out);
+    GfxDescriptorHeapHandle AllocateShaderVisibleInternal(uint32_t numHeaps, GfxDescriptorHeapHandle* out);
 
-    std::mutex m_GfxGPUDescriptorAllocatorLock[NbDescHeapContexts];
-    uint32_t m_AllocationCounter[NbDescHeapContexts]{};
-    CircularBuffer<GfxDescriptorHeapHandle> m_FreeHeaps[NbDescHeapContexts];
-    InplaceArray<GfxDescriptorHeapHandle, NbDescriptors> m_UsedHeaps[NbDescHeapContexts];
-
-    GfxDescriptorHeap m_InternalDescriptorHeap[NbDescHeapContexts];
+    // Shader Visible heaps
+    uint32_t m_AllocationCounter = 0;
+    CircularBuffer<GfxDescriptorHeapHandle> m_FreeShaderVisibleHeaps;
+    InplaceArray<GfxDescriptorHeapHandle, NbShaderVisibleDescriptors> m_UsedHeaps;
+    GfxDescriptorHeap m_ShaderVisibleDescriptorHeap;
 };
 #define g_GfxGPUDescriptorAllocator GfxGPUDescriptorAllocator::GetInstance()
