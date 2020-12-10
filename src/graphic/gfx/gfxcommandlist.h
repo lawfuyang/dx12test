@@ -44,10 +44,9 @@ private:
 
     GfxFence m_Fence;
     ComPtr<ID3D12CommandQueue> m_CommandQueue;
-    ObjectPool<GfxCommandList> m_CommandListsPool;
 
     std::mutex m_ListsLock;
-    CircularBuffer<GfxCommandList*> m_FreeCommandLists;
+    CircularBuffer<GfxCommandList> m_CommandLists;
     InplaceArray<GfxCommandList*, MaxCmdLists> m_PendingExecuteCommandLists;
 
     friend class GfxCommandListsManager;

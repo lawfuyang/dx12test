@@ -31,8 +31,6 @@ void GfxCommandList::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType)
 
 void GfxCommandList::BeginRecording()
 {
-    bbeProfileFunction();
-
     // Command list allocators can only be reset when the associated command lists have finished execution on the GPU
     // Apps should use fences to determine GPU execution progress
     DX12_CALL(m_CommandAllocator->Reset());
@@ -78,12 +76,12 @@ void GfxCommandListQueue::Initialize(D3D12_COMMAND_LIST_TYPE type)
     g_Profiler.RegisterGPUQueue(gfxDevice.Dev(), Dev(), QUEUE_NAMES[type]);
 
     // init a bunch of free cmd lists first
-    m_FreeCommandLists.set_capacity(MaxCmdLists);
+    m_CommandLists.set_capacity(MaxCmdLists);
     for (uint32_t i = 0; i < MaxCmdLists; ++i)
     {
-        GfxCommandList* newCmdList = m_CommandListsPool.construct();
-        newCmdList->Initialize(type);
-        m_FreeCommandLists.push_back(newCmdList);
+        GfxCommandList newCmdList;
+        newCmdList.Initialize(type);
+        m_CommandLists.push_back(newCmdList);
     }
 }
 
@@ -92,9 +90,9 @@ void GfxCommandListQueue::ShutDown()
     assert(m_PendingExecuteCommandLists.empty());
 
     // free all cmd lists
-    for (GfxCommandList* cmdList : m_FreeCommandLists)
+    for (GfxCommandList& cmdList : m_CommandLists)
     {
-        m_CommandListsPool.free(cmdList);
+        cmdList.Dev()->Release();
     }
 }
 
@@ -102,22 +100,21 @@ GfxCommandList* GfxCommandListQueue::AllocateCommandList(std::string_view name)
 {
     bbeProfileFunction();
 
-    assert(m_FreeCommandLists.capacity());
-    assert(!m_FreeCommandLists.empty());
+    // before allocating, make sure the queue itself is already initialized
+    assert(!m_CommandLists.empty());
 
-    GfxCommandList* newCmdList = [this]()
-    {
-        bbeAutoLock(m_ListsLock);
+    bbeAutoLock(m_ListsLock);
 
-        GfxCommandList* toRet = m_FreeCommandLists.front();
-        m_FreeCommandLists.pop_front();
-        return toRet;
-    }();
-    assert(newCmdList);
+    // get new cmd list in front of circular buffer and rotate it
+    GfxCommandList* newCmdList = &*m_CommandLists.begin();
+    assert(m_CommandLists.full());
+    m_CommandLists.rotate(m_CommandLists.begin() + 1);
+
+    // begin recording
     assert(newCmdList->Dev());
-
     newCmdList->BeginRecording();
 
+    // set debug names
     SetD3DDebugName(newCmdList->Dev(), name);
     SetD3DDebugName(newCmdList->m_CommandAllocator.Get(), name);
 
@@ -127,7 +124,6 @@ GfxCommandList* GfxCommandListQueue::AllocateCommandList(std::string_view name)
 void GfxCommandListQueue::ExecutePendingCommandLists() 
 {
     uint32_t numCmdListsToExec = 0;
-    GfxCommandList* ppPendingFreeCommandLists[MaxCmdLists] = {};
     ID3D12CommandList* ppCommandLists[MaxCmdLists] = {};
 
     // end recording for all pending cmd lists
@@ -138,21 +134,9 @@ void GfxCommandListQueue::ExecutePendingCommandLists()
         {
             DX12_CALL(cmdListToConsume->Dev()->Close());
 
-            ppPendingFreeCommandLists[numCmdListsToExec] = cmdListToConsume;
             ppCommandLists[numCmdListsToExec++] = cmdListToConsume->Dev();
         }
         m_PendingExecuteCommandLists.clear();
-    }
-
-    // add executed cmd lists to inflight list queue
-    {
-        bbeAutoLock(m_ListsLock);
-
-        assert(m_FreeCommandLists.size() + numCmdListsToExec <= MaxCmdLists);
-        for (uint32_t i = 0; i < numCmdListsToExec; ++i)
-        {
-            m_FreeCommandLists.push_back(ppPendingFreeCommandLists[i]);
-        }
     }
 
     // execute cmd lists

@@ -34,24 +34,18 @@ class GfxGPUDescriptorAllocator
     DeclareSingletonFunctions(GfxGPUDescriptorAllocator);
 
 public:
-    static const uint32_t NbStaticDescriptors        = BBE_KB(1);
     static const uint32_t NbShaderVisibleDescriptors = BBE_KB(1);
 
     const GfxDescriptorHeap& GetInternalShaderVisibleHeap() const { return m_ShaderVisibleDescriptorHeap; }
     void Initialize();
-    GfxDescriptorHeapHandle AllocateShaderVisible(uint32_t numHeaps, GfxDescriptorHeapHandle* out = nullptr);
-    CD3DX12_CPU_DESCRIPTOR_HANDLE AllocateStatic(D3D12_DESCRIPTOR_HEAP_TYPE);
-    void GarbageCollect();
+    GfxDescriptorHeapHandle AllocateShaderVisible(uint32_t numHeaps);
 
 private:
-    GfxDescriptorHeapHandle AllocateShaderVisibleInternal(uint32_t numHeaps, GfxDescriptorHeapHandle* out);
+    GfxDescriptorHeapHandle AllocateShaderVisibleInternal(uint32_t numHeaps);
 
     // Shader Visible heaps
     uint32_t m_AllocationCounter = 0;
     CircularBuffer<GfxDescriptorHeapHandle> m_FreeShaderVisibleHeaps;
-    InplaceArray<GfxDescriptorHeapHandle, NbShaderVisibleDescriptors> m_UsedHeaps;
     GfxDescriptorHeap m_ShaderVisibleDescriptorHeap;
-
-    CircularBuffer<GfxDescriptorHeap> m_StaticHeaps;
 };
 #define g_GfxGPUDescriptorAllocator GfxGPUDescriptorAllocator::GetInstance()

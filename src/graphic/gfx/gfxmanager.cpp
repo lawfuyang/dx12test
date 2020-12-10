@@ -118,11 +118,16 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
 
-    tf::Task BEGIN_FRAME_GATE = subFlow.placeholder();
+    tf::Task WAIT_PREV_FRAME_GATE = subFlow.placeholder();
+    tf::Task BEGIN_FRAME_GATE = subFlow.placeholder().succeed(WAIT_PREV_FRAME_GATE);
     tf::Task RENDERERS_GATE = subFlow.placeholder().succeed(BEGIN_FRAME_GATE);
 
-    subFlow.emplace([this](tf::Subflow& sf) { m_GfxCommandManager.ConsumeAllCommandsMT(sf); }).precede(BEGIN_FRAME_GATE);
-    subFlow.emplace([this] { BeginFrame(); }).precede(BEGIN_FRAME_GATE);
+    // TODO: This will kill performance with gpu debug layer enabled!
+    // Implement a proper way of handling previous frame gpu resources
+    subFlow.emplace([] { g_GfxCommandListsManager.GetMainQueue().StallCPUForFence(); }).precede(WAIT_PREV_FRAME_GATE);
+
+    subFlow.emplace([this](tf::Subflow& sf) { m_GfxCommandManager.ConsumeAllCommandsMT(sf); }).succeed(WAIT_PREV_FRAME_GATE).precede(BEGIN_FRAME_GATE);
+    subFlow.emplace([this] { BeginFrame(); }).succeed(WAIT_PREV_FRAME_GATE).precede(BEGIN_FRAME_GATE);
 
     auto PopulateCommandList = [&, this](GfxRendererBase* renderer)
     {
@@ -154,16 +159,10 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
 
 void GfxManager::BeginFrame()
 {
-    // TODO: This will kill performance with gpu debug layer enabled!
-    // Implement a proper way of handling previous frame gpu resources
-    g_GfxCommandListsManager.GetMainQueue().StallCPUForFence();
-
     m_GfxDevice.CheckStatus();
 
-    g_GfxGPUDescriptorAllocator.GarbageCollect();
-
     // TODO: Remove clearing of BackBuffer when we manage to fill every pixel on screen through various render passes
-    GfxContext& context = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "TransitionBackBufferForPresent");
+    GfxContext& context = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "ClearBackBuffer & DepthBuffer");
     context.ClearRenderTargetView(m_SwapChain.GetCurrentBackBuffer(), bbeVector4{ 0.0f, 0.2f, 0.4f, 1.0f });
     context.ClearDepth(g_SceneDepthBuffer, 1.0f);
     g_GfxCommandListsManager.QueueCommandListToExecute(&context.GetCommandList());

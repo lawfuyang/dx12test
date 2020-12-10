@@ -1,6 +1,5 @@
 #pragma once
 
-#include <graphic/gfx/gfxdescriptorheap.h>
 #include <graphic/dx12utils.h>
 
 namespace D3D12MA
@@ -33,34 +32,25 @@ class GfxHazardTrackedResource
 public:
     static const D3D12_RESOURCE_STATES INVALID_STATE = (D3D12_RESOURCE_STATES)0xDEADBEEF;
 
-    D3D12_RESOURCE_STATES GetResourceCurrentState() const { return m_CurrentResourceState; }
-    D3D12_RESOURCE_STATES GetResourceTransitioningState() const { return m_TransitioningState; }
+    ID3D12Resource* GetD3D12Resource() const { return m_D3D12Resource; }
+
+    void Release();
 
 protected:
-    D3D12_RESOURCE_STATES m_CurrentResourceState = D3D12_RESOURCE_STATE_COMMON;
-    D3D12_RESOURCE_STATES m_TransitioningState = INVALID_STATE;
-    ID3D12Resource* m_HazardTrackedResource = nullptr;
+    void UploadInitData(GfxContext& context, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* initData, const char* resourceName);
 
-    friend class GfxBufferCommon;
+    D3D12MA::Allocation* m_D3D12MABufferAllocation = nullptr;
+    ID3D12Resource*      m_D3D12Resource           = nullptr;
+
+    D3D12_RESOURCE_STATES m_CurrentResourceState = D3D12_RESOURCE_STATE_COMMON;
+    D3D12_RESOURCE_STATES m_TransitioningState   = INVALID_STATE;
+
+    uint32_t m_SizeInBytes = 0;
+
     friend class GfxContext;
 };
 
-class GfxBufferCommon
-{
-public:
-    ID3D12Resource* GetD3D12Resource() const { return m_D3D12MABufferAllocation->GetResource(); }
-
-    void Release();
-protected:
-
-    void InitializeBufferWithInitData(GfxContext& context, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* initData, const char* resourceName);
-
-    D3D12MA::Allocation* m_D3D12MABufferAllocation = nullptr;
-    uint32_t             m_SizeInBytes = 0;
-};
-
-class GfxVertexBuffer : public GfxHazardTrackedResource,
-                        public GfxBufferCommon
+class GfxVertexBuffer : public GfxHazardTrackedResource
 {
 public:
     struct InitParams
@@ -75,14 +65,14 @@ public:
     void Initialize(GfxContext& initContext, const InitParams&);
     void Initialize(const InitParams&);
 
-    uint32_t GetStrideInBytes() const { return m_InitParams.m_VertexSize; }
-    uint32_t GetNumVertices() const { return m_InitParams.m_NumVertices; }
+    uint32_t GetStrideInBytes() const { return m_StrideInBytes; }
+    uint32_t GetNumVertices() const { return m_NumVertices; }
 
-    InitParams m_InitParams;
+    uint32_t m_StrideInBytes = 0;
+    uint32_t m_NumVertices = 0;
 };
 
-class GfxIndexBuffer : public GfxHazardTrackedResource,
-                       public GfxBufferCommon
+class GfxIndexBuffer : public GfxHazardTrackedResource
 {
 public:
     struct InitParams
@@ -97,18 +87,15 @@ public:
     void Initialize(const InitParams&);
 
     DXGI_FORMAT GetFormat() const { DXGI_FORMAT_R16_UINT; } // only support 16 bit indices for now
-    uint32_t GetNumIndices() const { return m_InitParams.m_NumIndices; }
+    uint32_t GetNumIndices() const { return m_NumIndices; }
 
-    InitParams m_InitParams;
+    uint32_t m_NumIndices = 0;
 };
 
-class GfxTexture : public GfxHazardTrackedResource,
-                   public GfxBufferCommon
+class GfxTexture : public GfxHazardTrackedResource
 {
 public:
     DeclareObjectModelFunctions(GfxTexture);
-
-    enum ViewType { RTV, SRV, DSV, UAV };
 
     struct InitParams
     {
@@ -132,28 +119,20 @@ public:
         const void*              m_InitData     = nullptr;
         D3D12_RESOURCE_STATES    m_InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
         D3D12_CLEAR_VALUE        m_ClearValue   = {};
-        ViewType                 m_ViewType     = SRV;
         StaticString<128>        m_ResourceName;
     };
 
     void Initialize(GfxContext& initContext, const InitParams&);
     void Initialize(const InitParams&);
-    void InitializeForSwapChain(ComPtr<IDXGISwapChain4>& swapChain, DXGI_FORMAT, uint32_t backBufferIdx);
 
-    GfxDescriptorHeap& GetDescriptorHeap() { return m_GfxDescriptorHeap; }
+    DXGI_FORMAT GetFormat() const { return m_Format; }
 
-    DXGI_FORMAT GetFormat() const { return m_InitParams.m_Format; }
-
-    InitParams m_InitParams;
+    DXGI_FORMAT m_Format = DXGI_FORMAT_UNKNOWN;
 
     void UpdateIMGUI();
 
 private:
     D3D12_RESOURCE_DESC GetDescForGfxTexture(const GfxTexture::InitParams& i);
-    void CreateRTV(const InitParams& initParams);
-    void CreateDSV(const InitParams& initParams);
-    void CreateSRV(const InitParams& initParams);
-    void CreateUAV(const InitParams& initParams);
 
-    GfxDescriptorHeap m_GfxDescriptorHeap;
+    friend class GfxSwapChain;
 };

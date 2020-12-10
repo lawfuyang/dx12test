@@ -51,7 +51,6 @@ void GfxForwardLightingPass::Initialize()
     depthBufferInitParams.m_InitData = nullptr;
     depthBufferInitParams.m_ResourceName = "GfxManager Depth Buffer";
     depthBufferInitParams.m_InitialState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-    depthBufferInitParams.m_ViewType = GfxTexture::DSV;
     depthBufferInitParams.m_ClearValue.Format = depthBufferInitParams.m_Format;
     depthBufferInitParams.m_ClearValue.DepthStencil.Depth = 1.0f;
     depthBufferInitParams.m_ClearValue.DepthStencil.Stencil = 0;

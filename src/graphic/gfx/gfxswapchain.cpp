@@ -14,7 +14,7 @@ void GfxSwapChain::Initialize()
     swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     swapChainDesc.Stereo = false; // set to true for VR
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.BufferCount = ms_NumFrames;
+    swapChainDesc.BufferCount = NbBackBuffers;
     swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED; // TODO: Learn the differences
@@ -25,7 +25,7 @@ void GfxSwapChain::Initialize()
     ComPtr<IDXGISwapChain1> swapChain;
     {
         bbeProfile("CreateSwapChainForHwnd");
-        DX12_CALL(dxgiFactory->CreateSwapChainForHwnd(g_GfxCommandListsManager.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT).Dev(), // Swap chain needs the queue so that it can force a flush on it.
+        DX12_CALL(dxgiFactory->CreateSwapChainForHwnd(g_GfxCommandListsManager.GetMainQueue().Dev(), // Swap chain needs the queue so that it can force a flush on it.
                                                       g_System.GetEngineWindowHandle(),
                                                       &swapChainDesc,
                                                       nullptr,
@@ -39,18 +39,14 @@ void GfxSwapChain::Initialize()
     DX12_CALL(swapChain.As(&m_SwapChain));
     swapChain->QueryInterface(IID_PPV_ARGS(&m_SwapChain));
 
-    // Create a RTV for each frame.
-    for (uint32_t i = 0; i < _countof(m_RenderTargets); ++i)
+    // set debug names
+    for (uint32_t i = 0; i < NbBackBuffers; ++i)
     {
-        m_RenderTargets[i].InitializeForSwapChain(m_SwapChain, DXGI_FORMAT_R8G8B8A8_UNORM, i);
-    }
-}
-
-void GfxSwapChain::ShutDown()
-{
-    for (GfxTexture& tex : m_RenderTargets)
-    {
-        tex.Release();
+        ID3D12Resource* swapChainResource = nullptr;
+        DX12_CALL(Dev()->GetBuffer(i, IID_PPV_ARGS(&swapChainResource)));
+        m_Textures[i].m_D3D12Resource = swapChainResource;
+        m_Textures[i].m_D3D12Resource->SetName(StringUtils::Utf8ToWide(StringFormat("Back Buffer RTV %d", i)));
+        m_Textures[i].m_Format = swapChainDesc.Format;
     }
 }
 

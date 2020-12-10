@@ -18,6 +18,31 @@ void GfxContext::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, std::string_vie
     m_CommandList->Dev()->IASetIndexBuffer(&NullIndexBufferView);
 
     m_PSO.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+
+    // allocate static heaps
+    static const uint32_t NbStaticDescriptors = 128;
+    m_StaticHeaps.set_capacity(NbStaticDescriptors);
+    for (uint32_t i = 0; i < NbStaticDescriptors; ++i)
+    {
+        m_StaticHeaps.push_back();
+    }
+}
+
+CD3DX12_CPU_DESCRIPTOR_HANDLE GfxContext::AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE type, std::string_view debugName)
+{
+    // Get a heap from the front of buffer & re-init it to appropriate type
+    GfxDescriptorHeap& toRet = m_StaticHeaps.front();
+    toRet.Release();
+    toRet.Initialize(type, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
+
+    if (!debugName.empty())
+        SetD3DDebugName(toRet.Dev(), debugName);
+
+    // rotate circular buffer to the next element, so we always use the "oldest" heap
+    assert(m_StaticHeaps.full());
+    m_StaticHeaps.rotate(m_StaticHeaps.begin() + 1);
+
+    return CD3DX12_CPU_DESCRIPTOR_HANDLE{ toRet.Dev()->GetCPUDescriptorHandleForHeapStart() };
 }
 
 void GfxContext::ClearRenderTargetView(GfxTexture& tex, const bbeVector4& clearColor)
@@ -26,43 +51,56 @@ void GfxContext::ClearRenderTargetView(GfxTexture& tex, const bbeVector4& clearC
 
     TransitionResource(tex, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
 
+    CD3D12_RENDER_TARGET_VIEW_DESC desc{ D3D12_RTV_DIMENSION_TEXTURE2D, tex.GetFormat() };
+    CD3DX12_CPU_DESCRIPTOR_HANDLE descHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    g_GfxManager.GetGfxDevice().Dev()->CreateRenderTargetView(tex.GetD3D12Resource(), &desc, descHeap);
+
     const UINT numRects = 0;
     const D3D12_RECT* pRects = nullptr;
-    m_CommandList->Dev()->ClearRenderTargetView(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), (const FLOAT*)&clearColor, numRects, pRects);
+    m_CommandList->Dev()->ClearRenderTargetView(descHeap, (const FLOAT*)&clearColor, numRects, pRects);
 }
 
-void GfxContext::ClearDepth(GfxTexture& tex, float depth)
+void GfxContext::ClearDSVInternal(GfxTexture& tex, float depth, uint8_t stencil, D3D12_CLEAR_FLAGS flags)
 {
     bbeProfileGPUFunction((*this));
-    m_CommandList->Dev()->ClearDepthStencilView(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
-}
 
-void GfxContext::ClearDepthStencil(GfxTexture& tex, float depth, uint8_t stencil)
-{
-    bbeProfileGPUFunction((*this));
-    m_CommandList->Dev()->ClearDepthStencilView(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, depth, stencil, 0, nullptr);
+    TransitionResource(tex, D3D12_RESOURCE_STATE_DEPTH_WRITE, true);
+
+    D3D12_DEPTH_STENCIL_VIEW_DESC desc{};
+    desc.Format = tex.GetFormat();
+    desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE descHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+
+    g_GfxManager.GetGfxDevice().Dev()->CreateDepthStencilView(tex.GetD3D12Resource(), &desc, descHeap);
+
+    m_CommandList->Dev()->ClearDepthStencilView(descHeap, flags, depth, stencil, 0, nullptr);
 }
 
 void GfxContext::ClearUAVF(GfxTexture& tex, const bbeVector4& clearValue)
 {
     TransitionResource(tex, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
-    SetDescriptorHeapIfNeeded();
+    SetShaderVisibleDescriptorHeap();
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE CPUDescHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.AllocateShaderVisible(1);
-    g_GfxManager.GetGfxDevice().Dev()->CopyDescriptorsSimple(1, destHandle.m_CPUHandle, tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    g_GfxManager.GetGfxDevice().Dev()->CopyDescriptorsSimple(1, destHandle.m_CPUHandle, CPUDescHeap, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    m_CommandList->Dev()->ClearUnorderedAccessViewFloat(destHandle.m_GPUHandle, tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), tex.GetD3D12Resource(), (const FLOAT*)&clearValue, 0, nullptr);
+    m_CommandList->Dev()->ClearUnorderedAccessViewFloat(destHandle.m_GPUHandle, CPUDescHeap, tex.GetD3D12Resource(), (const FLOAT*)&clearValue, 0, nullptr);
 }
 
 void GfxContext::ClearUAVU(GfxTexture& tex, const bbeVector4U& clearValue)
 {
     TransitionResource(tex, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
-    SetDescriptorHeapIfNeeded();
+    SetShaderVisibleDescriptorHeap();
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE CPUDescHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.AllocateShaderVisible(1);
-    g_GfxManager.GetGfxDevice().Dev()->CopyDescriptorsSimple(1, destHandle.m_CPUHandle, tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    g_GfxManager.GetGfxDevice().Dev()->CopyDescriptorsSimple(1, destHandle.m_CPUHandle, CPUDescHeap, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    m_CommandList->Dev()->ClearUnorderedAccessViewUint(destHandle.m_GPUHandle, tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), tex.GetD3D12Resource(), (const UINT*)&clearValue, 0, nullptr);
+    m_CommandList->Dev()->ClearUnorderedAccessViewUint(destHandle.m_GPUHandle, CPUDescHeap, tex.GetD3D12Resource(), (const UINT*)&clearValue, 0, nullptr);
 }
 
 template <uint32_t NbRTs>
@@ -73,8 +111,15 @@ void GfxContext::SetRTVHelper(GfxTexture* (&RTVs)[NbRTs])
 
     for (uint32_t i = 0; i < NbRTs; ++i)
     {
-        m_RTVs[i] = RTVs[i];
+        m_RTVs[i].m_Tex = RTVs[i];
         (&m_PSO.RTVFormats)->RTFormats[i] = RTVs[i]->GetFormat();
+
+        // TODO: Any other dimensions for RTV other than Texture2D?
+        const D3D12_RESOURCE_DESC resourceDesc = RTVs[i]->GetD3D12Resource()->GetDesc();
+        CD3D12_RENDER_TARGET_VIEW_DESC RTVdesc{ D3D12_RTV_DIMENSION_TEXTURE2D, resourceDesc.Format };
+
+        m_RTVs[i].m_CPUDescHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        g_GfxManager.GetGfxDevice().Dev()->CreateRenderTargetView(RTVs[i]->GetD3D12Resource(), &RTVdesc, m_RTVs[i].m_CPUDescHeap);
     }
 }
 
@@ -149,13 +194,13 @@ void GfxContext::StageCBVInternal(const void* data, uint32_t bufferSize, uint32_
     memcpy(stagedCBV.m_CBBytes.data(), data, bufferSize);
 }
 
-void GfxContext::SetDescriptorHeapIfNeeded()
+void GfxContext::SetShaderVisibleDescriptorHeap()
 {
-    if (!m_DescHeapsSet)
+    if (!m_ShaderVisibleDescHeapsSet)
     {
         ID3D12DescriptorHeap* ppHeaps[] = { g_GfxGPUDescriptorAllocator.GetInternalShaderVisibleHeap().Dev() };
         m_CommandList->Dev()->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-        m_DescHeapsSet = true;
+        m_ShaderVisibleDescHeapsSet = true;
     }
 }
 
@@ -170,12 +215,34 @@ void GfxContext::CheckStagingResourceInputs(uint32_t rootIndex, uint32_t offset,
 void GfxContext::StageSRV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
 {
     CheckStagingResourceInputs(rootIndex, offset, D3D12_DESCRIPTOR_RANGE_TYPE_SRV);
-    StageDescriptor(tex.GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart(), rootIndex, offset);
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC SRVdesc{};
+
+    const D3D12_RESOURCE_DESC resourceDesc = tex.GetD3D12Resource()->GetDesc();
+    switch (resourceDesc.Dimension)
+    {
+    case D3D12_RESOURCE_DIMENSION_BUFFER:
+        SRVdesc = CD3D12_SHADER_RESOURCE_VIEW_DESC{ D3D12_SRV_DIMENSION_BUFFER, resourceDesc.Format };
+        break;
+    case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
+        SRVdesc = CD3D12_SHADER_RESOURCE_VIEW_DESC{ D3D12_SRV_DIMENSION_TEXTURE2D, resourceDesc.Format };
+        break;
+
+        // TODO: Other dimensions when needed
+    default: assert(false);
+    }
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE CPUDescHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, StringFormat("SRV: %s", GetD3DDebugName(tex.GetD3D12Resource())));
+    g_GfxManager.GetGfxDevice().Dev()->CreateShaderResourceView(tex.GetD3D12Resource(), &SRVdesc, CPUDescHeap);
+
+    StageDescriptor(CPUDescHeap, rootIndex, offset);
 }
 
 void GfxContext::StageUAV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
 {
     CheckStagingResourceInputs(rootIndex, offset, D3D12_DESCRIPTOR_RANGE_TYPE_UAV);
+
+    // TODO
 }
 
 void GfxContext::StageDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptor, uint32_t rootIndex, uint32_t offset)
@@ -243,7 +310,7 @@ std::size_t GfxContext::GetPSOHash()
         boost::hash_combine(finalHash, m_RTVs.size());
         for (uint32_t i = 0; i < m_RTVs.size(); ++i)
         {
-            boost::hash_combine(finalHash, m_RTVs[i]->GetFormat());
+            boost::hash_combine(finalHash, m_RTVs[i].m_Tex->GetFormat());
         }
 
         // Sample Desccriptors
@@ -275,7 +342,8 @@ void GfxContext::PrepareGraphicsStates()
 
     for (uint32_t i = 0; i < m_RTVs.size(); ++i)
     {
-        assert(m_RTVs[i] != nullptr);
+        assert(m_RTVs[i].m_Tex != nullptr);
+        assert(m_RTVs[i].m_CPUDescHeap.ptr != 0);
         assert((&m_PSO.RTVFormats)->RTFormats[i] != DXGI_FORMAT_UNKNOWN);
     }
 
@@ -292,15 +360,27 @@ void GfxContext::PrepareGraphicsStates()
         // Input Assembler
         m_CommandList->Dev()->IASetPrimitiveTopology(GetD3D12PrimitiveTopology(m_PSO.PrimitiveTopologyType));
 
-        // Output Merger
-        InplaceArray<D3D12_CPU_DESCRIPTOR_HANDLE, 3> rtvHandles{ m_RTVs.size() };
-        for (uint32_t i = 0; i < m_RTVs.size(); ++i)
+        // RTVs
+        InplaceArray<D3D12_CPU_DESCRIPTOR_HANDLE, 3> rtvHandles;
+        for (const RTVDesc& rtvDesc : m_RTVs)
         {
-            rtvHandles[i] = m_RTVs[i]->GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart();
-
-            TransitionResource(*m_RTVs[i], D3D12_RESOURCE_STATE_RENDER_TARGET, false);
+            TransitionResource(*rtvDesc.m_Tex, D3D12_RESOURCE_STATE_RENDER_TARGET, false);
+            rtvHandles.push_back(rtvDesc.m_CPUDescHeap);
         }
-        m_CommandList->Dev()->OMSetRenderTargets(m_RTVs.size(), rtvHandles.data(), FALSE, m_DSV ? &m_DSV->GetDescriptorHeap().Dev()->GetCPUDescriptorHandleForHeapStart() : nullptr);
+
+        // DSV
+        D3D12_CPU_DESCRIPTOR_HANDLE DSVDescHandle{};
+        if (m_DSV)
+        {
+            TransitionResource(*m_DSV, D3D12_RESOURCE_STATE_DEPTH_WRITE, false);
+            DSVDescHandle = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, StringFormat("DSV: %s", GetD3DDebugName(m_DSV->GetD3D12Resource())));
+
+            D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc{ m_DSV->GetFormat(), D3D12_DSV_DIMENSION_TEXTURE2D, D3D12_DSV_FLAG_READ_ONLY_DEPTH };
+            g_GfxManager.GetGfxDevice().Dev()->CreateDepthStencilView(m_DSV->GetD3D12Resource(), &DSVDesc, DSVDescHandle);
+        }
+
+        // Set Render Targets
+        m_CommandList->Dev()->OMSetRenderTargets(m_RTVs.size(), rtvHandles.data(), FALSE, m_DSV ? &DSVDescHandle : nullptr);
     }
 
     std::size_t buffersHash = std::hash<void*>{}(m_VertexBuffer);
@@ -365,26 +445,6 @@ void GfxContext::FlushResourceBarriers()
     }
 }
 
-void GfxContext::CreateRTV(const GfxTexture&)
-{
-
-}
-
-void GfxContext::CreateDSV(const GfxTexture&)
-{
-
-}
-
-void GfxContext::CreateSRV(const GfxTexture&)
-{
-
-}
-
-void GfxContext::CreateUAV(const GfxTexture&)
-{
-
-}
-
 void GfxContext::TransitionResource(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate)
 {
     const D3D12_RESOURCE_STATES oldState = resource.m_CurrentResourceState;
@@ -394,14 +454,14 @@ void GfxContext::TransitionResource(GfxHazardTrackedResource& resource, D3D12_RE
         D3D12_RESOURCE_BARRIER& BarrierDesc = m_ResourceBarriers.emplace_back(D3D12_RESOURCE_BARRIER{});
 
         BarrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        BarrierDesc.Transition.pResource = resource.m_HazardTrackedResource;
+        BarrierDesc.Transition.pResource = resource.GetD3D12Resource();
         BarrierDesc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
         BarrierDesc.Transition.StateBefore = oldState;
         BarrierDesc.Transition.StateAfter = newState;
 
         // Insert UAV barrier on SRV<->UAV transitions.
         if (oldState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS || newState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
-            m_ResourceBarriers.push_back(CD3DX12_RESOURCE_BARRIER::UAV(resource.m_HazardTrackedResource));
+            m_ResourceBarriers.push_back(CD3DX12_RESOURCE_BARRIER::UAV(resource.GetD3D12Resource()));
 
         // Check to see if we already started the transition
         if (newState == resource.m_TransitioningState)
@@ -415,7 +475,7 @@ void GfxContext::TransitionResource(GfxHazardTrackedResource& resource, D3D12_RE
         resource.m_CurrentResourceState = newState;
     }
     else if (newState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
-        m_ResourceBarriers.push_back(CD3DX12_RESOURCE_BARRIER::UAV(resource.m_HazardTrackedResource));
+        m_ResourceBarriers.push_back(CD3DX12_RESOURCE_BARRIER::UAV(resource.GetD3D12Resource()));
 
     if (flushImmediate)
         FlushResourceBarriers();
@@ -449,7 +509,7 @@ void GfxContext::BeginResourceTransition(GfxHazardTrackedResource& resource, D3D
         D3D12_RESOURCE_BARRIER& BarrierDesc = m_ResourceBarriers.emplace_back(D3D12_RESOURCE_BARRIER{});
 
         BarrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        BarrierDesc.Transition.pResource = resource.m_HazardTrackedResource;
+        BarrierDesc.Transition.pResource = resource.GetD3D12Resource();
         BarrierDesc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
         BarrierDesc.Transition.StateBefore = oldState;
         BarrierDesc.Transition.StateAfter = newState;
@@ -524,16 +584,11 @@ void GfxContext::CommitStagedResources()
         assert(uploadHeap);
 
         // init desc heap for cbuffer
-        GfxDescriptorHeap descHeap;
-        descHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
-        SetD3DDebugName(descHeap.Dev(), stagedCBV.m_Name);
+        CD3DX12_CPU_DESCRIPTOR_HANDLE descHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, StringFormat("CBV: %s", stagedCBV.m_Name));
 
         // Describe and create a constant buffer view.
-        D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
-        cbvDesc.BufferLocation = uploadHeap->GetResource()->GetGPUVirtualAddress();
-        cbvDesc.SizeInBytes = stagedCBV.m_CBBytes.size();
-
-        gfxDevice.Dev()->CreateConstantBufferView(&cbvDesc, descHeap.Dev()->GetCPUDescriptorHandleForHeapStart());
+        D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{ uploadHeap->GetResource()->GetGPUVirtualAddress(), (uint32_t)stagedCBV.m_CBBytes.size() };
+        gfxDevice.Dev()->CreateConstantBufferView(&cbvDesc, descHeap);
 
         void* mappedMemory = nullptr;
         DX12_CALL(uploadHeap->GetResource()->Map(0, nullptr, reinterpret_cast<void**>(&mappedMemory)));
@@ -541,10 +596,10 @@ void GfxContext::CommitStagedResources()
         uploadHeap->GetResource()->Unmap(0, nullptr);
 
         const uint32_t RootOffset = 0; // TODO?
-        StageDescriptor(descHeap.Dev()->GetCPUDescriptorHandleForHeapStart(), cbRegister, RootOffset);
+        StageDescriptor(descHeap, cbRegister, RootOffset);
 
-        // free Descriptor & Upload heaps 2 frames later
-        g_GfxManager.AddDoubleDeferredGraphicCommand([descHeap, uploadHeap]() { GfxHeap::Release(uploadHeap); });
+        // free Upload heap 1 frame later
+        g_GfxManager.AddGraphicCommand([uploadHeap]() { GfxHeap::Release(uploadHeap); });
     }
 
     // Resources
@@ -558,7 +613,7 @@ void GfxContext::CommitStagedResources()
     // allocate shader visible heaps
     GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.AllocateShaderVisible(numHeapsNeeded);
 
-    SetDescriptorHeapIfNeeded();
+    SetShaderVisibleDescriptorHeap();
 
     RunOnAllBits(m_StaleResourcesBitMap.to_ulong(), [&](uint32_t rootIndex)
     {
@@ -571,16 +626,8 @@ void GfxContext::CommitStagedResources()
         // TODO: is this ineffcient? Better to use the full "CopyDescriptors" method?
         for (uint32_t i = 0; i < resourceDesc.m_Descriptors.size(); ++i)
         {
-            D3D12_CPU_DESCRIPTOR_HANDLE srcDesc = resourceDesc.m_Descriptors[i];
-
-            if (srcDesc.ptr == 0)
-            {
-                CreateNullView(resourceDesc.m_Types[i], destHandle.m_CPUHandle);
-            }
-            else
-            {
-                gfxDevice.Dev()->CopyDescriptorsSimple(1, destHandle.m_CPUHandle, srcDesc, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-            }
+            assert(resourceDesc.m_Descriptors[i].ptr != 0);
+            gfxDevice.Dev()->CopyDescriptorsSimple(1, destHandle.m_CPUHandle, resourceDesc.m_Descriptors[i], D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
             static const uint32_t descriptorSize = gfxDevice.Dev()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
             destHandle.Offset(1, descriptorSize);

@@ -3,8 +3,6 @@
 
 void GfxDescriptorHeap::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE heapType, D3D12_DESCRIPTOR_HEAP_FLAGS heapFlags, uint32_t numHeaps)
 {
-    bbeProfileFunction();
-
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
     assert(!m_DescriptorHeap);
@@ -34,16 +32,9 @@ void GfxGPUDescriptorAllocator::Initialize()
 
         m_FreeShaderVisibleHeaps.push_back(newHandle);
     }
-
-    // allocate static heaps
-    m_StaticHeaps.set_capacity(NbStaticDescriptors);
-    for (uint32_t i = 0; i < NbStaticDescriptors; ++i)
-    {
-        m_StaticHeaps.push_back();
-    }
 }
 
-GfxDescriptorHeapHandle GfxGPUDescriptorAllocator::AllocateShaderVisible(uint32_t numHeaps, GfxDescriptorHeapHandle* out)
+GfxDescriptorHeapHandle GfxGPUDescriptorAllocator::AllocateShaderVisible(uint32_t numHeaps)
 {
     assert(numHeaps > 0);
 
@@ -55,62 +46,20 @@ GfxDescriptorHeapHandle GfxGPUDescriptorAllocator::AllocateShaderVisible(uint32_
     if ((m_AllocationCounter + numHeaps) > NbShaderVisibleDescriptors)
     {
         const int32_t allocationOverflow = NbShaderVisibleDescriptors - m_AllocationCounter;
-        AllocateShaderVisibleInternal(allocationOverflow, nullptr);
+        AllocateShaderVisibleInternal(allocationOverflow);
     }
 
-    return AllocateShaderVisibleInternal(numHeaps, out);
+    return AllocateShaderVisibleInternal(numHeaps);
 }
 
-GfxDescriptorHeapHandle GfxGPUDescriptorAllocator::AllocateShaderVisibleInternal(uint32_t numHeaps, GfxDescriptorHeapHandle* out)
+GfxDescriptorHeapHandle GfxGPUDescriptorAllocator::AllocateShaderVisibleInternal(uint32_t numHeaps)
 {
     assert(m_FreeShaderVisibleHeaps.size() >= numHeaps);
+    m_AllocationCounter = (m_AllocationCounter + numHeaps) % NbShaderVisibleDescriptors;
 
-    // return only the first descriptor
+    // allocate needed heaps and rotate circular buffer
     GfxDescriptorHeapHandle ret = m_FreeShaderVisibleHeaps.front();
-
-    for (uint32_t i = 0; i < numHeaps; ++i)
-    {
-        GfxDescriptorHeapHandle nextDesc = m_FreeShaderVisibleHeaps.front();
-        assert(nextDesc.m_CPUHandle.ptr != D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN);
-        assert(nextDesc.m_GPUHandle.ptr != D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN);
-
-        m_AllocationCounter = ++m_AllocationCounter % NbShaderVisibleDescriptors;
-        m_UsedHeaps.push_back(nextDesc);
-        m_FreeShaderVisibleHeaps.pop_front();
-
-        if (out)
-        {
-            out[i] = nextDesc;
-        }
-    }
+    m_FreeShaderVisibleHeaps.rotate(m_FreeShaderVisibleHeaps.begin() + numHeaps);
 
     return ret;
-}
-
-CD3DX12_CPU_DESCRIPTOR_HANDLE GfxGPUDescriptorAllocator::AllocateStatic(D3D12_DESCRIPTOR_HEAP_TYPE type)
-{
-    static std::mutex StaticDescHeapAllocatorLock;
-    bbeAutoLock(StaticDescHeapAllocatorLock);
-
-    // Get a heap from the front of buffer & re-init it to appropriate type
-    GfxDescriptorHeap& toRet = m_StaticHeaps.front();
-    toRet.Release();
-    toRet.Initialize(type, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
-
-    // rotate circular buffer to the next element, so we always use the "oldest" heap
-    assert(m_StaticHeaps.full());
-    m_StaticHeaps.rotate(m_StaticHeaps.begin() + 1);
-
-    return CD3DX12_CPU_DESCRIPTOR_HANDLE{ toRet.Dev()->GetCPUDescriptorHandleForHeapStart() };
-}
-
-void GfxGPUDescriptorAllocator::GarbageCollect()
-{
-    bbeMultiThreadDetector();
-
-    std::for_each(m_UsedHeaps.begin(), m_UsedHeaps.end(), [&](const GfxDescriptorHeapHandle& handle)
-        {
-            m_FreeShaderVisibleHeaps.push_back(handle);
-        });
-    m_UsedHeaps.clear();
 }
