@@ -34,14 +34,21 @@ void GfxGPUDescriptorAllocator::Initialize()
 
         m_FreeShaderVisibleHeaps.push_back(newHandle);
     }
+
+    // allocate static heaps
+    m_StaticHeaps.set_capacity(NbStaticDescriptors);
+    for (uint32_t i = 0; i < NbStaticDescriptors; ++i)
+    {
+        m_StaticHeaps.push_back();
+    }
 }
 
 GfxDescriptorHeapHandle GfxGPUDescriptorAllocator::AllocateShaderVisible(uint32_t numHeaps, GfxDescriptorHeapHandle* out)
 {
     assert(numHeaps > 0);
 
-    static std::mutex ShaderVisibleAllocatorLock;
-    bbeAutoLock(ShaderVisibleAllocatorLock);
+    static std::mutex ShaderVisibleDescHeapAllocatorLock;
+    bbeAutoLock(ShaderVisibleDescHeapAllocatorLock);
 
     // Requested shader visible heaps are assumed to be needed to be contiguous
     // In the event that we do a full circle around the CircularBuffer, and the number of requested heaps overflows back into the start, simply allocate and discard the tail heaps
@@ -78,6 +85,23 @@ GfxDescriptorHeapHandle GfxGPUDescriptorAllocator::AllocateShaderVisibleInternal
     }
 
     return ret;
+}
+
+CD3DX12_CPU_DESCRIPTOR_HANDLE GfxGPUDescriptorAllocator::AllocateStatic(D3D12_DESCRIPTOR_HEAP_TYPE type)
+{
+    static std::mutex StaticDescHeapAllocatorLock;
+    bbeAutoLock(StaticDescHeapAllocatorLock);
+
+    // Get a heap from the front of buffer & re-init it to appropriate type
+    GfxDescriptorHeap& toRet = m_StaticHeaps.front();
+    toRet.Release();
+    toRet.Initialize(type, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
+
+    // rotate circular buffer to the next element, so we always use the "oldest" heap
+    assert(m_StaticHeaps.full());
+    m_StaticHeaps.rotate(m_StaticHeaps.begin() + 1);
+
+    return CD3DX12_CPU_DESCRIPTOR_HANDLE{ toRet.Dev()->GetCPUDescriptorHandleForHeapStart() };
 }
 
 void GfxGPUDescriptorAllocator::GarbageCollect()
