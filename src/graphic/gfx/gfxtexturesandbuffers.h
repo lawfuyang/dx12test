@@ -12,17 +12,9 @@ class GfxContext;
 
 struct GfxHeap
 {
-    struct HeapDesc
-    {
-        D3D12_HEAP_TYPE           m_HeapType = D3D12_HEAP_TYPE_DEFAULT;
-        D3D12_RESOURCE_DESC1      m_ResourceDesc = {};
-        D3D12_RESOURCE_STATES     m_InitialState = D3D12_RESOURCE_STATE_COMMON;
-        D3D12_CLEAR_VALUE         m_ClearValue = {};
-        D3D12MA::ALLOCATION_FLAGS m_AllocationFlags = D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET;
-        StaticString<128>         m_ResourceName;
-    };
-    static D3D12MA::Allocation* Create(const HeapDesc&);
+    static D3D12MA::Allocation* Create(D3D12_HEAP_TYPE, CD3DX12_RESOURCE_DESC1&&, D3D12_RESOURCE_STATES initialState, const D3D12_CLEAR_VALUE*, std::string_view debugName);
     static void Release(D3D12MA::Allocation*);
+    static void UploadInitData(GfxCommandList& cmdList, D3D12Resource* destResource, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* initData, std::string_view debugName);
 
     D3D12MA::Allocation* m_HeapAllocation = nullptr;
 };
@@ -33,12 +25,9 @@ public:
     static const D3D12_RESOURCE_STATES INVALID_STATE = (D3D12_RESOURCE_STATES)0xDEADBEEF;
 
     D3D12Resource* GetD3D12Resource() const { return m_D3D12Resource; }
-
     void Release();
 
 protected:
-    void UploadInitData(GfxContext& context, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* initData, const char* resourceName);
-
     D3D12MA::Allocation* m_D3D12MABufferAllocation = nullptr;
     D3D12Resource*      m_D3D12Resource           = nullptr;
 
@@ -62,6 +51,8 @@ public:
 
     void Initialize(GfxContext& initContext, const InitParams&);
     void Initialize(const InitParams&);
+
+    void Initialize(uint32_t numVertices, uint32_t vertexSize, const void* initData, std::string_view debugName);
 
     uint32_t GetStrideInBytes() const { return m_StrideInBytes; }
     uint32_t GetNumVertices() const { return m_NumVertices; }
