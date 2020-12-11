@@ -142,6 +142,13 @@
 // typedefs
 using WindowHandle = uint64_t;
 
+using DXGISwapChain            = IDXGISwapChain4;
+using D3D12Device              = ID3D12Device8;
+using D3D12PipelineLibrary     = ID3D12PipelineLibrary1;
+using D3D12GraphicsCommandList = ID3D12GraphicsCommandList6;
+using D3D12Fence               = ID3D12Fence1;
+using D3D12Resource            = ID3D12Resource;
+
 template <typename T>
 using ConcurrentVector = concurrency::concurrent_vector<T>;
 

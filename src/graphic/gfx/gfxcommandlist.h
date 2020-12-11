@@ -6,7 +6,7 @@
 class GfxCommandList
 {
 public:
-    ID3D12GraphicsCommandList5* Dev() const { return m_CommandList.Get(); }
+    D3D12GraphicsCommandList* Dev() const { return m_CommandList.Get(); }
 
     void Initialize(D3D12_COMMAND_LIST_TYPE);
     void BeginRecording();
@@ -17,7 +17,7 @@ private:
     D3D12_COMMAND_LIST_TYPE m_Type = (D3D12_COMMAND_LIST_TYPE)0xDEADBEEF;
 
     ComPtr<ID3D12CommandAllocator> m_CommandAllocator;
-    ComPtr<ID3D12GraphicsCommandList5> m_CommandList;
+    ComPtr<D3D12GraphicsCommandList> m_CommandList;
 
     friend class GfxCommandListsManager;
     friend class GfxCommandListQueue;

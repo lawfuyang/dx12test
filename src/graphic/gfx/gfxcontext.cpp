@@ -576,7 +576,7 @@ void GfxContext::CommitStagedResources()
         // Create upload heap for constant buffer
         GfxHeap::HeapDesc heapDesc;
         heapDesc.m_HeapType = D3D12_HEAP_TYPE_UPLOAD;
-        heapDesc.m_ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(stagedCBV.m_CBBytes.size());
+        heapDesc.m_ResourceDesc = CD3DX12_RESOURCE_DESC1::Buffer(stagedCBV.m_CBBytes.size());
         heapDesc.m_InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
         heapDesc.m_ResourceName = stagedCBV.m_Name;
 

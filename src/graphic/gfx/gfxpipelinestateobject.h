@@ -16,7 +16,7 @@ public:
 
 private:
     std::shared_mutex m_PipelineLibraryRWLock;
-    ComPtr<ID3D12PipelineLibrary1> m_PipelineLibrary;
+    ComPtr<D3D12PipelineLibrary> m_PipelineLibrary;
 
     MemoryMappedFile m_MemoryMappedCacheFile;
 

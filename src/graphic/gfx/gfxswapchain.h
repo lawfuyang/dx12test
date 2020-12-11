@@ -7,7 +7,7 @@ class GfxContext;
 class GfxSwapChain
 {
 public:
-    IDXGISwapChain4* Dev() const { return m_SwapChain.Get(); }
+    DXGISwapChain* Dev() const { return m_SwapChain.Get(); }
 
     GfxTexture& GetCurrentBackBuffer() { return m_Textures[Dev()->GetCurrentBackBufferIndex()]; }
 
@@ -17,6 +17,6 @@ public:
 private:
     static const uint32_t NbBackBuffers = 2;
 
-    ComPtr<IDXGISwapChain4> m_SwapChain;
+    ComPtr<DXGISwapChain> m_SwapChain;
     GfxTexture m_Textures[NbBackBuffers];
 };

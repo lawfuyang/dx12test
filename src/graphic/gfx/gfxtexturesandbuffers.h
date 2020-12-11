@@ -15,7 +15,7 @@ struct GfxHeap
     struct HeapDesc
     {
         D3D12_HEAP_TYPE           m_HeapType = D3D12_HEAP_TYPE_DEFAULT;
-        D3D12_RESOURCE_DESC       m_ResourceDesc = {};
+        D3D12_RESOURCE_DESC1      m_ResourceDesc = {};
         D3D12_RESOURCE_STATES     m_InitialState = D3D12_RESOURCE_STATE_COMMON;
         D3D12_CLEAR_VALUE         m_ClearValue = {};
         D3D12MA::ALLOCATION_FLAGS m_AllocationFlags = D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET;
@@ -32,7 +32,7 @@ class GfxHazardTrackedResource
 public:
     static const D3D12_RESOURCE_STATES INVALID_STATE = (D3D12_RESOURCE_STATES)0xDEADBEEF;
 
-    ID3D12Resource* GetD3D12Resource() const { return m_D3D12Resource; }
+    D3D12Resource* GetD3D12Resource() const { return m_D3D12Resource; }
 
     void Release();
 
@@ -40,12 +40,10 @@ protected:
     void UploadInitData(GfxContext& context, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* initData, const char* resourceName);
 
     D3D12MA::Allocation* m_D3D12MABufferAllocation = nullptr;
-    ID3D12Resource*      m_D3D12Resource           = nullptr;
+    D3D12Resource*      m_D3D12Resource           = nullptr;
 
     D3D12_RESOURCE_STATES m_CurrentResourceState = D3D12_RESOURCE_STATE_COMMON;
     D3D12_RESOURCE_STATES m_TransitioningState   = INVALID_STATE;
-
-    uint32_t m_SizeInBytes = 0;
 
     friend class GfxContext;
 };
@@ -132,7 +130,7 @@ public:
     void UpdateIMGUI();
 
 private:
-    D3D12_RESOURCE_DESC GetDescForGfxTexture(const GfxTexture::InitParams& i);
+    CD3DX12_RESOURCE_DESC1 GetDescForGfxTexture(const GfxTexture::InitParams& i);
 
     friend class GfxSwapChain;
 };

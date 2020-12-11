@@ -8,7 +8,7 @@ namespace D3D12MA
 class GfxDevice
 {
 public:
-    ID3D12Device8* Dev() const { return m_D3DDevice.Get(); }
+    D3D12Device* Dev() const { return m_D3DDevice.Get(); }
 
     void Initialize();
     void CheckStatus();
@@ -19,7 +19,7 @@ private:
     void ConfigureDebugLayerAfterDeviceCreation();
     void CheckFeaturesSupports();
 
-    ComPtr<ID3D12Device8> m_D3DDevice;
+    ComPtr<D3D12Device> m_D3DDevice;
 
     bool m_TearingSupported = false;
     D3D12_FEATURE_DATA_D3D12_OPTIONS               m_D3D12Options                  = {};

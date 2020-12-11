@@ -8,7 +8,7 @@ public:
         ::CloseHandle(m_FenceEvent);
     }
 
-    ID3D12Fence1* Dev() const { return m_Fence.Get(); }
+    D3D12Fence* Dev() const { return m_Fence.Get(); }
 
     void Initialize();
     void IncrementAndSignal(ID3D12CommandQueue* cmdQueue);
@@ -18,7 +18,7 @@ public:
     ::HANDLE GetEvent() const { return m_FenceEvent; }
 
 private:
-    ComPtr<ID3D12Fence1> m_Fence;
+    ComPtr<D3D12Fence> m_Fence;
 
     uint64_t m_FenceValue = 0;
     ::HANDLE m_FenceEvent = nullptr;
