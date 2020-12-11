@@ -186,16 +186,11 @@ void GfxDefaultAssets::CreateUnitCubeMesh()
     meshInitParams.MeshName = "UnitCube Mesh";
     meshInitParams.m_VertexFormat = &GfxDefaultVertexFormats::Position3f_Normal3f_Texcoord2f;
 
-    GfxVertexBuffer::InitParams& VBInitParams = meshInitParams.m_VBInitParams;
-    VBInitParams.m_InitData = vertices.data();
-    VBInitParams.m_NumVertices = vertices.size();
-    VBInitParams.m_VertexSize = sizeof(Vertex);
-    VBInitParams.m_ResourceName = "GfxDefaultGeometry::UnitCube Vertex Buffer";
-
     GfxIndexBuffer::InitParams& IBInitParams = meshInitParams.m_IBInitParams;
     IBInitParams.m_InitData = indices.data();
     IBInitParams.m_NumIndices = indices.size();
     IBInitParams.m_ResourceName = "GfxDefaultGeometry::UnitCube Index Buffer";
 
     GfxDefaultAssets::UnitCube.Initialize(meshInitParams);
+    GfxDefaultAssets::UnitCube.GetVertexBuffer().Initialize(vertices.size(), sizeof(Vertex), vertices.data(), "GfxDefaultGeometry::UnitCube");
 }

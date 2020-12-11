@@ -8,7 +8,6 @@ void GfxMesh::Initialize(const GfxMesh::InitParams& initParams)
     assert(initParams.m_VertexFormat);
     m_VertexFormat = initParams.m_VertexFormat;
 
-    m_VertexBuffer.Initialize(initParams.m_VBInitParams);
     m_IndexBuffer.Initialize(initParams.m_IBInitParams);
 }
 

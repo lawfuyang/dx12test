@@ -592,7 +592,7 @@ void GfxContext::CommitStagedResources()
         const uint32_t RootOffset = 0; // TODO?
         StageDescriptor(descHeap, cbRegister, RootOffset);
 
-        // free Upload heap 1 frame later
+        // TODO: Implement a gfx garbage collector
         g_GfxManager.AddGraphicCommand([uploadHeap]() { GfxHeap::Release(uploadHeap); });
     }
 

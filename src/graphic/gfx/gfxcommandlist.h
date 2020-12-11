@@ -8,13 +8,14 @@ class GfxCommandList
 public:
     D3D12GraphicsCommandList* Dev() const { return m_CommandList.Get(); }
 
-    void Initialize(D3D12_COMMAND_LIST_TYPE);
+    void Initialize(D3D12_COMMAND_LIST_TYPE, uint32_t queueIdx);
     void BeginRecording();
 
     D3D12_COMMAND_LIST_TYPE GetType() const { return m_Type; }
 
 private:
     D3D12_COMMAND_LIST_TYPE m_Type = (D3D12_COMMAND_LIST_TYPE)0xDEADBEEF;
+    uint32_t m_QueueIndex = 0xDEADBEEF;
 
     ComPtr<ID3D12CommandAllocator> m_CommandAllocator;
     ComPtr<D3D12GraphicsCommandList> m_CommandList;
@@ -30,7 +31,7 @@ public:
 
     ID3D12CommandQueue* Dev() const { return m_CommandQueue.Get(); }
 
-    void Initialize(D3D12_COMMAND_LIST_TYPE type);
+    void Initialize(D3D12_COMMAND_LIST_TYPE type, uint32_t queueIdx);
     void ShutDown();
     GfxCommandList* AllocateCommandList(std::string_view name);
     bool HasPendingCommandLists() const { return !m_PendingExecuteCommandLists.empty(); };

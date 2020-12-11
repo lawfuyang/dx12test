@@ -78,6 +78,9 @@ void GfxManager::PostInit()
     bbeProfileFunction();
 
     g_GfxCommandListsManager.ExecutePendingCommandLists();
+
+    // TODO: use a master GfxFence in GfxManager
+    g_GfxCommandListsManager.GetMainQueue().SignalFence();
     g_GfxCommandListsManager.GetMainQueue().StallCPUForFence();
 
     // reset array of GfxContexts to prepare for next frame
@@ -107,6 +110,7 @@ void GfxManager::ShutDown()
     g_GfxPSOManager.ShutDown();
     g_GfxDefaultAssets.ShutDown();
     g_GfxResourceManager.ShutDown();
+    g_GfxCommandListsManager.ShutDown();
 
     m_GfxCommandManager.ConsumeAllCommandsST(true);
 
@@ -124,6 +128,7 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
 
     // TODO: This will kill performance with gpu debug layer enabled!
     // Implement a proper way of handling previous frame gpu resources
+    // This should really be called before execution of the first renderer
     subFlow.emplace([] { g_GfxCommandListsManager.GetMainQueue().StallCPUForFence(); }).precede(WAIT_PREV_FRAME_GATE);
 
     subFlow.emplace([this](tf::Subflow& sf) { m_GfxCommandManager.ConsumeAllCommandsMT(sf); }).succeed(WAIT_PREV_FRAME_GATE).precede(BEGIN_FRAME_GATE);
@@ -186,6 +191,9 @@ void GfxManager::EndFrame()
 
     // finally, present back buffer
     m_SwapChain.Present();
+
+    // TODO: use a master GfxFence in GfxManager
+    g_GfxCommandListsManager.GetMainQueue().SignalFence();
 
     // reset array of GfxContexts to prepare for next frame
     std::for_each(m_AllContexts.begin(), m_AllContexts.end(), [this](GfxContext* context) { m_ContextsPool.destroy(context); });

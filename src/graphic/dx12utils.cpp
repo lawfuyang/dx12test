@@ -1,4 +1,5 @@
 #include <graphic/dx12utils.h>
+#include <graphic/pch.h>
 
 // {4AA579AB-315B-4D6B-BE23-17FFD8402316}
 static const GUID GUID_ParentPointer = { 0x4aa579ab, 0x315b, 0x4d6b,{ 0xbe, 0x23, 0x17, 0xff, 0xd8, 0x40, 0x23, 0x16 } };
@@ -300,6 +301,45 @@ bool IsBlockFormat(DXGI_FORMAT fmt)
     }
 
     return false;
+}
+
+void UploadToGfxResource(D3D12GraphicsCommandList* pCommandList, GfxHazardTrackedResource& destResource, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* srcData, std::string_view debugName)
+{
+    bbePIXEvent(pCommandList);
+
+    assert(pCommandList);
+    assert(destResource.GetD3D12Resource());
+    assert(uploadBufferSize > 0);
+    assert(rowPitch > 0);
+    assert(slicePitch > 0);
+    assert(srcData);
+
+    // create upload heap to hold upload init data
+    StaticString<256> nameBuffer = debugName.data();
+    nameBuffer += " Upload Buffer";
+
+    D3D12MA::Allocation* uploadHeapAlloc = GfxHeap::Create(D3D12_HEAP_TYPE_UPLOAD, CD3DX12_RESOURCE_DESC1::Buffer(uploadBufferSize), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, debugName);
+
+    // transition to COPY_DEST
+    const D3D12_RESOURCE_STATES oldState = destResource.m_CurrentResourceState;
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(destResource.GetD3D12Resource(), oldState, D3D12_RESOURCE_STATE_COPY_DEST);
+    pCommandList->ResourceBarrier(1, &barrier);
+
+    // upload init data via CopyTextureRegion/CopyBufferRegion
+    const UINT MaxSubresources = 1;
+    const UINT64 IntermediateOffset = 0;
+    const UINT FirstSubresource = 0;
+    const UINT NumSubresources = 1;
+    const D3D12_SUBRESOURCE_DATA data{ srcData, rowPitch, slicePitch };
+    const UINT64 r = UpdateSubresources<MaxSubresources>(pCommandList, destResource.GetD3D12Resource(), uploadHeapAlloc->GetResource(), IntermediateOffset, FirstSubresource, NumSubresources, &data);
+    assert(r);
+
+    // TODO: Implement a gfx garbage collector
+    g_GfxManager.AddGraphicCommand([uploadHeapAlloc]() { GfxHeap::Release(uploadHeapAlloc); });
+
+    // transition back to old state
+    barrier = CD3DX12_RESOURCE_BARRIER::Transition(destResource.GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_DEST, oldState);
+    pCommandList->ResourceBarrier(1, &barrier);
 }
 
 CD3D12_RENDER_TARGET_VIEW_DESC::CD3D12_RENDER_TARGET_VIEW_DESC(D3D12_RTV_DIMENSION viewDimension,

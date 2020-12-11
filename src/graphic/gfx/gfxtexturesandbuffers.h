@@ -14,7 +14,6 @@ struct GfxHeap
 {
     static D3D12MA::Allocation* Create(D3D12_HEAP_TYPE, CD3DX12_RESOURCE_DESC1&&, D3D12_RESOURCE_STATES initialState, const D3D12_CLEAR_VALUE*, std::string_view debugName);
     static void Release(D3D12MA::Allocation*);
-    static void UploadInitData(GfxCommandList& cmdList, D3D12Resource* destResource, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* initData, std::string_view debugName);
 
     D3D12MA::Allocation* m_HeapAllocation = nullptr;
 };
@@ -27,9 +26,8 @@ public:
     D3D12Resource* GetD3D12Resource() const { return m_D3D12Resource; }
     void Release();
 
-protected:
     D3D12MA::Allocation* m_D3D12MABufferAllocation = nullptr;
-    D3D12Resource*      m_D3D12Resource           = nullptr;
+    D3D12Resource*       m_D3D12Resource           = nullptr;
 
     D3D12_RESOURCE_STATES m_CurrentResourceState = D3D12_RESOURCE_STATE_COMMON;
     D3D12_RESOURCE_STATES m_TransitioningState   = INVALID_STATE;
@@ -40,19 +38,7 @@ protected:
 class GfxVertexBuffer : public GfxHazardTrackedResource
 {
 public:
-    struct InitParams
-    {
-        const void*       m_InitData     = nullptr;
-        uint32_t          m_NumVertices  = 0;
-        uint32_t          m_VertexSize   = 0;
-        D3D12_HEAP_TYPE   m_HeapType     = D3D12_HEAP_TYPE_DEFAULT;
-        StaticString<128> m_ResourceName;
-    };
-
-    void Initialize(GfxContext& initContext, const InitParams&);
-    void Initialize(const InitParams&);
-
-    void Initialize(uint32_t numVertices, uint32_t vertexSize, const void* initData, std::string_view debugName);
+    void Initialize(uint32_t numVertices, uint32_t vertexSize, const void* initData = nullptr, std::string_view debugName = "");
 
     uint32_t GetStrideInBytes() const { return m_StrideInBytes; }
     uint32_t GetNumVertices() const { return m_NumVertices; }

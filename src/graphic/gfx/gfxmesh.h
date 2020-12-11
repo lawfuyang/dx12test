@@ -11,7 +11,6 @@ public:
     {
         std::string MeshName;
         GfxVertexFormat* m_VertexFormat = nullptr;
-        GfxVertexBuffer::InitParams m_VBInitParams;
         GfxIndexBuffer::InitParams m_IBInitParams;
     };
 

@@ -83,27 +83,6 @@ D3D12MA::Allocation* GfxHeap::Create(D3D12_HEAP_TYPE heapType, CD3DX12_RESOURCE_
     return allocHandle;
 }
 
-void GfxHeap::UploadInitData(GfxCommandList& cmdList, D3D12Resource* destResource, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* initData, std::string_view debugName)
-{
-    // create upload heap to hold upload init data
-    StaticString<256> nameBuffer = debugName.data();
-    nameBuffer += " Upload Buffer";
-
-    D3D12MA::Allocation* uploadHeapAlloc = GfxHeap::Create(D3D12_HEAP_TYPE_UPLOAD, CD3DX12_RESOURCE_DESC1::Buffer(uploadBufferSize), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, debugName);
-
-    // upload init data via CopyTextureRegion/CopyBufferRegion
-    const UINT MaxSubresources = 1;
-    const UINT64 IntermediateOffset = 0;
-    const UINT FirstSubresource = 0;
-    const UINT NumSubresources = 1;
-    const D3D12_SUBRESOURCE_DATA data{ initData, rowPitch, slicePitch };
-    const UINT64 r = UpdateSubresources<MaxSubresources>(cmdList.Dev(), destResource, uploadHeapAlloc->GetResource(), IntermediateOffset, FirstSubresource, NumSubresources, &data);
-    assert(r);
-
-    // we don't need this upload heap anymore... release it 1 frame later.
-    g_GfxManager.AddGraphicCommand([uploadHeapAlloc]() { GfxHeap::Release(uploadHeapAlloc); });
-}
-
 void GfxHazardTrackedResource::Release()
 {
     bbeProfileFunction();
@@ -115,59 +94,9 @@ void GfxHazardTrackedResource::Release()
     }
 }
 
-void GfxVertexBuffer::Initialize(const InitParams& initParams)
-{
-    GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName.c_str());
-    Initialize(initContext, initParams);
-}
-
-void GfxVertexBuffer::Initialize(GfxContext& initContext, const InitParams& initParams)
-{
-    bbeProfileFunction();
-    bbeProfileGPUFunction(initContext);
-    assert(!m_D3D12MABufferAllocation);
-
-    assert(initParams.m_NumVertices > 0);
-    assert(initParams.m_VertexSize > 0);
-
-    m_StrideInBytes = initParams.m_VertexSize;
-    m_NumVertices = initParams.m_NumVertices;
-    const uint32_t sizeInBytes = initParams.m_VertexSize * initParams.m_NumVertices;
-
-    if (sizeInBytes > BBE_MB(D3D12_REQ_RESOURCE_SIZE_IN_MEGABYTES_EXPRESSION_A_TERM))
-        assert(false);
-
-    // identify resource initial state
-    D3D12_RESOURCE_STATES initialState;
-    switch (initParams.m_HeapType)
-    {
-    case D3D12_HEAP_TYPE_DEFAULT: initialState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER; break;
-    case D3D12_HEAP_TYPE_UPLOAD: initialState = D3D12_RESOURCE_STATE_GENERIC_READ; break;
-    case D3D12_HEAP_TYPE_READBACK: initialState = D3D12_RESOURCE_STATE_COPY_DEST; break;
-    default: assert(0);
-    }
-    m_CurrentResourceState = initialState;
-
-    const bool hasInitData = initParams.m_InitData != nullptr;
-
-    // Create heap to hold final buffer data
-    m_D3D12MABufferAllocation = GfxHeap::Create(initParams.m_HeapType, CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), hasInitData ? D3D12_RESOURCE_STATE_COPY_DEST : initialState, nullptr, initParams.m_ResourceName.c_str());
-    assert(m_D3D12MABufferAllocation);
-    m_D3D12Resource = m_D3D12MABufferAllocation->GetResource();
-
-    if (hasInitData)
-    {
-        GfxHeap::UploadInitData(initContext.GetCommandList(), m_D3D12Resource, sizeInBytes, sizeInBytes, sizeInBytes, initParams.m_InitData, initParams.m_ResourceName.c_str());
-
-        // after uploading init values, transition the vertex buffer data from copy destination state to vertex buffer state
-        initContext.TransitionResource(*this, initialState, true);
-    }
-
-    g_GfxCommandListsManager.QueueCommandListToExecute(&initContext.GetCommandList());
-}
-
 void GfxVertexBuffer::Initialize(uint32_t numVertices, uint32_t vertexSize, const void* initData, std::string_view debugName)
 {
+    assert(!m_D3D12MABufferAllocation);
     assert(numVertices > 0);
     assert(vertexSize > 0);
 
@@ -176,9 +105,27 @@ void GfxVertexBuffer::Initialize(uint32_t numVertices, uint32_t vertexSize, cons
     const uint32_t sizeInBytes = numVertices * vertexSize;
     assert(sizeInBytes <= BBE_MB(D3D12_REQ_RESOURCE_SIZE_IN_MEGABYTES_EXPRESSION_A_TERM));
 
-    GfxCommandList& newCmdList = *g_GfxCommandListsManager.GetMainQueue().AllocateCommandList(debugName);
+    m_NumVertices = numVertices;
+    m_StrideInBytes = vertexSize;
 
+    const bool hasInitData = initData != nullptr;
+    m_CurrentResourceState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
 
+    // Create heap to hold final buffer data
+    m_D3D12MABufferAllocation = GfxHeap::Create(D3D12_HEAP_TYPE_DEFAULT, CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), m_CurrentResourceState, nullptr, debugName);
+    assert(m_D3D12MABufferAllocation);
+    m_D3D12Resource = m_D3D12MABufferAllocation->GetResource();
+    
+    if (hasInitData)
+    {
+        StaticString<128> cmdListDebugName = debugName.data();
+        cmdListDebugName += " Upload Init Data Cmd List";
+        GfxCommandList& newCmdList = *g_GfxCommandListsManager.GetMainQueue().AllocateCommandList(cmdListDebugName.c_str());
+
+        UploadToGfxResource(newCmdList.Dev(), *this, sizeInBytes, sizeInBytes, sizeInBytes, initData, debugName);
+
+        g_GfxCommandListsManager.QueueCommandListToExecute(&newCmdList);
+    }
 }
 
 void GfxIndexBuffer::Initialize(const InitParams& initParams)
@@ -212,18 +159,14 @@ void GfxIndexBuffer::Initialize(GfxContext& initContext, const InitParams& initP
     const bool hasInitData = initParams.m_InitData != nullptr;
 
     // Create heap to hold final buffer data
-    m_D3D12MABufferAllocation = GfxHeap::Create(initParams.m_HeapType, CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), hasInitData ? D3D12_RESOURCE_STATE_COPY_DEST : initialState, nullptr, initParams.m_ResourceName.c_str());
+    m_D3D12MABufferAllocation = GfxHeap::Create(initParams.m_HeapType, CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), m_CurrentResourceState, nullptr, initParams.m_ResourceName.c_str());
     assert(m_D3D12MABufferAllocation);
     m_D3D12Resource = m_D3D12MABufferAllocation->GetResource();
 
     if (hasInitData)
     {
-        GfxHeap::UploadInitData(initContext.GetCommandList(), m_D3D12Resource, sizeInBytes, sizeInBytes, sizeInBytes, initParams.m_InitData, initParams.m_ResourceName.c_str());
-
-        // after uploading init values, transition the index buffer data from copy destination state to index buffer state
-        initContext.TransitionResource(*this, initialState, true);
+        UploadToGfxResource(initContext.GetCommandList().Dev(), *this, sizeInBytes, sizeInBytes, sizeInBytes, initParams.m_InitData, initParams.m_ResourceName.c_str());
     }
-
     g_GfxCommandListsManager.QueueCommandListToExecute(&initContext.GetCommandList());
 }
 
@@ -308,7 +251,7 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     const bool hasInitData = initParams.m_InitData != nullptr;
 
     // if we have init data, we will start this heap in the copy destination state since we will copy data from the upload heap to this heap
-    m_CurrentResourceState = hasInitData ? D3D12_RESOURCE_STATE_COPY_DEST : initParams.m_InitialState;
+    m_CurrentResourceState = initParams.m_InitialState;
 
     const bool hasClearValue = (initParams.m_ClearValue.Format != DXGI_FORMAT_UNKNOWN) &&
                                (desc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER) && 
@@ -322,14 +265,8 @@ void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParam
     // if init data is specified, upload it
     if (hasInitData)
     {
-        GfxHeap::UploadInitData(initContext.GetCommandList(), m_D3D12Resource, sizeInBytes, (uint32_t)rowSizeInBytes, (uint32_t)(rowSizeInBytes * desc.Height), initParams.m_InitData, initParams.m_ResourceName.c_str());
-
-        // after uploading init values, transition the texture from copy destination state to common state
-        initContext.TransitionResource(*this, initParams.m_InitialState, true);
+        UploadToGfxResource(initContext.GetCommandList().Dev(), *this, sizeInBytes, (uint32_t)rowSizeInBytes, (uint32_t)(rowSizeInBytes * desc.Height), initParams.m_InitData, initParams.m_ResourceName.c_str());
     }
-
-    SetD3DDebugName(GetD3D12Resource(), initParams.m_ResourceName.c_str());
-
     g_GfxCommandListsManager.QueueCommandListToExecute(&initContext.GetCommandList());
 }
 

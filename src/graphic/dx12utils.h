@@ -1,5 +1,7 @@
 #pragma once
 
+class GfxHazardTrackedResource;
+
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 #define DX12_CALL(call)                                                                                            \
     {                                                                                                              \
@@ -35,11 +37,12 @@ D3D12_PRIMITIVE_TOPOLOGY GetD3D12PrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE
 uint32_t GetBitsPerPixel(DXGI_FORMAT fmt);
 uint32_t GetBytesPerPixel(DXGI_FORMAT fmt);
 bool IsBlockFormat(DXGI_FORMAT fmt);
+void UploadToGfxResource(D3D12GraphicsCommandList* pCommandList, GfxHazardTrackedResource& destResource, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* srcData, std::string_view debugName = "");
 
 class ScopedPixEvent
 {
 public:
-    ScopedPixEvent(ID3D12GraphicsCommandList* pCommandList) noexcept
+    ScopedPixEvent(D3D12GraphicsCommandList* pCommandList) noexcept
         : m_CommandList(pCommandList)
     {
         assert(pCommandList);
@@ -51,8 +54,9 @@ public:
     }
 
 private:
-    ID3D12GraphicsCommandList* m_CommandList;
+    D3D12GraphicsCommandList* m_CommandList;
 };
+#define bbePIXEvent(cmdList) const ScopedPixEvent bbeUniqueVariable(pixEvent) { cmdList }
 
 struct CD3D12_RENDER_TARGET_VIEW_DESC : public D3D12_RENDER_TARGET_VIEW_DESC
 {

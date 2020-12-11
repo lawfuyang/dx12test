@@ -24,13 +24,6 @@ public:
     template <typename Lambda>
     void AddGraphicCommand(Lambda&& lambda) { m_GfxCommandManager.AddCommand(std::forward<Lambda>(lambda)); }
 
-    template <typename Lambda>
-    void AddDoubleDeferredGraphicCommand(Lambda&& lambda)
-    {
-        auto deferredCmd = [this, lambda]() { AddGraphicCommand(lambda); };
-        AddGraphicCommand(deferredCmd);
-    }
-
     GfxContext& GenerateNewContext(D3D12_COMMAND_LIST_TYPE, std::string_view name);
 
     GfxDevice& GetGfxDevice() { return m_GfxDevice; }
