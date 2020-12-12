@@ -82,7 +82,6 @@ void GfxIMGUIRenderer::GrowBuffers(const IMGUIDrawData& imguiDrawData, GfxContex
         m_VertexBuffer.Release();
 
         const uint32_t numVertices = isInitPhase ? gs_VBufferGrowSize : imguiDrawData.m_VtxCount + gs_VBufferGrowSize;
-
         bufferNames = StringFormat("IMGUI GfxVertexBuffer_%u", numVertices);
 
         m_VertexBuffer.Initialize(numVertices, sizeof(ImDrawVert), nullptr, bufferNames.c_str());
@@ -91,31 +90,22 @@ void GfxIMGUIRenderer::GrowBuffers(const IMGUIDrawData& imguiDrawData, GfxContex
     {
         m_IndexBuffer.Release();
 
-        GfxIndexBuffer::InitParams initParams;
-        initParams.m_InitData = nullptr;
-        initParams.m_NumIndices = isInitPhase ? gs_IBufferGrowSize : AlignUp(imguiDrawData.m_IdxCount + gs_IBufferGrowSize, 4); // the indexbuffer copy requires alignment
-        initParams.m_HeapType = D3D12_HEAP_TYPE_UPLOAD;
+        const uint32_t numIndices = isInitPhase ? gs_IBufferGrowSize : AlignUp(imguiDrawData.m_IdxCount + gs_IBufferGrowSize, 4); // the indexbuffer copy requires alignment
+        bufferNames = StringFormat("IMGUI GfxIndexBuffer%u", numIndices);
 
-        bufferNames = StringFormat("IMGUI GfxIndexBuffer%u", initParams.m_NumIndices);
-        initParams.m_ResourceName = bufferNames.c_str();
-
-        if (context)
-            m_IndexBuffer.Initialize(*context, initParams);
-        else
-            m_IndexBuffer.Initialize(initParams);
+        m_IndexBuffer.Initialize(numIndices, nullptr, bufferNames.c_str());
     }
 }
 
 void GfxIMGUIRenderer::UploadBufferData(GfxContext& context, const IMGUIDrawData& imguiDrawData)
 {
     std::vector<ImDrawVert> vertices;
+    std::vector<ImDrawIdx> indices;
     vertices.resize(m_VertexBuffer.GetNumVertices());
+    indices.resize(m_IndexBuffer.GetNumIndices());
 
     ImDrawVert* vtx_dst = vertices.data();
-    ImDrawIdx* idx_dst = nullptr;
-    D3D12_RANGE range = {};
-    DX12_CALL(m_IndexBuffer.GetD3D12Resource()->Map(0, &range, &(void*)idx_dst));
-    assert(idx_dst);
+    ImDrawIdx* idx_dst = indices.data();
 
     for (uint32_t n = 0; n < imguiDrawData.m_DrawList.size(); n++)
     {
@@ -125,10 +115,12 @@ void GfxIMGUIRenderer::UploadBufferData(GfxContext& context, const IMGUIDrawData
         vtx_dst += cmd_list.m_VB.size();
         idx_dst += cmd_list.m_IB.size();
     }
-    m_IndexBuffer.GetD3D12Resource()->Unmap(0, &range);
 
-    const uint32_t uploadSize = vertices.size() * sizeof(ImDrawVert);
+    uint32_t uploadSize = vertices.size() * sizeof(ImDrawVert);
     UploadToGfxResource(context.GetCommandList().Dev(), m_VertexBuffer, uploadSize, uploadSize, uploadSize, vertices.data(), "IMGUI Vertex Buffer Update");
+
+    uploadSize = indices.size() * sizeof(ImDrawIdx);
+    UploadToGfxResource(context.GetCommandList().Dev(), m_IndexBuffer, uploadSize, uploadSize, uploadSize, indices.data(), "IMGUI Index Buffer Update");
 }
 
 void GfxIMGUIRenderer::SetupRenderStates(GfxContext& context, const IMGUIDrawData& imguiDrawData)

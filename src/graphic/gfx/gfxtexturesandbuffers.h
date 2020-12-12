@@ -50,16 +50,7 @@ public:
 class GfxIndexBuffer : public GfxHazardTrackedResource
 {
 public:
-    struct InitParams
-    {
-        const void*       m_InitData     = nullptr;
-        uint32_t          m_NumIndices   = 0;
-        D3D12_HEAP_TYPE   m_HeapType     = D3D12_HEAP_TYPE_DEFAULT;
-        StaticString<128> m_ResourceName;
-    };
-
-    void Initialize(GfxContext& initContext, const InitParams&);
-    void Initialize(const InitParams&);
+    void Initialize(uint32_t numIndices, const void* initData = nullptr, std::string_view debugName = "");
 
     DXGI_FORMAT GetFormat() const { DXGI_FORMAT_R16_UINT; } // only support 16 bit indices for now
     uint32_t GetNumIndices() const { return m_NumIndices; }

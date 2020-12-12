@@ -128,46 +128,36 @@ void GfxVertexBuffer::Initialize(uint32_t numVertices, uint32_t vertexSize, cons
     }
 }
 
-void GfxIndexBuffer::Initialize(const InitParams& initParams)
-{
-    GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName.c_str());
-    Initialize(initContext, initParams);
-}
-
-void GfxIndexBuffer::Initialize(GfxContext& initContext, const InitParams& initParams)
+void GfxIndexBuffer::Initialize(uint32_t numIndices, const void* initData, std::string_view debugName)
 {
     bbeProfileFunction();
-    bbeProfileGPUFunction(initContext);
 
     assert(!m_D3D12MABufferAllocation);
-    assert(initParams.m_NumIndices);
+    assert(numIndices > 0);
 
-    m_NumIndices = initParams.m_NumIndices;
-    const uint32_t sizeInBytes = initParams.m_NumIndices * 2;
+    m_NumIndices = numIndices;
+    const uint32_t sizeInBytes = numIndices * 2;
 
-    // identify resource initial state
-    D3D12_RESOURCE_STATES initialState;
-    switch (initParams.m_HeapType)
-    {
-    case D3D12_HEAP_TYPE_DEFAULT: initialState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER; break;
-    case D3D12_HEAP_TYPE_UPLOAD: initialState = D3D12_RESOURCE_STATE_GENERIC_READ; break;
-    case D3D12_HEAP_TYPE_READBACK: initialState = D3D12_RESOURCE_STATE_COPY_DEST; break;
-    default: assert(0);
-    }
-    m_CurrentResourceState = initialState;
+    m_CurrentResourceState = D3D12_RESOURCE_STATE_INDEX_BUFFER;
 
-    const bool hasInitData = initParams.m_InitData != nullptr;
+    const bool hasInitData = initData != nullptr;
 
     // Create heap to hold final buffer data
-    m_D3D12MABufferAllocation = GfxHeap::Create(initParams.m_HeapType, CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), m_CurrentResourceState, nullptr, initParams.m_ResourceName.c_str());
+    m_D3D12MABufferAllocation = GfxHeap::Create(D3D12_HEAP_TYPE_DEFAULT, CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), m_CurrentResourceState, nullptr, debugName);
     assert(m_D3D12MABufferAllocation);
     m_D3D12Resource = m_D3D12MABufferAllocation->GetResource();
 
     if (hasInitData)
     {
-        UploadToGfxResource(initContext.GetCommandList().Dev(), *this, sizeInBytes, sizeInBytes, sizeInBytes, initParams.m_InitData, initParams.m_ResourceName.c_str());
+        StaticString<128> cmdListDebugName = debugName.data();
+        cmdListDebugName += " Upload Init Data Cmd List";
+        GfxCommandList& newCmdList = *g_GfxCommandListsManager.GetMainQueue().AllocateCommandList(cmdListDebugName.c_str());
+
+        UploadToGfxResource(newCmdList.Dev(), *this, sizeInBytes, sizeInBytes, sizeInBytes, initData, debugName);
+
+        g_GfxCommandListsManager.QueueCommandListToExecute(&newCmdList);
     }
-    g_GfxCommandListsManager.QueueCommandListToExecute(&initContext.GetCommandList());
+
 }
 
 ForwardDeclareSerializerFunctions(GfxTexture);
