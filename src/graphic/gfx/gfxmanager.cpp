@@ -5,8 +5,6 @@
 
 static bool gs_ShowGfxManagerIMGUIWindow = false;
 
-extern void CheckAllD3D12AllocsReleased();
-
 extern GfxRendererBase* g_GfxForwardLightingPass;
 extern GfxRendererBase* g_GfxIMGUIRenderer;
 extern GfxRendererBase* g_GfxBodyGravityParticlesUpdate;
@@ -102,20 +100,11 @@ void GfxManager::ShutDown()
     if (fs)
         m_SwapChain.Dev()->SetFullscreenState(false, NULL);
 
-    for (GfxRendererBase* renderer : GfxRendererBase::ms_AllRenderers)
-    {
-        renderer->ShutDown();
-    }
-
     g_GfxPSOManager.ShutDown();
-    g_GfxDefaultAssets.ShutDown();
-    g_GfxResourceManager.ShutDown();
+    g_GfxMemoryAllocator.ShutDown();
     g_GfxCommandListsManager.ShutDown();
 
     m_GfxCommandManager.ConsumeAllCommandsST(true);
-
-    CheckAllD3D12AllocsReleased();
-    g_GfxMemoryAllocator.Dev().Release();
 }
 
 void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
@@ -165,6 +154,8 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
 void GfxManager::BeginFrame()
 {
     m_GfxDevice.CheckStatus();
+
+    g_GfxMemoryAllocator.GarbageCollect();
 
     // TODO: Remove clearing of BackBuffer when we manage to fill every pixel on screen through various render passes
     GfxContext& context = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "ClearBackBuffer & DepthBuffer");

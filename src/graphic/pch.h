@@ -14,6 +14,7 @@
 #include <graphic/gfx/gfxdevice.h>
 #include <graphic/gfx/gfxlightsmanager.h>
 #include <graphic/gfx/gfxmanager.h>
+#include <graphic/gfx/gfxmemory.h>
 #include <graphic/gfx/gfxmesh.h>
 #include <graphic/gfx/gfxpipelinestateobject.h>
 #include <graphic/gfx/gfxrootsignature.h>

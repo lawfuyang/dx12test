@@ -4,8 +4,6 @@
 #include <graphic/WICTextureLoader12.h>
 #include <graphic/DDSTextureLoader12.h>
 
-std::vector<std::function<void()>> gs_AllManagedGfxResourcesReleasers;
-
 template <typename T>
 struct ManagedGfxResources
 {
@@ -34,11 +32,6 @@ struct RESOURCE_TYPE_Register                                                   
     RESOURCE_TYPE_Register()                                                                                         \
     {                                                                                                                \
         ManagedGfxResources<RESOURCE_TYPE>& resources = ManagedGfxResources<RESOURCE_TYPE>::Get();                   \
-        gs_AllManagedGfxResourcesReleasers.push_back([&]()                                                           \
-            {                                                                                                        \
-                resources.Release();                                                                                 \
-                resources.m_ResourceCache.clear();                                                                   \
-            });                                                                                                      \
     }                                                                                                                \
 };                                                                                                                   \
 static RESOURCE_TYPE_Register gs_RESOURCE_TYPE_Register;
@@ -66,14 +59,6 @@ T* GfxResourceManager::Get(const std::string& filePath, const ResourceLoadingFin
     g_System.AddBGAsyncCommand([&, filePath, finalizer]() { resources.Load(filePath, finalizer); });
 
     return nullptr;
-}
-
-void GfxResourceManager::ShutDown()
-{
-    for (const auto& releaser : gs_AllManagedGfxResourcesReleasers)
-    {
-        releaser();
-    }
 }
 
 template<>

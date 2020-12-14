@@ -92,6 +92,7 @@
     <ClCompile Include="..\src\graphic\gfx\gfxfence.cpp" />
     <ClCompile Include="..\src\graphic\gfx\gfxlightsmanager.cpp" />
     <ClCompile Include="..\src\graphic\gfx\gfxmanager.cpp" />
+    <ClCompile Include="..\src\graphic\gfx\gfxmemory.cpp" />
     <ClCompile Include="..\src\graphic\gfx\gfxmesh.cpp" />
     <ClCompile Include="..\src\graphic\gfx\gfxpipelinestateobject.cpp" />
     <ClCompile Include="..\src\graphic\gfx\gfxrootsignature.cpp" />
@@ -145,6 +146,7 @@
     <ClInclude Include="..\src\graphic\gfx\gfxfence.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxlightsmanager.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxmanager.h" />
+    <ClInclude Include="..\src\graphic\gfx\gfxmemory.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxmesh.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxpipelinestateobject.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxpipelinestateobject.hpp" />

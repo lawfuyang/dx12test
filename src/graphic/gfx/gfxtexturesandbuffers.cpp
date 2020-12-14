@@ -15,7 +15,7 @@ void GfxHazardTrackedResource::Release()
 
     if (m_D3D12MABufferAllocation)
     {
-        g_GfxMemoryAllocator.Release(m_D3D12MABufferAllocation);
+        g_GfxMemoryAllocator.ReleaseStatic(m_D3D12MABufferAllocation);
         m_D3D12MABufferAllocation = nullptr;
     }
 }
@@ -38,7 +38,7 @@ void GfxVertexBuffer::Initialize(uint32_t numVertices, uint32_t vertexSize, cons
     m_CurrentResourceState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
 
     // Create heap to hold final buffer data
-    m_D3D12MABufferAllocation = g_GfxMemoryAllocator.Allocate(D3D12_HEAP_TYPE_DEFAULT, CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), m_CurrentResourceState, nullptr);
+    m_D3D12MABufferAllocation = g_GfxMemoryAllocator.AllocateStatic(CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), m_CurrentResourceState, nullptr);
     assert(m_D3D12MABufferAllocation);
     m_D3D12Resource = m_D3D12MABufferAllocation->GetResource();
 
@@ -69,7 +69,7 @@ void GfxIndexBuffer::Initialize(uint32_t numIndices, const void* initData)
     const bool hasInitData = initData != nullptr;
 
     // Create heap to hold final buffer data
-    m_D3D12MABufferAllocation = g_GfxMemoryAllocator.Allocate(D3D12_HEAP_TYPE_DEFAULT, CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), m_CurrentResourceState, nullptr);
+    m_D3D12MABufferAllocation = g_GfxMemoryAllocator.AllocateStatic(CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), m_CurrentResourceState, nullptr);
     assert(m_D3D12MABufferAllocation);
     m_D3D12Resource = m_D3D12MABufferAllocation->GetResource();
 
@@ -138,7 +138,7 @@ void GfxTexture::Initialize(const CD3DX12_RESOURCE_DESC1& desc, const void* init
                                (clearValue.Format != DXGI_FORMAT_UNKNOWN);
 
     // Create heap
-    m_D3D12MABufferAllocation = g_GfxMemoryAllocator.Allocate(D3D12_HEAP_TYPE_DEFAULT, desc, m_CurrentResourceState, hasClearValue ? &clearValue : nullptr);
+    m_D3D12MABufferAllocation = g_GfxMemoryAllocator.AllocateStatic(desc, m_CurrentResourceState, hasClearValue ? &clearValue : nullptr);
     assert(m_D3D12MABufferAllocation);
     m_D3D12Resource = m_D3D12MABufferAllocation->GetResource();
 

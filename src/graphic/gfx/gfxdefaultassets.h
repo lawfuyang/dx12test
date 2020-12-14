@@ -11,7 +11,6 @@ public:
     DeclareSingletonFunctions(GfxDefaultAssets);
 
     void Initialize(tf::Subflow& sf);
-    void ShutDown();
 
     inline static GfxTexture White2D;
     inline static GfxTexture Black2D;

@@ -5,8 +5,6 @@ class GfxResourceManager
 public:
     DeclareSingletonFunctions(GfxResourceManager);
 
-    void ShutDown();
-
     template <typename T>
     using ResourceLoadingFinalizer = std::function<void(T*)>;
 

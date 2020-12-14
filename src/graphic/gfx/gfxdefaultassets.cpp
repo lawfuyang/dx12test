@@ -16,17 +16,6 @@ void GfxDefaultAssets::Initialize(tf::Subflow& subFlow)
     subFlow.emplace([this] { CreateUnitCubeMesh(); });
 }
 
-void GfxDefaultAssets::ShutDown()
-{
-    GfxDefaultAssets::White2D.Release();
-    GfxDefaultAssets::Black2D.Release();
-    GfxDefaultAssets::Red2D.Release();
-    GfxDefaultAssets::Yellow2D.Release();
-    GfxDefaultAssets::FlatNormal.Release();
-    GfxDefaultAssets::Checkerboard.Release();
-    GfxDefaultAssets::UnitCube.Release();
-}
-
 void GfxDefaultAssets::CreateCheckerboardTexture()
 {
     bbeProfileFunction();

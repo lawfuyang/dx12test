@@ -577,7 +577,7 @@ void GfxContext::CommitStagedResources()
             continue;
 
         // Create upload heap for constant buffer
-        D3D12MA::Allocation* uploadHeap = g_GfxMemoryAllocator.Allocate(D3D12_HEAP_TYPE_UPLOAD, CD3DX12_RESOURCE_DESC1::Buffer(stagedCBV.m_CBBytes.size()), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
+        D3D12MA::Allocation* uploadHeap = g_GfxMemoryAllocator.AllocateVolatile(D3D12_HEAP_TYPE_UPLOAD, CD3DX12_RESOURCE_DESC1::Buffer(stagedCBV.m_CBBytes.size()));
         assert(uploadHeap);
 
         // init desc heap for cbuffer
@@ -594,9 +594,6 @@ void GfxContext::CommitStagedResources()
 
         const uint32_t RootOffset = 0; // TODO?
         StageDescriptor(descHeap, cbRegister, RootOffset);
-
-        // TODO: Implement a gfx garbage collector
-        g_GfxManager.AddGraphicCommand([uploadHeap]() { g_GfxMemoryAllocator.Release(uploadHeap); });
     }
 
     // Resources

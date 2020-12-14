@@ -14,7 +14,6 @@ GfxTexture g_SceneDepthBuffer;
 class GfxForwardLightingPass : public GfxRendererBase
 {
     void Initialize() override;
-    void ShutDown() override;
     bool ShouldPopulateCommandList(GfxContext&) const override;
     void PopulateCommandList(GfxContext& context) override;
     const char* GetName() const override { return "GfxForwardLightingPass"; }
@@ -48,11 +47,6 @@ void GfxForwardLightingPass::Initialize()
 
     g_SceneDepthBuffer.Initialize(desc, nullptr, { desc.Format, { 1.0f, 0 } }, D3D12_RESOURCE_STATE_DEPTH_WRITE);
     g_SceneDepthBuffer.SetDebugName("SceneDepthBuffer");
-}
-
-void GfxForwardLightingPass::ShutDown()
-{
-    g_SceneDepthBuffer.Release();
 }
 
 bool GfxForwardLightingPass::ShouldPopulateCommandList(GfxContext&) const

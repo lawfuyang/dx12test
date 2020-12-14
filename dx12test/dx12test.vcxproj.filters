@@ -154,6 +154,9 @@
     <ClCompile Include="..\src\graphic\renderers\gfxrendererbase.cpp">
       <Filter>graphic\renderers</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graphic\gfx\gfxmemory.cpp">
+      <Filter>graphic\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\system\keyboard.h">
@@ -312,6 +315,9 @@
     </ClInclude>
     <ClInclude Include="..\src\system\criticalsection.h">
       <Filter>system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graphic\gfx\gfxmemory.h">
+      <Filter>graphic\gfx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

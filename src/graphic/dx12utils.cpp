@@ -330,7 +330,7 @@ void UploadToGfxResource(D3D12GraphicsCommandList* pCommandList, GfxHazardTracke
     assert(slicePitch > 0);
     assert(srcData);
 
-    D3D12MA::Allocation* uploadHeapAlloc = g_GfxMemoryAllocator.Allocate(D3D12_HEAP_TYPE_UPLOAD, CD3DX12_RESOURCE_DESC1::Buffer(uploadBufferSize), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
+    D3D12MA::Allocation* uploadHeapAlloc = g_GfxMemoryAllocator.AllocateVolatile(D3D12_HEAP_TYPE_UPLOAD, CD3DX12_RESOURCE_DESC1::Buffer(uploadBufferSize));
     SetD3DDebugName(destResource.GetD3D12Resource(), "UpdateSubresources");
 
     bbeScopedD3DResourceState(pCommandList, destResource, D3D12_RESOURCE_STATE_COPY_DEST);
@@ -343,9 +343,6 @@ void UploadToGfxResource(D3D12GraphicsCommandList* pCommandList, GfxHazardTracke
     const D3D12_SUBRESOURCE_DATA data{ srcData, rowPitch, slicePitch };
     const UINT64 r = UpdateSubresources<MaxSubresources>(pCommandList, destResource.GetD3D12Resource(), uploadHeapAlloc->GetResource(), IntermediateOffset, FirstSubresource, NumSubresources, &data);
     assert(r);
-
-    // TODO: Implement a gfx garbage collector
-    g_GfxManager.AddGraphicCommand([uploadHeapAlloc]() { g_GfxMemoryAllocator.Release(uploadHeapAlloc); });
 }
 
 CD3D12_RENDER_TARGET_VIEW_DESC::CD3D12_RENDER_TARGET_VIEW_DESC(D3D12_RTV_DIMENSION viewDimension,

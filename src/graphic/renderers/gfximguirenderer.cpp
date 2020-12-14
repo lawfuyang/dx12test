@@ -13,7 +13,6 @@ static_assert(IsAligned(gs_IBufferGrowSize, 4));
 class GfxIMGUIRenderer : public GfxRendererBase
 {
     void Initialize() override;
-    void ShutDown() override;
     void PopulateCommandList(GfxContext& context) override;
     const char* GetName() const override { return "GfxIMGUIRenderer"; }
 
@@ -140,13 +139,6 @@ void GfxIMGUIRenderer::SetupRenderStates(GfxContext& context, const IMGUIDrawDat
         vp.TopLeftX = vp.TopLeftY = 0.0f;
         context.SetViewport(vp);
     }
-}
-
-void GfxIMGUIRenderer::ShutDown()
-{
-    m_VertexBuffer.Release();
-    m_IndexBuffer.Release();
-    m_FontsTexture.Release();
 }
 
 void GfxIMGUIRenderer::PopulateCommandList(GfxContext& context)
