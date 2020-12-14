@@ -226,13 +226,15 @@ void GfxContext::StageSRV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
         break;
     case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
         SRVdesc = CD3D12_SHADER_RESOURCE_VIEW_DESC{ D3D12_SRV_DIMENSION_TEXTURE2D, resourceDesc.Format };
+        SRVdesc.Texture2D.MipLevels = 1; // TODO: Mips
         break;
 
         // TODO: Other dimensions when needed
     default: assert(false);
     }
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE CPUDescHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, StringFormat("SRV: %s", GetD3DDebugName(tex.GetD3D12Resource())));
+    StaticString<128> heapDebugName = StringFormat("SRV. Index: %d, Offset: %d", rootIndex, offset);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE CPUDescHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, heapDebugName.c_str());
     g_GfxManager.GetGfxDevice().Dev()->CreateShaderResourceView(tex.GetD3D12Resource(), &SRVdesc, CPUDescHeap);
 
     StageDescriptor(CPUDescHeap, rootIndex, offset);
@@ -373,7 +375,8 @@ void GfxContext::PrepareGraphicsStates()
         if (m_DSV)
         {
             TransitionResource(*m_DSV, D3D12_RESOURCE_STATE_DEPTH_WRITE, false);
-            DSVDescHandle = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, StringFormat("DSV: %s", GetD3DDebugName(m_DSV->GetD3D12Resource())));
+
+            DSVDescHandle = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, "DSV");
 
             D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc{ m_DSV->GetFormat(), D3D12_DSV_DIMENSION_TEXTURE2D, D3D12_DSV_FLAG_READ_ONLY_DEPTH };
             g_GfxManager.GetGfxDevice().Dev()->CreateDepthStencilView(m_DSV->GetD3D12Resource(), &DSVDesc, DSVDescHandle);
@@ -574,7 +577,7 @@ void GfxContext::CommitStagedResources()
             continue;
 
         // Create upload heap for constant buffer
-        D3D12MA::Allocation* uploadHeap = GfxHeap::Create(D3D12_HEAP_TYPE_UPLOAD, CD3DX12_RESOURCE_DESC1::Buffer(stagedCBV.m_CBBytes.size()), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, stagedCBV.m_Name);
+        D3D12MA::Allocation* uploadHeap = g_GfxMemoryAllocator.Allocate(D3D12_HEAP_TYPE_UPLOAD, CD3DX12_RESOURCE_DESC1::Buffer(stagedCBV.m_CBBytes.size()), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr);
         assert(uploadHeap);
 
         // init desc heap for cbuffer
@@ -593,7 +596,7 @@ void GfxContext::CommitStagedResources()
         StageDescriptor(descHeap, cbRegister, RootOffset);
 
         // TODO: Implement a gfx garbage collector
-        g_GfxManager.AddGraphicCommand([uploadHeap]() { GfxHeap::Release(uploadHeap); });
+        g_GfxManager.AddGraphicCommand([uploadHeap]() { g_GfxMemoryAllocator.Release(uploadHeap); });
     }
 
     // Resources

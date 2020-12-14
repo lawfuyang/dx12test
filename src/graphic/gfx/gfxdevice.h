@@ -44,6 +44,9 @@ public:
 
     D3D12MA::Allocator& Dev() { assert(m_D3D12MemoryAllocator); return *m_D3D12MemoryAllocator; }
 
+    D3D12MA::Allocation* Allocate(D3D12_HEAP_TYPE, const CD3DX12_RESOURCE_DESC1&, D3D12_RESOURCE_STATES initialState, const D3D12_CLEAR_VALUE*);
+    void Release(D3D12MA::Allocation*);
+
 private:
     D3D12MA::Allocator* m_D3D12MemoryAllocator = nullptr;
 };

@@ -170,6 +170,33 @@ void GfxDevice::CheckFeaturesSupports()
     DX12_CALL(m_D3DDevice->CheckFeatureSupport(D3D12_FEATURE_GPU_VIRTUAL_ADDRESS_SUPPORT, &m_D3D12GPUVirtualAddressSupport, sizeof(m_D3D12GPUVirtualAddressSupport)));
 }
 
+#define TRACK_GFX_HEAP_ALLOCS
+
+#if defined(TRACK_GFX_HEAP_ALLOCS)
+    static ConcurrentUnorderedMap<D3D12MA::Allocation*, uint32_t> gs_HeapAllocs;
+
+    #define TRACK_GFX_ALLOC_REF_COUNT(allocHandle) ++gs_HeapAllocs[allocHandle]
+    #define UNTRACK_GFX_ALLOC_REF_COUNT(allocHandle) --gs_HeapAllocs[allocHandle]
+
+    void CheckAllD3D12AllocsReleased()
+    {
+        uint32_t numLeaks = 0;
+        for (const auto& elem : gs_HeapAllocs)
+        {
+            if (elem.second)
+            {
+                ++numLeaks;
+                g_Log.critical("\nUnreleased D3D12MA Allocation: '{}'\n", StringUtils::WideToUtf8(elem.first->GetName()));
+            }
+        }
+        assert(numLeaks == 0);
+    }
+#else
+    #define TRACK_GFX_ALLOC_REF_COUNT(obj, name) __noop
+    #define UNTRACK_GFX_ALLOC_REF_COUNT(obj) __noop
+void CheckAllD3D12AllocsReleased() {}
+#endif // #define TRACK_GFX_HEAP_ALLOCS
+
 void GfxMemoryAllocator::Initialize()
 {
     static bool s_AlwaysCommitedMemory = false;
@@ -193,6 +220,40 @@ void GfxMemoryAllocator::Initialize()
     default:
         assert(0);
     }
+}
+
+D3D12MA::Allocation* GfxMemoryAllocator::Allocate(D3D12_HEAP_TYPE heapType, const CD3DX12_RESOURCE_DESC1& desc, D3D12_RESOURCE_STATES initialState, const D3D12_CLEAR_VALUE* clearValue)
+{
+    bbeProfileFunction();
+
+    D3D12MA::ALLOCATION_DESC bufferAllocDesc{ D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET, heapType };
+
+    static ID3D12ProtectedResourceSession* ProtectedSession = nullptr; // TODO
+    D3D12MA::Allocation* allocHandle = nullptr;
+    D3D12Resource* newHeap = nullptr;
+    DX12_CALL(Dev().CreateResource2(
+        &bufferAllocDesc,
+        &desc,
+        initialState,
+        clearValue,
+        ProtectedSession,
+        &allocHandle,
+        IID_PPV_ARGS(&newHeap)));
+
+    assert(allocHandle);
+    assert(newHeap);
+
+    TRACK_GFX_ALLOC_REF_COUNT(allocHandle);
+
+    return allocHandle;
+}
+
+void GfxMemoryAllocator::Release(D3D12MA::Allocation* allocation)
+{
+    UNTRACK_GFX_ALLOC_REF_COUNT(allocation);
+
+    allocation->GetResource()->Release();
+    allocation->Release();
 }
 
 BBE_OPTIMIZE_OFF;

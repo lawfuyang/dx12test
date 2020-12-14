@@ -78,7 +78,7 @@ void GfxRootSignature::Compile(CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t num
         }
     }
 
-    m_RootSignature->SetName(StringUtils::Utf8ToWide(rootSigName));
+    SetD3DDebugName(m_RootSignature.Get(), rootSigName);
 }
 
 GfxRootSignature* GfxRootSignatureManager::GetOrCreateRootSig(CD3DX12_DESCRIPTOR_RANGE1* ranges, uint32_t nbRanges, D3D12_ROOT_SIGNATURE_FLAGS flags, const char* rootSigName)

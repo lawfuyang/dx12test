@@ -66,14 +66,8 @@ void GfxDefaultAssets::CreateCheckerboardTexture()
         }
     }
 
-    GfxTexture::InitParams initParams;
-    initParams.m_Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    initParams.m_TexParams.m_Width = TextureWidth;
-    initParams.m_TexParams.m_Height = TextureHeight;
-    initParams.m_InitData = data.data();
-    initParams.m_ResourceName = "Default Checkboard Texture";
-
-    GfxDefaultAssets::Checkerboard.Initialize(initParams);
+    GfxDefaultAssets::Checkerboard.Initialize(CD3DX12_RESOURCE_DESC1::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight), data.data());
+    GfxDefaultAssets::Checkerboard.SetDebugName("Checkerboard");
 }
 
 void GfxDefaultAssets::CreateSolidColorTexture(GfxTexture& result, const bbeColor& color, const char* colorName)
@@ -88,14 +82,8 @@ void GfxDefaultAssets::CreateSolidColorTexture(GfxTexture& result, const bbeColo
 
     std::fill(data.begin(), data.end(), color.RGBA().v);
 
-    GfxTexture::InitParams initParams;
-    initParams.m_Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    initParams.m_TexParams.m_Width = TextureWidth;
-    initParams.m_TexParams.m_Height = TextureHeight;
-    initParams.m_InitData = data.data();
-    initParams.m_ResourceName = colorName;
-
-    result.Initialize(initParams);
+    result.Initialize(CD3DX12_RESOURCE_DESC1::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight), data.data());
+    result.SetDebugName(StringFormat("SolidColorTexture: %s", colorName));
 }
 
 template <typename Vertex>
@@ -183,6 +171,9 @@ void GfxDefaultAssets::CreateUnitCubeMesh()
     ReverseWinding(indices, vertices);
 
     GfxDefaultAssets::UnitCube.m_VertexFormat = &GfxDefaultVertexFormats::Position3f_Normal3f_Texcoord2f;
-    GfxDefaultAssets::UnitCube.m_IndexBuffer.Initialize(indices.size(), indices.data(), "GfxDefaultGeometry::UnitCube Index Buffer");
-    GfxDefaultAssets::UnitCube.m_VertexBuffer.Initialize(vertices.size(), sizeof(Vertex), vertices.data(), "GfxDefaultGeometry::UnitCube");
+    GfxDefaultAssets::UnitCube.m_IndexBuffer.Initialize(indices.size(), indices.data());
+    GfxDefaultAssets::UnitCube.m_VertexBuffer.Initialize(vertices.size(), sizeof(Vertex), vertices.data());
+
+    GfxDefaultAssets::UnitCube.m_IndexBuffer.SetDebugName("UnitCube");
+    GfxDefaultAssets::UnitCube.m_VertexBuffer.SetDebugName("UnitCube");
 }

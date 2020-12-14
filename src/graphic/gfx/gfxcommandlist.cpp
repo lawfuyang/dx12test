@@ -26,9 +26,6 @@ void GfxCommandList::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, uint32_t qu
     // Command lists are created in the recording state, but there is nothing
     // to record yet. The main loop expects it to be closed, so close it now.
     DX12_CALL(m_CommandList->Close());
-
-    SetD3DDebugName(m_CommandList.Get(), "Un-named D3D12GraphicsCommandList");
-    SetD3DDebugName(m_CommandAllocator.Get(), "Un-named ID3D12CommandAllocator");
 }
 
 void GfxCommandList::BeginRecording()
@@ -108,8 +105,6 @@ GfxCommandList* GfxCommandListQueue::AllocateCommandList(std::string_view name)
     // get new cmd list in front of circular buffer and rotate it
     GfxCommandList* newCmdList = &*m_CommandLists.begin();
     m_CommandLists.rotate(m_CommandLists.begin() + 1);
-
-    const char* existingName = GetD3DDebugName(newCmdList->Dev());
 
     // begin recording
     assert(newCmdList->Dev());

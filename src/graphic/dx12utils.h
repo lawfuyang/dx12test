@@ -37,16 +37,16 @@ D3D12_PRIMITIVE_TOPOLOGY GetD3D12PrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE
 uint32_t GetBitsPerPixel(DXGI_FORMAT fmt);
 uint32_t GetBytesPerPixel(DXGI_FORMAT fmt);
 bool IsBlockFormat(DXGI_FORMAT fmt);
-void UploadToGfxResource(D3D12GraphicsCommandList* pCommandList, GfxHazardTrackedResource& destResource, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* srcData, std::string_view debugName = "");
+void UploadToGfxResource(D3D12GraphicsCommandList* pCommandList, GfxHazardTrackedResource& destResource, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* srcData);
 
 class ScopedPixEvent
 {
 public:
-    ScopedPixEvent(D3D12GraphicsCommandList* pCommandList) noexcept
+    ScopedPixEvent(D3D12GraphicsCommandList* pCommandList, std::string_view debugName) noexcept
         : m_CommandList(pCommandList)
     {
         assert(pCommandList);
-        PIXBeginEvent(pCommandList, 0, GetD3DDebugName(pCommandList));
+        PIXBeginEvent(pCommandList, 0, debugName.data());
     }
     ~ScopedPixEvent()
     {
@@ -56,7 +56,20 @@ public:
 private:
     D3D12GraphicsCommandList* m_CommandList;
 };
-#define bbePIXEvent(cmdList) const ScopedPixEvent bbeUniqueVariable(pixEvent) { cmdList }
+#define bbePIXEvent(cmdList, name) const ScopedPixEvent bbeUniqueVariable(scopedPixEvent) { cmdList, name }
+
+struct ScopedD3DesourceState
+{
+    ScopedD3DesourceState(D3D12GraphicsCommandList* pCommandList, const GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES tempNewState);
+    ~ScopedD3DesourceState();
+
+private:
+    D3D12Resource* m_Resource;
+    D3D12GraphicsCommandList* m_CommandList;
+    const D3D12_RESOURCE_STATES m_OldState;
+    const D3D12_RESOURCE_STATES m_TempNewState;
+};
+#define bbeScopedD3DResourceState(pCommandList, resource, tempNewState) const ScopedD3DesourceState bbeUniqueVariable(scopedD3DesourceState) { pCommandList, resource, tempNewState }
 
 struct CD3D12_RENDER_TARGET_VIEW_DESC : public D3D12_RENDER_TARGET_VIEW_DESC
 {

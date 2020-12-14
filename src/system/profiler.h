@@ -54,17 +54,17 @@ private:
 
 #if defined(BBE_USE_GPU_PROFILER)
     #define bbeProfileGPU(gfxContext, name)                                                             \
-            bbePIXEvent(gfxContext.GetCommandList().Dev());                                             \
+            bbePIXEvent(gfxContext.GetCommandList().Dev(), name);                                       \
             bbeOnExitScope([] { g_Profiler.SubmitGPULog(); });                                          \
             g_Profiler.BeginGPURecording(gfxContext.GetCommandList());                                  \
             MICROPROFILE_SCOPEGPUI_L(g_Profiler.GetGPULogForThread(), name, GetCompileTimeCRC32(name));
 
     #define bbeProfileGPUFunction(gfxContext)                                                                           \
-            bbePIXEvent(gfxContext.GetCommandList().Dev());                                                             \
+            bbePIXEvent(gfxContext.GetCommandList().Dev(), __FUNCTION__);                                               \
             bbeOnExitScope([] { g_Profiler.SubmitGPULog(); });                                                          \
             g_Profiler.BeginGPURecording(gfxContext.GetCommandList());                                                  \
             MICROPROFILE_SCOPEGPUI_L(g_Profiler.GetGPULogForThread(), __FUNCTION__, GetCompileTimeCRC32(__FUNCTION__));
 #else
-    #define bbeProfileGPU(gfxContext, name)   bbePIXEvent(gfxContext.GetCommandList().Dev());
-    #define bbeProfileGPUFunction(gfxContext) bbePIXEvent(gfxContext.GetCommandList().Dev());
+    #define bbeProfileGPU(gfxContext, name)   bbePIXEvent(gfxContext.GetCommandList().Dev(), name);
+    #define bbeProfileGPUFunction(gfxContext) bbePIXEvent(gfxContext.GetCommandList().Dev(), __FUNCTION__);
 #endif

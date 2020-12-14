@@ -10,20 +10,13 @@ namespace D3D12MA
 class GfxCommandList;
 class GfxContext;
 
-struct GfxHeap
-{
-    static D3D12MA::Allocation* Create(D3D12_HEAP_TYPE, CD3DX12_RESOURCE_DESC1&&, D3D12_RESOURCE_STATES initialState, const D3D12_CLEAR_VALUE*, std::string_view debugName);
-    static void Release(D3D12MA::Allocation*);
-
-    D3D12MA::Allocation* m_HeapAllocation = nullptr;
-};
-
 class GfxHazardTrackedResource
 {
 public:
     static const D3D12_RESOURCE_STATES INVALID_STATE = (D3D12_RESOURCE_STATES)0xDEADBEEF;
 
     D3D12Resource* GetD3D12Resource() const { return m_D3D12Resource; }
+    void SetDebugName(std::string_view debugName) const;
     void Release();
 
     D3D12MA::Allocation* m_D3D12MABufferAllocation = nullptr;
@@ -38,7 +31,7 @@ public:
 class GfxVertexBuffer : public GfxHazardTrackedResource
 {
 public:
-    void Initialize(uint32_t numVertices, uint32_t vertexSize, const void* initData = nullptr, std::string_view debugName = "");
+    void Initialize(uint32_t numVertices, uint32_t vertexSize, const void* initData = nullptr);
 
     uint32_t GetStrideInBytes() const { return m_StrideInBytes; }
     uint32_t GetNumVertices() const { return m_NumVertices; }
@@ -50,7 +43,7 @@ public:
 class GfxIndexBuffer : public GfxHazardTrackedResource
 {
 public:
-    void Initialize(uint32_t numIndices, const void* initData = nullptr, std::string_view debugName = "");
+    void Initialize(uint32_t numIndices, const void* initData = nullptr);
 
     DXGI_FORMAT GetFormat() const { DXGI_FORMAT_R16_UINT; } // only support 16 bit indices for now
     uint32_t GetNumIndices() const { return m_NumIndices; }
@@ -63,42 +56,11 @@ class GfxTexture : public GfxHazardTrackedResource
 public:
     DeclareObjectModelFunctions(GfxTexture);
 
-    struct InitParams
-    {
-        union
-        {
-            // TODO: TexArray, Mips
-            struct TexParams
-            {
-                uint32_t m_Width;
-                uint32_t m_Height;
-            } m_TexParams;
-            struct BufferParams
-            {
-                uint32_t m_NumElements;
-                uint32_t m_StructureByteStride;
-            } m_BufferParams;
-        };
-        DXGI_FORMAT              m_Format       = DXGI_FORMAT_UNKNOWN;
-        D3D12_RESOURCE_DIMENSION m_Dimension    = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        D3D12_RESOURCE_FLAGS     m_Flags        = D3D12_RESOURCE_FLAG_NONE;
-        const void*              m_InitData     = nullptr;
-        D3D12_RESOURCE_STATES    m_InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
-        D3D12_CLEAR_VALUE        m_ClearValue   = {};
-        StaticString<128>        m_ResourceName;
-    };
-
-    void Initialize(GfxContext& initContext, const InitParams&);
-    void Initialize(const InitParams&);
+    void Initialize(const CD3DX12_RESOURCE_DESC1& desc, const void* initData = nullptr, D3D12_CLEAR_VALUE clearValue = D3D12_CLEAR_VALUE{}, D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_GENERIC_READ);
 
     DXGI_FORMAT GetFormat() const { return m_Format; }
 
     DXGI_FORMAT m_Format = DXGI_FORMAT_UNKNOWN;
 
     void UpdateIMGUI();
-
-private:
-    CD3DX12_RESOURCE_DESC1 GetDescForGfxTexture(const GfxTexture::InitParams& i);
-
-    friend class GfxSwapChain;
 };

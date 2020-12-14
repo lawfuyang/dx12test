@@ -3,84 +3,10 @@
 
 #include <system/imguimanager.h>
 
-#define TRACK_GFX_HEAP_ALLOCS
-//#define DEBUG_PRINT_GFX_MEMORY_ALLOCS
-
-#if defined(TRACK_GFX_HEAP_ALLOCS) && defined(DEBUG_PRINT_GFX_MEMORY_ALLOCS)
-    #define bbeLogGfxAlloc(StrFormat, ...) g_Log.info(StrFormat, __VA_ARGS__);
-#else
-    #define bbeLogGfxAlloc(...) __noop
-#endif
-
-#if defined(TRACK_GFX_HEAP_ALLOCS)
-    static ConcurrentUnorderedMap<D3D12MA::Allocation*, uint32_t> gs_HeapAllocs;
-
-    #define TRACK_GFX_ALLOC_REF_COUNT(allocHandle) ++gs_HeapAllocs[allocHandle]
-    #define UNTRACK_GFX_ALLOC_REF_COUNT(allocHandle) --gs_HeapAllocs[allocHandle]
-
-    void CheckAllD3D12AllocsReleased()
-    {
-        uint32_t numLeaks = 0;
-        for (const auto& elem : gs_HeapAllocs)
-        {
-            if (elem.second)
-            {
-                ++numLeaks;
-                g_Log.critical("\nUnreleased D3D12MA Allocation: '{}'\n", StringUtils::WideToUtf8(elem.first->GetName()));
-            }
-        }
-        assert(numLeaks == 0);
-    }
-#else
-    #define TRACK_GFX_ALLOC_REF_COUNT(obj, name) __noop
-    #define UNTRACK_GFX_ALLOC_REF_COUNT(obj) __noop
-    void CheckAllD3D12AllocsReleased() {}
-#endif // #define TRACK_GFX_HEAP_ALLOCS
-
-void GfxHeap::Release(D3D12MA::Allocation* allocation)
+void GfxHazardTrackedResource::SetDebugName(std::string_view debugName) const
 {
-    bbeLogGfxAlloc("Destroying D3D12MA::Allocation '{}'", StringUtils::WideToUtf8(allocation->GetName()));
-
-    UNTRACK_GFX_ALLOC_REF_COUNT(allocation);
-
-    allocation->GetResource()->Release();
-    allocation->Release();
-}
-
-D3D12MA::Allocation* GfxHeap::Create(D3D12_HEAP_TYPE heapType, CD3DX12_RESOURCE_DESC1&& desc, D3D12_RESOURCE_STATES initialState, const D3D12_CLEAR_VALUE* clearValue, std::string_view debugName)
-{
-    bbeProfileFunction();
-
-    D3D12MA::ALLOCATION_DESC bufferAllocDesc{ D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET, heapType };
-
-    static ID3D12ProtectedResourceSession* ProtectedSession = nullptr; // TODO
-    D3D12MA::Allocation* allocHandle = nullptr;
-    D3D12Resource* newHeap = nullptr;
-    DX12_CALL(g_GfxMemoryAllocator.Dev().CreateResource2(
-        &bufferAllocDesc,
-        &desc,
-        initialState,
-        clearValue,
-        ProtectedSession,
-        &allocHandle,
-        IID_PPV_ARGS(&newHeap)));
-
-    assert(allocHandle);
-    assert(newHeap);
-
-    const StaticWString<128> resourceNameW = StringUtils::Utf8ToWide(debugName.data());
-    allocHandle->SetName(resourceNameW.c_str());
-    allocHandle->GetResource()->SetName(resourceNameW.c_str());
-
-    StaticString<128> heapName = debugName.data();
-    heapName += " Heap";
-    SetD3DDebugName(allocHandle->GetHeap(), heapName.c_str());
-    SetD3DDebugName(newHeap, heapName.c_str());
-
-    TRACK_GFX_ALLOC_REF_COUNT(allocHandle);
-    bbeLogGfxAlloc("Created D3D12MA::Allocation '{}'", debugName.data());
-
-    return allocHandle;
+    if (m_D3D12Resource)
+        SetD3DDebugName(m_D3D12Resource, debugName.data());
 }
 
 void GfxHazardTrackedResource::Release()
@@ -89,12 +15,12 @@ void GfxHazardTrackedResource::Release()
 
     if (m_D3D12MABufferAllocation)
     {
-        GfxHeap::Release(m_D3D12MABufferAllocation);
+        g_GfxMemoryAllocator.Release(m_D3D12MABufferAllocation);
         m_D3D12MABufferAllocation = nullptr;
     }
 }
 
-void GfxVertexBuffer::Initialize(uint32_t numVertices, uint32_t vertexSize, const void* initData, std::string_view debugName)
+void GfxVertexBuffer::Initialize(uint32_t numVertices, uint32_t vertexSize, const void* initData)
 {
     assert(!m_D3D12MABufferAllocation);
     assert(numVertices > 0);
@@ -112,23 +38,23 @@ void GfxVertexBuffer::Initialize(uint32_t numVertices, uint32_t vertexSize, cons
     m_CurrentResourceState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
 
     // Create heap to hold final buffer data
-    m_D3D12MABufferAllocation = GfxHeap::Create(D3D12_HEAP_TYPE_DEFAULT, CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), m_CurrentResourceState, nullptr, debugName);
+    m_D3D12MABufferAllocation = g_GfxMemoryAllocator.Allocate(D3D12_HEAP_TYPE_DEFAULT, CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), m_CurrentResourceState, nullptr);
     assert(m_D3D12MABufferAllocation);
     m_D3D12Resource = m_D3D12MABufferAllocation->GetResource();
+
+    SetDebugName("Un-named GfxVertexBuffer");
     
     if (hasInitData)
     {
-        StaticString<128> cmdListDebugName = debugName.data();
-        cmdListDebugName += " Upload Init Data Cmd List";
-        GfxCommandList& newCmdList = *g_GfxCommandListsManager.GetMainQueue().AllocateCommandList(cmdListDebugName.c_str());
+        GfxCommandList& newCmdList = *g_GfxCommandListsManager.GetMainQueue().AllocateCommandList("GfxVertexBuffer Upload Init Data");
 
-        UploadToGfxResource(newCmdList.Dev(), *this, sizeInBytes, sizeInBytes, sizeInBytes, initData, debugName);
+        UploadToGfxResource(newCmdList.Dev(), *this, sizeInBytes, sizeInBytes, sizeInBytes, initData);
 
         g_GfxCommandListsManager.QueueCommandListToExecute(&newCmdList);
     }
 }
 
-void GfxIndexBuffer::Initialize(uint32_t numIndices, const void* initData, std::string_view debugName)
+void GfxIndexBuffer::Initialize(uint32_t numIndices, const void* initData)
 {
     bbeProfileFunction();
 
@@ -143,121 +69,96 @@ void GfxIndexBuffer::Initialize(uint32_t numIndices, const void* initData, std::
     const bool hasInitData = initData != nullptr;
 
     // Create heap to hold final buffer data
-    m_D3D12MABufferAllocation = GfxHeap::Create(D3D12_HEAP_TYPE_DEFAULT, CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), m_CurrentResourceState, nullptr, debugName);
+    m_D3D12MABufferAllocation = g_GfxMemoryAllocator.Allocate(D3D12_HEAP_TYPE_DEFAULT, CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), m_CurrentResourceState, nullptr);
     assert(m_D3D12MABufferAllocation);
     m_D3D12Resource = m_D3D12MABufferAllocation->GetResource();
 
+    SetDebugName("Un-named GfxIndexBuffer");
+
     if (hasInitData)
     {
-        StaticString<128> cmdListDebugName = debugName.data();
-        cmdListDebugName += " Upload Init Data Cmd List";
-        GfxCommandList& newCmdList = *g_GfxCommandListsManager.GetMainQueue().AllocateCommandList(cmdListDebugName.c_str());
+        GfxCommandList& newCmdList = *g_GfxCommandListsManager.GetMainQueue().AllocateCommandList("GfxIndexBuffer Upload Init Data");
 
-        UploadToGfxResource(newCmdList.Dev(), *this, sizeInBytes, sizeInBytes, sizeInBytes, initData, debugName);
+        UploadToGfxResource(newCmdList.Dev(), *this, sizeInBytes, sizeInBytes, sizeInBytes, initData);
 
         g_GfxCommandListsManager.QueueCommandListToExecute(&newCmdList);
     }
-
 }
 
 ForwardDeclareSerializerFunctions(GfxTexture);
 
-CD3DX12_RESOURCE_DESC1 GfxTexture::GetDescForGfxTexture(const GfxTexture::InitParams& i)
+static void ResourceDescSanityCheck(const CD3DX12_RESOURCE_DESC1& desc)
 {
+    static const float BufferSizeLimitMb = []
+    {
+        D3D12MA::Budget gpuBudget{};
+        g_GfxMemoryAllocator.Dev().GetBudget(&gpuBudget, nullptr);
+
+        static constexpr float A_TERM = 128.0f;
+        static constexpr float B_TERM = 0.25f;
+        static constexpr float C_TERM = 2048.0f;
+        static_assert(A_TERM == D3D12_REQ_RESOURCE_SIZE_IN_MEGABYTES_EXPRESSION_A_TERM);
+        static_assert(B_TERM == D3D12_REQ_RESOURCE_SIZE_IN_MEGABYTES_EXPRESSION_B_TERM);
+        static_assert(C_TERM == D3D12_REQ_RESOURCE_SIZE_IN_MEGABYTES_EXPRESSION_C_TERM);
+
+        return std::min(std::max(A_TERM, B_TERM * BBE_MB(gpuBudget.BudgetBytes)), C_TERM);
+    }();
+
     // TODO: D3D12_RESOURCE_DIMENSION_TEXTURE1D, D3D12_RESOURCE_DIMENSION_TEXTURE3D
-    switch (i.m_Dimension)
+    switch (desc.Dimension)
     {
     case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
-    {
-        assert(i.m_Format != DXGI_FORMAT_UNKNOWN);
-        assert(i.m_TexParams.m_Width > 0 && i.m_TexParams.m_Width <= D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION);
-        assert(i.m_TexParams.m_Height > 0 && i.m_TexParams.m_Height <= D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION);
+        assert(desc.Format != DXGI_FORMAT_UNKNOWN);
+        assert(desc.Width > 0 && desc.Width <= D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION);
+        assert(desc.Height > 0 && desc.Height <= D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION);
+        // TODO: Texture2DArray
+        // TODO: Mips
+        break;
 
-        // TODO: Texture2DArray, Mips
-        const uint32_t ArraySize = 1;
-        const uint32_t MipLevels = 1;
-        return CD3DX12_RESOURCE_DESC1::Tex2D(i.m_Format, i.m_TexParams.m_Width, i.m_TexParams.m_Height, ArraySize, MipLevels, 1, 0, i.m_Flags);
-    }
     case D3D12_RESOURCE_DIMENSION_BUFFER:
-    {
-        const uint32_t width = i.m_BufferParams.m_NumElements * i.m_BufferParams.m_StructureByteStride;
-        static const float s_SizeLimitMb = [] 
-        {
-            D3D12MA::Budget gpuBudget{};
-            g_GfxMemoryAllocator.Dev().GetBudget(&gpuBudget, nullptr);
-
-            static constexpr float A_TERM = 128.0f;
-            static constexpr float B_TERM = 0.25f;
-            static constexpr float C_TERM = 2048.0f;
-            static_assert(A_TERM == D3D12_REQ_RESOURCE_SIZE_IN_MEGABYTES_EXPRESSION_A_TERM);
-            static_assert(B_TERM == D3D12_REQ_RESOURCE_SIZE_IN_MEGABYTES_EXPRESSION_B_TERM);
-            static_assert(C_TERM == D3D12_REQ_RESOURCE_SIZE_IN_MEGABYTES_EXPRESSION_C_TERM);
-
-            return std::min(std::max(A_TERM, B_TERM * BBE_MB(gpuBudget.BudgetBytes)), C_TERM);
-        }();
-
-        assert(i.m_Format == DXGI_FORMAT_UNKNOWN);
-        assert(BBE_TO_MB(width) < s_SizeLimitMb);
-
-        return CD3DX12_RESOURCE_DESC1::Buffer(width, i.m_Flags);
+        assert(desc.Format == DXGI_FORMAT_UNKNOWN);
+        assert(BBE_TO_MB(desc.Width) < BufferSizeLimitMb);
+        break;
     }
-    }
-
-    assert(false);
-    return *(CD3DX12_RESOURCE_DESC1*)0;
 }
 
-void GfxTexture::Initialize(const InitParams& initParams)
-{
-    GfxContext& initContext = g_GfxManager.GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, initParams.m_ResourceName.c_str());
-    Initialize(initContext, initParams);
-}
-
-void GfxTexture::Initialize(GfxContext& initContext, const InitParams& initParams)
+void GfxTexture::Initialize(const CD3DX12_RESOURCE_DESC1& desc, const void* initData, D3D12_CLEAR_VALUE clearValue, D3D12_RESOURCE_STATES initialState)
 {
     bbeProfileFunction();
-    bbeProfileGPUFunction(initContext);
-
     assert(!m_D3D12MABufferAllocation);
 
-    m_Format = initParams.m_Format;
+    m_Format = desc.Format;
+    m_CurrentResourceState = initialState;
 
-    CD3DX12_RESOURCE_DESC1 desc = GetDescForGfxTexture(initParams);
+    // sanity check for resource desc
+    ResourceDescSanityCheck(desc);
 
-    UINT64 rowSizeInBytes = 0;
-    uint32_t sizeInBytes = 0;
-    {
-        UINT FirstSubresource = 0;
-        UINT NumSubresources = 1;
-        const UINT64 BaseOffset = 0;
-        D3D12_PLACED_SUBRESOURCE_FOOTPRINT layouts{};
-        UINT numRows = 0;
-        UINT64 totalBytes = 0;
-        g_GfxManager.GetGfxDevice().Dev()->GetCopyableFootprints1(&desc, FirstSubresource, NumSubresources, BaseOffset, &layouts, &numRows, &rowSizeInBytes, &totalBytes);
+    const bool hasClearValue = (desc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER) &&
+                               ((desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) == 0) &&
+                               (clearValue.Format != DXGI_FORMAT_UNKNOWN);
 
-        sizeInBytes = (uint32_t)totalBytes;
-    }
-
-    const bool hasInitData = initParams.m_InitData != nullptr;
-
-    // if we have init data, we will start this heap in the copy destination state since we will copy data from the upload heap to this heap
-    m_CurrentResourceState = initParams.m_InitialState;
-
-    const bool hasClearValue = (initParams.m_ClearValue.Format != DXGI_FORMAT_UNKNOWN) &&
-                               (desc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER) && 
-                               ((desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) == 0);
-
-    // Create heap to hold final buffer data
-    m_D3D12MABufferAllocation = GfxHeap::Create(D3D12_HEAP_TYPE_DEFAULT, std::move(desc), m_CurrentResourceState, hasClearValue ? &initParams.m_ClearValue : nullptr, initParams.m_ResourceName.c_str());
+    // Create heap
+    m_D3D12MABufferAllocation = g_GfxMemoryAllocator.Allocate(D3D12_HEAP_TYPE_DEFAULT, desc, m_CurrentResourceState, hasClearValue ? &clearValue : nullptr);
     assert(m_D3D12MABufferAllocation);
     m_D3D12Resource = m_D3D12MABufferAllocation->GetResource();
 
-    // if init data is specified, upload it
-    if (hasInitData)
+    SetDebugName("Un-named GfxTexture");
+
+    if (initData)
     {
-        UploadToGfxResource(initContext.GetCommandList().Dev(), *this, sizeInBytes, (uint32_t)rowSizeInBytes, (uint32_t)(rowSizeInBytes * desc.Height), initParams.m_InitData, initParams.m_ResourceName.c_str());
+        const UINT FirstSubresource = 0;
+        const UINT NumSubresources = 1;
+        const UINT64 BaseOffset = 0;
+        D3D12_PLACED_SUBRESOURCE_FOOTPRINT layouts{};
+        UINT numRows = 0;
+        UINT64 rowSizeInBytes = 0;
+        UINT64 totalBytes = 0;
+        g_GfxManager.GetGfxDevice().Dev()->GetCopyableFootprints1(&desc, FirstSubresource, NumSubresources, BaseOffset, &layouts, &numRows, &rowSizeInBytes, &totalBytes);
+
+        GfxCommandList& newCmdList = *g_GfxCommandListsManager.GetMainQueue().AllocateCommandList("GfxTexture Upload Init Data");
+        UploadToGfxResource(newCmdList.Dev(), *this, (uint32_t)totalBytes, (uint32_t)rowSizeInBytes, (uint32_t)(rowSizeInBytes * desc.Height), initData);
+        g_GfxCommandListsManager.QueueCommandListToExecute(&newCmdList);
     }
-    g_GfxCommandListsManager.QueueCommandListToExecute(&initContext.GetCommandList());
 }
 
 void GfxTexture::UpdateIMGUI()

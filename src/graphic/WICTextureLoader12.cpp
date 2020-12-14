@@ -175,18 +175,6 @@ namespace
         return factory;
     }
 
-    //---------------------------------------------------------------------------------
-    template<UINT TNameLength>
-    inline void SetDebugObjectName(_In_ ID3D12DeviceChild* resource, _In_z_ const wchar_t(&name)[TNameLength]) noexcept
-    {
-        #if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
-            resource->SetName(name);
-        #else
-            UNREFERENCED_PARAMETER(resource);
-            UNREFERENCED_PARAMETER(name);
-        #endif
-    }
-
     inline uint32_t CountMips(uint32_t width, uint32_t height) noexcept
     {
         if (width == 0 || height == 0)
@@ -616,32 +604,6 @@ namespace
         *texture = tex;
         return hr;
     }
-
-    //--------------------------------------------------------------------------------------
-    void SetDebugTextureInfo(
-        _In_z_ const wchar_t* fileName,
-        _In_ ID3D12Resource** texture) noexcept
-    {
-#if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
-        if (texture && *texture)
-        {
-            const wchar_t* pstrName = wcsrchr(fileName, '\\');
-            if (!pstrName)
-            {
-                pstrName = fileName;
-            }
-            else
-            {
-                pstrName++;
-            }
-
-            (*texture)->SetName(pstrName);
-        }
-#else
-        UNREFERENCED_PARAMETER(fileName);
-        UNREFERENCED_PARAMETER(texture);
-#endif
-    }
 } // anonymous namespace
 
 //--------------------------------------------------------------------------------------
@@ -732,9 +694,6 @@ HRESULT DirectX::LoadWICTextureFromMemoryEx(
     if (FAILED(hr))
         return hr;
 
-    _Analysis_assume_(*texture != nullptr);
-    SetDebugObjectName(*texture, L"WICTextureLoader");
-
     return hr;
 }
 
@@ -803,11 +762,6 @@ HRESULT DirectX::LoadWICTextureFromFileEx(
     hr = CreateTextureFromWIC(d3dDevice, frame.Get(), maxsize,
         resFlags, loadFlags,
         texture, decodedData, subresource, pDesc);
-
-    if (SUCCEEDED(hr))
-    {
-        SetDebugTextureInfo(fileName, texture);
-    }
 
     return hr;
 }

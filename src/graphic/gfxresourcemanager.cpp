@@ -53,15 +53,13 @@ T* GfxResourceManager::Get(const std::string& filePath, const ResourceLoadingFin
     ManagedGfxResources<T>& resources = ManagedGfxResources<T>::Get();
 
     // if resource is already loaded in memory, return ptr to resource
-    {
-        const std::size_t hashedFilePath = std::hash<std::string>{}(filePath);
+    const std::size_t hashedFilePath = std::hash<std::string>{}(filePath);
 
-        std::shared_lock readLock{ resources.m_CacheLock };
-        if (resources.m_ResourceCache.count(hashedFilePath))
-        {
-            g_Log.info("Retrieved {} from resource cache", filePath.c_str());
-            return resources.m_ResourceCache[hashedFilePath];
-        }
+    bbeAutoLockRead(resources.m_CacheLock);
+    if (resources.m_ResourceCache.count(hashedFilePath))
+    {
+        g_Log.info("Retrieved {} from resource cache", filePath.c_str());
+        return resources.m_ResourceCache[hashedFilePath];
     }
 
     // resource not yet loaded in memory. Load it async in BG thread, and return nullptr
@@ -108,19 +106,13 @@ void ManagedGfxResources<GfxTexture>::Load(const std::string& filePath, const Gf
     // init and assign gfx texture in the next gfx frame
     auto CreateGfxTexture = [&, texDesc = std::move(texDesc), initData = std::move(decodedData), filePath, finalizer]()
     {
-        GfxTexture::InitParams params;
-        params.m_Format = texDesc.Format;
-        params.m_TexParams.m_Width = (uint32_t)texDesc.Width;
-        params.m_TexParams.m_Height = texDesc.Height;
-        params.m_InitData = initData.data();
-        params.m_ResourceName = GetFileNameFromPath(filePath).c_str();
-
         GfxTexture* newTex = [&]()
         {
             bbeAutoLock(m_PoolLock);
             return m_Pool.construct();
         }();
-        newTex->Initialize(params);
+        newTex->Initialize(CD3DX12_RESOURCE_DESC1::Tex2D(texDesc.Format, texDesc.Width, texDesc.Height), initData.data());
+        newTex->SetDebugName(GetFileNameFromPath(filePath).c_str());
 
         finalizer(newTex);
 
@@ -129,7 +121,7 @@ void ManagedGfxResources<GfxTexture>::Load(const std::string& filePath, const Gf
         // finally, cache gfx texture
         const std::size_t hashedFilePath = std::hash<std::string>{}(filePath);
 
-        std::unique_lock readLock{ m_CacheLock };
+        bbeAutoLockWrite(m_CacheLock);
         m_ResourceCache[hashedFilePath] = newTex;
     };
     g_GfxManager.AddGraphicCommand(CreateGfxTexture);

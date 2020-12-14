@@ -43,19 +43,11 @@ void GfxForwardLightingPass::Initialize()
 
     m_RootSignature = g_GfxRootSignatureManager.GetOrCreateRootSig(ranges, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT, "GfxForwardLightingPass_RootSignature");
 
-    GfxTexture::InitParams depthBufferInitParams;
-    depthBufferInitParams.m_Format = DXGI_FORMAT_D32_FLOAT;
-    depthBufferInitParams.m_TexParams.m_Width = g_CommandLineOptions.m_WindowWidth;
-    depthBufferInitParams.m_TexParams.m_Height = g_CommandLineOptions.m_WindowHeight;
-    depthBufferInitParams.m_Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-    depthBufferInitParams.m_InitData = nullptr;
-    depthBufferInitParams.m_ResourceName = "GfxManager Depth Buffer";
-    depthBufferInitParams.m_InitialState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-    depthBufferInitParams.m_ClearValue.Format = depthBufferInitParams.m_Format;
-    depthBufferInitParams.m_ClearValue.DepthStencil.Depth = 1.0f;
-    depthBufferInitParams.m_ClearValue.DepthStencil.Stencil = 0;
+    CD3DX12_RESOURCE_DESC1 desc{ CD3DX12_RESOURCE_DESC1::Tex2D(DXGI_FORMAT_D32_FLOAT, g_CommandLineOptions.m_WindowWidth, g_CommandLineOptions.m_WindowHeight) };
+    desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
-    g_SceneDepthBuffer.Initialize(depthBufferInitParams);
+    g_SceneDepthBuffer.Initialize(desc, nullptr, { desc.Format, { 1.0f, 0 } }, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+    g_SceneDepthBuffer.SetDebugName("SceneDepthBuffer");
 }
 
 void GfxForwardLightingPass::ShutDown()

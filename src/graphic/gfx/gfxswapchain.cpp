@@ -45,7 +45,7 @@ void GfxSwapChain::Initialize()
         D3D12Resource* swapChainResource = nullptr;
         DX12_CALL(Dev()->GetBuffer(i, IID_PPV_ARGS(&swapChainResource)));
         m_Textures[i].m_D3D12Resource = swapChainResource;
-        m_Textures[i].m_D3D12Resource->SetName(StringUtils::Utf8ToWide(StringFormat("Back Buffer RTV %d", i)));
+        m_Textures[i].SetDebugName(StringFormat("Back Buffer RTV %d", i));
         m_Textures[i].m_Format = swapChainDesc.Format;
     }
 }

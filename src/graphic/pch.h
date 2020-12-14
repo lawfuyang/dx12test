@@ -22,3 +22,6 @@
 #include <graphic/gfx/gfxvertexformat.h>
 
 #include <graphic/renderers/gfxrendererbase.h>
+
+// Helper macro for dispatch compute shader threads
+#define bbeGetCSDispatchCount(domainWidth, groupWidth) (((domainWidth) + ((groupWidth) - 1)) / (groupWidth))

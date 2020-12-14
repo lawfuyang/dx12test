@@ -52,18 +52,13 @@ void GfxIMGUIRenderer::InitFontsTexture()
     bbeProfileFunction();
 
     ImGuiIO& io = ImGui::GetIO();
-    unsigned char* pixels;
+    unsigned char* pixels = nullptr;
     int width, height;
     io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
-    GfxTexture::InitParams initParams;
-    initParams.m_Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    initParams.m_TexParams.m_Width = width;
-    initParams.m_TexParams.m_Height = height;
-    initParams.m_InitData = pixels;
-    initParams.m_ResourceName = "IMGUI Fonts Texture";
-
-    m_FontsTexture.Initialize(initParams);
+    //m_FontsTexture.Initialize(initParams);
+    m_FontsTexture.Initialize(CD3DX12_RESOURCE_DESC1::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, width, height), pixels);
+    m_FontsTexture.SetDebugName("IMGUI Fonts Texture");
 }
 
 void GfxIMGUIRenderer::GrowBuffers(const IMGUIDrawData& imguiDrawData, GfxContext* context)
@@ -73,8 +68,6 @@ void GfxIMGUIRenderer::GrowBuffers(const IMGUIDrawData& imguiDrawData, GfxContex
     // empty buffers == init phase
     const bool isInitPhase = (m_VertexBuffer.GetNumVertices() == 0) && (m_IndexBuffer.GetNumIndices() == 0);
 
-    StaticString<128> bufferNames;
-
     // Create and grow vertex/index buffers if needed
     // since we will be continuously streaming vertex/index via "Map", the heap type must be "D3D12_HEAP_TYPE_UPLOAD"
     if (isInitPhase || (m_VertexBuffer.GetNumVertices() < imguiDrawData.m_VtxCount))
@@ -82,18 +75,16 @@ void GfxIMGUIRenderer::GrowBuffers(const IMGUIDrawData& imguiDrawData, GfxContex
         m_VertexBuffer.Release();
 
         const uint32_t numVertices = isInitPhase ? gs_VBufferGrowSize : imguiDrawData.m_VtxCount + gs_VBufferGrowSize;
-        bufferNames = StringFormat("IMGUI GfxVertexBuffer_%u", numVertices);
-
-        m_VertexBuffer.Initialize(numVertices, sizeof(ImDrawVert), nullptr, bufferNames.c_str());
+        m_VertexBuffer.Initialize(numVertices, sizeof(ImDrawVert), nullptr);
+        m_VertexBuffer.SetDebugName("IMGUI GfxVertexBuffer");
     }
     if (isInitPhase || (m_IndexBuffer.GetNumIndices() < imguiDrawData.m_IdxCount))
     {
         m_IndexBuffer.Release();
 
         const uint32_t numIndices = isInitPhase ? gs_IBufferGrowSize : AlignUp(imguiDrawData.m_IdxCount + gs_IBufferGrowSize, 4); // the indexbuffer copy requires alignment
-        bufferNames = StringFormat("IMGUI GfxIndexBuffer%u", numIndices);
-
-        m_IndexBuffer.Initialize(numIndices, nullptr, bufferNames.c_str());
+        m_IndexBuffer.Initialize(numIndices, nullptr);
+        m_VertexBuffer.SetDebugName("IMGUI GfxIndexBuffer");
     }
 }
 
@@ -117,10 +108,10 @@ void GfxIMGUIRenderer::UploadBufferData(GfxContext& context, const IMGUIDrawData
     }
 
     uint32_t uploadSize = vertices.size() * sizeof(ImDrawVert);
-    UploadToGfxResource(context.GetCommandList().Dev(), m_VertexBuffer, uploadSize, uploadSize, uploadSize, vertices.data(), "IMGUI Vertex Buffer Update");
+    UploadToGfxResource(context.GetCommandList().Dev(), m_VertexBuffer, uploadSize, uploadSize, uploadSize, vertices.data());
 
     uploadSize = indices.size() * sizeof(ImDrawIdx);
-    UploadToGfxResource(context.GetCommandList().Dev(), m_IndexBuffer, uploadSize, uploadSize, uploadSize, indices.data(), "IMGUI Index Buffer Update");
+    UploadToGfxResource(context.GetCommandList().Dev(), m_IndexBuffer, uploadSize, uploadSize, uploadSize, indices.data());
 }
 
 void GfxIMGUIRenderer::SetupRenderStates(GfxContext& context, const IMGUIDrawData& imguiDrawData)
