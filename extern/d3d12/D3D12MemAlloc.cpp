@@ -206,7 +206,7 @@ static inline void D3D12MA_SWAP(T& a, T& b)
     class Mutex
     {
     public:
-        void Lock() { m_Mutex.lock(); }
+        void Lock() { bbeProfileLock(D3D12MA_MutexLock); m_Mutex.lock(); }
         void Unlock() { m_Mutex.unlock(); }
     private:
         std::mutex m_Mutex;
@@ -223,9 +223,9 @@ static inline void D3D12MA_SWAP(T& a, T& b)
     {
     public:
         RWMutex() { InitializeSRWLock(&m_Lock); }
-        void LockRead() { AcquireSRWLockShared(&m_Lock); }
+        void LockRead() { bbeProfileLock(D3D12MA_MutexLockRead); AcquireSRWLockShared(&m_Lock); }
         void UnlockRead() { ReleaseSRWLockShared(&m_Lock); }
-        void LockWrite() { AcquireSRWLockExclusive(&m_Lock); }
+        void LockWrite() { bbeProfileLock(D3D12MA_MutexLockWrite); AcquireSRWLockExclusive(&m_Lock); }
         void UnlockWrite() { ReleaseSRWLockExclusive(&m_Lock); }
     private:
         SRWLOCK m_Lock;

@@ -58,7 +58,7 @@ class GfxCommandListsManager
     DeclareSingletonFunctions(GfxCommandListsManager);
 
 public:
-    static const uint32_t NbQueues = 2;
+    static const uint32_t NbQueues = 3;
 
     void Initialize(tf::Subflow& sf);
     void ShutDown();
@@ -73,6 +73,7 @@ public:
         {
         case D3D12_COMMAND_LIST_TYPE_DIRECT: return m_DirectQueue;
         case D3D12_COMMAND_LIST_TYPE_COMPUTE: return m_AsyncComputeQueue;
+        case D3D12_COMMAND_LIST_TYPE_COPY: return m_CopyQueue;
         }
 
         assert(false);
@@ -82,8 +83,9 @@ public:
 private:
     GfxCommandListQueue m_DirectQueue;
     GfxCommandListQueue m_AsyncComputeQueue;
+    GfxCommandListQueue m_CopyQueue;
 
     // convenience array of all queues
-    GfxCommandListQueue* m_AllQueues[NbQueues] = { &m_DirectQueue, &m_AsyncComputeQueue };
+    GfxCommandListQueue* m_AllQueues[NbQueues] = { &m_DirectQueue, &m_AsyncComputeQueue, &m_CopyQueue };
 };
 #define g_GfxCommandListsManager GfxCommandListsManager::GetInstance()

@@ -30,6 +30,8 @@ void GfxCommandList::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, uint32_t qu
 
 void GfxCommandList::BeginRecording()
 {
+    bbeProfileFunction();
+
     // Command list allocators can only be reset when the associated command lists have finished execution on the GPU
     // Apps should use fences to determine GPU execution progress
     DX12_CALL(m_CommandAllocator->Reset());
@@ -99,12 +101,16 @@ GfxCommandList* GfxCommandListQueue::AllocateCommandList(std::string_view name)
 
     // before allocating, make sure the queue itself is already initialized
     assert(m_CommandLists.full());
-
-    bbeAutoLock(m_ListsLock);
-
+    
     // get new cmd list in front of circular buffer and rotate it
-    GfxCommandList* newCmdList = &*m_CommandLists.begin();
-    m_CommandLists.rotate(m_CommandLists.begin() + 1);
+    GfxCommandList* newCmdList = [this] 
+    {
+        bbeAutoLock(m_ListsLock);
+
+        GfxCommandList* ret = &*m_CommandLists.begin();
+        m_CommandLists.rotate(m_CommandLists.begin() + 1);
+        return ret;
+    }();
 
     // begin recording
     assert(newCmdList->Dev());
@@ -150,6 +156,7 @@ void GfxCommandListsManager::Initialize(tf::Subflow& sf)
     }
     sf.emplace([this] { m_DirectQueue.Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, 0); });
     sf.emplace([this] { m_AsyncComputeQueue.Initialize(D3D12_COMMAND_LIST_TYPE_COMPUTE, 1); });
+    sf.emplace([this] { m_CopyQueue.Initialize(D3D12_COMMAND_LIST_TYPE_COPY, 2); });
 }
 
 void GfxCommandListsManager::ShutDown()
