@@ -6,29 +6,27 @@ static const uint  g_MaxParticles     = NBodyGravityCSConsts::GetMaxParticles();
 static const uint  g_TileSize         = NBodyGravityCSConsts::GetTileSize();
 static const float g_DeltaTime        = NBodyGravityCSConsts::GetDeltaTime();
 static const float g_ParticlesDamping = NBodyGravityCSConsts::GetParticlesDamping();
+static const float g_ParticleMass     = NBodyGravityCSConsts::GetParticleMass();
 
-static StructuredBuffer<BodyGravityPosVelo>   g_OldPosVelo = NBodyGravityCSConsts::GetOldPosVelo();
-static RWStructuredBuffer<BodyGravityPosVelo> g_NewPosVelo = NBodyGravityCSConsts::GetNewPosVelo();
-
-static const float softeningSquared    = 0.0012500000f * 0.0012500000f;
-static const float g_fG                = 6.67300e-11f * 10000.0f;
-static const float g_fParticleMass    = g_fG * 10000.0f * 10000.0f;
+static RWStructuredBuffer<BodyGravityPosVelo> g_PosVelo = NBodyGravityCSConsts::GetPosVelo();
 
 groupshared float4 sharedPos[NBodyGravityCSConsts::BlockSize];
 
 // Body to body interaction, acceleration of the particle at position 
 // bi is updated.
-void bodyBodyInteraction(inout float3 ai, float4 bj, float4 bi, float mass, int particles) 
+void bodyBodyInteraction(inout float3 ai, float4 bj, float4 bi, int particles) 
 {
     float3 r = bj.xyz - bi.xyz;
 
     float distSqr = dot(r, r);
+
+    const float softeningSquared = 0.00125f * 0.00125f;
     distSqr += softeningSquared;
 
-    float invDist = 1.0f / sqrt(distSqr);
+    float invDist = rcp(sqrt(distSqr));
     float invDistCube =  invDist * invDist * invDist;
     
-    float s = mass * invDistCube * particles;
+    float s = g_ParticleMass * invDistCube * particles;
 
     ai += r * s;
 }
@@ -37,23 +35,23 @@ void bodyBodyInteraction(inout float3 ai, float4 bj, float4 bi, float mass, int 
 void CSMain(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, uint3 GTid : SV_GroupThreadID, uint GI : SV_GroupIndex)
 {
     // Each thread of the CS updates one of the particles.
-    float4 pos = g_OldPosVelo[DTid.x].m_Pos;
-    float4 vel = g_OldPosVelo[DTid.x].m_Velocity;
+    float4 pos = g_PosVelo[DTid.x].m_Pos;
+    float4 vel = g_PosVelo[DTid.x].m_Velocity;
     float3 accel = 0;
-    float mass = g_fParticleMass;
+    float mass = g_ParticleMass;
 
     // Update current particle using all other particles.
     [loop]
     for (uint tile = 0; tile < g_TileSize; tile++)
     {
         // Cache a tile of particles unto shared memory to increase IO efficiency.
-        sharedPos[GI] = g_OldPosVelo[tile * NBodyGravityCSConsts::BlockSize + GI].m_Pos;
+        sharedPos[GI] = g_PosVelo[tile * NBodyGravityCSConsts::BlockSize + GI].m_Pos;
        
         GroupMemoryBarrierWithGroupSync();
 
         for (uint i = 0; i < NBodyGravityCSConsts::BlockSize; ++i)
         {
-            bodyBodyInteraction(accel, sharedPos[i], pos, mass, 1);
+            bodyBodyInteraction(accel, sharedPos[i], pos, 1);
         }
         
         GroupMemoryBarrierWithGroupSync();
@@ -65,7 +63,7 @@ void CSMain(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, uint3 GTid
     // "phantom" particles generating false gravity at position (0, 0, 0), so 
     // we have to subtract them here. NOTE, out of bound reads always return 0 in CS.
     const int tooManyParticles = g_TileSize * NBodyGravityCSConsts::BlockSize - g_MaxParticles;
-    bodyBodyInteraction(accel, float4(0, 0, 0, 0), pos, mass, -tooManyParticles);
+    bodyBodyInteraction(accel, float4(0, 0, 0, 0), pos, -tooManyParticles);
 
     // Update the velocity and position of current particle using the 
     // acceleration computed above.
@@ -75,8 +73,8 @@ void CSMain(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, uint3 GTid
 
     if (DTid.x < g_MaxParticles)
     {
-        g_NewPosVelo[DTid.x].m_Pos = pos;
-        g_NewPosVelo[DTid.x].m_Velocity = float4(vel.xyz, length(accel));
+        g_PosVelo[DTid.x].m_Pos = pos;
+        g_PosVelo[DTid.x].m_Velocity = float4(vel.xyz, length(accel));
     }
 }
 

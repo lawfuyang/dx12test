@@ -45,7 +45,7 @@ void GfxForwardLightingPass::Initialize()
     CD3DX12_RESOURCE_DESC1 desc{ CD3DX12_RESOURCE_DESC1::Tex2D(DXGI_FORMAT_D32_FLOAT, g_CommandLineOptions.m_WindowWidth, g_CommandLineOptions.m_WindowHeight) };
     desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
-    g_SceneDepthBuffer.Initialize(desc, nullptr, { desc.Format, { 1.0f, 0 } }, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+    g_SceneDepthBuffer.InitializeTexture(desc, nullptr, { desc.Format, { 1.0f, 0 } }, D3D12_RESOURCE_STATE_DEPTH_WRITE);
     g_SceneDepthBuffer.SetDebugName("SceneDepthBuffer");
 }
 

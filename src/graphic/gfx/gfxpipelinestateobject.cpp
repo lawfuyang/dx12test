@@ -89,7 +89,42 @@ void GfxPSOManager::ShutDown()
     m_PipelineLibrary.Reset();
 }
 
-ID3D12PipelineState* GfxPSOManager::GetPSO(GfxContext& gfxContext, CD3DX12_PIPELINE_STATE_STREAM2& pso, std::size_t psoHash)
+//template <typename DescType, typename PipelineLoader, typename PipelineCreator>
+//ID3D12PipelineState* GfxPSOManager::GetPSOInternal(GfxContext& context, DescType&& desc, std::size_t psoHash, PipelineLoader&& loaderFunc, PipelineCreator&& creatorFunc)
+//{
+//    bbeProfileFunction();
+//
+//    assert(m_PipelineLibrary);
+//
+//    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
+//
+//    const StaticWString<32> psoHashStr = std::to_wstring(psoHash).c_str();
+//    ID3D12PipelineState* psoToReturn = nullptr;
+//
+//    bbeAutoLockRead(m_PipelineLibraryRWLock);
+//    ::HRESULT result = loaderFunc(psoHashStr.data(), std::forward<DescType>(desc), psoToReturn);
+//    if (result == E_INVALIDARG)
+//    {
+//        bbeProfile("Create & Save PSO");
+//        g_Log.info("Creating & Storing new PSO '{0:X}' into PipelineLibrary", psoHash);
+//
+//        creatorFunc(std::forward<DescType>(desc), psoToReturn);
+//
+//        bbeAutoLockScopedRWUpgrade(m_PipelineLibraryRWLock);
+//        DX12_CALL(m_PipelineLibrary->StorePipeline(psoHashStr.c_str(), psoToReturn));
+//        ++m_NewPSOs;
+//    }
+//    else if (FAILED(result))
+//    {
+//        assert(false);
+//    }
+//
+//    assert(psoToReturn);
+//    return psoToReturn;
+//}
+
+template <typename DescType, typename D3D12PSOLoaderFunc, typename D3D12PSOCreationFunc>
+ID3D12PipelineState* GfxPSOManager::GetPSOInternal(GfxContext& context, DescType&& desc, std::size_t psoHash, D3D12PSOLoaderFunc loaderFunc, D3D12PSOCreationFunc creationFunc)
 {
     bbeProfileFunction();
 
@@ -100,16 +135,14 @@ ID3D12PipelineState* GfxPSOManager::GetPSO(GfxContext& gfxContext, CD3DX12_PIPEL
     const StaticWString<32> psoHashStr = std::to_wstring(psoHash).c_str();
     ID3D12PipelineState* psoToReturn = nullptr;
 
-    D3D12_PIPELINE_STATE_STREAM_DESC psoStreamDesc{ sizeof(pso), &pso };
-
     bbeAutoLockRead(m_PipelineLibraryRWLock);
-    ::HRESULT result = m_PipelineLibrary->LoadPipeline(psoHashStr.data(), &psoStreamDesc, IID_PPV_ARGS(&psoToReturn));
+    ::HRESULT result = (m_PipelineLibrary.Get()->*loaderFunc)(psoHashStr.data(), &desc, IID_PPV_ARGS(&psoToReturn));
     if (result == E_INVALIDARG)
     {
         bbeProfile("Create & Save PSO");
         g_Log.info("Creating & Storing new PSO '{0:X}' into PipelineLibrary", psoHash);
 
-        DX12_CALL(gfxDevice.Dev()->CreatePipelineState(&psoStreamDesc, IID_PPV_ARGS(&psoToReturn)));
+        DX12_CALL((gfxDevice.Dev()->*creationFunc)(&desc, IID_PPV_ARGS(&psoToReturn)));
 
         bbeAutoLockScopedRWUpgrade(m_PipelineLibraryRWLock);
         DX12_CALL(m_PipelineLibrary->StorePipeline(psoHashStr.c_str(), psoToReturn));
@@ -122,4 +155,14 @@ ID3D12PipelineState* GfxPSOManager::GetPSO(GfxContext& gfxContext, CD3DX12_PIPEL
 
     assert(psoToReturn);
     return psoToReturn;
+}
+
+ID3D12PipelineState* GfxPSOManager::GetPSO(GfxContext& gfxContext, D3D12_GRAPHICS_PIPELINE_STATE_DESC&& desc, std::size_t psoHash)
+{
+    return GetPSOInternal(gfxContext, std::forward<D3D12_GRAPHICS_PIPELINE_STATE_DESC>(desc), psoHash, &D3D12PipelineLibrary::LoadGraphicsPipeline, &D3D12Device::CreateGraphicsPipelineState);
+}
+
+ID3D12PipelineState* GfxPSOManager::GetPSO(GfxContext& gfxContext, D3D12_COMPUTE_PIPELINE_STATE_DESC&& desc, std::size_t psoHash)
+{
+    return GetPSOInternal(gfxContext, std::forward<D3D12_COMPUTE_PIPELINE_STATE_DESC>(desc), psoHash, &D3D12PipelineLibrary::LoadComputePipeline, &D3D12Device::CreateComputePipelineState);
 }

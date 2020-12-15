@@ -172,10 +172,8 @@ void GfxContext::SetRootSignature(GfxRootSignature& rootSig)
     // Make sure you double check after setting a new root sig
     m_StagedResources = rootSig.m_Params;
 
-    //m_PSO.SetRootSignature(rootSig);
     m_PSO.pRootSignature = rootSig.Dev();
     m_RootSig = &rootSig;
-    m_CommandList->Dev()->SetGraphicsRootSignature(rootSig.Dev());
 }
 
 void GfxContext::StageCBVInternal(const void* data, uint32_t bufferSize, uint32_t cbRegister, const char* CBName)
@@ -244,7 +242,31 @@ void GfxContext::StageUAV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
 {
     CheckStagingResourceInputs(rootIndex, offset, D3D12_DESCRIPTOR_RANGE_TYPE_UAV);
 
-    // TODO
+    D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc{};
+
+    const D3D12_RESOURCE_DESC resourceDesc = tex.GetD3D12Resource()->GetDesc();
+    switch (resourceDesc.Dimension)
+    {
+    case D3D12_RESOURCE_DIMENSION_BUFFER:
+        UAVDesc = CD3D12_UNORDERED_ACCESS_VIEW_DESC{ D3D12_UAV_DIMENSION_BUFFER, resourceDesc.Format };
+        UAVDesc.Buffer.NumElements = tex.m_NumElements;
+        UAVDesc.Buffer.StructureByteStride = tex.m_StructureByteStride;
+        break;
+    case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
+        UAVDesc = CD3D12_UNORDERED_ACCESS_VIEW_DESC{ D3D12_UAV_DIMENSION_TEXTURE2D, resourceDesc.Format };
+        break;
+
+        // TODO: Other dimensions when needed
+    default: assert(false);
+    }
+
+    static ID3D12Resource* pCounterResource = nullptr; // TODO
+
+    StaticString<128> heapDebugName = StringFormat("UAV. Index: %d, Offset: %d", rootIndex, offset);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE CPUDescHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, heapDebugName.c_str());
+    g_GfxManager.GetGfxDevice().Dev()->CreateUnorderedAccessView(tex.GetD3D12Resource(), pCounterResource, &UAVDesc, CPUDescHeap);
+
+    StageDescriptor(CPUDescHeap, rootIndex, offset);
 }
 
 void GfxContext::StageDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptor, uint32_t rootIndex, uint32_t offset)
@@ -258,14 +280,12 @@ void GfxContext::StageDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptor, uint
     m_StaleResourcesBitMap.set(rootIndex);
 }
 
-std::size_t GfxContext::GetPSOHash()
+std::size_t GfxContext::GetPSOHash(bool forGraphicPSO)
 {
-    std::size_t finalHash = 0;
+    // Always get root sig Hash first
+    std::size_t finalHash = m_RootSig->m_Hash;
 
-    // RootSig
-    boost::hash_combine(finalHash, m_RootSig->m_Hash);
-
-    if (m_Shaders[VS])
+    if (forGraphicPSO)
     {
         // VS/PS Shaders
         boost::hash_combine(finalHash, m_Shaders[VS]->m_Hash);
@@ -315,10 +335,10 @@ std::size_t GfxContext::GetPSOHash()
             boost::hash_combine(finalHash, m_RTVs[i].m_Tex->GetFormat());
         }
 
-        // Sample Desccriptors
+        // Sample Descriptors
         boost::hash_combine(finalHash, GenericTypeHash(m_PSO.SampleDesc));
     }
-    else if (m_Shaders[CS])
+    else
     {
         // We only need to hash CS shader
         boost::hash_combine(finalHash, m_Shaders[CS]->m_Hash);
@@ -349,15 +369,18 @@ void GfxContext::PrepareGraphicsStates()
         assert((&m_PSO.RTVFormats)->RTFormats[i] != DXGI_FORMAT_UNKNOWN);
     }
 
-    std::size_t psoHash = GetPSOHash();
+    std::size_t psoHash = GetPSOHash(true);
     if (m_PSOHash != psoHash)
     {
         bbeProfile("Set PSO Params");
 
         m_PSOHash = psoHash;
 
+        // Root Sig
+        m_CommandList->Dev()->SetGraphicsRootSignature(m_RootSig->Dev());
+
         // PSO
-        m_CommandList->Dev()->SetPipelineState(g_GfxPSOManager.GetPSO(*this, m_PSO, m_PSOHash));
+        m_CommandList->Dev()->SetPipelineState(g_GfxPSOManager.GetPSO(*this, m_PSO.GraphicsDescV0(), m_PSOHash));
 
         // Input Assembler
         m_CommandList->Dev()->IASetPrimitiveTopology(GetD3D12PrimitiveTopology(m_PSO.PrimitiveTopologyType));
@@ -422,16 +445,19 @@ void GfxContext::PrepareComputeStates()
 
     assert(m_RootSig && m_RootSig->Dev());
     assert(m_CommandList);
+    assert(m_Shaders[CS]);
 
-    std::size_t psoHash = GetPSOHash();
+    std::size_t psoHash = GetPSOHash(false);
     if (m_PSOHash != psoHash)
     {
         bbeProfile("Set PSO Params");
 
         m_PSOHash = psoHash;
 
+        m_CommandList->Dev()->SetComputeRootSignature(m_RootSig->Dev());
+
         // PSO
-        m_CommandList->Dev()->SetPipelineState(g_GfxPSOManager.GetPSO(*this, m_PSO, m_PSOHash));
+        m_CommandList->Dev()->SetPipelineState(g_GfxPSOManager.GetPSO(*this, m_PSO.ComputeDescV0(), m_PSOHash));
     }
 }
 
@@ -561,7 +587,7 @@ static void CreateNullView(D3D12_DESCRIPTOR_RANGE_TYPE type, D3D12_CPU_DESCRIPTO
     }
 }
 
-void GfxContext::CommitStagedResources()
+void GfxContext::CommitStagedResources(RootDescTableSetter rootDescSetterFunc)
 {
     //bbeProfileFunction();
 
@@ -612,7 +638,7 @@ void GfxContext::CommitStagedResources()
     RunOnAllBits(m_StaleResourcesBitMap.to_ulong(), [&](uint32_t rootIndex)
     {
         // set desc heap for this table
-        m_CommandList->Dev()->SetGraphicsRootDescriptorTable(rootIndex, destHandle.m_GPUHandle);
+        (m_CommandList->Dev()->*rootDescSetterFunc)(rootIndex, destHandle.m_GPUHandle);
 
         const GfxRootSignature::StagedResourcesDescriptors& resourceDesc = m_StagedResources[rootIndex];
 
@@ -633,7 +659,7 @@ void GfxContext::DrawInstanced(uint32_t vertexCountPerInstance, uint32_t instanc
 {
     PrepareGraphicsStates();
     FlushResourceBarriers();
-    CommitStagedResources();
+    CommitStagedResources(&D3D12GraphicsCommandList::SetGraphicsRootDescriptorTable);
     m_CommandList->Dev()->DrawInstanced(vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
     PostDraw();
 }
@@ -646,7 +672,7 @@ void GfxContext::DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t i
 
     PrepareGraphicsStates();
     FlushResourceBarriers();
-    CommitStagedResources();
+    CommitStagedResources(&D3D12GraphicsCommandList::SetGraphicsRootDescriptorTable);
     m_CommandList->Dev()->DrawIndexedInstanced(indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
     PostDraw();
 }
@@ -655,7 +681,7 @@ void GfxContext::Dispatch(uint32_t threadGroupCountX, uint32_t threadGroupCountY
 {
     PrepareComputeStates();
     FlushResourceBarriers();
-    CommitStagedResources();
+    CommitStagedResources(&D3D12GraphicsCommandList::SetComputeRootDescriptorTable);
     m_CommandList->Dev()->Dispatch(threadGroupCountX, threadGroupCountY, threadGroupCountZ);
     PostDraw();
 }

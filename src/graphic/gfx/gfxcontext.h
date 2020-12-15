@@ -68,18 +68,20 @@ public:
     void Dispatch(uint32_t threadGroupCountX, uint32_t threadGroupCountY, uint32_t threadGroupCountZ);
 
 private:
+    using RootDescTableSetter = void (STDMETHODCALLTYPE D3D12GraphicsCommandList::*)(UINT, D3D12_GPU_DESCRIPTOR_HANDLE);
+
     void PrepareGraphicsStates();
     void PrepareComputeStates();
     void PostDraw();
     void FlushResourceBarriers();
     void StageDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptor, uint32_t rootIndex, uint32_t offset);
-    void CommitStagedResources();
+    void CommitStagedResources(RootDescTableSetter rootDescSetterFunc);
     void CheckStagingResourceInputs(uint32_t rootIndex, uint32_t offset, D3D12_DESCRIPTOR_RANGE_TYPE);
     void StageCBVInternal(const void* data, uint32_t bufferSize, uint32_t cbRegister, const char* CBName);
     void SetShaderVisibleDescriptorHeap();
     void ClearDSVInternal(GfxTexture& tex, float depth, uint8_t stencil, D3D12_CLEAR_FLAGS flags);
     CD3DX12_CPU_DESCRIPTOR_HANDLE AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE, std::string_view debugName = "");
-    std::size_t GetPSOHash();
+    std::size_t GetPSOHash(bool forGraphicPSO);
 
     template <uint32_t NbRTs>
     void SetRTVHelper(GfxTexture*(&RTVs)[NbRTs]);

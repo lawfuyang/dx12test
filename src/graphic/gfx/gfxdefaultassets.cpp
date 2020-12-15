@@ -55,7 +55,7 @@ void GfxDefaultAssets::CreateCheckerboardTexture()
         }
     }
 
-    GfxDefaultAssets::Checkerboard.Initialize(CD3DX12_RESOURCE_DESC1::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight), data.data());
+    GfxDefaultAssets::Checkerboard.InitializeTexture(CD3DX12_RESOURCE_DESC1::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight), data.data());
     GfxDefaultAssets::Checkerboard.SetDebugName("Checkerboard");
 }
 
@@ -71,7 +71,7 @@ void GfxDefaultAssets::CreateSolidColorTexture(GfxTexture& result, const bbeColo
 
     std::fill(data.begin(), data.end(), color.RGBA().v);
 
-    result.Initialize(CD3DX12_RESOURCE_DESC1::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight), data.data());
+    result.InitializeTexture(CD3DX12_RESOURCE_DESC1::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, TextureWidth, TextureHeight), data.data());
     result.SetDebugName(StringFormat("SolidColorTexture: %s", colorName));
 }
 

@@ -96,7 +96,7 @@ void ManagedGfxResources<GfxTexture>::Load(const std::string& filePath, const Gf
             bbeAutoLock(m_PoolLock);
             return m_Pool.construct();
         }();
-        newTex->Initialize(CD3DX12_RESOURCE_DESC1::Tex2D(texDesc.Format, texDesc.Width, texDesc.Height), initData.data());
+        newTex->InitializeTexture(CD3DX12_RESOURCE_DESC1::Tex2D(texDesc.Format, texDesc.Width, texDesc.Height), initData.data());
         newTex->SetDebugName(GetFileNameFromPath(filePath).c_str());
 
         finalizer(newTex);

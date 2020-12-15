@@ -122,7 +122,7 @@ static void ResourceDescSanityCheck(const CD3DX12_RESOURCE_DESC1& desc)
     }
 }
 
-void GfxTexture::Initialize(const CD3DX12_RESOURCE_DESC1& desc, const void* initData, D3D12_CLEAR_VALUE clearValue, D3D12_RESOURCE_STATES initialState)
+void GfxTexture::InitializeTexture(const CD3DX12_RESOURCE_DESC1& desc, const void* initData, D3D12_CLEAR_VALUE clearValue, D3D12_RESOURCE_STATES initialState)
 {
     bbeProfileFunction();
     assert(!m_D3D12MABufferAllocation);
@@ -159,6 +159,27 @@ void GfxTexture::Initialize(const CD3DX12_RESOURCE_DESC1& desc, const void* init
         UploadToGfxResource(newCmdList.Dev(), *this, (uint32_t)totalBytes, (uint32_t)rowSizeInBytes, (uint32_t)(rowSizeInBytes * desc.Height), initData);
         g_GfxCommandListsManager.QueueCommandListToExecute(&newCmdList);
     }
+}
+
+void GfxTexture::InitializeBuffer(const CD3DX12_RESOURCE_DESC1& desc, uint32_t numElements, uint32_t structureByteStride, D3D12_RESOURCE_STATES initialState)
+{
+    bbeProfileFunction();
+    assert(!m_D3D12MABufferAllocation);
+
+    m_Format = desc.Format;
+    m_CurrentResourceState = initialState;
+    m_NumElements = numElements;
+    m_StructureByteStride = structureByteStride;
+
+    // sanity check for resource desc
+    ResourceDescSanityCheck(desc);
+
+    // Create heap
+    m_D3D12MABufferAllocation = g_GfxMemoryAllocator.AllocateStatic(desc, m_CurrentResourceState, nullptr);
+    assert(m_D3D12MABufferAllocation);
+    m_D3D12Resource = m_D3D12MABufferAllocation->GetResource();
+
+    SetDebugName("Un-named GfxTexture");
 }
 
 void GfxTexture::UpdateIMGUI()

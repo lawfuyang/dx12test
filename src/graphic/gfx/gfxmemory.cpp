@@ -18,7 +18,7 @@ D3D12MA::Allocation* GfxMemoryAllocator::AllocateInternal(D3D12_HEAP_TYPE heapTy
 {
     bbeProfileFunction();
 
-    D3D12MA::ALLOCATION_DESC bufferAllocDesc{ D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET, heapType };
+    const D3D12MA::ALLOCATION_DESC bufferAllocDesc{ D3D12MA::ALLOCATION_FLAG_WITHIN_BUDGET, heapType };
 
     static ID3D12ProtectedResourceSession* ProtectedSession = nullptr; // TODO
     D3D12MA::Allocation* allocHandle = nullptr;

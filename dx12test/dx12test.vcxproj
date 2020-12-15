@@ -149,7 +149,6 @@
     <ClInclude Include="..\src\graphic\gfx\gfxmemory.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxmesh.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxpipelinestateobject.h" />
-    <ClInclude Include="..\src\graphic\gfx\gfxpipelinestateobject.hpp" />
     <ClInclude Include="..\src\graphic\gfx\gfxrootsignature.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxshadermanager.h" />
     <ClInclude Include="..\src\graphic\gfx\gfxswapchain.h" />

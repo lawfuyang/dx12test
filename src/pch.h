@@ -9,6 +9,7 @@
 
 #if !defined(BBE_SHADERCOMPILER)
     #define BBE_USE_PROFILER
+    //#define BBE_USE_GPU_PROFILER
 #endif
 
 // uncomment to disable all asserts
@@ -128,7 +129,6 @@
     #define MICROPROFILE_ENABLED 1
     #define MICROPROFILE_WEBSERVER_MAXFRAMES 50
 
-    //#define BBE_USE_GPU_PROFILER
     #if defined(BBE_USE_GPU_PROFILER)
         #define MICROPROFILE_GPU_TIMERS_D3D12 1
     #else
@@ -142,12 +142,14 @@
 // typedefs
 using WindowHandle = uint64_t;
 
-using DXGISwapChain            = IDXGISwapChain4;
-using D3D12Device              = ID3D12Device8;
-using D3D12PipelineLibrary     = ID3D12PipelineLibrary1;
-using D3D12GraphicsCommandList = ID3D12GraphicsCommandList6;
-using D3D12Fence               = ID3D12Fence1;
-using D3D12Resource            = ID3D12Resource;
+#if !defined(BBE_SHADERCOMPILER)
+    using DXGISwapChain            = IDXGISwapChain4;
+    using D3D12Device              = ID3D12Device8;
+    using D3D12PipelineLibrary     = ID3D12PipelineLibrary1;
+    using D3D12GraphicsCommandList = ID3D12GraphicsCommandList6;
+    using D3D12Fence               = ID3D12Fence1;
+    using D3D12Resource            = ID3D12Resource;
+#endif
 
 template <typename T>
 using ConcurrentVector = concurrency::concurrent_vector<T>;

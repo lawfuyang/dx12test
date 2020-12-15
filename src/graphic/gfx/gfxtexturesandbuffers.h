@@ -56,11 +56,22 @@ class GfxTexture : public GfxHazardTrackedResource
 public:
     DeclareObjectModelFunctions(GfxTexture);
 
-    void Initialize(const CD3DX12_RESOURCE_DESC1& desc, const void* initData = nullptr, D3D12_CLEAR_VALUE clearValue = D3D12_CLEAR_VALUE{}, D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_GENERIC_READ);
+    void InitializeTexture(const CD3DX12_RESOURCE_DESC1& desc, const void* initData = nullptr, D3D12_CLEAR_VALUE clearValue = D3D12_CLEAR_VALUE{}, D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_GENERIC_READ);
+    void InitializeBuffer(const CD3DX12_RESOURCE_DESC1& desc, uint32_t numElements, uint32_t structureByteStride, D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_GENERIC_READ);
+
+    template <typename T>
+    void InitializeStructuredBuffer(const CD3DX12_RESOURCE_DESC1& desc, uint32_t numElements, D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_GENERIC_READ)
+    {
+        InitializeBuffer(desc, numElements, sizeof(T), initialState);
+    }
 
     DXGI_FORMAT GetFormat() const { return m_Format; }
 
     DXGI_FORMAT m_Format = DXGI_FORMAT_UNKNOWN;
+    
+    // Buffer Params
+    uint32_t m_NumElements         = 0;
+    uint32_t m_StructureByteStride = 0;
 
     void UpdateIMGUI();
 };

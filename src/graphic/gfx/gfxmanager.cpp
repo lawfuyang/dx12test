@@ -143,10 +143,10 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
 
         tf.succeed(BEGIN_FRAME_GATE).precede(RENDERERS_GATE);
     };
-    PopulateCommandList(g_GfxForwardLightingPass);
-    PopulateCommandList(g_GfxIMGUIRenderer);
     PopulateCommandList(g_GfxBodyGravityParticlesUpdate);
+    PopulateCommandList(g_GfxForwardLightingPass);
     PopulateCommandList(g_GfxBodyGravityParticlesRender);
+    PopulateCommandList(g_GfxIMGUIRenderer);
 
     subFlow.emplace([this] { EndFrame(); }).succeed(RENDERERS_GATE);
 }

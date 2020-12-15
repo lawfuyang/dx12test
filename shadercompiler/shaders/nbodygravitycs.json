@@ -42,21 +42,19 @@
           {
             "Type": "float",
             "Name": "ParticlesDamping"
+          },
+		  {
+            "Type": "float",
+            "Name": "ParticleMass"
           }
         ]
       },
       "Resources": [
         {
-          "Type": "StructuredBuffer",
-          "UAVStructureType": "BodyGravityPosVelo",
-          "Register": 0,
-          "Name": "OldPosVelo"
-        },
-        {
           "Type": "RWStructuredBuffer",
           "UAVStructureType": "BodyGravityPosVelo",
           "Register": 0,
-          "Name": "NewPosVelo"
+          "Name": "PosVelo"
         }
       ],
       "Consts": [

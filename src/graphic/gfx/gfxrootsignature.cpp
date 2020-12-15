@@ -97,6 +97,15 @@ GfxRootSignature* GfxRootSignatureManager::GetOrCreateRootSig(CD3DX12_DESCRIPTOR
     {
         boost::hash_combine(hash, rootParams[i].ParameterType);
         boost::hash_combine(hash, rootParams[i].ShaderVisibility);
+
+        for (uint32_t j = 0; j < rootParams[i].DescriptorTable.NumDescriptorRanges; ++j)
+        {
+            boost::hash_combine(hash, rootParams[i].DescriptorTable.pDescriptorRanges[j].RangeType);
+            boost::hash_combine(hash, rootParams[i].DescriptorTable.pDescriptorRanges[j].NumDescriptors);
+            boost::hash_combine(hash, rootParams[i].DescriptorTable.pDescriptorRanges[j].BaseShaderRegister);
+            boost::hash_combine(hash, rootParams[i].DescriptorTable.pDescriptorRanges[j].RegisterSpace);
+            boost::hash_combine(hash, rootParams[i].DescriptorTable.pDescriptorRanges[j].Flags);
+        }
     }
 
     bbeAutoLockRead(m_CachedRootSigsRWLock);

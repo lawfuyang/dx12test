@@ -12,9 +12,13 @@ public:
     void Initialize();
     void ShutDown();
 
-    ID3D12PipelineState* GetPSO(GfxContext&, CD3DX12_PIPELINE_STATE_STREAM2&, std::size_t psoHash);
+    ID3D12PipelineState* GetPSO(GfxContext& context, D3D12_GRAPHICS_PIPELINE_STATE_DESC&& desc, std::size_t psoHash);
+    ID3D12PipelineState* GetPSO(GfxContext& context, D3D12_COMPUTE_PIPELINE_STATE_DESC&& desc, std::size_t psoHash);
 
 private:
+    template <typename DescType, typename D3D12PSOLoaderFunc, typename D3D12PSOCreationFunc>
+    ID3D12PipelineState* GetPSOInternal(GfxContext& context, DescType&& desc, std::size_t psoHash, D3D12PSOLoaderFunc loaderFunc, D3D12PSOCreationFunc creatorFunc);
+
     std::shared_mutex m_PipelineLibraryRWLock;
     ComPtr<D3D12PipelineLibrary> m_PipelineLibrary;
 

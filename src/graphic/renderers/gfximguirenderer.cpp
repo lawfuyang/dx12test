@@ -17,7 +17,7 @@ class GfxIMGUIRenderer : public GfxRendererBase
     const char* GetName() const override { return "GfxIMGUIRenderer"; }
 
     void InitFontsTexture();
-    void GrowBuffers(const IMGUIDrawData& imguiDrawData, GfxContext* context = nullptr);
+    void GrowBuffers(const IMGUIDrawData& imguiDrawData);
     void UploadBufferData(GfxContext& context, const IMGUIDrawData& imguiDrawData);
     void SetupRenderStates(GfxContext&, const IMGUIDrawData& imguiDrawData);
 
@@ -35,8 +35,7 @@ void GfxIMGUIRenderer::Initialize()
     InitFontsTexture();
 
     // Create buffers with a default size (they will later be grown as needed)
-    void* dummyDrawData = nullptr;
-    GrowBuffers(*(const IMGUIDrawData*)dummyDrawData);
+    GrowBuffers(*(const IMGUIDrawData*)0);
 
     // Perfomance TIP: Order from most frequent to least frequent.
     CD3DX12_DESCRIPTOR_RANGE1 ranges[2]{};
@@ -55,12 +54,11 @@ void GfxIMGUIRenderer::InitFontsTexture()
     int width, height;
     io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
-    //m_FontsTexture.Initialize(initParams);
-    m_FontsTexture.Initialize(CD3DX12_RESOURCE_DESC1::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, width, height), pixels);
+    m_FontsTexture.InitializeTexture(CD3DX12_RESOURCE_DESC1::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, width, height), pixels);
     m_FontsTexture.SetDebugName("IMGUI Fonts Texture");
 }
 
-void GfxIMGUIRenderer::GrowBuffers(const IMGUIDrawData& imguiDrawData, GfxContext* context)
+void GfxIMGUIRenderer::GrowBuffers(const IMGUIDrawData& imguiDrawData)
 {
     bbeProfileFunction();
     
@@ -145,7 +143,7 @@ void GfxIMGUIRenderer::PopulateCommandList(GfxContext& context)
 {
     bbeProfileFunction();
     bbeProfileGPUFunction(context);
-    
+
     assert(m_RootSignature);
     context.SetRootSignature(*m_RootSignature);
 
@@ -163,7 +161,7 @@ void GfxIMGUIRenderer::PopulateCommandList(GfxContext& context)
         return;
 
     // Create and grow vertex/index buffers if needed
-    GrowBuffers(imguiDrawData, &context);
+    GrowBuffers(imguiDrawData);
 
     // Upload vertex/index data into a single contiguous GPU buffer
     UploadBufferData(context, imguiDrawData);
