@@ -35,8 +35,7 @@ CD3DX12_CPU_DESCRIPTOR_HANDLE GfxContext::AllocateStaticDescHeap(D3D12_DESCRIPTO
     toRet.Release();
     toRet.Initialize(type, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1);
 
-    if (!debugName.empty())
-        SetD3DDebugName(toRet.Dev(), debugName);
+    SetD3DDebugName(toRet.Dev(), debugName);
 
     // rotate circular buffer to the next element, so we always use the "oldest" heap
     assert(m_StaticHeaps.full());
@@ -52,7 +51,7 @@ void GfxContext::ClearRenderTargetView(GfxTexture& tex, const bbeVector4& clearC
     TransitionResource(tex, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
 
     CD3D12_RENDER_TARGET_VIEW_DESC desc{ D3D12_RTV_DIMENSION_TEXTURE2D, tex.GetFormat() };
-    CD3DX12_CPU_DESCRIPTOR_HANDLE descHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE descHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, __FUNCTION__);
     g_GfxManager.GetGfxDevice().Dev()->CreateRenderTargetView(tex.GetD3D12Resource(), &desc, descHeap);
 
     const UINT numRects = 0;
@@ -70,7 +69,7 @@ void GfxContext::ClearDSVInternal(GfxTexture& tex, float depth, uint8_t stencil,
     desc.Format = tex.GetFormat();
     desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE descHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE descHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, __FUNCTION__);
 
     g_GfxManager.GetGfxDevice().Dev()->CreateDepthStencilView(tex.GetD3D12Resource(), &desc, descHeap);
 
@@ -82,9 +81,10 @@ void GfxContext::ClearUAVF(GfxTexture& tex, const bbeVector4& clearValue)
     TransitionResource(tex, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
     SetShaderVisibleDescriptorHeap();
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE CPUDescHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE CPUDescHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, __FUNCTION__);
 
     GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.AllocateShaderVisible(1);
+
     g_GfxManager.GetGfxDevice().Dev()->CopyDescriptorsSimple(1, destHandle.m_CPUHandle, CPUDescHeap, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     m_CommandList->Dev()->ClearUnorderedAccessViewFloat(destHandle.m_GPUHandle, CPUDescHeap, tex.GetD3D12Resource(), (const FLOAT*)&clearValue, 0, nullptr);
@@ -95,7 +95,7 @@ void GfxContext::ClearUAVU(GfxTexture& tex, const bbeVector4U& clearValue)
     TransitionResource(tex, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
     SetShaderVisibleDescriptorHeap();
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE CPUDescHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE CPUDescHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, __FUNCTION__);
 
     GfxDescriptorHeapHandle destHandle = g_GfxGPUDescriptorAllocator.AllocateShaderVisible(1);
     g_GfxManager.GetGfxDevice().Dev()->CopyDescriptorsSimple(1, destHandle.m_CPUHandle, CPUDescHeap, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -118,7 +118,7 @@ void GfxContext::SetRTVHelper(GfxTexture* (&RTVs)[NbRTs])
         const D3D12_RESOURCE_DESC resourceDesc = RTVs[i]->GetD3D12Resource()->GetDesc();
         CD3D12_RENDER_TARGET_VIEW_DESC RTVdesc{ D3D12_RTV_DIMENSION_TEXTURE2D, resourceDesc.Format };
 
-        m_RTVs[i].m_CPUDescHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        m_RTVs[i].m_CPUDescHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, __FUNCTION__);
         g_GfxManager.GetGfxDevice().Dev()->CreateRenderTargetView(RTVs[i]->GetD3D12Resource(), &RTVdesc, m_RTVs[i].m_CPUDescHeap);
     }
 }
@@ -139,6 +139,12 @@ void GfxContext::SetRenderTargets(GfxTexture& rt1, GfxTexture& rt2, GfxTexture& 
 {
     GfxTexture* RTsArr[] = { &rt1, &rt2, &rt3 };
     SetRTVHelper(RTsArr);
+}
+
+void GfxContext::SetTopology(D3D12_PRIMITIVE_TOPOLOGY topology)
+{
+    m_Topology = topology;
+    m_PSO.PrimitiveTopologyType = GetD3D12PrimitiveTopologyType(topology);
 }
 
 void GfxContext::SetBlendStates(uint32_t renderTarget, const D3D12_RENDER_TARGET_BLEND_DESC& blendState)
@@ -210,38 +216,51 @@ void GfxContext::CheckStagingResourceInputs(uint32_t rootIndex, uint32_t offset,
     assert(m_StagedResources[rootIndex].m_Types[offset] == type);
 }
 
-void GfxContext::StageSRV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
+static D3D12_SHADER_RESOURCE_VIEW_DESC CreateSRVDesc(GfxTexture& tex)
 {
-    CheckStagingResourceInputs(rootIndex, offset, D3D12_DESCRIPTOR_RANGE_TYPE_SRV);
-
-    D3D12_SHADER_RESOURCE_VIEW_DESC SRVdesc{};
+    D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc{};
 
     const D3D12_RESOURCE_DESC resourceDesc = tex.GetD3D12Resource()->GetDesc();
     switch (resourceDesc.Dimension)
     {
     case D3D12_RESOURCE_DIMENSION_BUFFER:
-        SRVdesc = CD3D12_SHADER_RESOURCE_VIEW_DESC{ D3D12_SRV_DIMENSION_BUFFER, resourceDesc.Format };
+        SRVDesc = CD3D12_SHADER_RESOURCE_VIEW_DESC{ D3D12_SRV_DIMENSION_BUFFER, resourceDesc.Format };
+        if (resourceDesc.Format == DXGI_FORMAT_UNKNOWN)
+        {
+            SRVDesc.Buffer.NumElements = tex.GetNumElements();
+            SRVDesc.Buffer.StructureByteStride = tex.GetStructureByteStride();
+        }
         break;
     case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
-        SRVdesc = CD3D12_SHADER_RESOURCE_VIEW_DESC{ D3D12_SRV_DIMENSION_TEXTURE2D, resourceDesc.Format };
-        SRVdesc.Texture2D.MipLevels = 1; // TODO: Mips
+        SRVDesc = CD3D12_SHADER_RESOURCE_VIEW_DESC{ D3D12_SRV_DIMENSION_TEXTURE2D, resourceDesc.Format };
+        SRVDesc.Texture2D.MipLevels = 1; // TODO: Mips
         break;
 
         // TODO: Other dimensions when needed
     default: assert(false);
     }
 
+    return SRVDesc;
+}
+
+void GfxContext::StageSRV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
+{
+    CheckStagingResourceInputs(rootIndex, offset, D3D12_DESCRIPTOR_RANGE_TYPE_SRV);
+
+    const D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = CreateSRVDesc(tex);
+
     StaticString<128> heapDebugName = StringFormat("SRV. Index: %d, Offset: %d", rootIndex, offset);
     CD3DX12_CPU_DESCRIPTOR_HANDLE CPUDescHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, heapDebugName.c_str());
-    g_GfxManager.GetGfxDevice().Dev()->CreateShaderResourceView(tex.GetD3D12Resource(), &SRVdesc, CPUDescHeap);
+    g_GfxManager.GetGfxDevice().Dev()->CreateShaderResourceView(tex.GetD3D12Resource(), &SRVDesc, CPUDescHeap);
+
+    // TODO: Specific states for Pixel/Non-Pixel resources?
+    TransitionResource(tex, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
     StageDescriptor(CPUDescHeap, rootIndex, offset);
 }
 
-void GfxContext::StageUAV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
+static D3D12_UNORDERED_ACCESS_VIEW_DESC CreateUAVDesc(GfxTexture& tex)
 {
-    CheckStagingResourceInputs(rootIndex, offset, D3D12_DESCRIPTOR_RANGE_TYPE_UAV);
-
     D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc{};
 
     const D3D12_RESOURCE_DESC resourceDesc = tex.GetD3D12Resource()->GetDesc();
@@ -249,8 +268,11 @@ void GfxContext::StageUAV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
     {
     case D3D12_RESOURCE_DIMENSION_BUFFER:
         UAVDesc = CD3D12_UNORDERED_ACCESS_VIEW_DESC{ D3D12_UAV_DIMENSION_BUFFER, resourceDesc.Format };
-        UAVDesc.Buffer.NumElements = tex.m_NumElements;
-        UAVDesc.Buffer.StructureByteStride = tex.m_StructureByteStride;
+        if (resourceDesc.Format == DXGI_FORMAT_UNKNOWN)
+        {
+            UAVDesc.Buffer.NumElements = tex.m_NumElements;
+            UAVDesc.Buffer.StructureByteStride = tex.m_StructureByteStride;
+        }
         break;
     case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
         UAVDesc = CD3D12_UNORDERED_ACCESS_VIEW_DESC{ D3D12_UAV_DIMENSION_TEXTURE2D, resourceDesc.Format };
@@ -260,11 +282,22 @@ void GfxContext::StageUAV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
     default: assert(false);
     }
 
+    return UAVDesc;
+}
+
+void GfxContext::StageUAV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
+{
+    CheckStagingResourceInputs(rootIndex, offset, D3D12_DESCRIPTOR_RANGE_TYPE_UAV);
+
+    const D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = CreateUAVDesc(tex);
+
     static ID3D12Resource* pCounterResource = nullptr; // TODO
 
     StaticString<128> heapDebugName = StringFormat("UAV. Index: %d, Offset: %d", rootIndex, offset);
     CD3DX12_CPU_DESCRIPTOR_HANDLE CPUDescHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, heapDebugName.c_str());
     g_GfxManager.GetGfxDevice().Dev()->CreateUnorderedAccessView(tex.GetD3D12Resource(), pCounterResource, &UAVDesc, CPUDescHeap);
+
+    TransitionResource(tex, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
     StageDescriptor(CPUDescHeap, rootIndex, offset);
 }
@@ -282,13 +315,14 @@ void GfxContext::StageDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptor, uint
 
 std::size_t GfxContext::GetPSOHash(bool forGraphicPSO)
 {
-    // Always get root sig Hash first
+    // Always get root sig Hash
     std::size_t finalHash = m_RootSig->m_Hash;
 
     if (forGraphicPSO)
     {
         // VS/PS Shaders
-        boost::hash_combine(finalHash, m_Shaders[VS]->m_Hash);
+        if (m_Shaders[VS])
+            boost::hash_combine(finalHash, m_Shaders[VS]->m_Hash);
         if (m_Shaders[PS])
             boost::hash_combine(finalHash, m_Shaders[PS]->m_Hash);
 
@@ -325,7 +359,8 @@ std::size_t GfxContext::GetPSOHash(bool forGraphicPSO)
         // Vertex Input Layout
         boost::hash_combine(finalHash, m_VertexFormat->GetHash());
 
-        // Primitive Topology
+        // Topology
+        boost::hash_combine(finalHash, m_Topology);
         boost::hash_combine(finalHash, GenericTypeHash(m_PSO.PrimitiveTopologyType));
 
         // RTV Formats
@@ -353,6 +388,8 @@ void GfxContext::PrepareGraphicsStates()
 
     assert(m_RootSig && m_RootSig->Dev());
     assert(m_CommandList);
+    assert(!m_RTVs.empty());
+    assert(m_Shaders[VS]);
 
     if (m_VertexBuffer)
     {
@@ -360,6 +397,12 @@ void GfxContext::PrepareGraphicsStates()
         assert(m_VertexBuffer->GetD3D12Resource());
         assert(m_VertexBuffer->GetStrideInBytes() > 0);
         assert(m_VertexBuffer->GetNumVertices() > 0);
+    }
+
+    if (m_IndexBuffer)
+    {
+        assert(m_IndexBuffer->GetNumIndices() > 0);
+        assert(m_IndexBuffer->GetFormat() == DXGI_FORMAT_R16_UINT || m_IndexBuffer->GetFormat() == DXGI_FORMAT_R32_UINT);
     }
 
     for (uint32_t i = 0; i < m_RTVs.size(); ++i)
@@ -383,13 +426,13 @@ void GfxContext::PrepareGraphicsStates()
         m_CommandList->Dev()->SetPipelineState(g_GfxPSOManager.GetPSO(*this, m_PSO.GraphicsDescV0(), m_PSOHash));
 
         // Input Assembler
-        m_CommandList->Dev()->IASetPrimitiveTopology(GetD3D12PrimitiveTopology(m_PSO.PrimitiveTopologyType));
+        m_CommandList->Dev()->IASetPrimitiveTopology(m_Topology);
 
         // RTVs
         InplaceArray<D3D12_CPU_DESCRIPTOR_HANDLE, 3> rtvHandles;
         for (const RTVDesc& rtvDesc : m_RTVs)
         {
-            TransitionResource(*rtvDesc.m_Tex, D3D12_RESOURCE_STATE_RENDER_TARGET, false);
+            TransitionResource(*rtvDesc.m_Tex, D3D12_RESOURCE_STATE_RENDER_TARGET);
             rtvHandles.push_back(rtvDesc.m_CPUDescHeap);
         }
 
@@ -397,7 +440,7 @@ void GfxContext::PrepareGraphicsStates()
         D3D12_CPU_DESCRIPTOR_HANDLE DSVDescHandle{};
         if (m_DSV)
         {
-            TransitionResource(*m_DSV, D3D12_RESOURCE_STATE_DEPTH_WRITE, false);
+            TransitionResource(*m_DSV, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
             DSVDescHandle = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, "DSV");
 
@@ -474,6 +517,13 @@ void GfxContext::FlushResourceBarriers()
     }
 }
 
+void GfxContext::UAVBarrier(GfxHazardTrackedResource& resource)
+{
+    assert((resource.m_CurrentResourceState & D3D12_RESOURCE_STATE_UNORDERED_ACCESS) != 0);
+
+    m_ResourceBarriers.push_back(CD3DX12_RESOURCE_BARRIER::UAV(resource.GetD3D12Resource()));
+}
+
 void GfxContext::TransitionResource(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate)
 {
     const D3D12_RESOURCE_STATES oldState = resource.m_CurrentResourceState;
@@ -504,7 +554,7 @@ void GfxContext::TransitionResource(GfxHazardTrackedResource& resource, D3D12_RE
         resource.m_CurrentResourceState = newState;
     }
     else if (newState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
-        m_ResourceBarriers.push_back(CD3DX12_RESOURCE_BARRIER::UAV(resource.GetD3D12Resource()));
+        UAVBarrier(resource);
 
     if (flushImmediate)
         FlushResourceBarriers();
@@ -519,19 +569,6 @@ void GfxContext::BeginResourceTransition(GfxHazardTrackedResource& resource, D3D
         TransitionResource(resource, resource.m_TransitioningState, flushImmediate);
 
     const D3D12_RESOURCE_STATES oldState = resource.m_CurrentResourceState;
-
-    // verify UAV states
-    if (m_CommandList->GetType() == D3D12_COMMAND_LIST_TYPE_COMPUTE)
-    {
-        static const uint32_t VALID_STATES =
-            D3D12_RESOURCE_STATE_UNORDERED_ACCESS |
-            D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE |
-            D3D12_RESOURCE_STATE_COPY_DEST |
-            D3D12_RESOURCE_STATE_COPY_SOURCE;
-
-        assert((oldState & VALID_STATES) == oldState);
-        assert((newState & VALID_STATES) == newState);
-    }
 
     if (oldState != newState)
     {
@@ -590,6 +627,8 @@ static void CreateNullView(D3D12_DESCRIPTOR_RANGE_TYPE type, D3D12_CPU_DESCRIPTO
 void GfxContext::CommitStagedResources(RootDescTableSetter rootDescSetterFunc)
 {
     //bbeProfileFunction();
+
+    FlushResourceBarriers();
 
     GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
 
@@ -658,7 +697,6 @@ void GfxContext::CommitStagedResources(RootDescTableSetter rootDescSetterFunc)
 void GfxContext::DrawInstanced(uint32_t vertexCountPerInstance, uint32_t instanceCount, uint32_t startVertexLocation, uint32_t startInstanceLocation)
 {
     PrepareGraphicsStates();
-    FlushResourceBarriers();
     CommitStagedResources(&D3D12GraphicsCommandList::SetGraphicsRootDescriptorTable);
     m_CommandList->Dev()->DrawInstanced(vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
     PostDraw();
@@ -668,10 +706,10 @@ void GfxContext::DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t i
 {
     //bbeProfileFunction();
 
+    assert(m_VertexBuffer);
     assert(m_IndexBuffer);
 
     PrepareGraphicsStates();
-    FlushResourceBarriers();
     CommitStagedResources(&D3D12GraphicsCommandList::SetGraphicsRootDescriptorTable);
     m_CommandList->Dev()->DrawIndexedInstanced(indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
     PostDraw();
@@ -680,7 +718,6 @@ void GfxContext::DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t i
 void GfxContext::Dispatch(uint32_t threadGroupCountX, uint32_t threadGroupCountY, uint32_t threadGroupCountZ)
 {
     PrepareComputeStates();
-    FlushResourceBarriers();
     CommitStagedResources(&D3D12GraphicsCommandList::SetComputeRootDescriptorTable);
     m_CommandList->Dev()->Dispatch(threadGroupCountX, threadGroupCountY, threadGroupCountZ);
     PostDraw();

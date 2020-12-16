@@ -14,7 +14,6 @@ class GfxIMGUIRenderer : public GfxRendererBase
 {
     void Initialize() override;
     void PopulateCommandList(GfxContext& context) override;
-    const char* GetName() const override { return "GfxIMGUIRenderer"; }
 
     void InitFontsTexture();
     void GrowBuffers(const IMGUIDrawData& imguiDrawData);
@@ -221,7 +220,7 @@ void GfxIMGUIRenderer::PopulateCommandList(GfxContext& context)
             r.bottom = (LONG)(cmd.ClipRect.w - clip_off.y);
             context.SetRect(r);
 
-            context.DrawIndexedInstanced(cmd.ElemCount, 1, cmd.IdxOffset + global_idx_offset, cmd.VtxOffset + global_vtx_offset, 0);
+            context.DrawIndexedInstanced(cmd.ElemCount, 1, cmd.IdxOffset + global_idx_offset, cmd.VtxOffset + global_vtx_offset);
 
         }
         global_idx_offset += cmd_list.m_IB.size();

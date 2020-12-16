@@ -1,32 +1,34 @@
 {
-  "Shader": {
-    "ShaderName": "ForwardLighting",
-    "FileName": "forwardlighting.hlsl",
-    "VSEntryPoint": "VSMain",
-    "PSEntryPoint": "PSMain",
-    "ShaderPermutations": {
-      "VS": {
-        "Permutations": [
-          "VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f",
-          "VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f"
-        ],
-        "Rules": [
-          {
-            "Rule": "OnlyOneBitSet",
-            "AffectedBits": [
-              0,
-              1
-            ]
-          }
-        ]
-      },
-      "PS": {
-        "Permutations": [
-          "USE_PBR_CONSTS"
-        ]
+  "Shaders": [
+    {
+      "ShaderName": "ForwardLighting",
+      "FileName": "forwardlighting.hlsl",
+      "VSEntryPoint": "VSMain",
+      "PSEntryPoint": "PSMain",
+      "ShaderPermutations": {
+        "VS": {
+          "Permutations": [
+            "VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f",
+            "VERTEX_FORMAT_Position3f_Normal3f_Texcoord2f_Tangent3f"
+          ],
+          "Rules": [
+            {
+              "Rule": "OnlyOneBitSet",
+              "AffectedBits": [
+                0,
+                1
+              ]
+            }
+          ]
+        },
+        "PS": {
+          "Permutations": [
+            "USE_PBR_CONSTS"
+          ]
+        }
       }
     }
-  },
+  ],
   "ShaderInputs": [
     {
       "Name": "PerInstanceConsts",

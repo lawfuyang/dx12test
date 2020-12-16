@@ -12,6 +12,7 @@ class GfxVertexBuffer;
 class GfxIndexBuffer;
 class GfxHazardTrackedResource;
 class GfxSwapChain;
+class View;
 struct GfxShader;
 
 class GfxContext
@@ -32,7 +33,8 @@ public:
     void SetRenderTarget(GfxTexture&);
     void SetRenderTargets(GfxTexture&, GfxTexture&);
     void SetRenderTargets(GfxTexture&, GfxTexture&, GfxTexture&);
-
+    
+    void SetTopology(D3D12_PRIMITIVE_TOPOLOGY topology);
     void SetBlendStates(uint32_t renderTarget, const D3D12_RENDER_TARGET_BLEND_DESC& blendStates);
 
     template <typename T>
@@ -59,11 +61,12 @@ public:
         StageCBVInternal((const void*)&cb, sizeof(CBType), CBType::ConstantBufferRegister, CBType::Name);
     }
 
-    void TransitionResource(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate);
+    void UAVBarrier(GfxHazardTrackedResource& resource);
+    void TransitionResource(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate = false);
     void BeginResourceTransition(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate = false);
 
-    void DrawInstanced(uint32_t vertexCountPerInstance, uint32_t instanceCount, uint32_t startVertexLocation, uint32_t startInstanceLocation);
-    void DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation, uint32_t baseVertexLocation, uint32_t startInstanceLocation);
+    void DrawInstanced(uint32_t vertexCountPerInstance, uint32_t instanceCount, uint32_t startVertexLocation = 0, uint32_t startInstanceLocation = 0);
+    void DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation = 0, uint32_t baseVertexLocation = 0, uint32_t startInstanceLocation = 0);
 
     void Dispatch(uint32_t threadGroupCountX, uint32_t threadGroupCountY, uint32_t threadGroupCountZ);
 
@@ -80,19 +83,20 @@ private:
     void StageCBVInternal(const void* data, uint32_t bufferSize, uint32_t cbRegister, const char* CBName);
     void SetShaderVisibleDescriptorHeap();
     void ClearDSVInternal(GfxTexture& tex, float depth, uint8_t stencil, D3D12_CLEAR_FLAGS flags);
-    CD3DX12_CPU_DESCRIPTOR_HANDLE AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE, std::string_view debugName = "");
+    CD3DX12_CPU_DESCRIPTOR_HANDLE AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE, std::string_view debugName);
     std::size_t GetPSOHash(bool forGraphicPSO);
 
     template <uint32_t NbRTs>
     void SetRTVHelper(GfxTexture*(&RTVs)[NbRTs]);
 
-    GfxRootSignature* m_RootSig                      = nullptr;
-    GfxVertexFormat*  m_VertexFormat                 = &GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub;
-    GfxCommandList*   m_CommandList                  = nullptr;
-    GfxVertexBuffer*  m_VertexBuffer                 = nullptr;
-    GfxIndexBuffer*   m_IndexBuffer                  = nullptr;
-    GfxTexture*       m_DSV                          = nullptr;
-    const GfxShader*  m_Shaders[GfxShaderType_Count] = {};
+    GfxRootSignature*        m_RootSig                      = nullptr;
+    GfxVertexFormat*         m_VertexFormat                 = &GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub;
+    GfxCommandList*          m_CommandList                  = nullptr;
+    GfxVertexBuffer*         m_VertexBuffer                 = nullptr;
+    GfxIndexBuffer*          m_IndexBuffer                  = nullptr;
+    GfxTexture*              m_DSV                          = nullptr;
+    const GfxShader*         m_Shaders[GfxShaderType_Count] = {};
+    D3D12_PRIMITIVE_TOPOLOGY m_Topology                     = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
     struct RTVDesc
     {
@@ -103,6 +107,7 @@ private:
 
     CD3DX12_PIPELINE_STATE_STREAM2 m_PSO;
 
+    InplaceArray<D3D12_RESOURCE_BARRIER, 16> m_BegunResourceBarriers;
     InplaceArray<D3D12_RESOURCE_BARRIER, 16> m_ResourceBarriers;
     GfxRootSignature::RootSigParams m_StagedResources;
 

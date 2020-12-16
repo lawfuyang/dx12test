@@ -1,6 +1,24 @@
 #ifndef __UTILS_HLSL__
 #define __UTILS_HLSL__
 
+// full screen helpers
+void GetFullScreenTriangleVposAndUVFromVertexID(const uint vertexID, out float2 vpos, out float2 uv)
+{
+    uint2 v = uint2(vertexID & 1, vertexID >> 1); // ccw
+
+    vpos.x = -1.f + v.x * 4.f;
+    vpos.y = -1.f + v.y * 4.f;
+
+    uv.x = v.x * 2.f;
+    uv.y = 1.f - v.y * 2.f;
+}
+void GetFullScreenVposAndUVFromVertexID(const uint vertexID, out float2 vpos, out float2 uv)
+{
+    // based on triangle strip
+    vpos = float2(vertexID & 1, vertexID >> 1);
+    uv = (vpos * float2(0.5f, -0.5f) + 0.5f);
+}
+
 // Sample normal map, convert to signed, apply tangent-to-world space transform.
 float3 CalcPerPixelNormal(in Texture2D<float4> normalTexture, float2 vTexcoord, float3 vVertNormal, float3 vVertBinormal, float3 vVertTangent)
 {
@@ -99,6 +117,85 @@ float3 ToneMapACESFilmic(float3 x)
     float d = 0.59f;
     float e = 0.14f;
     return saturate((x * (a * x + b)) / (x * (c * x + d) + e));
+}
+
+// Ref: http://www.reedbeta.com/blog/quick-and-easy-gpu-random-numbers-in-d3d11/
+namespace RNG
+{
+    static uint GlobalRNGSeed = 0;
+
+    // Create an initial random number for this thread
+    uint SeedThread(uint seed)
+    {
+        // Thomas Wang hash 
+        // Ref: http://www.burtleburtle.net/bob/hash/integer.html
+        seed = (seed ^ 61) ^ (seed >> 16);
+        seed *= 9;
+        seed = seed ^ (seed >> 4);
+        seed *= 0x27d4eb2d;
+        seed = seed ^ (seed >> 15);
+        return seed;
+    }
+
+    // Generate a random 32-bit integer
+    uint Random(inout uint state)
+    {
+        // Xorshift algorithm from George Marsaglia's paper.
+        state ^= (state << 13);
+        state ^= (state >> 17);
+        state ^= (state << 5);
+        return state;
+    }
+
+    // Generate a random float in the range [0.0f, 1.0f)
+    float Random01(inout uint state)
+    {
+        return asfloat(0x3f800000 | Random(state) >> 9) - 1.0;
+    }
+
+    // Generate a random float in the range [0.0f, 1.0f]
+    float Random01inclusive(inout uint state)
+    {
+        return Random(state) / float(0xffffffff);
+    }
+
+
+    // Generate a random integer in the range [lower, upper]
+    uint Random(inout uint state, uint lower, uint upper)
+    {
+        return lower + uint(float(upper - lower + 1) * Random01(state));
+    }
+}
+
+// Generate a random 32-bit integer
+uint RandomUint()
+{
+    RNG::GlobalRNGSeed ^= (RNG::GlobalRNGSeed << 13);
+    RNG::GlobalRNGSeed ^= (RNG::GlobalRNGSeed >> 17);
+    RNG::GlobalRNGSeed ^= (RNG::GlobalRNGSeed << 5);
+    return RNG::GlobalRNGSeed;
+}
+
+// Generate a random float in the range [0.0f, 1.0f]
+float RandomFloat()
+{
+    return RandomUint() / float(0xffffffff);
+}
+
+// 3D value noise
+// Ref: https://www.shadertoy.com/view/XsXfRH
+float Hash(float3 p)
+{
+    p = frac(p * 0.3183099 + .1);
+    p *= 17.0;
+    return frac(p.x * p.y * p.z * (p.x + p.y + p.z));
+}
+
+// Thomas Wang hash 
+// Ref: http://www.burtleburtle.net/bob/hash/integer.html
+uint Hash(uint seed)
+{
+    return RNG::SeedThread(seed);
 }
 
 #endif // #define __UTILS_HLSL__

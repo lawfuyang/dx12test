@@ -1,45 +1,44 @@
 
 static void ProcessShaderPermutations(ConcurrentVector<Shader>& allShaders, json baseJSON)
 {
-    json shaderJSON = baseJSON["Shader"];
-    if (shaderJSON.empty())
-        return;
-
-    Shader& newShader = *allShaders.push_back(Shader{});
-    newShader.m_Name = shaderJSON.at("ShaderName");
-    newShader.m_FileName = shaderJSON.at("FileName");
-    newShader.m_BaseShaderID = std::hash<std::string>{}(newShader.m_Name);
-
-    // Add entry points
-    for (uint32_t i = 0; i < GfxShaderType_Count; ++i)
+    for (json shaderJSON : baseJSON["Shaders"])
     {
-        const GfxShaderType shaderType = (GfxShaderType)i;
-        const std::string entryPointName = StringFormat("%sEntryPoint", EnumToString(shaderType));
-        if (shaderJSON.contains(entryPointName))
+        Shader& newShader = *allShaders.push_back(Shader{});
+        newShader.m_Name = shaderJSON.at("ShaderName");
+        newShader.m_FileName = shaderJSON.at("FileName");
+        newShader.m_BaseShaderID = std::hash<std::string>{}(newShader.m_Name);
+
+        // Add entry points
+        for (uint32_t i = 0; i < GfxShaderType_Count; ++i)
         {
-            newShader.m_EntryPoints[i] = shaderJSON.at(entryPointName);
+            const GfxShaderType shaderType = (GfxShaderType)i;
+            const std::string entryPointName = StringFormat("%sEntryPoint", EnumToString(shaderType));
+            if (shaderJSON.contains(entryPointName))
+            {
+                newShader.m_EntryPoints[i] = shaderJSON.at(entryPointName);
 
-            // Base shader permutation always exists
-            const std::string shaderObjCodeFileDir = StringFormat("%s%s_%s.h", g_GlobalDirs.m_ShadersTmpDir.c_str(), EnumToString(shaderType), newShader.m_Name.c_str());
-            newShader.m_Permutations[shaderType].push_back({ 0, newShader.m_Name, shaderObjCodeFileDir });
+                // Base shader permutation always exists
+                const std::string shaderObjCodeFileDir = StringFormat("%s%s_%s.h", g_GlobalDirs.m_ShadersTmpDir.c_str(), EnumToString(shaderType), newShader.m_Name.c_str());
+                newShader.m_Permutations[shaderType].push_back({ 0, newShader.m_Name, shaderObjCodeFileDir });
+            }
         }
+
+        // add Shader Permutations
+        json shaderPermsJSON = shaderJSON["ShaderPermutations"];
+        for (uint32_t i = 0; i < GfxShaderType_Count; ++i)
+        {
+            const GfxShaderType shaderType = (GfxShaderType)i;
+            json shaderPermsForTypeJSON = shaderPermsJSON[EnumToString(shaderType)];
+
+            // no permutations for this shader type. go to next type
+            if (shaderPermsForTypeJSON.empty())
+                continue;
+
+            AddValidPermutations(newShader, shaderType, shaderPermsForTypeJSON);
+        }
+
+        PrintAutogenFileForShaderPermutationStructs(newShader);
     }
-
-    // add Shader Permutations
-    json shaderPermsJSON = shaderJSON["ShaderPermutations"];
-    for (uint32_t i = 0; i < GfxShaderType_Count; ++i)
-    {
-        const GfxShaderType shaderType = (GfxShaderType)i;
-        json shaderPermsForTypeJSON = shaderPermsJSON[EnumToString(shaderType)];
-
-        // no permutations for this shader type. go to next type
-        if (shaderPermsForTypeJSON.empty())
-            continue;
-
-        AddValidPermutations(newShader, shaderType, shaderPermsForTypeJSON);
-    }
-
-    PrintAutogenFileForShaderPermutationStructs(newShader);
 }
 
 static void ProcessGlobalStructures(json baseJSON)

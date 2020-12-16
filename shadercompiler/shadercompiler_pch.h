@@ -97,7 +97,6 @@ struct Shader
         std::string m_Name;
         std::string m_ShaderObjCodeFileDir;
         std::vector<std::string> m_Defines;
-        std::size_t m_Hash = 0;
     };
     std::vector<Permutation> m_Permutations[GfxShaderType_Count];
 

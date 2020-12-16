@@ -24,8 +24,6 @@ public:
 
     D3D12_RESOURCE_STATES m_CurrentResourceState = D3D12_RESOURCE_STATE_COMMON;
     D3D12_RESOURCE_STATES m_TransitioningState   = INVALID_STATE;
-
-    friend class GfxContext;
 };
 
 class GfxVertexBuffer : public GfxHazardTrackedResource
@@ -45,7 +43,7 @@ class GfxIndexBuffer : public GfxHazardTrackedResource
 public:
     void Initialize(uint32_t numIndices, const void* initData = nullptr);
 
-    DXGI_FORMAT GetFormat() const { DXGI_FORMAT_R16_UINT; } // only support 16 bit indices for now
+    DXGI_FORMAT GetFormat() const { return DXGI_FORMAT_R16_UINT; } // only support 16 bit indices for now
     uint32_t GetNumIndices() const { return m_NumIndices; }
 
     uint32_t m_NumIndices = 0;
@@ -66,6 +64,8 @@ public:
     }
 
     DXGI_FORMAT GetFormat() const { return m_Format; }
+    uint32_t GetNumElements() const { return m_NumElements; }
+    uint32_t GetStructureByteStride() const { return m_StructureByteStride; }
 
     DXGI_FORMAT m_Format = DXGI_FORMAT_UNKNOWN;
     

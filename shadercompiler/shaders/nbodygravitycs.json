@@ -14,13 +14,20 @@
       ]
     }
   ],
-  "Shader": {
-    "ShaderName": "NBodyGravity",
-    "FileName": "nbodygravity.hlsl",
-    "VSEntryPoint": "VSMain",
-    "PSEntryPoint": "PSMain",
-    "CSEntryPoint": "CSMain"
-  },
+  "Shaders": [
+    {
+      "ShaderName": "NBodyGravity",
+      "FileName": "nbodygravity.hlsl",
+      "VSEntryPoint": "VSMain",
+      "PSEntryPoint": "PSMain",
+      "CSEntryPoint": "CSMain"
+    },
+    {
+      "ShaderName": "NBodyGravityFill",
+      "FileName": "nbodygravity.hlsl",
+      "CSEntryPoint": "CS_FillParticlesBuffer"
+    }
+  ],
   "ShaderInputs": [
     {
       "Name": "NBodyGravityCSConsts",
@@ -43,9 +50,17 @@
             "Type": "float",
             "Name": "ParticlesDamping"
           },
-		  {
+          {
             "Type": "float",
             "Name": "ParticleMass"
+          },
+		  {
+            "Type": "float",
+            "Name": "ParticleSpread"
+          },
+		  {
+            "Type": "float",
+            "Name": "ParticleCenterSpread"
           }
         ]
       },
@@ -70,6 +85,14 @@
       "ConstantBuffer": {
         "Register": 0,
         "Constants": [
+          {
+            "Type": "float4x4",
+            "Name": "ViewProjMatrix"
+          },
+          {
+            "Type": "float4x4",
+            "Name": "InvViewProjMatrix"
+          },
           {
             "Type": "float",
             "Name": "ParticleRadius"

@@ -89,40 +89,6 @@ void GfxPSOManager::ShutDown()
     m_PipelineLibrary.Reset();
 }
 
-//template <typename DescType, typename PipelineLoader, typename PipelineCreator>
-//ID3D12PipelineState* GfxPSOManager::GetPSOInternal(GfxContext& context, DescType&& desc, std::size_t psoHash, PipelineLoader&& loaderFunc, PipelineCreator&& creatorFunc)
-//{
-//    bbeProfileFunction();
-//
-//    assert(m_PipelineLibrary);
-//
-//    GfxDevice& gfxDevice = g_GfxManager.GetGfxDevice();
-//
-//    const StaticWString<32> psoHashStr = std::to_wstring(psoHash).c_str();
-//    ID3D12PipelineState* psoToReturn = nullptr;
-//
-//    bbeAutoLockRead(m_PipelineLibraryRWLock);
-//    ::HRESULT result = loaderFunc(psoHashStr.data(), std::forward<DescType>(desc), psoToReturn);
-//    if (result == E_INVALIDARG)
-//    {
-//        bbeProfile("Create & Save PSO");
-//        g_Log.info("Creating & Storing new PSO '{0:X}' into PipelineLibrary", psoHash);
-//
-//        creatorFunc(std::forward<DescType>(desc), psoToReturn);
-//
-//        bbeAutoLockScopedRWUpgrade(m_PipelineLibraryRWLock);
-//        DX12_CALL(m_PipelineLibrary->StorePipeline(psoHashStr.c_str(), psoToReturn));
-//        ++m_NewPSOs;
-//    }
-//    else if (FAILED(result))
-//    {
-//        assert(false);
-//    }
-//
-//    assert(psoToReturn);
-//    return psoToReturn;
-//}
-
 template <typename DescType, typename D3D12PSOLoaderFunc, typename D3D12PSOCreationFunc>
 ID3D12PipelineState* GfxPSOManager::GetPSOInternal(GfxContext& context, DescType&& desc, std::size_t psoHash, D3D12PSOLoaderFunc loaderFunc, D3D12PSOCreationFunc creationFunc)
 {

@@ -70,7 +70,9 @@ struct CommandLineOptions
         bool m_BreakOnWarnings                         = false;
         bool m_BreakOnErrors                           = false;
         bool m_EnableGPUValidation                     = false;
+        bool m_EnableGPUResourceValidation             = false;
         bool m_EnableConservativeResourceStateTracking = false;
+        bool m_BehaviorChangingAids                    = false;
     } m_GfxDebugLayer;
 };
 #define g_CommandLineOptions CommandLineOptions::GetInstance()

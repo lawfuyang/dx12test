@@ -1,10 +1,12 @@
 {
-  "Shader": {
-    "ShaderName": "IMGUI",
-    "FileName": "imgui.hlsl",
-    "VSEntryPoint": "VSMain",
-    "PSEntryPoint": "PSMain"
-  },
+  "Shaders": [
+    {
+      "ShaderName": "IMGUI",
+      "FileName": "imgui.hlsl",
+      "VSEntryPoint": "VSMain",
+      "PSEntryPoint": "PSMain"
+    }
+  ],
   "ShaderInputs": [
     {
       "Name": "IMGUIConsts",

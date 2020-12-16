@@ -28,7 +28,7 @@ void View::Update()
 
     m_GfxInvView = m_GfxProjection.Transpose();
     m_GfxInvProjection = m_GfxView.Transpose();
-    m_GfxInvVP = m_GfxVP.Transpose();
+    m_GfxInvVP = m_GfxVP.Invert();
 
     m_Frustum.Create(m_VP);
 }

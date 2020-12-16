@@ -3,8 +3,16 @@
   "Id": "9e787ae2-dbf1-4408-8ceb-6bbef1d8c43f",
   "Items": [
     {
+      "Id": "46d0c154-c733-4430-9174-ea711d651d71",
+      "Command": "--gfxdebuglayer gpuvalidation gpuresourcevalidation behaviorchangingaids resourcestatetracking breakonwarnings breakonerrors"
+    },
+    {
+      "Id": "ede8ed20-7f31-408f-bb53-26249a4550ea",
+      "Command": "--gfxdebuglayer gpuvalidation behaviorchangingaids resourcestatetracking breakonwarnings breakonerrors"
+    },
+    {
       "Id": "9ff4b9ec-bf73-4a6a-ae4a-d3dfdaca467f",
-      "Command": "--gfxdebuglayer gpuvalidation resourcestatetracking breakonwarnings breakonerrors"
+      "Command": "--gfxdebuglayer breakonwarnings breakonerrors"
     },
     {
       "Id": "292a5299-c60f-4440-9d1b-002c600fb015",

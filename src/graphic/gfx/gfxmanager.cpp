@@ -113,7 +113,7 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
 
     tf::Task WAIT_PREV_FRAME_GATE = subFlow.placeholder();
     tf::Task BEGIN_FRAME_GATE = subFlow.placeholder().succeed(WAIT_PREV_FRAME_GATE);
-    tf::Task RENDERERS_GATE = subFlow.placeholder().succeed(BEGIN_FRAME_GATE);
+    tf::Task END_OF_RENDERERS_GATE = subFlow.placeholder().succeed(BEGIN_FRAME_GATE);
 
     // TODO: This will kill performance with gpu debug layer enabled!
     // Implement a proper way of handling previous frame gpu resources
@@ -125,30 +125,28 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
 
     auto PopulateCommandList = [&, this](GfxRendererBase* renderer)
     {
-        tf::Task tf;
-
         GfxContext& context = GenerateNewContextInternal();
-        if (renderer->ShouldPopulateCommandList(context))
-        {
-            // TODO: different cmd list type based on renderer type (async compute or direct)
-            context.Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, renderer->GetName());
-            m_ScheduledCmdLists.push_back(&context.GetCommandList());
-            tf = subFlow.emplace([&context, renderer]() { renderer->PopulateCommandList(context); }).name(renderer->GetName());
-        }
-        else
-        {
-            // Do nothing if no need to render
-            tf = subFlow.placeholder();
-        }
 
-        tf.succeed(BEGIN_FRAME_GATE).precede(RENDERERS_GATE);
+        // Do nothing if no need to render
+        if (!renderer->ShouldPopulateCommandList(context))
+            return subFlow.placeholder();
+
+        // TODO: different cmd list type based on renderer type (async compute or direct)
+        context.Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, renderer->GetName());
+        m_ScheduledCmdLists.push_back(&context.GetCommandList());
+        tf::Task tf = subFlow.emplace([&context, renderer]() { renderer->PopulateCommandList(context); }).name(renderer->GetName());
+
+        tf.succeed(BEGIN_FRAME_GATE).precede(END_OF_RENDERERS_GATE);
+
+        return tf;
     };
-    PopulateCommandList(g_GfxBodyGravityParticlesUpdate);
+
+    tf::Task particlesUpdate = PopulateCommandList(g_GfxBodyGravityParticlesUpdate);
+    PopulateCommandList(g_GfxBodyGravityParticlesRender).succeed(particlesUpdate);
     PopulateCommandList(g_GfxForwardLightingPass);
-    PopulateCommandList(g_GfxBodyGravityParticlesRender);
     PopulateCommandList(g_GfxIMGUIRenderer);
 
-    subFlow.emplace([this] { EndFrame(); }).succeed(RENDERERS_GATE);
+    subFlow.emplace([this] { EndFrame(); }).succeed(END_OF_RENDERERS_GATE);
 }
 
 void GfxManager::BeginFrame()

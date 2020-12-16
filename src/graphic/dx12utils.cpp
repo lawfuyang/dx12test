@@ -331,7 +331,7 @@ void UploadToGfxResource(D3D12GraphicsCommandList* pCommandList, GfxHazardTracke
     assert(srcData);
 
     D3D12MA::Allocation* uploadHeapAlloc = g_GfxMemoryAllocator.AllocateVolatile(D3D12_HEAP_TYPE_UPLOAD, CD3DX12_RESOURCE_DESC1::Buffer(uploadBufferSize));
-    SetD3DDebugName(destResource.GetD3D12Resource(), "UpdateSubresources");
+    SetD3DDebugName(uploadHeapAlloc->GetResource(), "UpdateSubresources");
 
     bbeScopedD3DResourceState(pCommandList, destResource, D3D12_RESOURCE_STATE_COPY_DEST);
 

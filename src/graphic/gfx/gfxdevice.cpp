@@ -18,6 +18,9 @@ static void ConfigureDebugLayerBeforeDeviceCreation()
     debugInterface3->EnableDebugLayer();
     debugInterface3->SetEnableGPUBasedValidation(g_CommandLineOptions.m_GfxDebugLayer.m_EnableGPUValidation);
 
+    if (!g_CommandLineOptions.m_GfxDebugLayer.m_EnableGPUResourceValidation)
+        debugInterface3->SetGPUBasedValidationFlags(D3D12_GPU_BASED_VALIDATION_FLAGS_DISABLE_STATE_TRACKING);
+
     // TODO: Investigate why MicroProfiler will have infinite ID3D12Fence wait?
 #if defined(BBE_USE_GPU_PROFILER)
     debugInterface3->SetEnableSynchronizedCommandQueueValidation(false);
@@ -89,11 +92,13 @@ void GfxDevice::ConfigureDebugLayerAfterDeviceCreation()
     ComPtr<ID3D12DebugDevice1> debugDevice1;
     DX12_CALL(Dev()->QueryInterface(IID_PPV_ARGS(&debugDevice1)));
 
+    D3D12_DEBUG_FEATURE debugFeatures = D3D12_DEBUG_FEATURE_NONE;
     if (g_CommandLineOptions.m_GfxDebugLayer.m_EnableConservativeResourceStateTracking)
-    {
-        const D3D12_DEBUG_FEATURE debugFeatures = D3D12_DEBUG_FEATURE_ALLOW_BEHAVIOR_CHANGING_DEBUG_AIDS | D3D12_DEBUG_FEATURE_CONSERVATIVE_RESOURCE_STATE_TRACKING;
-        debugDevice1->SetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_FEATURE_FLAGS, &debugFeatures, sizeof(debugFeatures));
-    }
+        debugFeatures |= D3D12_DEBUG_FEATURE_CONSERVATIVE_RESOURCE_STATE_TRACKING;
+    if (g_CommandLineOptions.m_GfxDebugLayer.m_BehaviorChangingAids)
+        debugFeatures |= D3D12_DEBUG_FEATURE_ALLOW_BEHAVIOR_CHANGING_DEBUG_AIDS;
+
+    debugDevice1->SetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_FEATURE_FLAGS, &debugFeatures, sizeof(debugFeatures));
 
     if (g_CommandLineOptions.m_GfxDebugLayer.m_EnableGPUValidation)
     {

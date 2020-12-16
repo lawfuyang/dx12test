@@ -140,7 +140,7 @@ void MemoryMappedFile::GrowMapping(UINT size)
     BOOL flag = FlushViewOfFile(m_mapAddress, 0);
     if (!flag)
     {
-        g_Log.error("\nError %ld occurred flushing the mapping object!", GetLastError());
+        g_Log.error("MemoryMappedFile::GrowMapping Error: {}", GetLastErrorAsString());
         assert(false);
     }
 

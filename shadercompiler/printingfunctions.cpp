@@ -265,7 +265,6 @@ void PrintAutogenByteCodeHeadersFile(const ConcurrentVector<Shader>& allShaders)
     generatedString += "struct ShaderData {\n";
     generatedString += "    const unsigned char* m_ByteCodeArray;\n";
     generatedString += "    const uint32_t m_ByteCodeSize;\n";
-    generatedString += "    const std::size_t m_Hash;\n";
     generatedString += "    const uint32_t m_ShaderKey;\n";
     generatedString += "    const uint32_t m_BaseShaderID;\n";
     generatedString += "    const GfxShaderType m_ShaderType;\n";
@@ -283,7 +282,6 @@ void PrintAutogenByteCodeHeadersFile(const ConcurrentVector<Shader>& allShaders)
                 generatedString += StringFormat("    {\n");
                 generatedString += StringFormat("        %s,\n", byteCodeVarName.c_str());
                 generatedString += StringFormat("        _countof(%s),\n", byteCodeVarName.c_str());
-                generatedString += StringFormat("        %llu,\n", permutation.m_Hash);
                 generatedString += StringFormat("        %u,\n", permutation.m_ShaderKey);
                 generatedString += StringFormat("        %u,\n", shader.m_BaseShaderID);
                 generatedString += StringFormat("        %s,\n", EnumToString((GfxShaderType)i));

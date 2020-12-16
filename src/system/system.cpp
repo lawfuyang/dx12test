@@ -222,7 +222,9 @@ void CommandLineOptions::Parse()
             if (str.find("breakonwarnings") != std::string::npos) { m_GfxDebugLayer.m_BreakOnWarnings = true; }
             else if (str.find("breakonerrors") != std::string::npos) { m_GfxDebugLayer.m_BreakOnErrors = true; }
             else if (str.find("gpuvalidation") != std::string::npos) { m_GfxDebugLayer.m_EnableGPUValidation = true; }
+            else if (str.find("gpuresourcevalidation") != std::string::npos) { m_GfxDebugLayer.m_EnableGPUResourceValidation = true; }
             else if (str.find("resourcestatetracking") != std::string::npos) { m_GfxDebugLayer.m_EnableConservativeResourceStateTracking = true; }
+            else if (str.find("behaviorchangingaids") != std::string::npos) { m_GfxDebugLayer.m_BehaviorChangingAids = true; }
         }
     }
 

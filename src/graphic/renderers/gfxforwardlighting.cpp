@@ -16,7 +16,6 @@ class GfxForwardLightingPass : public GfxRendererBase
     void Initialize() override;
     bool ShouldPopulateCommandList(GfxContext&) const override;
     void PopulateCommandList(GfxContext& context) override;
-    const char* GetName() const override { return "GfxForwardLightingPass"; }
 
     void UpdateIMGUI();
 
@@ -107,7 +106,7 @@ void GfxForwardLightingPass::PopulateCommandList(GfxContext& context)
         context.SetVertexBuffer(visual->m_Mesh->m_VertexBuffer);
         context.SetIndexBuffer(visual->m_Mesh->m_IndexBuffer);
 
-        context.DrawIndexedInstanced(visual->m_Mesh->m_IndexBuffer.GetNumIndices(), 1, 0, 0, 0);
+        context.DrawIndexedInstanced(visual->m_Mesh->m_IndexBuffer.GetNumIndices(), 1);
     }
 }
 
