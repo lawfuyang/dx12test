@@ -85,7 +85,7 @@
     #include <extern/d3d12/D3D12MemAlloc.h>
 
     // IMGUI
-    // #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS // ImGuiFileDialog uses ImGuiListClipper's old ctor
+    #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
     #include <extern/imgui/imgui.h>
     #include <extern/imgui/ImGuiFileDialog.h>
 
