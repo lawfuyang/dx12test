@@ -44,7 +44,7 @@ private:
     std::mutex m_ContextsLock;
     ObjectPool<GfxContext> m_ContextsPool;
     InplaceArray<GfxContext*, NbMaxContexts> m_AllContexts;
-    InplaceArray<GfxCommandList*, NbMaxContexts> m_ScheduledCmdLists;
+    InplaceArray<GfxContext*, NbMaxContexts> m_ScheduledContexts;
 
     GfxDevice         m_GfxDevice;
     GfxSwapChain      m_SwapChain;

@@ -131,10 +131,12 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
         if (!renderer->ShouldPopulateCommandList(context))
             return subFlow.placeholder();
 
-        // TODO: different cmd list type based on renderer type (async compute or direct)
-        context.Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, renderer->GetName());
-        m_ScheduledCmdLists.push_back(&context.GetCommandList());
-        tf::Task tf = subFlow.emplace([&context, renderer]() { renderer->PopulateCommandList(context); }).name(renderer->GetName());
+        m_ScheduledContexts.push_back(&context);
+        tf::Task tf = subFlow.emplace([&context, renderer]() 
+            {
+                context.Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, renderer->GetName()); // TODO: different cmd list type based on renderer type (async compute or direct)
+                renderer->PopulateCommandList(context); 
+            }).name(renderer->GetName());
 
         tf.succeed(BEGIN_FRAME_GATE).precede(END_OF_RENDERERS_GATE);
 
@@ -151,6 +153,8 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
 
 void GfxManager::BeginFrame()
 {
+    bbeProfileFunction();
+
     m_GfxDevice.CheckStatus();
 
     g_GfxMemoryAllocator.GarbageCollect();
@@ -167,8 +171,8 @@ void GfxManager::EndFrame()
     bbeProfileFunction();
 
     // execute all Renderers' cmd lists
-    std::for_each(m_ScheduledCmdLists.begin(), m_ScheduledCmdLists.end(), [](GfxCommandList* cmdList) { g_GfxCommandListsManager.QueueCommandListToExecute(cmdList); });
-    m_ScheduledCmdLists.clear();
+    std::for_each(m_ScheduledContexts.begin(), m_ScheduledContexts.end(), [](GfxContext* context) { g_GfxCommandListsManager.QueueCommandListToExecute(&context->GetCommandList()); });
+    m_ScheduledContexts.clear();
 
     // Before presenting backbuffer, transition to to PRESENT state
     GfxContext& context = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "TransitionBackBufferForPresent");
