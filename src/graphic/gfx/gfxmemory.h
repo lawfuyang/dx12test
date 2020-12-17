@@ -22,7 +22,7 @@ private:
     D3D12MA::Allocator* m_D3D12MemoryAllocator = nullptr;
 
     std::mutex m_StaticAllocationsLck;
-    std::unordered_set<D3D12MA::Allocation*> m_StaticAllocations;
+    FlatSet<D3D12MA::Allocation*> m_StaticAllocations;
 
     std::mutex m_VolatileAllocationsLck;
     InplaceArray<D3D12MA::Allocation*, 128> m_VolatileAllocations;
