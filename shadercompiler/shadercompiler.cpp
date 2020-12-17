@@ -90,7 +90,7 @@ static void InitializeShaderFilesDependencies()
 {
     const std::string metaDataJSONDir = StringFormat("%sshadercompiler_shaderfiles_metadata.json", g_GlobalDirs.m_TmpDir.c_str());
 
-    std::unordered_map<std::string, std::size_t> exitingFilesHashes;
+    std::unordered_map<std::string, std::size_t> exitingFilesHashes; // TODO: FlatMap
     if (CFileWrapper metaDataJSONFile{ metaDataJSONDir.c_str(), true }; 
         metaDataJSONFile)
     {
@@ -107,7 +107,7 @@ static void InitializeShaderFilesDependencies()
     GetFilesInDirectory(allShaderFiles, g_GlobalDirs.m_ShadersSrcDir);
 
     // retrieve all dependencies recursively
-    std::unordered_map<std::string, ShaderFileMetaData> allShaderFilesMetaData;
+    std::unordered_map<std::string, ShaderFileMetaData> allShaderFilesMetaData; // TODO: FlatMap
     for (std::string_view shaderFileDir : allShaderFiles)
     {
         const std::string shaderFileName = GetFileNameFromPath(shaderFileDir.data());

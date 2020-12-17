@@ -50,7 +50,7 @@ public:
     void SetDepthStencil(GfxTexture& tex);
     void SetVertexBuffer(GfxVertexBuffer& vBuffer) { m_VertexBuffer = &vBuffer; }
     void SetIndexBuffer(GfxIndexBuffer& iBuffer) { m_IndexBuffer = &iBuffer; }
-    void SetRootSignature(GfxRootSignature&);
+    void SetRootSignature(std::size_t rootSigHash);
     void StageSRV(GfxTexture&, uint32_t rootIndex, uint32_t offset);
     void StageUAV(GfxTexture&, uint32_t rootIndex, uint32_t offset);
 
@@ -89,7 +89,7 @@ private:
     template <uint32_t NbRTs>
     void SetRTVHelper(GfxTexture*(&RTVs)[NbRTs]);
 
-    GfxRootSignature*        m_RootSig                      = nullptr;
+    const GfxRootSignature*  m_RootSig                      = nullptr;
     GfxVertexFormat*         m_VertexFormat                 = &GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub;
     GfxCommandList*          m_CommandList                  = nullptr;
     GfxVertexBuffer*         m_VertexBuffer                 = nullptr;

@@ -15,7 +15,7 @@ struct HLSLTypesTraits
     const char* m_CPPType;
     uint32_t m_SizeInBytes;
 };
-static const std::unordered_map<std::string_view, HLSLTypesTraits> gs_TypesTraitsMap =
+static const FixedSizeFlatMap<std::string_view, HLSLTypesTraits, 13> gs_TypesTraitsMap =
 {
     { "int"      , { "int32_t", 4 } },
     { "int2"     , { "bbeVector2I", 8 } },
@@ -37,7 +37,7 @@ struct ResourceTraits
     bool m_IsStructured;
     ResourceType m_Type;
 };
-static const std::unordered_map<std::string_view, ResourceTraits> gs_ResourceTraitsMap =
+static const FixedSizeFlatMap<std::string_view, ResourceTraits, 3> gs_ResourceTraitsMap =
 {
     { "Texture2D"         , { false, SRV } },
     { "StructuredBuffer"  , { true, SRV } },

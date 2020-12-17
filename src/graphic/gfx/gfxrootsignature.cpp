@@ -81,7 +81,9 @@ void GfxRootSignature::Compile(CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t num
     SetD3DDebugName(m_RootSignature.Get(), rootSigName);
 }
 
-GfxRootSignature* GfxRootSignatureManager::GetOrCreateRootSig(CD3DX12_DESCRIPTOR_RANGE1* ranges, uint32_t nbRanges, D3D12_ROOT_SIGNATURE_FLAGS flags, const char* rootSigName)
+BBE_OPTIMIZE_OFF;
+
+std::size_t GfxRootSignatureManager::GetOrCreateRootSig(CD3DX12_DESCRIPTOR_RANGE1* ranges, uint32_t nbRanges, D3D12_ROOT_SIGNATURE_FLAGS flags, const char* rootSigName)
 {
     bbeProfileFunction();
 
@@ -108,23 +110,18 @@ GfxRootSignature* GfxRootSignatureManager::GetOrCreateRootSig(CD3DX12_DESCRIPTOR
         }
     }
 
-    bbeAutoLockRead(m_CachedRootSigsRWLock);
-    auto it = m_CachedRootSigs.find(hash);
-    if (it != m_CachedRootSigs.end())
+    bbeAutoLockWrite(m_CachedRootSigsRWLock);
+    assert(m_CachedRootSigs.size() < NbMaxRootSigs);
+    GfxRootSignature& rootSig = m_CachedRootSigs[hash];
+
+    if (rootSig.m_Hash != 0)
     {
-        GfxRootSignature& rootSig = it->second;
-        assert(rootSig.m_Hash != 0);
         assert(!rootSig.m_Params.empty());
-        return &rootSig;
     }
-
-    bbeAutoLockScopedRWUpgrade(m_CachedRootSigsRWLock);
-    GfxRootSignature& newRootSig = m_CachedRootSigs[hash];
-
-    assert(newRootSig.m_Hash == 0);
-    assert(newRootSig.m_Params.empty());
-
-    newRootSig.m_Hash = hash;
-    newRootSig.Compile(rootParams, nbRanges, flags, rootSigName);
-    return &newRootSig;
+    else
+    {
+        rootSig.m_Hash = hash;
+        rootSig.Compile(rootParams, nbRanges, flags, rootSigName);
+    }
+    return rootSig.m_Hash;
 }

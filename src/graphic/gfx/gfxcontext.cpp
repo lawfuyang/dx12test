@@ -168,18 +168,20 @@ void GfxContext::SetDepthStencil(GfxTexture& tex)
     m_DSV = &tex;
 }
 
-void GfxContext::SetRootSignature(GfxRootSignature& rootSig)
+void GfxContext::SetRootSignature(std::size_t rootSigHash)
 {
+    const GfxRootSignature* rootSig = g_GfxRootSignatureManager.GetRootSig(rootSigHash);
+
     // do check to prevent needless descriptor heap allocation
-    if (m_RootSig == &rootSig)
+    if (m_RootSig == rootSig)
         return;
 
     // Upon setting a new Root Signature, ALL staged resources will be set to null views!
     // Make sure you double check after setting a new root sig
-    m_StagedResources = rootSig.m_Params;
+    m_StagedResources = rootSig->m_Params;
 
-    m_PSO.pRootSignature = rootSig.Dev();
-    m_RootSig = &rootSig;
+    m_PSO.pRootSignature = rootSig->Dev();
+    m_RootSig = rootSig;
 }
 
 void GfxContext::StageCBVInternal(const void* data, uint32_t bufferSize, uint32_t cbRegister, const char* CBName)

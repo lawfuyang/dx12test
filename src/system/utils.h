@@ -260,32 +260,32 @@ static void RunOnAllBits(uint32_t mask, Functor&& func)
     }
 }
 
-#define DEFINE_ENUM_WITH_STRING_CONVERSIONS(name, enumerators)                             \
-    enum name {                                                                            \
-        BOOST_PP_SEQ_ENUM(enumerators),                                                    \
-        name##_Count                                                                       \
-    };                                                                                     \
-                                                                                           \
-    static constexpr char* EnumToString(name v)                                            \
-    {                                                                                      \
-        switch (v)                                                                         \
-        {                                                                                  \
-            BOOST_PP_SEQ_FOR_EACH(                                                         \
-                DEFINE_ENUM_WITH_STRING_CONVERSIONS_TOSTRING_CASE,                         \
-                name,                                                                      \
-                enumerators                                                                \
-            )                                                                              \
-            default: return "[Unknown " BOOST_PP_STRINGIZE(name) "]";                      \
-        }                                                                                  \
-    }                                                                                      \
-                                                                                           \
-    static name StringTo##name(const std::string& str)                                     \
-    {                                                                                      \
-        static const std::unordered_map<std::string_view, name> s_StrToEnumMap =           \
-        {                                                                                  \
-            BOOST_PP_SEQ_FOR_EACH(DEFINE_STRING_TOENUM_CONVERSION_PAIR, name, enumerators) \
-        };                                                                                 \
-        return s_StrToEnumMap.at(str);                                                     \
+#define DEFINE_ENUM_WITH_STRING_CONVERSIONS(name, enumerators)                               \
+    enum name {                                                                              \
+        BOOST_PP_SEQ_ENUM(enumerators),                                                      \
+        name##_Count                                                                         \
+    };                                                                                       \
+                                                                                             \
+    static constexpr char* EnumToString(name v)                                              \
+    {                                                                                        \
+        switch (v)                                                                           \
+        {                                                                                    \
+            BOOST_PP_SEQ_FOR_EACH(                                                           \
+                DEFINE_ENUM_WITH_STRING_CONVERSIONS_TOSTRING_CASE,                           \
+                name,                                                                        \
+                enumerators                                                                  \
+            )                                                                                \
+            default: return "[Unknown " BOOST_PP_STRINGIZE(name) "]";                        \
+        }                                                                                    \
+    }                                                                                        \
+                                                                                             \
+    static name StringTo##name(const std::string& str)                                       \
+    {                                                                                        \
+        static const FixedSizeFlatMap<std::string_view, name, name##_Count> s_StrToEnumMap = \
+        {                                                                                    \
+            BOOST_PP_SEQ_FOR_EACH(DEFINE_STRING_TOENUM_CONVERSION_PAIR, name, enumerators)   \
+        };                                                                                   \
+        return s_StrToEnumMap.at(str);                                                       \
     }
 
 static ObjectID GenerateObjectID() { return boost::uuids::random_generator{}(); }
