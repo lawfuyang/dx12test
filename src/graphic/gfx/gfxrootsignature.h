@@ -42,11 +42,11 @@ public:
 
     std::size_t GetOrCreateRootSig(CD3DX12_DESCRIPTOR_RANGE1* ranges, uint32_t nbRanges, D3D12_ROOT_SIGNATURE_FLAGS flags, const char* rootSigName);
 
-    const GfxRootSignature* GetRootSig(std::size_t rootSigHash) const { return &m_CachedRootSigs.at(rootSigHash); }
+    const GfxRootSignature* GetRootSig(std::size_t rootSigHash) const { bbeAutoLockRead(m_CachedRootSigsRWLock); return &m_CachedRootSigs.at(rootSigHash); }
 
 private:
     static const uint32_t NbMaxRootSigs = 4;
     FixedSizeFlatMap<std::size_t, GfxRootSignature, NbMaxRootSigs> m_CachedRootSigs;
-    std::shared_mutex m_CachedRootSigsRWLock;
+    mutable std::shared_mutex m_CachedRootSigsRWLock;
 };
 #define g_GfxRootSignatureManager GfxRootSignatureManager::GetInstance()
