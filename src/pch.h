@@ -4,8 +4,8 @@
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 
-#define _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING // for concurrency::concurrent_unordered_set
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // for std::wstring_convert
+#define _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING // for concurrency::concurrent_unordered_set
 
 #if !defined(BBE_SHADERCOMPILER)
     #define BBE_USE_PROFILER
@@ -63,10 +63,6 @@
 #include <codecvt>
 
 // windows
-#include <concurrent_queue.h>
-#include <concurrent_unordered_map.h>
-#include <concurrent_unordered_set.h>
-#include <concurrent_vector.h>
 #include <windows.h>
 #include <winuser.h>
 #include <wrl.h>
@@ -107,13 +103,7 @@
 #include <extern/taskflow/taskflow.hpp>
 
 // Boost
-#include <extern/boost/circular_buffer.hpp>
-#include <extern/boost/container/flat_map.hpp>
-#include <extern/boost/container/flat_set.hpp>
-#include <extern/boost/container/small_vector.hpp>
-#include <extern/boost/container/static_vector.hpp>
 #include <extern/boost/container_hash/hash.hpp>
-#include <extern/boost/pool/object_pool.hpp>
 #include <extern/boost/preprocessor.hpp>
 #include <extern/boost/static_string.hpp>
 #include <extern/boost/uuid/uuid.hpp>
@@ -154,57 +144,13 @@ using WindowHandle = uint64_t;
     using D3D12Resource            = ID3D12Resource;
 #endif
 
-template <typename T>
-using ConcurrentVector = concurrency::concurrent_vector<T>;
-
-template <typename KeyType, typename ValueType>
-using ConcurrentUnorderedMap = concurrency::concurrent_unordered_map<KeyType, ValueType>;
-
-template <typename T>
-using ConcurrentUnorderedSet = concurrency::concurrent_unordered_set<T>;
-
-template <typename T, uint32_t N>
-using InplaceArray = boost::container::small_vector<T, N>;
-
-template <typename T, uint32_t N>
-using FixedSizeArray = boost::container::static_vector<T, N>;
-
-template <typename KeyType, typename ValueType>
-using FlatMap = boost::container::flat_map<KeyType, ValueType>;
-
-template <typename KeyType>
-using FlatSet = boost::container::flat_set<KeyType>;
-
-template <typename KeyType, typename ValueType, std::size_t N>
-using InplaceFlatMap = boost::container::flat_map<KeyType, ValueType, std::less<KeyType>, InplaceArray<std::pair<KeyType, ValueType>, N>>;
-
-template <typename ValueType, uint32_t N>
-using InplaceFlatSet = boost::container::flat_set< ValueType, std::less<ValueType>, InplaceArray<ValueType, N>>;
-
-template <typename KeyType, typename ValueType, std::size_t N>
-using FixedSizeFlatMap = boost::container::flat_map<KeyType, ValueType, std::less<KeyType>, boost::container::static_vector<std::pair<KeyType, ValueType>, N>>;
-
-template <typename ValueType, uint32_t N>
-using FixedSizeFlatSet = boost::container::flat_set< ValueType, std::less<ValueType>, boost::container::static_vector<ValueType, N>>;
-
-template<std::size_t N>
-using StaticString = boost::static_strings::static_string<N>;
-
-template<std::size_t N>
-using StaticWString = boost::static_strings::static_wstring<N>;
-
-template <typename T>
-using ObjectPool = boost::object_pool<T>;
-
-template <typename T>
-using CircularBuffer = boost::circular_buffer<T>;
-
 using ObjectID = boost::uuids::uuid;
 using ClassID = uint32_t;
 
 // ComPtr namespace
 using Microsoft::WRL::ComPtr;
 
+#include <system/containers.h>
 #include <system/math.h>
 #include <system/utils.h>
 #include <system/timer.h>

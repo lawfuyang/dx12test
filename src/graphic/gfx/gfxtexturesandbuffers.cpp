@@ -3,13 +3,7 @@
 
 #include <system/imguimanager.h>
 
-void GfxHazardTrackedResource::SetDebugName(std::string_view debugName) const
-{
-    if (m_D3D12Resource)
-        SetD3DDebugName(m_D3D12Resource, debugName.data());
-}
-
-void GfxHazardTrackedResource::Release()
+void GfxResourceBase::Release()
 {
     bbeProfileFunction();
 
@@ -35,10 +29,9 @@ void GfxVertexBuffer::Initialize(uint32_t numVertices, uint32_t vertexSize, cons
     m_StrideInBytes = vertexSize;
 
     const bool hasInitData = initData != nullptr;
-    m_CurrentResourceState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
 
     // Create heap to hold final buffer data
-    m_D3D12MABufferAllocation = g_GfxMemoryAllocator.AllocateStatic(CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), m_CurrentResourceState, nullptr);
+    m_D3D12MABufferAllocation = g_GfxMemoryAllocator.AllocateStatic(CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
     assert(m_D3D12MABufferAllocation);
     m_D3D12Resource = m_D3D12MABufferAllocation->GetResource();
 
@@ -48,7 +41,7 @@ void GfxVertexBuffer::Initialize(uint32_t numVertices, uint32_t vertexSize, cons
     {
         GfxCommandList& newCmdList = *g_GfxCommandListsManager.GetMainQueue().AllocateCommandList("GfxVertexBuffer Upload Init Data");
 
-        UploadToGfxResource(newCmdList.Dev(), *this, sizeInBytes, sizeInBytes, sizeInBytes, initData);
+        UploadToGfxResource(newCmdList.Dev(), *this, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, sizeInBytes, sizeInBytes, sizeInBytes, initData);
 
         g_GfxCommandListsManager.QueueCommandListToExecute(&newCmdList);
     }
@@ -64,12 +57,10 @@ void GfxIndexBuffer::Initialize(uint32_t numIndices, const void* initData)
     m_NumIndices = numIndices;
     const uint32_t sizeInBytes = numIndices * 2;
 
-    m_CurrentResourceState = D3D12_RESOURCE_STATE_INDEX_BUFFER;
-
     const bool hasInitData = initData != nullptr;
 
     // Create heap to hold final buffer data
-    m_D3D12MABufferAllocation = g_GfxMemoryAllocator.AllocateStatic(CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), m_CurrentResourceState, nullptr);
+    m_D3D12MABufferAllocation = g_GfxMemoryAllocator.AllocateStatic(CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), D3D12_RESOURCE_STATE_INDEX_BUFFER, nullptr);
     assert(m_D3D12MABufferAllocation);
     m_D3D12Resource = m_D3D12MABufferAllocation->GetResource();
 
@@ -79,7 +70,7 @@ void GfxIndexBuffer::Initialize(uint32_t numIndices, const void* initData)
     {
         GfxCommandList& newCmdList = *g_GfxCommandListsManager.GetMainQueue().AllocateCommandList("GfxIndexBuffer Upload Init Data");
 
-        UploadToGfxResource(newCmdList.Dev(), *this, sizeInBytes, sizeInBytes, sizeInBytes, initData);
+        UploadToGfxResource(newCmdList.Dev(), *this, D3D12_RESOURCE_STATE_INDEX_BUFFER, sizeInBytes, sizeInBytes, sizeInBytes, initData);
 
         g_GfxCommandListsManager.QueueCommandListToExecute(&newCmdList);
     }
@@ -128,7 +119,6 @@ void GfxTexture::InitializeTexture(const CD3DX12_RESOURCE_DESC1& desc, const voi
     assert(!m_D3D12MABufferAllocation);
 
     m_Format = desc.Format;
-    m_CurrentResourceState = initialState;
 
     // sanity check for resource desc
     ResourceDescSanityCheck(desc);
@@ -138,7 +128,7 @@ void GfxTexture::InitializeTexture(const CD3DX12_RESOURCE_DESC1& desc, const voi
                                (clearValue.Format != DXGI_FORMAT_UNKNOWN);
 
     // Create heap
-    m_D3D12MABufferAllocation = g_GfxMemoryAllocator.AllocateStatic(desc, m_CurrentResourceState, hasClearValue ? &clearValue : nullptr);
+    m_D3D12MABufferAllocation = g_GfxMemoryAllocator.AllocateStatic(desc, initialState, hasClearValue ? &clearValue : nullptr);
     assert(m_D3D12MABufferAllocation);
     m_D3D12Resource = m_D3D12MABufferAllocation->GetResource();
 
@@ -156,7 +146,7 @@ void GfxTexture::InitializeTexture(const CD3DX12_RESOURCE_DESC1& desc, const voi
         g_GfxManager.GetGfxDevice().Dev()->GetCopyableFootprints1(&desc, FirstSubresource, NumSubresources, BaseOffset, &layouts, &numRows, &rowSizeInBytes, &totalBytes);
 
         GfxCommandList& newCmdList = *g_GfxCommandListsManager.GetMainQueue().AllocateCommandList("GfxTexture Upload Init Data");
-        UploadToGfxResource(newCmdList.Dev(), *this, (uint32_t)totalBytes, (uint32_t)rowSizeInBytes, (uint32_t)(rowSizeInBytes * desc.Height), initData);
+        UploadToGfxResource(newCmdList.Dev(), *this, initialState, (uint32_t)totalBytes, (uint32_t)rowSizeInBytes, (uint32_t)(rowSizeInBytes * desc.Height), initData);
         g_GfxCommandListsManager.QueueCommandListToExecute(&newCmdList);
     }
 }
@@ -167,7 +157,6 @@ void GfxTexture::InitializeBuffer(const CD3DX12_RESOURCE_DESC1& desc, uint32_t n
     assert(!m_D3D12MABufferAllocation);
 
     m_Format = desc.Format;
-    m_CurrentResourceState = initialState;
     m_NumElements = numElements;
     m_StructureByteStride = structureByteStride;
 
@@ -175,7 +164,7 @@ void GfxTexture::InitializeBuffer(const CD3DX12_RESOURCE_DESC1& desc, uint32_t n
     ResourceDescSanityCheck(desc);
 
     // Create heap
-    m_D3D12MABufferAllocation = g_GfxMemoryAllocator.AllocateStatic(desc, m_CurrentResourceState, nullptr);
+    m_D3D12MABufferAllocation = g_GfxMemoryAllocator.AllocateStatic(desc, initialState, nullptr);
     assert(m_D3D12MABufferAllocation);
     m_D3D12Resource = m_D3D12MABufferAllocation->GetResource();
 

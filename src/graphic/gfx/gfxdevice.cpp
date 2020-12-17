@@ -111,11 +111,11 @@ void GfxDevice::ConfigureDebugLayerAfterDeviceCreation()
         debugDevice1->SetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_GPU_BASED_VALIDATION_SETTINGS, &gpuValidationSettings, sizeof(gpuValidationSettings));
     }
 
-
     // Filter unwanted gfx warnings/errors
     ComPtr<ID3D12InfoQueue> debugInfoQueue;
     DX12_CALL(Dev()->QueryInterface(__uuidof(ID3D12InfoQueue), (LPVOID*)&debugInfoQueue));
 
+    debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
     debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, g_CommandLineOptions.m_GfxDebugLayer.m_BreakOnWarnings);
     debugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, g_CommandLineOptions.m_GfxDebugLayer.m_BreakOnErrors);
 

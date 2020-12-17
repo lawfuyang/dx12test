@@ -10,23 +10,18 @@ namespace D3D12MA
 class GfxCommandList;
 class GfxContext;
 
-class GfxHazardTrackedResource
+class GfxResourceBase
 {
 public:
-    static const D3D12_RESOURCE_STATES INVALID_STATE = (D3D12_RESOURCE_STATES)0xDEADBEEF;
-
     D3D12Resource* GetD3D12Resource() const { return m_D3D12Resource; }
-    void SetDebugName(std::string_view debugName) const;
+    void SetDebugName(std::string_view debugName) const { SetD3DDebugName(m_D3D12Resource, debugName.data()); }
     void Release();
 
     D3D12MA::Allocation* m_D3D12MABufferAllocation = nullptr;
-    D3D12Resource*       m_D3D12Resource           = nullptr;
-
-    D3D12_RESOURCE_STATES m_CurrentResourceState = D3D12_RESOURCE_STATE_COMMON;
-    D3D12_RESOURCE_STATES m_TransitioningState   = INVALID_STATE;
+    D3D12Resource* m_D3D12Resource = nullptr;
 };
 
-class GfxVertexBuffer : public GfxHazardTrackedResource
+class GfxVertexBuffer : public GfxResourceBase
 {
 public:
     void Initialize(uint32_t numVertices, uint32_t vertexSize, const void* initData = nullptr);
@@ -38,7 +33,7 @@ public:
     uint32_t m_NumVertices = 0;
 };
 
-class GfxIndexBuffer : public GfxHazardTrackedResource
+class GfxIndexBuffer : public GfxResourceBase
 {
 public:
     void Initialize(uint32_t numIndices, const void* initData = nullptr);
@@ -49,7 +44,7 @@ public:
     uint32_t m_NumIndices = 0;
 };
 
-class GfxTexture : public GfxHazardTrackedResource
+class GfxTexture : public GfxResourceBase
 {
 public:
     DeclareObjectModelFunctions(GfxTexture);

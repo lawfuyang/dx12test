@@ -1,6 +1,6 @@
 #pragma once
 
-class GfxHazardTrackedResource;
+class GfxResourceBase;
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 #define DX12_CALL(call)                                                                                            \
@@ -37,7 +37,7 @@ D3D12_PRIMITIVE_TOPOLOGY GetD3D12PrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE
 uint32_t GetBitsPerPixel(DXGI_FORMAT fmt);
 uint32_t GetBytesPerPixel(DXGI_FORMAT fmt);
 bool IsBlockFormat(DXGI_FORMAT fmt);
-void UploadToGfxResource(D3D12GraphicsCommandList* pCommandList, GfxHazardTrackedResource& destResource, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* srcData);
+void UploadToGfxResource(D3D12GraphicsCommandList* pCommandList, GfxResourceBase& destResource, D3D12_RESOURCE_STATES currentResourceState, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* srcData);
 
 class ScopedPixEvent
 {
@@ -60,7 +60,7 @@ private:
 
 struct ScopedD3DesourceState
 {
-    ScopedD3DesourceState(D3D12GraphicsCommandList* pCommandList, const GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES tempNewState);
+    ScopedD3DesourceState(D3D12GraphicsCommandList* pCommandList, const GfxResourceBase& resource, D3D12_RESOURCE_STATES oldState, D3D12_RESOURCE_STATES tempNewState);
     ~ScopedD3DesourceState();
 
 private:
@@ -69,7 +69,7 @@ private:
     const D3D12_RESOURCE_STATES m_OldState;
     const D3D12_RESOURCE_STATES m_TempNewState;
 };
-#define bbeScopedD3DResourceState(pCommandList, resource, tempNewState) const ScopedD3DesourceState bbeUniqueVariable(scopedD3DesourceState) { pCommandList, resource, tempNewState }
+#define bbeScopedD3DResourceState(pCommandList, resource, currentState, tempNewState) const ScopedD3DesourceState bbeUniqueVariable(scopedD3DesourceState) { pCommandList, resource, currentState, tempNewState }
 
 struct CD3D12_RENDER_TARGET_VIEW_DESC : public D3D12_RENDER_TARGET_VIEW_DESC
 {

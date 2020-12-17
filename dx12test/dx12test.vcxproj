@@ -162,6 +162,7 @@
     <ClInclude Include="..\src\graphic\WICTextureLoader12.h" />
     <ClInclude Include="..\src\pch.h" />
     <ClInclude Include="..\src\system\commandmanager.h" />
+    <ClInclude Include="..\src\system\containers.h" />
     <ClInclude Include="..\src\system\criticalsection.h" />
     <ClInclude Include="..\src\system\imguimanager.h" />
     <ClInclude Include="..\src\system\keyboard.h" />

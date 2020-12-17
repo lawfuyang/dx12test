@@ -104,10 +104,10 @@ void GfxIMGUIRenderer::UploadBufferData(GfxContext& context, const IMGUIDrawData
     }
 
     uint32_t uploadSize = vertices.size() * sizeof(ImDrawVert);
-    UploadToGfxResource(context.GetCommandList().Dev(), m_VertexBuffer, uploadSize, uploadSize, uploadSize, vertices.data());
+    UploadToGfxResource(context.GetCommandList().Dev(), m_VertexBuffer, context.GetCurrentResourceState(m_VertexBuffer), uploadSize, uploadSize, uploadSize, vertices.data());
 
     uploadSize = indices.size() * sizeof(ImDrawIdx);
-    UploadToGfxResource(context.GetCommandList().Dev(), m_IndexBuffer, uploadSize, uploadSize, uploadSize, indices.data());
+    UploadToGfxResource(context.GetCommandList().Dev(), m_IndexBuffer, context.GetCurrentResourceState(m_IndexBuffer), uploadSize, uploadSize, uploadSize, indices.data());
 }
 
 void GfxIMGUIRenderer::SetupRenderStates(GfxContext& context, const IMGUIDrawData& imguiDrawData)
@@ -162,6 +162,10 @@ void GfxIMGUIRenderer::PopulateCommandList(GfxContext& context)
     // Create and grow vertex/index buffers if needed
     GrowBuffers(imguiDrawData);
 
+    // Set the buffers in the context right now to begin tracking their resource states
+    context.SetVertexBuffer(m_VertexBuffer);
+    context.SetIndexBuffer(m_IndexBuffer);
+
     // Upload vertex/index data into a single contiguous GPU buffer
     UploadBufferData(context, imguiDrawData);
 
@@ -191,13 +195,8 @@ void GfxIMGUIRenderer::PopulateCommandList(GfxContext& context)
 
     context.SetShader(g_GfxShaderManager.GetShader(Shaders::VS_IMGUI{}));
     context.SetShader(g_GfxShaderManager.GetShader(Shaders::PS_IMGUI{}));
-
     context.SetVertexFormat(GfxDefaultVertexFormats::Position2f_TexCoord2f_Color4ub);
-
     context.StageSRV(m_FontsTexture, 1, 0);
-
-    context.SetVertexBuffer(m_VertexBuffer);
-    context.SetIndexBuffer(m_IndexBuffer);
     context.SetRenderTarget(g_GfxManager.GetSwapChain().GetCurrentBackBuffer());
 
     // Render command lists

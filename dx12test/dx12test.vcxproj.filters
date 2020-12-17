@@ -316,6 +316,9 @@
     <ClInclude Include="..\src\graphic\gfx\gfxmemory.h">
       <Filter>graphic\gfx</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\system\containers.h">
+      <Filter>system</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="system">

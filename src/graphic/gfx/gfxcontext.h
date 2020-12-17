@@ -10,7 +10,7 @@ class GfxManager;
 class GfxTexture;
 class GfxVertexBuffer;
 class GfxIndexBuffer;
-class GfxHazardTrackedResource;
+class GfxResourceBase;
 class GfxSwapChain;
 class View;
 struct GfxShader;
@@ -22,6 +22,9 @@ public:
 
     void Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, std::string_view name);
     void ResetStates() { m_PSO = CD3DX12_PIPELINE_STATE_STREAM2{}; }
+
+    void BeginTrackResourceState(GfxResourceBase& resource, D3D12_RESOURCE_STATES assumedInitialState);
+    D3D12_RESOURCE_STATES GetCurrentResourceState(GfxResourceBase& resource) const;
 
     void ClearRenderTargetView(GfxTexture&, const bbeVector4& clearColor);
     void ClearDepth(GfxTexture& tex, float depth) { ClearDSVInternal(tex, depth, 0, D3D12_CLEAR_FLAG_DEPTH); }
@@ -48,8 +51,8 @@ public:
     void SetShader(const GfxShader&);
     void SetVertexFormat(const GfxVertexFormat& vertexFormat) { m_PSO.InputLayout = vertexFormat.Dev(); }
     void SetDepthStencil(GfxTexture& tex);
-    void SetVertexBuffer(GfxVertexBuffer& vBuffer) { m_VertexBuffer = &vBuffer; }
-    void SetIndexBuffer(GfxIndexBuffer& iBuffer) { m_IndexBuffer = &iBuffer; }
+    void SetVertexBuffer(GfxVertexBuffer& vBuffer);
+    void SetIndexBuffer(GfxIndexBuffer& iBuffer);
     void SetRootSignature(std::size_t rootSigHash);
     void StageSRV(GfxTexture&, uint32_t rootIndex, uint32_t offset);
     void StageUAV(GfxTexture&, uint32_t rootIndex, uint32_t offset);
@@ -61,9 +64,8 @@ public:
         StageCBVInternal((const void*)&cb, sizeof(CBType), CBType::ConstantBufferRegister, CBType::Name);
     }
 
-    void UAVBarrier(GfxHazardTrackedResource& resource);
-    void TransitionResource(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate = false);
-    void BeginResourceTransition(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate = false);
+    void UAVBarrier(GfxResourceBase& resource);
+    void TransitionResource(GfxResourceBase& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate = false);
 
     void DrawInstanced(uint32_t vertexCountPerInstance, uint32_t instanceCount, uint32_t startVertexLocation = 0, uint32_t startInstanceLocation = 0);
     void DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation = 0, uint32_t baseVertexLocation = 0, uint32_t startInstanceLocation = 0);
@@ -86,6 +88,8 @@ private:
     CD3DX12_CPU_DESCRIPTOR_HANDLE AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE, std::string_view debugName);
     std::size_t GetPSOHash(bool forGraphicPSO);
 
+    void LazyTransitionResource(GfxResourceBase& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate = false);
+
     template <uint32_t NbRTs>
     void SetRTVHelper(GfxTexture*(&RTVs)[NbRTs]);
 
@@ -106,6 +110,8 @@ private:
     InplaceArray<RTVDesc, 3> m_RTVs;
 
     CD3DX12_PIPELINE_STATE_STREAM2 m_PSO;
+
+    InplaceFlatMap<D3D12Resource*, D3D12_RESOURCE_STATES, 8> m_TrackedResourceStates;
 
     InplaceArray<D3D12_RESOURCE_BARRIER, 16> m_BegunResourceBarriers;
     InplaceArray<D3D12_RESOURCE_BARRIER, 16> m_ResourceBarriers;

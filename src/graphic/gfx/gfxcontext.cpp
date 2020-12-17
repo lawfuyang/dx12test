@@ -1,6 +1,16 @@
 #include <graphic/gfx/gfxcontext.h>
 #include <graphic/pch.h>
 
+void GfxContext::BeginTrackResourceState(GfxResourceBase& resource, D3D12_RESOURCE_STATES assumedInitialState)
+{
+    m_TrackedResourceStates[resource.GetD3D12Resource()] = assumedInitialState;
+}
+
+D3D12_RESOURCE_STATES GfxContext::GetCurrentResourceState(GfxResourceBase& resource) const
+{
+    return m_TrackedResourceStates.at(resource.GetD3D12Resource());
+}
+
 void GfxContext::Initialize(D3D12_COMMAND_LIST_TYPE cmdListType, std::string_view name)
 {
     assert(m_CommandList == nullptr);
@@ -48,7 +58,7 @@ void GfxContext::ClearRenderTargetView(GfxTexture& tex, const bbeVector4& clearC
 {
     bbeProfileGPUFunction((*this));
 
-    TransitionResource(tex, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
+    LazyTransitionResource(tex, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
 
     CD3D12_RENDER_TARGET_VIEW_DESC desc{ D3D12_RTV_DIMENSION_TEXTURE2D, tex.GetFormat() };
     CD3DX12_CPU_DESCRIPTOR_HANDLE descHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, __FUNCTION__);
@@ -63,7 +73,7 @@ void GfxContext::ClearDSVInternal(GfxTexture& tex, float depth, uint8_t stencil,
 {
     bbeProfileGPUFunction((*this));
 
-    TransitionResource(tex, D3D12_RESOURCE_STATE_DEPTH_WRITE, true);
+    LazyTransitionResource(tex, D3D12_RESOURCE_STATE_DEPTH_WRITE, true);
 
     D3D12_DEPTH_STENCIL_VIEW_DESC desc{};
     desc.Format = tex.GetFormat();
@@ -78,7 +88,10 @@ void GfxContext::ClearDSVInternal(GfxTexture& tex, float depth, uint8_t stencil,
 
 void GfxContext::ClearUAVF(GfxTexture& tex, const bbeVector4& clearValue)
 {
-    TransitionResource(tex, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
+    bbeProfileGPUFunction((*this));
+
+    LazyTransitionResource(tex, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
+
     SetShaderVisibleDescriptorHeap();
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE CPUDescHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, __FUNCTION__);
@@ -92,7 +105,10 @@ void GfxContext::ClearUAVF(GfxTexture& tex, const bbeVector4& clearValue)
 
 void GfxContext::ClearUAVU(GfxTexture& tex, const bbeVector4U& clearValue)
 {
-    TransitionResource(tex, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
+    bbeProfileGPUFunction((*this));
+
+    LazyTransitionResource(tex, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, true);
+
     SetShaderVisibleDescriptorHeap();
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE CPUDescHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, __FUNCTION__);
@@ -120,6 +136,8 @@ void GfxContext::SetRTVHelper(GfxTexture* (&RTVs)[NbRTs])
 
         m_RTVs[i].m_CPUDescHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, __FUNCTION__);
         g_GfxManager.GetGfxDevice().Dev()->CreateRenderTargetView(RTVs[i]->GetD3D12Resource(), &RTVdesc, m_RTVs[i].m_CPUDescHeap);
+
+        LazyTransitionResource(*m_RTVs[i].m_Tex, D3D12_RESOURCE_STATE_RENDER_TARGET);
     }
 }
 
@@ -164,8 +182,24 @@ void GfxContext::SetShader(const GfxShader& shader)
 
 void GfxContext::SetDepthStencil(GfxTexture& tex)
 {
+    LazyTransitionResource(tex, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+
     m_PSO.DSVFormat = tex.GetFormat();
     m_DSV = &tex;
+}
+
+void GfxContext::SetVertexBuffer(GfxVertexBuffer& vBuffer)
+{
+    LazyTransitionResource(vBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+
+    m_VertexBuffer = &vBuffer;
+}
+
+void GfxContext::SetIndexBuffer(GfxIndexBuffer& iBuffer)
+{
+    LazyTransitionResource(iBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+
+    m_IndexBuffer = &iBuffer;
 }
 
 void GfxContext::SetRootSignature(std::size_t rootSigHash)
@@ -256,7 +290,7 @@ void GfxContext::StageSRV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
     g_GfxManager.GetGfxDevice().Dev()->CreateShaderResourceView(tex.GetD3D12Resource(), &SRVDesc, CPUDescHeap);
 
     // TODO: Specific states for Pixel/Non-Pixel resources?
-    TransitionResource(tex, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    LazyTransitionResource(tex, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
     StageDescriptor(CPUDescHeap, rootIndex, offset);
 }
@@ -299,7 +333,7 @@ void GfxContext::StageUAV(GfxTexture& tex, uint32_t rootIndex, uint32_t offset)
     CD3DX12_CPU_DESCRIPTOR_HANDLE CPUDescHeap = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, heapDebugName.c_str());
     g_GfxManager.GetGfxDevice().Dev()->CreateUnorderedAccessView(tex.GetD3D12Resource(), pCounterResource, &UAVDesc, CPUDescHeap);
 
-    TransitionResource(tex, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    LazyTransitionResource(tex, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
     StageDescriptor(CPUDescHeap, rootIndex, offset);
 }
@@ -434,7 +468,6 @@ void GfxContext::PrepareGraphicsStates()
         InplaceArray<D3D12_CPU_DESCRIPTOR_HANDLE, 3> rtvHandles;
         for (const RTVDesc& rtvDesc : m_RTVs)
         {
-            TransitionResource(*rtvDesc.m_Tex, D3D12_RESOURCE_STATE_RENDER_TARGET);
             rtvHandles.push_back(rtvDesc.m_CPUDescHeap);
         }
 
@@ -442,8 +475,6 @@ void GfxContext::PrepareGraphicsStates()
         D3D12_CPU_DESCRIPTOR_HANDLE DSVDescHandle{};
         if (m_DSV)
         {
-            TransitionResource(*m_DSV, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-
             DSVDescHandle = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, "DSV");
 
             D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc{ m_DSV->GetFormat(), D3D12_DSV_DIMENSION_TEXTURE2D, D3D12_DSV_FLAG_READ_ONLY_DEPTH };
@@ -519,75 +550,41 @@ void GfxContext::FlushResourceBarriers()
     }
 }
 
-void GfxContext::UAVBarrier(GfxHazardTrackedResource& resource)
+void GfxContext::UAVBarrier(GfxResourceBase& resource)
 {
-    assert((resource.m_CurrentResourceState & D3D12_RESOURCE_STATE_UNORDERED_ACCESS) != 0);
+    const D3D12_RESOURCE_STATES currentState = m_TrackedResourceStates.at(resource.GetD3D12Resource());
+    assert((currentState & D3D12_RESOURCE_STATE_UNORDERED_ACCESS) != 0);
 
     m_ResourceBarriers.push_back(CD3DX12_RESOURCE_BARRIER::UAV(resource.GetD3D12Resource()));
 }
 
-void GfxContext::TransitionResource(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate)
+void GfxContext::TransitionResource(GfxResourceBase& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate)
 {
-    const D3D12_RESOURCE_STATES oldState = resource.m_CurrentResourceState;
-
-    if (oldState != newState)
+    if (D3D12_RESOURCE_STATES& currentState = m_TrackedResourceStates.at(resource.GetD3D12Resource());
+        currentState != newState)
     {
-        D3D12_RESOURCE_BARRIER& BarrierDesc = m_ResourceBarriers.emplace_back(D3D12_RESOURCE_BARRIER{});
+        m_ResourceBarriers.push_back(CD3DX12_RESOURCE_BARRIER::Transition(resource.GetD3D12Resource(), currentState, newState));
+        currentState = newState;
 
-        BarrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        BarrierDesc.Transition.pResource = resource.GetD3D12Resource();
-        BarrierDesc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-        BarrierDesc.Transition.StateBefore = oldState;
-        BarrierDesc.Transition.StateAfter = newState;
-
-        // Insert UAV barrier on SRV<->UAV transitions.
-        if (oldState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS || newState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
-            m_ResourceBarriers.push_back(CD3DX12_RESOURCE_BARRIER::UAV(resource.GetD3D12Resource()));
-
-        // Check to see if we already started the transition
-        if (newState == resource.m_TransitioningState)
-        {
-            BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
-            resource.m_TransitioningState = GfxHazardTrackedResource::INVALID_STATE;
-        }
-        else
-            BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-
-        resource.m_CurrentResourceState = newState;
+        // Insert UAV barrier on SRV<->UAV transitions
+        if (newState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+            UAVBarrier(resource);
     }
     else if (newState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+    {
         UAVBarrier(resource);
+    }
 
     if (flushImmediate)
         FlushResourceBarriers();
 }
 
-void GfxContext::BeginResourceTransition(GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate)
+void GfxContext::LazyTransitionResource(GfxResourceBase& resource, D3D12_RESOURCE_STATES newState, bool flushImmediate)
 {
-    assert(m_CommandList);
+    if (!m_TrackedResourceStates.contains(resource.GetD3D12Resource()))
+        BeginTrackResourceState(resource, newState);
 
-    // If it's already transitioning, finish that transition
-    if (resource.m_TransitioningState != GfxHazardTrackedResource::INVALID_STATE)
-        TransitionResource(resource, resource.m_TransitioningState, flushImmediate);
-
-    const D3D12_RESOURCE_STATES oldState = resource.m_CurrentResourceState;
-
-    if (oldState != newState)
-    {
-        D3D12_RESOURCE_BARRIER& BarrierDesc = m_ResourceBarriers.emplace_back(D3D12_RESOURCE_BARRIER{});
-
-        BarrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        BarrierDesc.Transition.pResource = resource.GetD3D12Resource();
-        BarrierDesc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-        BarrierDesc.Transition.StateBefore = oldState;
-        BarrierDesc.Transition.StateAfter = newState;
-        BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY;
-
-        resource.m_TransitioningState = newState;
-    }
-
-    if (flushImmediate)
-        FlushResourceBarriers();
+    TransitionResource(resource, newState, flushImmediate);
 }
 
 static void CreateNullCBV(D3D12_CPU_DESCRIPTOR_HANDLE destDesc)

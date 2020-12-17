@@ -1,10 +1,10 @@
 #include <graphic/dx12utils.h>
 #include <graphic/pch.h>
 
-ScopedD3DesourceState::ScopedD3DesourceState(D3D12GraphicsCommandList* pCommandList, const GfxHazardTrackedResource& resource, D3D12_RESOURCE_STATES tempNewState)
+ScopedD3DesourceState::ScopedD3DesourceState(D3D12GraphicsCommandList* pCommandList, const GfxResourceBase& resource, D3D12_RESOURCE_STATES oldState, D3D12_RESOURCE_STATES tempNewState)
     : m_CommandList(pCommandList)
     , m_Resource(resource.GetD3D12Resource())
-    , m_OldState(resource.m_CurrentResourceState)
+    , m_OldState(oldState)
     , m_TempNewState(tempNewState)
 {
     const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_Resource, m_OldState, m_TempNewState);
@@ -319,7 +319,7 @@ bool IsBlockFormat(DXGI_FORMAT fmt)
     return false;
 }
 
-void UploadToGfxResource(D3D12GraphicsCommandList* pCommandList, GfxHazardTrackedResource& destResource, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* srcData)
+void UploadToGfxResource(D3D12GraphicsCommandList* pCommandList, GfxResourceBase& destResource, D3D12_RESOURCE_STATES currentResourceState, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* srcData)
 {
     bbePIXEvent(pCommandList, "UpdateSubresources");
 
@@ -333,7 +333,7 @@ void UploadToGfxResource(D3D12GraphicsCommandList* pCommandList, GfxHazardTracke
     D3D12MA::Allocation* uploadHeapAlloc = g_GfxMemoryAllocator.AllocateVolatile(D3D12_HEAP_TYPE_UPLOAD, CD3DX12_RESOURCE_DESC1::Buffer(uploadBufferSize));
     SetD3DDebugName(uploadHeapAlloc->GetResource(), "UpdateSubresources");
 
-    bbeScopedD3DResourceState(pCommandList, destResource, D3D12_RESOURCE_STATE_COPY_DEST);
+    bbeScopedD3DResourceState(pCommandList, destResource, currentResourceState, D3D12_RESOURCE_STATE_COPY_DEST);
 
     // upload init data via CopyTextureRegion/CopyBufferRegion
     const UINT MaxSubresources = 1;

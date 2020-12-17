@@ -143,9 +143,9 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
         return tf;
     };
 
-    tf::Task particlesUpdate = PopulateCommandList(g_GfxBodyGravityParticlesUpdate);
-    PopulateCommandList(g_GfxBodyGravityParticlesRender).succeed(particlesUpdate);
+    PopulateCommandList(g_GfxBodyGravityParticlesUpdate);
     PopulateCommandList(g_GfxForwardLightingPass);
+    PopulateCommandList(g_GfxBodyGravityParticlesRender);
     PopulateCommandList(g_GfxIMGUIRenderer);
 
     subFlow.emplace([this] { EndFrame(); }).succeed(END_OF_RENDERERS_GATE);
@@ -161,6 +161,12 @@ void GfxManager::BeginFrame()
 
     // TODO: Remove clearing of BackBuffer when we manage to fill every pixel on screen through various render passes
     GfxContext& context = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "ClearBackBuffer & DepthBuffer");
+
+    // If Swap Chain is used for the first time after init, it's in the [Common/Present] state
+    // If not, it was transitioned into the [Common/Present] in "EndFrame" function
+    context.BeginTrackResourceState(m_SwapChain.GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT);
+
+    // Clearing the back buffer will transition it to the "RenderTarget" state
     context.ClearRenderTargetView(m_SwapChain.GetCurrentBackBuffer(), bbeVector4{ 0.0f, 0.2f, 0.4f, 1.0f });
     context.ClearDepth(g_SceneDepthBuffer, 1.0f);
     g_GfxCommandListsManager.QueueCommandListToExecute(&context.GetCommandList());
@@ -175,9 +181,12 @@ void GfxManager::EndFrame()
     m_ScheduledContexts.clear();
 
     // Before presenting backbuffer, transition to to PRESENT state
-    GfxContext& context = GenerateNewContext(D3D12_COMMAND_LIST_TYPE_DIRECT, "TransitionBackBufferForPresent");
-    context.TransitionResource(m_SwapChain.GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, true);
-    g_GfxCommandListsManager.QueueCommandListToExecute(&context.GetCommandList());
+    {
+        GfxCommandList* cmdList = g_GfxCommandListsManager.GetMainQueue().AllocateCommandList("TransitionBackBufferTo_PRESENT");
+        const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_SwapChain.GetCurrentBackBuffer().GetD3D12Resource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+        cmdList->Dev()->ResourceBarrier(1, &barrier);
+        g_GfxCommandListsManager.QueueCommandListToExecute(cmdList);
+    }
 
     // Finally, execute all cmd lists for this frame
     g_GfxCommandListsManager.ExecutePendingCommandLists();
