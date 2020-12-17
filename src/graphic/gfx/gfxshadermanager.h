@@ -38,7 +38,7 @@ public:
 
 private:
     // key == BaseShaderID, val = { ShaderKey, GfxShader }
-    using ShaderContainer = std::unordered_map<std::size_t, std::unordered_map<uint32_t, GfxShader>>;
+    using ShaderContainer = FlatMap<std::size_t, FlatMap<uint32_t, GfxShader>>;
     ShaderContainer m_ShaderContainers[GfxShaderType_Count];
 };
 #define g_GfxShaderManager GfxShaderManager::GetInstance()
