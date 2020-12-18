@@ -1,6 +1,6 @@
 #pragma once
 
-#include <graphic/dx12utils.h>
+#include <graphic/graphicutils.h>
 #include <graphic/gfxresourcemanager.h>
 #include <graphic/shapes.h>
 #include <graphic/view.h>
@@ -23,6 +23,3 @@
 #include <graphic/gfx/gfxvertexformat.h>
 
 #include <graphic/renderers/gfxrendererbase.h>
-
-// Helper macro for dispatch compute shader threads
-#define bbeGetCSDispatchCount(domainWidth, groupWidth) (((domainWidth) + ((groupWidth) - 1)) / (groupWidth))

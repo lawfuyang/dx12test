@@ -1,7 +1,5 @@
 #pragma once
 
-#include <graphic/dx12utils.h>
-
 class GfxDescriptorHeap
 {
 public:

@@ -3,39 +3,13 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
+#define _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING
 
-#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // for std::wstring_convert
-#define _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING // for concurrency::concurrent_unordered_set
-
-#if !defined(BBE_SHADERCOMPILER)
-    #define BBE_USE_PROFILER
-    //#define BBE_USE_GPU_PROFILER
+// comment to disable all asserts
+#if defined(NDEBUG)
+    #undef NDEBUG
 #endif
-
-// uncomment to disable all asserts
-//#define NDEBUG
-
-#if !defined(BBE_SHADERCOMPILER)
-    #define USE_PIX
-#endif
-
-#pragma comment(lib, "ws2_32.lib")
-#pragma comment(lib, "runtimeobject.lib")
-
-#if !defined(BBE_SHADERCOMPILER)
-    #pragma comment(lib, "d3d12.lib")
-    #pragma comment(lib, "d3dcompiler.lib")
-    #pragma comment(lib, "dxgi.lib")
-    #pragma comment(lib, "dxguid.lib")
-
-    // PIX
-    #pragma comment(lib, "extern/lib/winpixeventruntime.lib")
-#endif
-
-// SPD Log
-#pragma comment(lib, "extern/lib/spdlog.lib")
-
-#pragma warning(disable : 4267)
 
 // C Standard Lib
 #include <assert.h>
@@ -67,16 +41,17 @@
 #include <winuser.h>
 #include <wrl.h>
 
-#if !defined(BBE_SHADERCOMPILER)
+#if defined(BBE_ENGINE)
     // DirectX
     #include <d3d12.h>
     #include <d3d12sdklayers.h>
     #include <d3dcompiler.h>
     #include <dxgi1_6.h>
     #include <extern/d3d12/d3dx12.h>
-#endif
 
-#if !defined(BBE_SHADERCOMPILER)
+    #include <wincodec.h>
+    //#include <wincodecsdk.h>
+
     // D3D12MA
     #include <extern/d3d12/D3D12MemAlloc.h>
 
@@ -94,10 +69,25 @@
 
     // Arg Parse
     #include <extern/argparse/argparse.h>
-#endif // #if defined(BBE_SHADERCOMPILER)
 
-// PIX
-#include <extern/pix/pix3.h>
+    // PIX
+    #define USE_PIX
+    #include <extern/pix/pix3.h>
+
+    // Microprofiler
+    #define MICROPROFILE_ENABLED 1
+    #define MICROPROFILE_WEBSERVER_MAXFRAMES 50
+    
+    // TODO: Investigate GfxFence timeout
+    //#define BBE_USE_GPU_PROFILER
+    
+    #if defined(BBE_USE_GPU_PROFILER)
+        #define MICROPROFILE_GPU_TIMERS_D3D12 1
+    #else
+        #define MICROPROFILE_GPU_TIMERS 0
+    #endif
+    #include <extern/microprofile/microprofile.h>
+#endif // #if defined(BBE_SHADERCOMPILER)
 
 // TaskFlow task threading lib
 #include <extern/taskflow/taskflow.hpp>
@@ -117,25 +107,10 @@
 // Math
 #include <extern/simplemath/SimpleMath.h>
 
-// Microprofiler
-#if defined(BBE_USE_PROFILER)
-    #define MICROPROFILE_ENABLED 1
-    #define MICROPROFILE_WEBSERVER_MAXFRAMES 50
-
-    #if defined(BBE_USE_GPU_PROFILER)
-        #define MICROPROFILE_GPU_TIMERS_D3D12 1
-    #else
-        #define MICROPROFILE_GPU_TIMERS 0
-    #endif
-#else
-    #define MICROPROFILE_ENABLED 0
-#endif
-#include <extern/microprofile/microprofile.h>
-
 // typedefs
 using WindowHandle = uint64_t;
 
-#if !defined(BBE_SHADERCOMPILER)
+#if defined(BBE_ENGINE)
     using DXGISwapChain            = IDXGISwapChain4;
     using D3D12Device              = ID3D12Device8;
     using D3D12PipelineLibrary     = ID3D12PipelineLibrary1;
@@ -159,7 +134,7 @@ using Microsoft::WRL::ComPtr;
 #include <system/profiler.h>
 #include <system/criticalsection.h>
 
-#if !defined(BBE_SHADERCOMPILER)
+#if defined(BBE_ENGINE)
     #include <system/memcpy.h>
     #include <system/serializer.h>
     #include <system/keyboard.h>

@@ -16,13 +16,6 @@
 
 #pragma once
 
-#include <d3d12.h>
-
-#include <cstdint>
-#include <memory>
-#include <vector>
-
-
 namespace DirectX
 {
 #ifndef DDS_ALPHA_MODE_DEFINED

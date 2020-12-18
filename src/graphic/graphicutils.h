@@ -1,8 +1,9 @@
 #pragma once
 
+#include <pch.h>
+
 class GfxResourceBase;
 
-//------------------------------------------------------------------------------------------------------------------------------------------------------
 #define DX12_CALL(call)                                                                                            \
     {                                                                                                              \
         const HRESULT result = call;                                                                               \
@@ -12,6 +13,9 @@ class GfxResourceBase;
     }
 
 #define D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN ((D3D12_GPU_VIRTUAL_ADDRESS)-1)
+
+// Helper macro for dispatch compute shader threads
+#define bbeGetCSDispatchCount(domainWidth, groupWidth) (((domainWidth) + ((groupWidth) - 1)) / (groupWidth))
 
 // sorted by highest SM
 static const D3D12_FEATURE_DATA_SHADER_MODEL gs_AllD3D12ShaderModels[] =
@@ -38,6 +42,8 @@ uint32_t GetBitsPerPixel(DXGI_FORMAT fmt);
 uint32_t GetBytesPerPixel(DXGI_FORMAT fmt);
 bool IsBlockFormat(DXGI_FORMAT fmt);
 void UploadToGfxResource(D3D12GraphicsCommandList* pCommandList, GfxResourceBase& destResource, D3D12_RESOURCE_STATES currentResourceState, uint32_t uploadBufferSize, uint32_t rowPitch, uint32_t slicePitch, const void* srcData);
+uint32_t CountMips(uint32_t width, uint32_t height);
+DXGI_FORMAT MakeSRGB(_In_ DXGI_FORMAT format);
 
 class ScopedPixEvent
 {

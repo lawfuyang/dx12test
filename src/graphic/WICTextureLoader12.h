@@ -20,12 +20,6 @@
 
 #pragma once
 
-#include <d3d12.h>
-
-#include <cstdint>
-#include <memory>
-
-
 namespace DirectX
 {
 #ifndef WIC_LOADER_FLAGS_DEFINED

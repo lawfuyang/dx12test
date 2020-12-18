@@ -1,4 +1,4 @@
-#include <graphic/dx12utils.h>
+#include <graphic/graphicutils.h>
 #include <graphic/pch.h>
 
 ScopedD3DesourceState::ScopedD3DesourceState(D3D12GraphicsCommandList* pCommandList, const GfxResourceBase& resource, D3D12_RESOURCE_STATES oldState, D3D12_RESOURCE_STATES tempNewState)
@@ -343,6 +343,51 @@ void UploadToGfxResource(D3D12GraphicsCommandList* pCommandList, GfxResourceBase
     const D3D12_SUBRESOURCE_DATA data{ srcData, rowPitch, slicePitch };
     const UINT64 r = UpdateSubresources<MaxSubresources>(pCommandList, destResource.GetD3D12Resource(), uploadHeapAlloc->GetResource(), IntermediateOffset, FirstSubresource, NumSubresources, &data);
     assert(r);
+}
+
+uint32_t CountMips(uint32_t width, uint32_t height)
+{
+    if (width == 0 || height == 0)
+        return 0;
+
+    uint32_t count = 1;
+    while (width > 1 || height > 1)
+    {
+        width >>= 1;
+        height >>= 1;
+        count++;
+    }
+    return count;
+}
+
+DXGI_FORMAT MakeSRGB(_In_ DXGI_FORMAT format)
+{
+    switch (format)
+    {
+    case DXGI_FORMAT_R8G8B8A8_UNORM:
+        return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+
+    case DXGI_FORMAT_BC1_UNORM:
+        return DXGI_FORMAT_BC1_UNORM_SRGB;
+
+    case DXGI_FORMAT_BC2_UNORM:
+        return DXGI_FORMAT_BC2_UNORM_SRGB;
+
+    case DXGI_FORMAT_BC3_UNORM:
+        return DXGI_FORMAT_BC3_UNORM_SRGB;
+
+    case DXGI_FORMAT_B8G8R8A8_UNORM:
+        return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+
+    case DXGI_FORMAT_B8G8R8X8_UNORM:
+        return DXGI_FORMAT_B8G8R8X8_UNORM_SRGB;
+
+    case DXGI_FORMAT_BC7_UNORM:
+        return DXGI_FORMAT_BC7_UNORM_SRGB;
+
+    default:
+        return format;
+    }
 }
 
 CD3D12_RENDER_TARGET_VIEW_DESC::CD3D12_RENDER_TARGET_VIEW_DESC(D3D12_RTV_DIMENSION viewDimension,

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <graphic/dx12utils.h>
 #include <graphic/gfx/gfxfence.h>
 
 class GfxCommandList
@@ -38,7 +37,7 @@ public:
     void ExecutePendingCommandLists();
     void SignalFence() { m_Fence.IncrementAndSignal(Dev()); }
     void StallCPUForFence() const { m_Fence.WaitForSignalFromGPU(); }
-    void StallGPUForFence() const { DX12_CALL(m_CommandQueue->Wait(m_Fence.Dev(), m_Fence.GetValue())); }
+    void StallGPUForFence() const;
 
 private:
     D3D12_COMMAND_LIST_TYPE m_Type = (D3D12_COMMAND_LIST_TYPE)0xDEADBEEF;

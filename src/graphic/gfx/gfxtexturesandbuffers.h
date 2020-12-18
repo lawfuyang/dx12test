@@ -1,7 +1,5 @@
 #pragma once
 
-#include <graphic/dx12utils.h>
-
 namespace D3D12MA
 {
     class Allocation;
@@ -14,7 +12,7 @@ class GfxResourceBase
 {
 public:
     D3D12Resource* GetD3D12Resource() const { return m_D3D12Resource; }
-    void SetDebugName(std::string_view debugName) const { SetD3DDebugName(m_D3D12Resource, debugName.data()); }
+    void SetDebugName(std::string_view debugName) const;
     void Release();
 
     D3D12MA::Allocation* m_D3D12MABufferAllocation = nullptr;

@@ -2,11 +2,9 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
+CMakeSettings.json
+/cmake
 /bin
-*/.vs
-/dx12test/x64/Release Unity
-/dx12test/imgui.ini
-/shadercompiler/x64
 /tmp/
 /extern/lib/
 /extern/boost/

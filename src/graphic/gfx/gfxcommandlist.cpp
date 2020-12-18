@@ -148,6 +148,11 @@ void GfxCommandListQueue::ExecutePendingCommandLists()
     }
 }
 
+void GfxCommandListQueue::StallGPUForFence() const
+{
+    DX12_CALL(m_CommandQueue->Wait(m_Fence.Dev(), m_Fence.GetValue()));
+}
+
 void GfxCommandListsManager::Initialize(tf::Subflow& sf)
 {
     for (GfxCommandListQueue* queue : m_AllQueues)

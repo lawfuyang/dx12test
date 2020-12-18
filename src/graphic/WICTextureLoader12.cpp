@@ -22,20 +22,9 @@
 // For now, we just load the first frame (note: DirectXTex supports multi-frame images)
 
 #include "WICTextureLoader12.h"
-
-#include <assert.h>
-#include <algorithm>
-
-#include <wincodec.h>
+#include <graphic/pch.h>
 
 #include <wrl\client.h>
-
-#ifdef __clang__
-#pragma clang diagnostic ignored "-Wtautological-type-limit-compare"
-#pragma clang diagnostic ignored "-Wcovered-switch-default"
-#pragma clang diagnostic ignored "-Wswitch"
-#pragma clang diagnostic ignored "-Wswitch-enum"
-#endif
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
@@ -173,52 +162,6 @@ namespace
         }
 
         return factory;
-    }
-
-    inline uint32_t CountMips(uint32_t width, uint32_t height) noexcept
-    {
-        if (width == 0 || height == 0)
-            return 0;
-
-        uint32_t count = 1;
-        while (width > 1 || height > 1)
-        {
-            width >>= 1;
-            height >>= 1;
-            count++;
-        }
-        return count;
-    }
-
-    //--------------------------------------------------------------------------------------
-    DXGI_FORMAT MakeSRGB(_In_ DXGI_FORMAT format) noexcept
-    {
-        switch (format)
-        {
-        case DXGI_FORMAT_R8G8B8A8_UNORM:
-            return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-
-        case DXGI_FORMAT_BC1_UNORM:
-            return DXGI_FORMAT_BC1_UNORM_SRGB;
-
-        case DXGI_FORMAT_BC2_UNORM:
-            return DXGI_FORMAT_BC2_UNORM_SRGB;
-
-        case DXGI_FORMAT_BC3_UNORM:
-            return DXGI_FORMAT_BC3_UNORM_SRGB;
-
-        case DXGI_FORMAT_B8G8R8A8_UNORM:
-            return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
-
-        case DXGI_FORMAT_B8G8R8X8_UNORM:
-            return DXGI_FORMAT_B8G8R8X8_UNORM_SRGB;
-
-        case DXGI_FORMAT_BC7_UNORM:
-            return DXGI_FORMAT_BC7_UNORM_SRGB;
-
-        default:
-            return format;
-        }
     }
 
     //---------------------------------------------------------------------------------

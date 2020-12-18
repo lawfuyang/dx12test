@@ -3,6 +3,11 @@
 
 #include <system/imguimanager.h>
 
+void GfxResourceBase::SetDebugName(std::string_view debugName) const
+{
+    SetD3DDebugName(m_D3D12Resource, debugName.data());
+}
+
 void GfxResourceBase::Release()
 {
     bbeProfileFunction();
