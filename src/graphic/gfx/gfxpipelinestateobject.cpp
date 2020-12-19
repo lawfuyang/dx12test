@@ -35,8 +35,6 @@ void GfxPSOManager::Initialize()
 
     assert(m_PipelineLibrary);
     SetD3DDebugName(m_PipelineLibrary.Get(), "GfxPSOManager ID3D12PipelineLibrary");
-
-    g_Log.info("GfxPSOManager Initialized");
 }
 
 void GfxPSOManager::ShutDown()

@@ -4,12 +4,7 @@
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
-#define _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING
-
-// comment to disable all asserts
-#if defined(NDEBUG)
-    #undef NDEBUG
-#endif
+#define _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNINGs
 
 // C Standard Lib
 #include <assert.h>

@@ -15,8 +15,6 @@ thread_local GPULog tl_GPULog;
 
 void SystemProfiler::Initialize()
 {
-    g_Log.info("Initializing CPU Profiler");
-
     //turn on profiling
     MicroProfileOnThreadCreate("Main");
     MicroProfileSetEnableAllGroups(true);
@@ -39,8 +37,6 @@ void SystemProfiler::RegisterGPUQueue(void* pDevice, void* pCommandQueue, const 
 
 void SystemProfiler::ShutDown()
 {
-    g_Log.info("Shutting down profiler");
-
     for (const GPUQueueAndHandle& elem : m_GPUProfileHandles)
     {
         MICROPROFILE_GPU_FREE_QUEUE(elem.m_Handle);

@@ -5,6 +5,9 @@ project(dx12test LANGUAGES CXX)
 # We only care about 1 config type (Release)
 set(CMAKE_CONFIGURATION_TYPES Release)
 
+# We dont want NDEBUG... we want asserts
+string(REPLACE "/DNDEBUG" "" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
+
 # C++17 required
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -24,10 +27,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4267")      # disable IRRITATING type
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DEBUG:FASTLINK") # Fast Linking
 
-set(ROOT_DIR   "${CMAKE_CURRENT_LIST_DIR}")
-set(BIN_DIR    "${CMAKE_CURRENT_LIST_DIR}/bin")
-set(SRC_DIR    "${CMAKE_CURRENT_LIST_DIR}/src")
-set(EXTERN_DIR "${CMAKE_CURRENT_LIST_DIR}/extern")
+set(ROOT_DIR               "${CMAKE_CURRENT_LIST_DIR}")
+set(BIN_DIR                "${CMAKE_CURRENT_LIST_DIR}/bin")
+set(SRC_DIR                "${CMAKE_CURRENT_LIST_DIR}/src")
+set(EXTERN_DIR             "${CMAKE_CURRENT_LIST_DIR}/extern")
+set(SHADERCOMPILER_SRC_DIR "${CMAKE_CURRENT_LIST_DIR}/shadercompiler")
 
 # all binaries for all config types (if any) go to the "bin" folder
 foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
@@ -50,18 +54,27 @@ include_directories(${EXTERN_DIR})
 include_directories("${EXTERN_DIR}/spdlog")
 
 # Gather src files
-file(GLOB_RECURSE CORE_SRC         "${SRC_DIR}/*.cpp" "${SRC_DIR}/*.h" "${SRC_DIR}/*.hpp" "${SRC_DIR}/*.inl")
-file(GLOB_RECURSE D3D12MA_SRC      "${EXTERN_DIR}/d3d12/*.*")
-file(GLOB_RECURSE IMGUI_SRC        "${EXTERN_DIR}/imgui/*.*")
-file(GLOB_RECURSE MICROPROFILE_SRC "${EXTERN_DIR}/microprofile/*.*")
-file(GLOB_RECURSE SIMPLEMATH_SRC   "${EXTERN_DIR}/simplemath/*.*")
+file(GLOB_RECURSE ENGINE_SRC         "${SRC_DIR}/*.cpp" "${SRC_DIR}/*.h" "${SRC_DIR}/*.hpp" "${SRC_DIR}/*.inl")
+file(GLOB_RECURSE D3D12MA_SRC        "${EXTERN_DIR}/d3d12/*.*")
+file(GLOB_RECURSE IMGUI_SRC          "${EXTERN_DIR}/imgui/*.*")
+file(GLOB_RECURSE MICROPROFILE_SRC   "${EXTERN_DIR}/microprofile/*.*")
+file(GLOB_RECURSE SIMPLEMATH_SRC     "${EXTERN_DIR}/simplemath/*.*")
+file(GLOB_RECURSE SHADERCOMPILER_SRC "${SHADERCOMPILER_SRC_DIR}/*.cpp" "${SHADERCOMPILER_SRC_DIR}/*.h" "${SHADERCOMPILER_SRC_DIR}/*.hpp" "${SHADERCOMPILER_SRC_DIR}/*.inl")
+file(GLOB         UTILS_FILES        "${SRC_DIR}/system/utils.*")
 
 # Main Engine Proj src files to compile
-set(ALL_ENGINE_SRC ${CORE_SRC})
+set(ALL_ENGINE_SRC ${ENGINE_SRC})
 set(ALL_ENGINE_SRC ${ALL_ENGINE_SRC} ${D3D12MA_SRC})
 set(ALL_ENGINE_SRC ${ALL_ENGINE_SRC} ${IMGUI_SRC})
 set(ALL_ENGINE_SRC ${ALL_ENGINE_SRC} ${MICROPROFILE_SRC})
 set(ALL_ENGINE_SRC ${ALL_ENGINE_SRC} ${SIMPLEMATH_SRC})
+
+# ShaderCompiler Proj src files to compile
+set(ALL_SHADERCOMPILER_SRC ${SHADERCOMPILER_SRC})
+set(ALL_SHADERCOMPILER_SRC ${ALL_SHADERCOMPILER_SRC} ${SIMPLEMATH_SRC})
+set(ALL_SHADERCOMPILER_SRC ${ALL_SHADERCOMPILER_SRC} ${UTILS_FILES})
+
+################################################################################
 
 # Main Engine Proj
 add_executable(dx12test WIN32 ${ALL_ENGINE_SRC})
@@ -98,21 +111,12 @@ target_include_directories(dx12test PUBLIC "${EXTERN_DIR}/imgui")
 
 ################################################################################
 
-set(SC_SRC_DIR "${CMAKE_CURRENT_LIST_DIR}/shadercompiler")
-
-file(GLOB_RECURSE SRC_CORE_SRC "${SC_SRC_DIR}/*.cpp" "${SC_SRC_DIR}/*.h" "${SC_SRC_DIR}/*.hpp" "${SC_SRC_DIR}/*.inl")
-file(GLOB UTILS_FILES "${SRC_DIR}/system/utils.*")
-
-set(ALL_SC_SRC ${SRC_CORE_SRC})
-set(ALL_SC_SRC ${SRC_CORE_SRC} ${SIMPLEMATH_SRC})
-set(ALL_SC_SRC ${SRC_CORE_SRC} ${UTILS_FILES})
-
 # Shader Compiler proj
-add_executable(shadercompiler ${SRC_CORE_SRC} ${SIMPLEMATH_SRC} ${UTILS_FILES})
+add_executable(shadercompiler ${ALL_SHADERCOMPILER_SRC})
 target_compile_definitions(shadercompiler PUBLIC BBE_SHADERCOMPILER)
 
 # Shader Compiler specific pch
 target_compile_options(shadercompiler PUBLIC "/FIshadercompiler_pch.h")
 
 # Shader Compiler specific include dirs
-target_include_directories(shadercompiler PUBLIC ${SC_SRC_DIR})
+target_include_directories(shadercompiler PUBLIC ${SHADERCOMPILER_SRC_DIR})

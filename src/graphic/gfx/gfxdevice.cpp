@@ -37,7 +37,6 @@ static void ConfigureDebugLayerBeforeDeviceCreation()
 void GfxDevice::Initialize()
 {
     bbeProfileFunction();
-    g_Log.info("Initializing GfxDevice");
 
     ConfigureDebugLayerBeforeDeviceCreation();
 
