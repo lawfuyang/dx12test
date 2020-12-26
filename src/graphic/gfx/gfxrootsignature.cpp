@@ -70,7 +70,7 @@ void GfxRootSignature::Compile(CD3DX12_ROOT_PARAMETER1* rootParams, uint32_t num
         for (uint32_t rangeIdx = 0; rangeIdx < rootTable.NumDescriptorRanges; ++rangeIdx)
         {
             const D3D12_DESCRIPTOR_RANGE1& range = rootTable.pDescriptorRanges[rangeIdx];
-            for (uint32_t i = 0; i < range.NumDescriptors; ++i)
+            for (uint32_t j = 0; j < range.NumDescriptors; ++j)
             {
                 param.m_Types.push_back(range.RangeType);
                 param.m_Descriptors.emplace_back(CD3DX12_DEFAULT{});

@@ -4,12 +4,13 @@
 
 class GfxResourceBase;
 
-#define DX12_CALL(call)                                                                                            \
-    {                                                                                                              \
-        const HRESULT result = call;                                                                               \
-        if (FAILED(result)) g_Log.error("DX12 Error: return code {0:X}, call: {}", result, bbeTOSTRING(call));     \
-        if (!SUCCEEDED(result)) g_Log.warn("DX12 Warning: return code {0:X}, call: {}", result, bbeTOSTRING(call));\
-        assert(!FAILED(result));                                                                                   \
+inline thread_local HRESULT tl_D3D12APIResult;
+#define DX12_CALL(call)                                                                                                                   \
+    {                                                                                                                                     \
+        tl_D3D12APIResult = (call);                                                                                                       \
+        if (FAILED(tl_D3D12APIResult)) g_Log.error("DX12 Error: return code {0:X}, call: {}", tl_D3D12APIResult, bbeTOSTRING(call));      \
+        if (!SUCCEEDED(tl_D3D12APIResult)) g_Log.warn("DX12 Warning: return code {0:X}, call: {}", tl_D3D12APIResult, bbeTOSTRING(call)); \
+        assert(!FAILED(tl_D3D12APIResult));                                                                                               \
     }
 
 #define D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN ((D3D12_GPU_VIRTUAL_ADDRESS)-1)

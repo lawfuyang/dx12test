@@ -24,17 +24,7 @@ struct ManagedGfxResources
     }
 };
 
-#define RegisterResource(RESOURCE_TYPE)                                                                              \
-template RESOURCE_TYPE* GfxResourceManager::Get(const std::string&, const ResourceLoadingFinalizer<RESOURCE_TYPE>&); \
-                                                                                                                     \
-struct RESOURCE_TYPE_Register                                                                                        \
-{                                                                                                                    \
-    RESOURCE_TYPE_Register()                                                                                         \
-    {                                                                                                                \
-        ManagedGfxResources<RESOURCE_TYPE>& resources = ManagedGfxResources<RESOURCE_TYPE>::Get();                   \
-    }                                                                                                                \
-};                                                                                                                   \
-static RESOURCE_TYPE_Register gs_RESOURCE_TYPE_Register;
+#define RegisterResource(RESOURCE_TYPE) template RESOURCE_TYPE* GfxResourceManager::Get(const std::string&, const ResourceLoadingFinalizer<RESOURCE_TYPE>&);
 
 RegisterResource(GfxTexture);
 

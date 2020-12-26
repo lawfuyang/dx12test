@@ -132,7 +132,7 @@ private:
 
 #define bbeOnExitScope(lambda) const AutoScopeCaller bbeUniqueVariable(AutoOnExitVar){ [](){}, lambda };
 
-#define BBE_SCOPED_UNSET(type, var, val) UtilsPrivate::MemberAutoUnset<type> bbeUniqueVariable(autoUnset){var, val};
+#define BBE_SCOPED_UNSET(var, val) UtilsPrivate::MemberAutoUnset<decltype(var)> bbeUniqueVariable(autoUnset){var, val};
 
 #define bbeMemZeroArray(dst)  memset(dst, 0, sizeof(dst))
 #define bbeMemZeroStruct(dst) memset(&dst, 0, sizeof(dst))

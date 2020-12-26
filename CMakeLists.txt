@@ -19,12 +19,19 @@ set(CMAKE_UNITY_BUILD TRUE)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi")          # Program Database
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /FI\"pch.h\"") # Force #include pch.h
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")          # Multi-Processor compilation
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3")          # Level 3 warnings
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")          # Level 4 warnings
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX")          # Warnings as errors
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fp:fast")     # Fast floating point
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2")   # AVX2 BABY
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4267")      # disable IRRITATING type conversion warning
 
+# Disable some warnings...
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4100")      # unreferenced formal parameter
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4127")      # conditional expression is constant
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244")      # conversion from 'T1' to 'T2', possible loss of data
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4267")      # conversion from 'T1' to 'T2', possible loss of data
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4324")      # structure was padded due to alignment specifier
+
+# Global linker flags
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DEBUG:FASTLINK") # Fast Linking
 
 set(ROOT_DIR               "${CMAKE_CURRENT_LIST_DIR}")

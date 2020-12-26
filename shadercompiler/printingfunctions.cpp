@@ -232,7 +232,7 @@ void PrintAutogenFileForShaderPermutationStructs(const Shader& shader)
             generatedString += StringFormat("           bool %s : 1;\n", permutationName.c_str());
         }
 
-        generatedString += "        };\n";
+        generatedString += "        } Permutations;\n";
         generatedString += "        uint32_t m_ShaderKey = 0;\n";
         generatedString += "    };\n";
         generatedString += "};\n";

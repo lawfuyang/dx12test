@@ -234,7 +234,6 @@ void GfxManager::UpdateIMGUIPropertyGrid()
     static bool showMemoryStats = false;
     static bool showDetailedStats = false;
 
-    bool* pOpen = nullptr;
     ScopedIMGUIWindow window{ "GfxManager" };
     ImGui::Checkbox("Show Memory Stats", &showMemoryStats);
 
@@ -270,7 +269,7 @@ void GfxManager::UpdateIMGUIPropertyGrid()
         const char* statsString = StringUtils::WideToUtf8Big(statsStringW);
         allocator.FreeStatsString(statsStringW);
 
-        ScopedIMGUIWindow window{ "Detailed Gfx Stats" };
+        ScopedIMGUIWindow statsWindow{ "Detailed Gfx Stats" };
         ImGui::Text("%s", statsString);
     }
 }

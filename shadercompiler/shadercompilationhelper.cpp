@@ -57,7 +57,7 @@ static bool RunDXCCompiler(const std::string& inputCommandLine, std::string& err
         ::Sleep(1); // Sleep every loop iteration so the thread does not read 4/5 chars per "::ReadFile"
 
         DWORD dwRead = 0;
-        const bool success = ::ReadFile(hChildStd_OUT_Rd, errorMsg.data(), 1024, &dwRead, NULL);
+        success = ::ReadFile(hChildStd_OUT_Rd, errorMsg.data(), 1024, &dwRead, NULL);
         totalRead += dwRead;
         if (!success || dwRead == 0) break;
     }
