@@ -46,7 +46,6 @@ private:
     tf::Executor m_Executor;
     std::thread m_BGAsyncThread;
 
-    Timer m_FrameTimer;
     uint32_t m_SystemFrameNumber = 0;
 };
 #define g_System System::GetInstance()

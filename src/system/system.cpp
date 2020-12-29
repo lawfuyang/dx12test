@@ -63,13 +63,29 @@ static void BusyWaitUntilFPSLimit(Timer& timer)
 {
     bbeProfileFunction();
 
-    // busy wait until hard cap of 200 FPS
-    const uint64_t FPSFrameEndTime = Timer::MilliSecondsToTicks(1000.0 / g_CommandLineOptions.m_FPSLimit);
+    const uint64_t ticksToFPSLimit = Timer::MilliSecondsToTicks(1000.0 / g_CommandLineOptions.m_FPSLimit);
 
-    while (timer.GetElapsedTicks() < FPSFrameEndTime)
-    {
-        std::this_thread::yield();
-    }
+    // TODO: Find a way to NOT spin wait to fps cap
+#if 0
+    const uint64_t ticksSoFar = timer.GetElapsedTicks();
+
+    // beyond FPS limit... return
+    if (ticksSoFar >= ticksToFPSLimit)
+        return;
+
+    // ticks left
+    LARGE_INTEGER liDueTime{};
+    liDueTime.QuadPart = -(LONGLONG)(ticksToFPSLimit - ticksSoFar);
+
+    static ::HANDLE FPSTimer = ::CreateWaitableTimer(nullptr, true, nullptr);
+    bool result = ::SetWaitableTimer(FPSTimer, &liDueTime, 0, NULL, NULL, 0);
+    assert(result);
+
+    // wait until fps cap
+    WaitForSingleObject(FPSTimer, INFINITE);
+#endif
+
+    while (timer.GetElapsedTicks() < ticksToFPSLimit) { std::this_thread::yield(); }
 }
 
 void System::Loop()
@@ -78,7 +94,7 @@ void System::Loop()
 
     do
     {
-        m_FrameTimer.Reset();
+        Timer frameTimer;
 
         RunKeyboardCommands();
 
@@ -100,9 +116,9 @@ void System::Loop()
 
         g_Profiler.OnFlip();
 
-        BusyWaitUntilFPSLimit(m_FrameTimer);
+        BusyWaitUntilFPSLimit(frameTimer);
 
-        const double elapsedMS = m_FrameTimer.GetElapsedMicroSeconds();
+        const double elapsedMS = frameTimer.GetElapsedMilliSeconds();
         g_System.m_FrameTimeMs = elapsedMS;
         g_System.m_FPS = 1000.0 / elapsedMS;
     } while (!m_Exit);

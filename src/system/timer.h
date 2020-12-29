@@ -15,7 +15,7 @@ public:
     // Get elapsed time since the previous Update call.
     uint64_t GetElapsedTicks() { Tick(); return m_ElapsedTicks; }
     double GetElapsedSeconds() { return TicksToSeconds(GetElapsedTicks()); }
-    double GetElapsedMicroSeconds() { return TicksToMilliSeconds(GetElapsedTicks()); }
+    double GetElapsedMilliSeconds() { return TicksToMilliSeconds(GetElapsedTicks()); }
 
     // Integer format represents time using 10,000,000 ticks per second.
     static const uint64_t TicksPerSecond = 10000000;

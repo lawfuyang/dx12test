@@ -34,7 +34,7 @@ private:
 };
 #define g_Profiler SystemProfiler::GetInstance()
 
-#if defined(BBE_USE_PROFILER)
+#if defined(BBE_ENGINE)
     #define bbeDefineProfilerToken(var, group, name, color) MICROPROFILE_DEFINE(var, group, name, color)
     #define bbeProfile(str)                                 MICROPROFILE_SCOPEI("", str, GetCompileTimeCRC32(str))
     #define bbeProfileToken(token)                          MICROPROFILE_SCOPE(token)
