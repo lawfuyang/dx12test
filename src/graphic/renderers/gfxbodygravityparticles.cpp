@@ -22,6 +22,7 @@ namespace BodyGravityParticles
 class GfxBodyGravityParticlesUpdate : public GfxRendererBase
 {
     void Initialize() override;
+    D3D12_COMMAND_LIST_TYPE GetCommandListType(GfxContext&) const;
     void PopulateCommandList(GfxContext& context) override;
     bool ShouldPopulateCommandList(GfxContext&) const override { return BodyGravityParticles::gs_UpdateIMGUI; }
 
@@ -32,6 +33,7 @@ class GfxBodyGravityParticlesUpdate : public GfxRendererBase
     float m_ParticleMass = 66.0f;
 
     std::size_t m_RootSigHash = 0;
+    bool m_AsyncCompute = false;
     bool m_InitUAVBuffer = true;
 };
 
@@ -54,6 +56,11 @@ void GfxBodyGravityParticlesUpdate::Initialize()
         BodyGravityParticles::C_MAX_PARTICLES,
         D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     BodyGravityParticles::gs_ParticlesUAV.SetDebugName("BodyGravityParticles_Buffer");
+}
+
+D3D12_COMMAND_LIST_TYPE GfxBodyGravityParticlesUpdate::GetCommandListType(GfxContext&) const
+{
+    return m_AsyncCompute ? D3D12_COMMAND_LIST_TYPE_COMPUTE : D3D12_COMMAND_LIST_TYPE_DIRECT;
 }
 
 void GfxBodyGravityParticlesUpdate::PopulateCommandList(GfxContext& context)
@@ -94,6 +101,7 @@ void GfxBodyGravityParticlesUpdate::UpdateIMGUI()
     if (!BodyGravityParticles::gs_UpdateIMGUI)
         return;
 
+    ImGui::Checkbox("Update using Async Compute", &m_AsyncCompute);
     ImGui::SliderFloat("Particles Damping", &m_ParticlesDamping, 0.1f, 2.0f);
     ImGui::SliderFloat("Particle Mass", &m_ParticleMass, 1.0f, 100.0f);
 

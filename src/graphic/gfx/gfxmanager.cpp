@@ -138,7 +138,7 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
         tf::Task tf = subFlow.emplace([&context, renderer]()
             {
                 // TODO: different cmd list type based on renderer type (async compute or direct)
-                context.Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, renderer->GetName());
+                context.Initialize(renderer->GetCommandListType(context), renderer->GetName());
                 
                 renderer->PopulateCommandList(context);
             }).succeed(beginFrameGate).precede(endFrameGate);

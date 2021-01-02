@@ -6,8 +6,10 @@ class GfxRendererBase
 {
 public:
     virtual void Initialize() {};
+    virtual D3D12_COMMAND_LIST_TYPE GetCommandListType(GfxContext&) const { return D3D12_COMMAND_LIST_TYPE_DIRECT; }
     virtual bool ShouldPopulateCommandList(GfxContext&) const { return true; }
     virtual void PopulateCommandList(GfxContext& context) {};
+
     const char* GetName() const { return m_Name; }
 
     static void RegisterRenderer(GfxRendererBase* renderer, std::string_view name);
@@ -15,6 +17,7 @@ public:
 
 private:
     const char* m_Name;
+    D3D12_COMMAND_LIST_TYPE m_Type;
 };
 
 #define REGISTER_RENDERER(TYPE)                                         \
