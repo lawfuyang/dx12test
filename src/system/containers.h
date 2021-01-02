@@ -1,5 +1,8 @@
 #pragma once
 
+// Extended STL
+#include <system/inplace_function.h>
+
 // Windows Concurrent Containers
 #include <concurrent_unordered_map.h>
 #include <concurrent_unordered_set.h>
@@ -12,6 +15,9 @@
 #include <extern/boost/container/small_vector.hpp>
 #include <extern/boost/container/static_vector.hpp>
 #include <extern/boost/pool/object_pool.hpp>
+
+template<typename Signature, uint32_t Capacity>
+using InplaceFunction = stdext::inplace_function<Signature, Capacity>;
 
 template <typename T>
 using ConcurrentVector = concurrency::concurrent_vector<T>;
