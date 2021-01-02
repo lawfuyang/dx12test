@@ -35,6 +35,7 @@ public:
 
 private:
     void PreInit(tf::Subflow& sf);
+    void MainInit(tf::Subflow& sf);
     void PostInit();
     GfxContext& GenerateNewContextInternal();
     void UpdateIMGUIPropertyGrid();

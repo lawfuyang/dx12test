@@ -49,6 +49,7 @@ private:
     uint32_t m_SystemFrameNumber = 0;
 };
 #define g_System System::GetInstance()
+#define g_TasksExecutor g_System.GetTasksExecutor()
 
 struct CommandLineOptions
 {

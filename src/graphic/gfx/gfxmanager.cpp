@@ -15,6 +15,10 @@ void InitializeGraphic(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
 
+    g_TasksExecutor.silent_async([] { g_GfxShaderManager.Initialize(); });
+    g_TasksExecutor.silent_async([] { g_GfxDefaultVertexFormats.Initialize(); });
+    g_TasksExecutor.silent_async([] { g_GfxLightsManager.Initialize(); });
+
     g_GfxManager.Initialize(subFlow);
 }
 
@@ -41,34 +45,33 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
     g_IMGUIManager.RegisterTopMenu("Graphic", "GfxManager", &gs_ShowGfxManagerIMGUIWindow);
     g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUIPropertyGrid(); });
 
-    // independent tasks
-    subFlow.emplace([](tf::Subflow& sf) { g_GfxShaderManager.Initialize(sf); });
-    subFlow.emplace([] { g_GfxDefaultVertexFormats.Initialize(); });
-    subFlow.emplace([] { g_GfxLightsManager.Initialize(); });
-
-    tf::Task PRE_INIT_GATE = subFlow.emplace([this](tf::Subflow& sf) { PreInit(sf); });
-    tf::Task POST_INIT_GATE = subFlow.emplace([this] { PostInit(); }).succeed(PRE_INIT_GATE);
-    
-    // tasks with dependencies
-    subFlow.emplace([this] { m_SwapChain.Initialize(); }).succeed(PRE_INIT_GATE).precede(POST_INIT_GATE);
-    subFlow.emplace([] { g_GfxPSOManager.Initialize(); }).succeed(PRE_INIT_GATE).precede(POST_INIT_GATE);
-    subFlow.emplace([] { g_GfxGPUDescriptorAllocator.Initialize(); }).succeed(PRE_INIT_GATE).precede(POST_INIT_GATE);
-    subFlow.emplace([](tf::Subflow& sf) { g_GfxDefaultAssets.Initialize(sf); }).succeed(PRE_INIT_GATE).precede(POST_INIT_GATE);
-
-    for (GfxRendererBase* renderer : GfxRendererBase::ms_AllRenderers)
-    {
-        subFlow.emplace([renderer] { renderer->Initialize(); }).succeed(PRE_INIT_GATE).precede(POST_INIT_GATE);
-    }
+    tf::Task preInitGate = subFlow.emplace([this](tf::Subflow& sf) { PreInit(sf); });
+    tf::Task mainInitGate = subFlow.emplace([this](tf::Subflow& sf) { MainInit(sf); }).succeed(preInitGate);
+    subFlow.emplace([this] { PostInit(); }).succeed(mainInitGate);
 }
 
-void GfxManager::PreInit(tf::Subflow& sf)
+void GfxManager::PreInit(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
 
     g_GfxAdapter.Initialize();
     m_GfxDevice.Initialize();
-    g_GfxMemoryAllocator.Initialize();
-    g_GfxCommandListsManager.Initialize(sf);
+
+    subFlow.emplace([] { g_GfxPSOManager.Initialize(); });
+    subFlow.emplace([] { g_GfxGPUDescriptorAllocator.Initialize(); });
+    subFlow.emplace([] { g_GfxMemoryAllocator.Initialize(); });
+    subFlow.emplace([](tf::Subflow& sf) { g_GfxCommandListsManager.Initialize(sf); });
+}
+
+void GfxManager::MainInit(tf::Subflow& subFlow)
+{
+    subFlow.emplace([this] { m_SwapChain.Initialize(); });
+    subFlow.emplace([](tf::Subflow& sf) { g_GfxDefaultAssets.Initialize(sf); });
+
+    for (GfxRendererBase* renderer : GfxRendererBase::ms_AllRenderers)
+    {
+        subFlow.emplace([renderer] { renderer->Initialize(); });
+    }
 }
 
 void GfxManager::PostInit()
@@ -111,44 +114,40 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
 
-    tf::Task WAIT_PREV_FRAME_GATE = subFlow.placeholder();
-    tf::Task BEGIN_FRAME_GATE = subFlow.placeholder().succeed(WAIT_PREV_FRAME_GATE);
-    tf::Task END_OF_RENDERERS_GATE = subFlow.placeholder().succeed(BEGIN_FRAME_GATE);
-
-    // TODO: This will kill performance with gpu debug layer enabled!
+    // TODO: This will kill performance with D3D12_GPU_BASED_VALIDATION_STATE_TRACKING enabled!
     // Implement a proper way of handling previous frame gpu resources
     // This should really be called before execution of the first renderer
-    subFlow.emplace([] { g_GfxCommandListsManager.GetMainQueue().StallCPUForFence(); }).precede(WAIT_PREV_FRAME_GATE);
+    g_GfxCommandListsManager.GetMainQueue().StallCPUForFence();
 
-    subFlow.emplace([this](tf::Subflow& sf) { m_GfxCommandManager.ConsumeAllCommandsMT(sf); }).succeed(WAIT_PREV_FRAME_GATE).precede(BEGIN_FRAME_GATE);
-    subFlow.emplace([this] { BeginFrame(); }).succeed(WAIT_PREV_FRAME_GATE).precede(BEGIN_FRAME_GATE);
+    tf::Task beginFrameGate = subFlow.emplace([this] { BeginFrame(); });
+    subFlow.emplace([this](tf::Subflow& sf) { m_GfxCommandManager.ConsumeAllCommandsMT(sf); }).succeed(beginFrameGate);
+    tf::Task endFrameGate = subFlow.emplace([this] { EndFrame(); });
 
+    // Functor for Renderers' cmd list population
     auto PopulateCommandList = [&, this](GfxRendererBase* renderer)
     {
         GfxContext& context = GenerateNewContextInternal();
 
         // Do nothing if no need to render
         if (!renderer->ShouldPopulateCommandList(context))
-            return subFlow.placeholder();
+            return;
 
+        // TODO: Instead of deferred cmd list execution in "EndFrame", try to immediately execute them after cmd list population, taking into account dependencies
         m_ScheduledContexts.push_back(&context);
-        tf::Task tf = subFlow.emplace([&context, renderer]() 
+
+        tf::Task tf = subFlow.emplace([&context, renderer]()
             {
-                context.Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, renderer->GetName()); // TODO: different cmd list type based on renderer type (async compute or direct)
-                renderer->PopulateCommandList(context); 
-            }).name(renderer->GetName());
-
-        tf.succeed(BEGIN_FRAME_GATE).precede(END_OF_RENDERERS_GATE);
-
-        return tf;
+                // TODO: different cmd list type based on renderer type (async compute or direct)
+                context.Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT, renderer->GetName());
+                
+                renderer->PopulateCommandList(context);
+            }).succeed(beginFrameGate).precede(endFrameGate);
     };
 
     PopulateCommandList(g_GfxBodyGravityParticlesUpdate);
     PopulateCommandList(g_GfxForwardLightingPass);
     PopulateCommandList(g_GfxBodyGravityParticlesRender);
     PopulateCommandList(g_GfxIMGUIRenderer);
-
-    subFlow.emplace([this] { EndFrame(); }).succeed(END_OF_RENDERERS_GATE);
 }
 
 void GfxManager::BeginFrame()

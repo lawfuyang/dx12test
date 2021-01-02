@@ -156,13 +156,14 @@ void System::Initialize()
 
         m_SystemCommandManager.Initialize();
 
-        tf::Taskflow tf;
+        m_Executor.silent_async([] { g_IMGUIManager.Initialize(); });
 
-        tf.emplace([]() { g_IMGUIManager.Initialize(); });
+        tf::Taskflow tf;
         tf.emplace([](tf::Subflow& subFlow) { InitializeGraphic(subFlow); });
         tf.emplace([](tf::Subflow& subFlow) { InitializeApplicationLayer(subFlow); });
 
-        m_Executor.run(tf).wait();
+        m_Executor.run(tf);
+        m_Executor.wait_for_all();
     }
 
     g_Profiler.DumpProfilerBlocks(g_CommandLineOptions.m_ProfileInit, true);

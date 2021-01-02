@@ -25,7 +25,7 @@ class GfxShaderManager
 public:
     DeclareSingletonFunctions(GfxShaderManager);
 
-    void Initialize(tf::Subflow& sf);
+    void Initialize();
 
     template <typename ShaderPermutations>
     const GfxShader& GetShader(const ShaderPermutations& permutations) const

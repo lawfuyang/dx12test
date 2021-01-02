@@ -3,6 +3,8 @@
 
 void GfxMemoryAllocator::Initialize()
 {
+    bbeProfileFunction();
+
     static bool s_AlwaysCommitedMemory = false;
 
     D3D12MA::ALLOCATOR_DESC desc{};
