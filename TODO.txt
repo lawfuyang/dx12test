@@ -12,3 +12,4 @@ Change following to use Boost:
 Remove needless hlsl compilation for non-dirty shader files in ShaderCompiler
 
 Heap Pools in GfxMemory
+- Complete with 'Fenced' free-ing

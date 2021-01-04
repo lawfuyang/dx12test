@@ -83,10 +83,6 @@ void GfxManager::PostInit()
     // signal frame fence and stall cpu until all gpu work is done
     m_FrameFence.IncrementAndSignal(g_GfxCommandListsManager.GetMainQueue().Dev());
     m_FrameFence.WaitForSignalFromGPU();
-
-    // reset array of GfxContexts to prepare for next frame
-    std::for_each(m_AllContexts.begin(), m_AllContexts.end(), [this](GfxContext* context) { m_ContextsPool.destroy(context); });
-    m_AllContexts.clear();
 }
 
 void GfxManager::ShutDown()
@@ -126,7 +122,7 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
     // Functor for Renderers' cmd list population
     auto PopulateCommandList = [&, this](GfxRendererBase* renderer)
     {
-        GfxContext& context = GenerateNewContextInternal();
+        GfxContext& context = GenerateLightweightGfxContext();
 
         // Do nothing if no need to render
         if (!renderer->ShouldPopulateCommandList(context))
@@ -137,7 +133,6 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
 
         tf::Task tf = subFlow.emplace([&context, renderer]()
             {
-                // TODO: different cmd list type based on renderer type (async compute or direct)
                 context.Initialize(renderer->GetCommandListType(context), renderer->GetName());
                 
                 renderer->PopulateCommandList(context);
@@ -205,13 +200,13 @@ void GfxManager::EndFrame()
 
 GfxContext& GfxManager::GenerateNewContext(D3D12_COMMAND_LIST_TYPE cmdListType, std::string_view name)
 {
-    GfxContext& newContext = GenerateNewContextInternal();
+    GfxContext& newContext = GenerateLightweightGfxContext();
     newContext.Initialize(cmdListType, name);
 
     return newContext;
 }
 
-GfxContext& GfxManager::GenerateNewContextInternal()
+GfxContext& GfxManager::GenerateLightweightGfxContext()
 {
     bbeProfileFunction();
 

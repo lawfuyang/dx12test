@@ -183,6 +183,19 @@ void GfxCommandListsManager::QueueCommandListToExecute(GfxCommandList* cmdList)
     queue.m_PendingExecuteCommandLists.push_back(cmdList);
 }
 
+void GfxCommandListsManager::ExecuteCommandListImmediate(GfxCommandList* cmdList)
+{
+    assert(cmdList);
+
+    bbeProfileFunction();
+
+    DX12_CALL(cmdList->Dev()->Close());
+
+    GfxCommandListQueue& queue = *m_AllQueues[cmdList->m_QueueIndex];
+    ID3D12CommandList* ppCommandLists[] = { cmdList->Dev() };
+    queue.Dev()->ExecuteCommandLists(1, ppCommandLists);
+}
+
 void GfxCommandListsManager::ExecutePendingCommandLists()
 {
     bbeProfileFunction();

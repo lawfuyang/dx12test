@@ -38,7 +38,7 @@ private:
     void PreInit(tf::Subflow& sf);
     void MainInit(tf::Subflow& sf);
     void PostInit();
-    GfxContext& GenerateNewContextInternal();
+    GfxContext& GenerateLightweightGfxContext();
     void UpdateIMGUIPropertyGrid();
 
     GfxFence m_FrameFence;

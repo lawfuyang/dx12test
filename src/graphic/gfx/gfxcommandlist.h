@@ -60,6 +60,7 @@ public:
     void ShutDown();
 
     void QueueCommandListToExecute(GfxCommandList*);
+    void ExecuteCommandListImmediate(GfxCommandList*);
     void ExecutePendingCommandLists();
 
     GfxCommandListQueue& GetMainQueue() { return m_DirectQueue; }
