@@ -33,8 +33,6 @@ void GfxVertexBuffer::Initialize(uint32_t numVertices, uint32_t vertexSize, cons
     m_NumVertices = numVertices;
     m_StrideInBytes = vertexSize;
 
-    const bool hasInitData = initData != nullptr;
-
     // Create heap to hold final buffer data
     m_D3D12MABufferAllocation = g_GfxMemoryAllocator.AllocateStatic(CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
     assert(m_D3D12MABufferAllocation);
@@ -42,7 +40,7 @@ void GfxVertexBuffer::Initialize(uint32_t numVertices, uint32_t vertexSize, cons
 
     SetDebugName("Un-named GfxVertexBuffer");
     
-    if (hasInitData)
+    if (initData)
     {
         GfxCommandList& newCmdList = *g_GfxCommandListsManager.GetMainQueue().AllocateCommandList("GfxVertexBuffer Upload Init Data");
 
@@ -62,8 +60,6 @@ void GfxIndexBuffer::Initialize(uint32_t numIndices, const void* initData)
     m_NumIndices = numIndices;
     const uint32_t sizeInBytes = numIndices * 2;
 
-    const bool hasInitData = initData != nullptr;
-
     // Create heap to hold final buffer data
     m_D3D12MABufferAllocation = g_GfxMemoryAllocator.AllocateStatic(CD3DX12_RESOURCE_DESC1::Buffer(sizeInBytes), D3D12_RESOURCE_STATE_INDEX_BUFFER, nullptr);
     assert(m_D3D12MABufferAllocation);
@@ -71,7 +67,7 @@ void GfxIndexBuffer::Initialize(uint32_t numIndices, const void* initData)
 
     SetDebugName("Un-named GfxIndexBuffer");
 
-    if (hasInitData)
+    if (initData)
     {
         GfxCommandList& newCmdList = *g_GfxCommandListsManager.GetMainQueue().AllocateCommandList("GfxIndexBuffer Upload Init Data");
 

@@ -123,7 +123,7 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
     tf::Task endFrameGate = subFlow.emplace([this] { EndFrame(); });
 
     // Functor for Renderers' cmd list population
-    auto PopulateCommandList = [&, this](GfxRendererBase* renderer)
+    auto PopulateAndExecuteCommandList = [&, this](GfxRendererBase* renderer)
     {
         GfxContext& context = GenerateLightweightGfxContext();
 
@@ -142,10 +142,10 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
             }).succeed(beginFrameGate).precede(endFrameGate);
     };
 
-    PopulateCommandList(g_GfxBodyGravityParticlesUpdate);
-    PopulateCommandList(g_GfxForwardLightingPass);
-    PopulateCommandList(g_GfxBodyGravityParticlesRender);
-    PopulateCommandList(g_GfxIMGUIRenderer);
+    PopulateAndExecuteCommandList(g_GfxBodyGravityParticlesUpdate);
+    PopulateAndExecuteCommandList(g_GfxForwardLightingPass);
+    PopulateAndExecuteCommandList(g_GfxBodyGravityParticlesRender);
+    PopulateAndExecuteCommandList(g_GfxIMGUIRenderer);
 }
 
 void GfxManager::BeginFrame()

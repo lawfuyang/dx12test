@@ -71,7 +71,7 @@ void GfxIMGUIRenderer::GrowBuffers(const IMGUIDrawData& imguiDrawData)
         m_VertexBuffer.Release();
 
         const uint32_t numVertices = isInitPhase ? gs_VBufferGrowSize : imguiDrawData.m_VtxCount + gs_VBufferGrowSize;
-        m_VertexBuffer.Initialize(numVertices, sizeof(ImDrawVert), nullptr);
+        m_VertexBuffer.Initialize(numVertices, sizeof(ImDrawVert));
         m_VertexBuffer.SetDebugName("IMGUI GfxVertexBuffer");
     }
     if (isInitPhase || (m_IndexBuffer.GetNumIndices() < imguiDrawData.m_IdxCount))
@@ -79,7 +79,7 @@ void GfxIMGUIRenderer::GrowBuffers(const IMGUIDrawData& imguiDrawData)
         m_IndexBuffer.Release();
 
         const uint32_t numIndices = isInitPhase ? gs_IBufferGrowSize : AlignUp(imguiDrawData.m_IdxCount + gs_IBufferGrowSize, 4); // the indexbuffer copy requires alignment
-        m_IndexBuffer.Initialize(numIndices, nullptr);
+        m_IndexBuffer.Initialize(numIndices);
         m_VertexBuffer.SetDebugName("IMGUI GfxIndexBuffer");
     }
 }
