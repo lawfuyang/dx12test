@@ -21,10 +21,8 @@ static void ConfigureDebugLayerBeforeDeviceCreation()
     if (!g_CommandLineOptions.m_GfxDebugLayer.m_EnableGPUResourceValidation)
         debugInterface3->SetGPUBasedValidationFlags(D3D12_GPU_BASED_VALIDATION_FLAGS_DISABLE_STATE_TRACKING);
 
-    // TODO: Investigate why MicroProfiler will have infinite ID3D12Fence wait?
-#if defined(BBE_USE_GPU_PROFILER)
+    // TODO: This strict-ness of GfxFence usage when this is enabled is ridiculous! Fix the app, or completely ignore this validation
     debugInterface3->SetEnableSynchronizedCommandQueueValidation(false);
-#endif
 
     ComPtr<ID3D12DeviceRemovedExtendedDataSettings> pDredSettings;
     DX12_CALL(D3D12GetDebugInterface(IID_PPV_ARGS(&pDredSettings)));

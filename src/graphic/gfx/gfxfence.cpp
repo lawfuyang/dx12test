@@ -14,7 +14,9 @@ void GfxFence::Initialize()
     DX12_CALL(gfxDevice.Dev()->CreateFence(initialValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)));
 
     // Create an event handle for CPU synchronization
-    m_FenceEvent = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
+    const bool ManualReset = true;
+    const bool InitialState = false;
+    m_FenceEvent = ::CreateEvent(nullptr, ManualReset, InitialState, nullptr);
     assert(m_FenceEvent);
 }
 
@@ -22,36 +24,30 @@ void GfxFence::IncrementAndSignal(ID3D12CommandQueue* cmdQueue)
 {
     assert(m_FenceEvent);
 
-    cmdQueue->Signal(m_Fence.Get(), ++m_FenceValue);
+    DX12_CALL(cmdQueue->Signal(m_Fence.Get(), ++m_FenceValue));
 
     ::ResetEvent(m_FenceEvent);
     DX12_CALL(m_Fence->SetEventOnCompletion(m_FenceValue, m_FenceEvent));
-}
-
-static bool IsSignaledByGPU(ID3D12Fence1* fence, uint64_t fenceValue)
-{
-    const UINT64 completedValue = fence->GetCompletedValue();
-    if (completedValue == UINT64_MAX)
-        DeviceRemovedHandler();
-
-    assert(completedValue <= fenceValue);
-    return completedValue == fenceValue;
 }
 
 void GfxFence::WaitForSignalFromGPU() const
 {
     assert(m_FenceEvent);
 
-    if (IsSignaledByGPU(m_Fence.Get(), m_FenceValue))
+    // check for device removal via returned frame value
+    const UINT64 completedValue = m_Fence->GetCompletedValue();
+    if (completedValue == UINT64_MAX)
+        DeviceRemovedHandler();
+    assert(completedValue <= m_FenceValue);
+
+    if (completedValue == m_FenceValue)
         return;
 
     bbeProfileFunction();
 
-    ::ResetEvent(m_FenceEvent);
-    DX12_CALL(m_Fence->SetEventOnCompletion(m_FenceValue, m_FenceEvent));
-    const DWORD waitResult = WaitForSingleObject(m_FenceEvent, 1000);
+    const DWORD waitResult = ::WaitForSingleObject(m_FenceEvent, 1000);
 
     // GPU hang? Deadlock?
-    // Debug layer held back actual submission of GPU work until all outstanding fence Wait conditions are met? See: ID3D12Debug1::SetEnableSynchronizedCommandQueueValidation
+    // Debug layer held back actual submission of GPU work until all outstanding fence Wait conditions are met? See: ID3D12Debug3::SetEnableSynchronizedCommandQueueValidation
     assert(waitResult != WAIT_TIMEOUT);
 }

@@ -17,7 +17,6 @@
 #include <array>
 #include <atomic>
 #include <bitset>
-#include <chrono>
 #include <fstream>
 #include <functional>
 #include <map>
@@ -73,8 +72,7 @@
     #define MICROPROFILE_ENABLED 1
     #define MICROPROFILE_WEBSERVER_MAXFRAMES 50
     
-    // TODO: Investigate GfxFence timeout
-    //#define BBE_USE_GPU_PROFILER
+    #define BBE_USE_GPU_PROFILER
     
     #if defined(BBE_USE_GPU_PROFILER)
         #define MICROPROFILE_GPU_TIMERS_D3D12 1

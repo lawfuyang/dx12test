@@ -4,7 +4,6 @@
 
 #include <graphic/gfx/gfxcontext.h>
 #include <graphic/gfx/gfxdevice.h>
-#include <graphic/gfx/gfxfence.h>
 #include <graphic/gfx/gfxswapchain.h>
 
 #include <graphic/view.h>
@@ -41,8 +40,6 @@ private:
     GfxContext& GenerateLightweightGfxContext();
     void UpdateIMGUIPropertyGrid();
 
-    GfxFence m_FrameFence;
-
     static const uint32_t NbMaxContexts = 128;
 
     std::mutex m_ContextsLock;
@@ -50,8 +47,8 @@ private:
     InplaceArray<GfxContext*, NbMaxContexts> m_AllContexts;
     InplaceArray<GfxContext*, NbMaxContexts> m_ScheduledContexts;
 
-    GfxDevice         m_GfxDevice;
-    GfxSwapChain      m_SwapChain;
+    GfxDevice    m_GfxDevice;
+    GfxSwapChain m_SwapChain;
 
     CommandManager m_GfxCommandManager;
 

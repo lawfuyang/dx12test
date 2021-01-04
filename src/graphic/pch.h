@@ -12,6 +12,7 @@
 #include <graphic/gfx/gfxcontext.h>
 #include <graphic/gfx/gfxdefaultassets.h>
 #include <graphic/gfx/gfxdevice.h>
+#include <graphic/gfx/gfxfence.h>
 #include <graphic/gfx/gfxlightsmanager.h>
 #include <graphic/gfx/gfxmanager.h>
 #include <graphic/gfx/gfxmemory.h>

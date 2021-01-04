@@ -11,6 +11,9 @@ extern GfxRendererBase* g_GfxBodyGravityParticlesUpdate;
 extern GfxRendererBase* g_GfxBodyGravityParticlesRender;
 extern GfxTexture g_SceneDepthBuffer;
 
+static GfxFence gs_FrameFence;
+static GfxFence gs_ClearBackBufferFence;
+
 void InitializeGraphic(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
@@ -55,7 +58,8 @@ void GfxManager::PreInit(tf::Subflow& subFlow)
     g_GfxAdapter.Initialize();
     m_GfxDevice.Initialize();
 
-    subFlow.emplace([this] { m_FrameFence.Initialize(); });
+    subFlow.emplace([] { gs_FrameFence.Initialize(); });
+    subFlow.emplace([] { gs_ClearBackBufferFence.Initialize(); });
     subFlow.emplace([this] { m_GfxCommandManager.Initialize(); });
     subFlow.emplace([] { g_GfxPSOManager.Initialize(); });
     subFlow.emplace([] { g_GfxGPUDescriptorAllocator.Initialize(); });
@@ -81,15 +85,15 @@ void GfxManager::PostInit()
     g_GfxCommandListsManager.ExecutePendingCommandLists();
 
     // signal frame fence and stall cpu until all gpu work is done
-    m_FrameFence.IncrementAndSignal(g_GfxCommandListsManager.GetMainQueue().Dev());
-    m_FrameFence.WaitForSignalFromGPU();
+    gs_FrameFence.IncrementAndSignal(g_GfxCommandListsManager.GetMainQueue().Dev());
+    gs_FrameFence.WaitForSignalFromGPU();
 }
 
 void GfxManager::ShutDown()
 {
     bbeProfileFunction();
 
-    m_FrameFence.WaitForSignalFromGPU();
+    gs_FrameFence.WaitForSignalFromGPU();
 
     m_GfxCommandManager.ConsumeAllCommandsST(true);
 
@@ -111,9 +115,8 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
     bbeProfileFunction();
 
     // TODO: This will kill performance with D3D12_GPU_BASED_VALIDATION_STATE_TRACKING enabled!
-    // Implement a proper way of handling previous frame gpu resources
-    // This should really be called before execution of the first renderer
-    m_FrameFence.WaitForSignalFromGPU();
+    // Implement proper fence-based free-ing of gpu resources
+    gs_FrameFence.WaitForSignalFromGPU();
 
     tf::Task beginFrameGate = subFlow.emplace([this] { BeginFrame(); });
     subFlow.emplace([this](tf::Subflow& sf) { m_GfxCommandManager.ConsumeAllCommandsMT(sf); }).succeed(beginFrameGate);
@@ -163,33 +166,37 @@ void GfxManager::BeginFrame()
     // Clearing the back buffer will transition it to the "RenderTarget" state
     context.ClearRenderTargetView(m_SwapChain.GetCurrentBackBuffer(), bbeVector4{ 0.0f, 0.2f, 0.4f, 1.0f });
     context.ClearDepth(g_SceneDepthBuffer, 1.0f);
-    g_GfxCommandListsManager.QueueCommandListToExecute(&context.GetCommandList());
+    g_GfxCommandListsManager.ExecuteCommandListImmediate(&context.GetCommandList());
+
+    // signal frame fence after clearing back buffer
+    gs_ClearBackBufferFence.IncrementAndSignal(g_GfxCommandListsManager.GetMainQueue().Dev());
 }
 
 void GfxManager::EndFrame()
 {
     bbeProfileFunction();
 
-    // execute all Renderers' cmd lists
+    // Before execution of main cmd lists, make sure back buffer is cleared
+    g_GfxCommandListsManager.GetMainQueue().StallGPUForFence(gs_ClearBackBufferFence);
+
+    // Execute all main cmd lists for this frame
     std::for_each(m_ScheduledContexts.begin(), m_ScheduledContexts.end(), [](GfxContext* context) { g_GfxCommandListsManager.QueueCommandListToExecute(&context->GetCommandList()); });
     m_ScheduledContexts.clear();
+    g_GfxCommandListsManager.ExecutePendingCommandLists();
 
     // Before presenting backbuffer, transition to to PRESENT state
     {
         GfxCommandList* cmdList = g_GfxCommandListsManager.GetMainQueue().AllocateCommandList("TransitionBackBufferTo_PRESENT");
         const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_SwapChain.GetCurrentBackBuffer().GetD3D12Resource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
         cmdList->Dev()->ResourceBarrier(1, &barrier);
-        g_GfxCommandListsManager.QueueCommandListToExecute(cmdList);
+        g_GfxCommandListsManager.ExecuteCommandListImmediate(cmdList);
     }
 
-    // Finally, execute all cmd lists for this frame
-    g_GfxCommandListsManager.ExecutePendingCommandLists();
-
-    // finally, present back buffer
+    // Present back buffer
     m_SwapChain.Present();
 
-    // signal frame fence
-    m_FrameFence.IncrementAndSignal(g_GfxCommandListsManager.GetMainQueue().Dev());
+    // signal frame fence after presenting
+    gs_FrameFence.IncrementAndSignal(g_GfxCommandListsManager.GetMainQueue().Dev());
 
     // reset array of GfxContexts to prepare for next frame
     std::for_each(m_AllContexts.begin(), m_AllContexts.end(), [this](GfxContext* context) { m_ContextsPool.destroy(context); });
