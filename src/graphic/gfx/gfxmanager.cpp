@@ -40,8 +40,6 @@ void GfxManager::Initialize(tf::Subflow& subFlow)
 {
     bbeProfileFunction();
 
-    m_GfxCommandManager.Initialize();
-
     g_IMGUIManager.RegisterTopMenu("Graphic", "GfxManager", &gs_ShowGfxManagerIMGUIWindow);
     g_IMGUIManager.RegisterWindowUpdateCB([&]() { UpdateIMGUIPropertyGrid(); });
 
@@ -57,6 +55,8 @@ void GfxManager::PreInit(tf::Subflow& subFlow)
     g_GfxAdapter.Initialize();
     m_GfxDevice.Initialize();
 
+    subFlow.emplace([this] { m_FrameFence.Initialize(); });
+    subFlow.emplace([this] { m_GfxCommandManager.Initialize(); });
     subFlow.emplace([] { g_GfxPSOManager.Initialize(); });
     subFlow.emplace([] { g_GfxGPUDescriptorAllocator.Initialize(); });
     subFlow.emplace([] { g_GfxMemoryAllocator.Initialize(); });
@@ -80,9 +80,9 @@ void GfxManager::PostInit()
 
     g_GfxCommandListsManager.ExecutePendingCommandLists();
 
-    // TODO: use a master GfxFence in GfxManager
-    g_GfxCommandListsManager.GetMainQueue().SignalFence();
-    g_GfxCommandListsManager.GetMainQueue().StallCPUForFence();
+    // signal frame fence and stall cpu until all gpu work is done
+    m_FrameFence.IncrementAndSignal(g_GfxCommandListsManager.GetMainQueue().Dev());
+    m_FrameFence.WaitForSignalFromGPU();
 
     // reset array of GfxContexts to prepare for next frame
     std::for_each(m_AllContexts.begin(), m_AllContexts.end(), [this](GfxContext* context) { m_ContextsPool.destroy(context); });
@@ -93,7 +93,7 @@ void GfxManager::ShutDown()
 {
     bbeProfileFunction();
 
-    g_GfxCommandListsManager.GetMainQueue().StallCPUForFence();
+    m_FrameFence.WaitForSignalFromGPU();
 
     m_GfxCommandManager.ConsumeAllCommandsST(true);
 
@@ -117,7 +117,7 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
     // TODO: This will kill performance with D3D12_GPU_BASED_VALIDATION_STATE_TRACKING enabled!
     // Implement a proper way of handling previous frame gpu resources
     // This should really be called before execution of the first renderer
-    g_GfxCommandListsManager.GetMainQueue().StallCPUForFence();
+    m_FrameFence.WaitForSignalFromGPU();
 
     tf::Task beginFrameGate = subFlow.emplace([this] { BeginFrame(); });
     subFlow.emplace([this](tf::Subflow& sf) { m_GfxCommandManager.ConsumeAllCommandsMT(sf); }).succeed(beginFrameGate);
@@ -193,8 +193,8 @@ void GfxManager::EndFrame()
     // finally, present back buffer
     m_SwapChain.Present();
 
-    // TODO: use a master GfxFence in GfxManager
-    g_GfxCommandListsManager.GetMainQueue().SignalFence();
+    // signal frame fence
+    m_FrameFence.IncrementAndSignal(g_GfxCommandListsManager.GetMainQueue().Dev());
 
     // reset array of GfxContexts to prepare for next frame
     std::for_each(m_AllContexts.begin(), m_AllContexts.end(), [this](GfxContext* context) { m_ContextsPool.destroy(context); });

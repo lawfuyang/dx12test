@@ -52,8 +52,6 @@ void GfxCommandListQueue::Initialize(D3D12_COMMAND_LIST_TYPE type, uint32_t queu
 
     m_Type = type;
 
-    m_Fence.Initialize();
-
     // Describe and create the command queue.
     D3D12_COMMAND_QUEUE_DESC queueDesc = {};
     queueDesc.Type = type;
@@ -148,9 +146,9 @@ void GfxCommandListQueue::ExecutePendingCommandLists()
     }
 }
 
-void GfxCommandListQueue::StallGPUForFence() const
+void GfxCommandListQueue::StallGPUForFence(GfxFence& fence) const
 {
-    DX12_CALL(m_CommandQueue->Wait(m_Fence.Dev(), m_Fence.GetValue()));
+    DX12_CALL(m_CommandQueue->Wait(fence.Dev(), fence.GetValue()));
 }
 
 void GfxCommandListsManager::Initialize(tf::Subflow& sf)

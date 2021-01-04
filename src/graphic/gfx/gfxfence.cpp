@@ -20,6 +20,8 @@ void GfxFence::Initialize()
 
 void GfxFence::IncrementAndSignal(ID3D12CommandQueue* cmdQueue)
 {
+    assert(m_FenceEvent);
+
     cmdQueue->Signal(m_Fence.Get(), ++m_FenceValue);
 
     ::ResetEvent(m_FenceEvent);
@@ -38,6 +40,8 @@ static bool IsSignaledByGPU(ID3D12Fence1* fence, uint64_t fenceValue)
 
 void GfxFence::WaitForSignalFromGPU() const
 {
+    assert(m_FenceEvent);
+
     if (IsSignaledByGPU(m_Fence.Get(), m_FenceValue))
         return;
 

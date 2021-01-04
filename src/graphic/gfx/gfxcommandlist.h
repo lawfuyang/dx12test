@@ -1,6 +1,6 @@
 #pragma once
 
-#include <graphic/gfx/gfxfence.h>
+class GfxFence;
 
 class GfxCommandList
 {
@@ -35,14 +35,11 @@ public:
     GfxCommandList* AllocateCommandList(std::string_view name);
     bool HasPendingCommandLists() const { return !m_PendingExecuteCommandLists.empty(); };
     void ExecutePendingCommandLists();
-    void SignalFence() { m_Fence.IncrementAndSignal(Dev()); }
-    void StallCPUForFence() const { m_Fence.WaitForSignalFromGPU(); }
-    void StallGPUForFence() const;
+    void StallGPUForFence(GfxFence&) const;
 
 private:
     D3D12_COMMAND_LIST_TYPE m_Type = (D3D12_COMMAND_LIST_TYPE)0xDEADBEEF;
 
-    GfxFence m_Fence;
     ComPtr<ID3D12CommandQueue> m_CommandQueue;
 
     std::mutex m_ListsLock;

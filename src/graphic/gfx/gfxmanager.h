@@ -4,6 +4,7 @@
 
 #include <graphic/gfx/gfxcontext.h>
 #include <graphic/gfx/gfxdevice.h>
+#include <graphic/gfx/gfxfence.h>
 #include <graphic/gfx/gfxswapchain.h>
 
 #include <graphic/view.h>
@@ -39,6 +40,8 @@ private:
     void PostInit();
     GfxContext& GenerateNewContextInternal();
     void UpdateIMGUIPropertyGrid();
+
+    GfxFence m_FrameFence;
 
     static const uint32_t NbMaxContexts = 128;
 
