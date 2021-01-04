@@ -8,3 +8,7 @@ Change following to use Boost:
 - Log -> Boost Log
 - ArgParse -> Boost Program Options
 - json -> Boost JSON
+
+Remove needless hlsl compilation for non-dirty shader files in ShaderCompiler
+
+Heap Pools in GfxMemory
