@@ -12,7 +12,6 @@ extern GfxRendererBase* g_GfxBodyGravityParticlesRender;
 extern GfxTexture g_SceneDepthBuffer;
 
 static GfxFence gs_FrameFence;
-static GfxFence gs_ClearBackBufferFence;
 
 void InitializeGraphic(tf::Subflow& subFlow)
 {
@@ -59,7 +58,6 @@ void GfxManager::PreInit(tf::Subflow& subFlow)
     m_GfxDevice.Initialize();
 
     subFlow.emplace([] { gs_FrameFence.Initialize(); });
-    subFlow.emplace([] { gs_ClearBackBufferFence.Initialize(); });
     subFlow.emplace([this] { m_GfxCommandManager.Initialize(); });
     subFlow.emplace([] { g_GfxPSOManager.Initialize(); });
     subFlow.emplace([] { g_GfxGPUDescriptorAllocator.Initialize(); });
@@ -167,17 +165,11 @@ void GfxManager::BeginFrame()
     context.ClearRenderTargetView(m_SwapChain.GetCurrentBackBuffer(), bbeVector4{ 0.0f, 0.2f, 0.4f, 1.0f });
     context.ClearDepth(g_SceneDepthBuffer, 1.0f);
     g_GfxCommandListsManager.ExecuteCommandListImmediate(&context.GetCommandList());
-
-    // signal frame fence after clearing back buffer
-    gs_ClearBackBufferFence.IncrementAndSignal(g_GfxCommandListsManager.GetMainQueue().Dev());
 }
 
 void GfxManager::EndFrame()
 {
     bbeProfileFunction();
-
-    // Before execution of main cmd lists, make sure back buffer is cleared
-    g_GfxCommandListsManager.GetMainQueue().StallGPUForFence(gs_ClearBackBufferFence);
 
     // Execute all main cmd lists for this frame
     std::for_each(m_ScheduledContexts.begin(), m_ScheduledContexts.end(), [](GfxContext* context) { g_GfxCommandListsManager.QueueCommandListToExecute(&context->GetCommandList()); });
