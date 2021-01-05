@@ -120,30 +120,60 @@ void GfxManager::ScheduleGraphicTasks(tf::Subflow& subFlow)
     subFlow.emplace([this](tf::Subflow& sf) { m_GfxCommandManager.ConsumeAllCommandsMT(sf); }).succeed(beginFrameGate);
     tf::Task endFrameGate = subFlow.emplace([this] { EndFrame(); });
 
-    // Functor for Renderers' cmd list population
-    auto PopulateAndExecuteCommandList = [&, this](GfxRendererBase* renderer)
+    struct ExecutionContext
     {
+        GfxRendererBase* m_Renderer = nullptr;
+        bool m_DoSkeletonScheduling = true;
+    };
+
+    // Functor for Renderers' cmd list population
+    FixedSizeFlatMap<D3D12_COMMAND_LIST_TYPE, ExecutionContext, 3> lastExecutionContext;
+    auto ScheduleRenderer = [&](GfxRendererBase* renderer, bool doSkeletonScheduling = true)
+    {
+        // reset each renderers' dependencies and event
+        renderer->m_Event.Reset();
+        renderer->m_Dependencies.clear();
+
         GfxContext& context = GenerateLightweightGfxContext();
 
         // Do nothing if no need to render
         if (!renderer->ShouldPopulateCommandList(context))
             return;
 
-        // TODO: Instead of deferred cmd list execution in "EndFrame", try to immediately execute them after cmd list population, taking into account dependencies
-        m_ScheduledContexts.push_back(&context);
+        // Rough skeleton dependency scheduling based off last renderer of same cmd list type
+        D3D12_COMMAND_LIST_TYPE cmdListType = renderer->GetCommandListType(context);
+        if (lastExecutionContext[cmdListType].m_Renderer && lastExecutionContext[cmdListType].m_DoSkeletonScheduling)
+            renderer->m_Dependencies.push_back(lastExecutionContext[cmdListType].m_Renderer);
+        lastExecutionContext[cmdListType] = { renderer, doSkeletonScheduling };
 
-        tf::Task tf = subFlow.emplace([&context, renderer]()
+        subFlow.emplace([&, renderer, cmdListType]()
             {
-                context.Initialize(renderer->GetCommandListType(context), renderer->GetName());
+                context.Initialize(cmdListType, renderer->GetName());
                 
+                renderer->AddDependencies();
                 renderer->PopulateCommandList(context);
+                
+                // Execute cmd list only after prior dependent renderers are done
+                for (GfxRendererBase* dependentRenderer : renderer->m_Dependencies)
+                {
+                    bbeProfile("Wait For Dependency");
+
+                    // TODO: yield thread to other tasks, not stall. This will be terrible when we have alot more renderers
+                    dependentRenderer->m_Event.Wait();
+                }
+
+                g_GfxCommandListsManager.ExecuteCommandListImmediate(&context.GetCommandList());
+
+                // signal event after cmd list submission
+                renderer->m_Event.Signal();
+
             }).succeed(beginFrameGate).precede(endFrameGate);
     };
 
-    PopulateAndExecuteCommandList(g_GfxBodyGravityParticlesUpdate);
-    PopulateAndExecuteCommandList(g_GfxForwardLightingPass);
-    PopulateAndExecuteCommandList(g_GfxBodyGravityParticlesRender);
-    PopulateAndExecuteCommandList(g_GfxIMGUIRenderer);
+    ScheduleRenderer(g_GfxBodyGravityParticlesUpdate, false);
+    ScheduleRenderer(g_GfxForwardLightingPass);
+    ScheduleRenderer(g_GfxBodyGravityParticlesRender);
+    ScheduleRenderer(g_GfxIMGUIRenderer);
 }
 
 void GfxManager::BeginFrame()
@@ -170,11 +200,6 @@ void GfxManager::BeginFrame()
 void GfxManager::EndFrame()
 {
     bbeProfileFunction();
-
-    // Execute all main cmd lists for this frame
-    std::for_each(m_ScheduledContexts.begin(), m_ScheduledContexts.end(), [](GfxContext* context) { g_GfxCommandListsManager.QueueCommandListToExecute(&context->GetCommandList()); });
-    m_ScheduledContexts.clear();
-    g_GfxCommandListsManager.ExecutePendingCommandLists();
 
     // Before presenting backbuffer, transition to to PRESENT state
     {

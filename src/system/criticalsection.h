@@ -11,12 +11,12 @@ public:
     EventLockable(bool manualReset = true, bool initialState = false) { m_Event = CreateEvent(nullptr, manualReset, initialState, nullptr); assert(m_Event); }
     ~EventLockable() { ::CloseHandle(m_Event); }
 
-    void wait()     { lock(); }
-    void signal()   { unlock(); }
-    void lock()     { WaitForSingleObject(m_Event, INFINITE); }
-    bool try_lock() { return WaitForSingleObject(m_Event, 0) == WAIT_OBJECT_0; }
-    void unlock()   { SetEvent(m_Event); }
-    void reset()    { ResetEvent(m_Event); }
+    void Wait()     { Lock(); }
+    void Signal()   { Unlock(); }
+    void Lock()     { WaitForSingleObject(m_Event, INFINITE); }
+    bool Try_lock() { return WaitForSingleObject(m_Event, 0) == WAIT_OBJECT_0; }
+    void Unlock()   { SetEvent(m_Event); }
+    void Reset()    { ResetEvent(m_Event); }
 };
 
 #define bbeAutoLock(lck) \

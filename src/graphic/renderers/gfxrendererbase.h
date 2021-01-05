@@ -8,6 +8,7 @@ public:
     virtual void Initialize() {};
     virtual D3D12_COMMAND_LIST_TYPE GetCommandListType(GfxContext&) const { return D3D12_COMMAND_LIST_TYPE_DIRECT; }
     virtual bool ShouldPopulateCommandList(GfxContext&) const { return true; }
+    virtual void AddDependencies() {};
     virtual void PopulateCommandList(GfxContext& context) {};
 
     const char* GetName() const { return m_Name; }
@@ -18,6 +19,11 @@ public:
 private:
     const char* m_Name;
     D3D12_COMMAND_LIST_TYPE m_Type;
+
+    EventLockable m_Event;
+    InplaceArray<GfxRendererBase*, 4> m_Dependencies;
+
+    friend class GfxManager;
 };
 
 #define REGISTER_RENDERER(TYPE)                                         \

@@ -1,8 +1,5 @@
 Implement Async compute for GfxBodyGravityParticlesUpdate
 
-Independent execution of Cmd Lists immediately after population
-- Take dependencies into account
-
 Change following to use Boost:
 - Cereal -> Boost Serialization
 - Log -> Boost Log
