@@ -11,6 +11,7 @@ public:
     D3D12Fence* Dev() const { return m_Fence.Get(); }
 
     void Initialize();
+    void Shutdown() { m_Fence.Reset(); }
     void IncrementAndSignal(ID3D12CommandQueue* cmdQueue);
     void WaitForSignalFromGPU() const;
 

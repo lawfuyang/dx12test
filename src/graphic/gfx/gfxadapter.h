@@ -8,6 +8,7 @@ public:
     using GfxAdapterArray = InplaceArray<ComPtr<IDXGIAdapter1>, 2>;
 
     void Initialize();
+    void Shutdown();
 
     IDXGIFactory7* GetDXGIFactory() const { return m_DXGIFactory.Get(); }
     const GfxAdapterArray& GetAllAdapters() const { return m_AllAdapters; }

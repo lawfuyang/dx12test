@@ -104,6 +104,10 @@ void GfxManager::ShutDown()
     g_GfxPSOManager.ShutDown();
     g_GfxMemoryAllocator.ShutDown();
     g_GfxCommandListsManager.ShutDown();
+    gs_FrameFence.Shutdown();
+    m_SwapChain.Shutdown();
+    m_GfxDevice.Shutdown();
+    g_GfxAdapter.Shutdown();
 
     m_GfxCommandManager.ConsumeAllCommandsST(true);
 }

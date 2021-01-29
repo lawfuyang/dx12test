@@ -12,6 +12,7 @@ public:
     GfxTexture& GetCurrentBackBuffer() { return m_Textures[Dev()->GetCurrentBackBufferIndex()]; }
 
     void Initialize();
+    void Shutdown() { m_SwapChain.Reset(); }
     void Present();
 
 private:

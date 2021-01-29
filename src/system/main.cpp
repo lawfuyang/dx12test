@@ -9,9 +9,6 @@ public:
 
     static void Shutdown()
     {
-        if (g_System.GetEngineWindowHandle())
-            DestroyWindow(g_System.GetEngineWindowHandle());
-
         ms_EngineWindowThread.join();
     }
 
@@ -24,27 +21,16 @@ private:
         switch (message)
         {
         case WM_CLOSE:
-        case WM_DESTROY:
-            ms_Exit = true;
+            ::DestroyWindow(hWnd);
             break;
 
-        default:
+        case WM_DESTROY:
+            ::PostQuitMessage(0);
             break;
         }
 
         g_System.ProcessWindowsMessage(hWnd, message, wParam, lParam);
-        return DefWindowProc(hWnd, message, wParam, lParam);
-    }
-
-    static uint32_t GetTaskBarHeight()
-    {
-        ::RECT rect = {};
-        ::HWND taskBar = ::FindWindowA("Shell_traywnd", NULL);
-        if (taskBar && ::GetWindowRect(taskBar, &rect)) 
-        {
-            return rect.bottom - rect.top;
-        }
-        return 0;
+        return ::DefWindowProc(hWnd, message, wParam, lParam);
     }
 
     static void Run()
@@ -69,18 +55,13 @@ private:
         ::RECT rect{ 0, 0, (LONG)g_CommandLineOptions.m_WindowWidth, (LONG)g_CommandLineOptions.m_WindowHeight };
         ::AdjustWindowRect(&rect, style, false);
 
-        ::RECT desktopRect = {};
-        ::GetWindowRect(::GetDesktopWindow(), &desktopRect);
-
-        const uint32_t nativeWidth = desktopRect.right;
-        const uint32_t nativeHeight = desktopRect.bottom - GetTaskBarHeight();
-        const uint32_t windowTopLeftX = (nativeWidth - g_CommandLineOptions.m_WindowWidth) / 2;
-        const uint32_t windowTopLeftY = (nativeHeight - g_CommandLineOptions.m_WindowHeight) / 2;
+        const int posX = (GetSystemMetrics(SM_CXSCREEN) - g_CommandLineOptions.m_WindowWidth) / 2;
+        const int posY = (GetSystemMetrics(SM_CYSCREEN) - g_CommandLineOptions.m_WindowHeight) / 2;
 
         ::HWND engineWindowHandle = CreateWindow(wc.lpszClassName,
                                                  s_AppName,
                                                  style,
-                                                 windowTopLeftX, windowTopLeftY,
+                                                 posX, posY,
                                                  rect.right - rect.left,
                                                  rect.bottom - rect.top,
                                                  0, 0, hInstance, NULL);
@@ -94,11 +75,11 @@ private:
         g_System.SetEngineWindowHandle(engineWindowHandle);
 
         ::ShowCursor(true);
-        ::SetCursor(LoadCursor(NULL, IDC_ARROW));
+        ::SetCursor(::LoadCursor(NULL, IDC_ARROW));
 
         ::MSG msg;
         ::BOOL bRet;
-        while ((bRet = GetMessageW(&msg, NULL, 0, 0)) != 0)
+        while ((bRet = ::GetMessage(&msg, NULL, 0, 0)) != 0)
         {
             if (bRet == -1)
             {
@@ -107,25 +88,19 @@ private:
             }
             else
             {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
-            }
-
-            if (ms_Exit)
-            {
-                break;
+                ::TranslateMessage(&msg);
+                ::DispatchMessage(&msg);
             }
         }
     }
 
-    inline static bool ms_Exit = false;
     inline static std::thread ms_EngineWindowThread;
 };
 
 int APIENTRY WinMain(::HINSTANCE hInstance,
                      ::HINSTANCE hPrevInstance,
                      ::LPTSTR    lpCmdLine,
-                     int       nCmdShow)
+                     int         nCmdShow)
 {
     UNREFERENCED_PARAMETER(hInstance);
     UNREFERENCED_PARAMETER(hPrevInstance);
@@ -134,18 +109,33 @@ int APIENTRY WinMain(::HINSTANCE hInstance,
     // first, Init the logger
     Logger::GetInstance().Initialize("../bin/output.txt");
 
-    Microsoft::WRL::Wrappers::RoInitializeWrapper InitializeWinRT{ RO_INIT_MULTITHREADED };
-
     g_Log.info("Commandline args: {}", lpCmdLine);
     g_CommandLineOptions.Parse();
 
     EngineWindowThread::Initialize();
 
-    g_System.Initialize();
-    g_System.Loop();
-    g_System.Shutdown();
+    {
+        Microsoft::WRL::Wrappers::RoInitializeWrapper InitializeWinRT{ RO_INIT_MULTITHREADED };
 
-    EngineWindowThread::Shutdown();
+        g_System.Initialize();
+        g_System.Loop();
+        g_System.Shutdown();
+
+        EngineWindowThread::Shutdown();
+    }
+
+    // check for dxgi debug errors
+    // todo: fix the leaks
+#if 0
+    if (g_CommandLineOptions.m_GfxDebugLayer.m_Enabled)
+    {
+        ComPtr<IDXGIDebug1> dxgiDebug;
+        if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug))))
+        {
+            dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_FLAGS(DXGI_DEBUG_RLO_SUMMARY | DXGI_DEBUG_RLO_IGNORE_INTERNAL));
+        }
+    }
+#endif
 
     return 0;
 }

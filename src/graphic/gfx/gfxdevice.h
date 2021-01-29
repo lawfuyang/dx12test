@@ -11,6 +11,7 @@ public:
     D3D12Device* Dev() const { return m_D3DDevice.Get(); }
 
     void Initialize();
+    void Shutdown() { m_D3DDevice.Reset(); }
     void CheckStatus();
 
     D3D_ROOT_SIGNATURE_VERSION GetHighSupportedRootSignature() const { return m_RootSigSupport.HighestVersion; }

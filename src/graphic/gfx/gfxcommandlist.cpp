@@ -91,6 +91,7 @@ void GfxCommandListQueue::Initialize(D3D12_COMMAND_LIST_TYPE type, uint32_t queu
 void GfxCommandListQueue::ShutDown()
 {
     assert(m_PendingExecuteCommandLists.empty());
+    m_CommandQueue.Reset();
 }
 
 GfxCommandList* GfxCommandListQueue::AllocateCommandList(std::string_view name)

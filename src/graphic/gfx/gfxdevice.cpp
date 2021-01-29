@@ -51,6 +51,8 @@ void GfxDevice::Initialize()
     {
         bbeProfile("D3D12CreateDevice");
 
+        m_D3DDevice.Reset();
+
         // Just take the first device that supports DX12
         if (SUCCEEDED(D3D12CreateDevice(GfxAdapter::GetInstance().GetAllAdapters()[0].Get(), level, IID_PPV_ARGS(&m_D3DDevice))))
         {

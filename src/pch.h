@@ -41,6 +41,7 @@
     #include <d3d12sdklayers.h>
     #include <d3dcompiler.h>
     #include <dxgi1_6.h>
+    #include <dxgidebug.h>
     #include <extern/d3d12/d3dx12.h>
 
     #include <wincodec.h>

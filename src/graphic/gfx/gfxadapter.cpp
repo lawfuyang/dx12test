@@ -1,11 +1,6 @@
 #include <graphic/gfx/gfxadapter.h>
 #include <graphic/pch.h>
 
-void EnumerateAdapter()
-{
-
-}
-
 void GfxAdapter::Initialize()
 {
     bbeProfileFunction();
@@ -33,4 +28,10 @@ void GfxAdapter::Initialize()
         m_AllAdapters.push_back(hardwareAdapter);
     }
     assert(m_AllAdapters.empty() == false);
+}
+
+void GfxAdapter::Shutdown()
+{
+    m_AllAdapters.clear();
+    m_DXGIFactory.Reset();
 }
