@@ -270,7 +270,8 @@ void IMGUIManager::RegisterTopMenu(const std::string& mainCategory, const std::s
 void IMGUIManager::RegisterFileDialog(const std::string& vName, const char* vFilters, const FileDialogResultFinalizer& finalizer)
 {
     // only support 1 active file dialog
-    assert(m_ActiveFileDialog.first.empty() && !m_ActiveFileDialog.second);
+    if (!m_ActiveFileDialog.first.empty())
+        return;
 
     g_IMGUIFileDialog->OpenDialog(vName, vName.c_str(), vFilters, "..\\bin\\assets\\");
 

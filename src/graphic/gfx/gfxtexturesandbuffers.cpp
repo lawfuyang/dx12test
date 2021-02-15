@@ -114,7 +114,7 @@ static void ResourceDescSanityCheck(const CD3DX12_RESOURCE_DESC1& desc)
     }
 }
 
-void GfxTexture::InitializeTexture(const CD3DX12_RESOURCE_DESC1& desc, const void* initData, D3D12_CLEAR_VALUE clearValue, D3D12_RESOURCE_STATES initialState)
+void GfxTexture::InitializeTexture(const CD3DX12_RESOURCE_DESC1& desc, const void* initData, D3D12_CLEAR_VALUE clearValue, D3D12_RESOURCE_STATES initialState, bool immediate)
 {
     bbeProfileFunction();
     assert(!m_D3D12MABufferAllocation);
@@ -148,7 +148,15 @@ void GfxTexture::InitializeTexture(const CD3DX12_RESOURCE_DESC1& desc, const voi
 
         GfxCommandList& newCmdList = *g_GfxCommandListsManager.GetMainQueue().AllocateCommandList("GfxTexture Upload Init Data");
         UploadToGfxResource(newCmdList.Dev(), *this, initialState, (uint32_t)totalBytes, (uint32_t)rowSizeInBytes, (uint32_t)(rowSizeInBytes * desc.Height), initData);
-        g_GfxCommandListsManager.QueueCommandListToExecute(&newCmdList);
+
+        if (immediate)
+        {
+            g_GfxCommandListsManager.ExecuteCommandListImmediate(&newCmdList);
+        }
+        else
+        {
+            g_GfxCommandListsManager.QueueCommandListToExecute(&newCmdList);
+        }
     }
 }
 

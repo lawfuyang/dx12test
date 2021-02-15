@@ -29,38 +29,46 @@ void Visual::UpdateIMGUI()
     }
     ImGui::InputFloat3("Scale", (float*)&m_Scale);
 
-    if (ImGui::CollapsingHeader("Diffuse Texture"))
+    auto TextureSelector = [](GfxTexture*& destTex, GfxTexture* defaultTex)
     {
+        ScopedIMGUIID scopedID{ destTex };
+
         if (ImGui::Button("Browse..."))
         {
             auto FileSelectionFinalizer = [&](const std::string& filePath)
             {
-                GfxTexture* tex = g_GfxResourceManager.Get<GfxTexture>(filePath, [&](GfxTexture* tex) { m_DiffuseTexture = tex; });
+                GfxTexture* tex = g_GfxResourceManager.Get<GfxTexture>(filePath, [&](GfxTexture* tex) { destTex = tex; });
                 if (tex)
                 {
-                    g_GfxManager.AddGraphicCommand([&, tex]() { m_DiffuseTexture = tex; });
+                    g_GfxManager.AddGraphicCommand([&, tex]() { destTex = tex; });
                 }
             };
 
-            g_IMGUIManager.RegisterFileDialog("Visual::DiffuseTexture", ".dds,.hdr,.png,.jpg", FileSelectionFinalizer);
+            g_IMGUIManager.RegisterFileDialog("Visual: Select Texture", ".dds,.hdr,.png,.jpg", FileSelectionFinalizer);
         }
         ImGui::SameLine();
 
         // reset back to default texture
         if (ImGui::Button("Reset"))
         {
-            g_GfxManager.AddGraphicCommand([&]() { m_DiffuseTexture = &GfxDefaultAssets::Checkerboard; });
+            g_GfxManager.AddGraphicCommand([&]() { destTex = defaultTex; });
         }
 
-        m_DiffuseTexture->UpdateIMGUI();
+        destTex->UpdateIMGUI();
+    };
+
+    if (ImGui::CollapsingHeader("Diffuse Texture"))
+    {
+        TextureSelector(m_DiffuseTexture, &GfxDefaultAssets::Checkerboard);
     }
     if (ImGui::CollapsingHeader("Normal Texture"))
     {
-
+        TextureSelector(m_NormalTexture, &GfxDefaultAssets::FlatNormal);
     }
-    if (ImGui::CollapsingHeader("PBR Texture (Occlusion, Roughness, Metalness)"))
+    if (ImGui::CollapsingHeader("PBR (Occlusion, Roughness, Metalness)"))
     {
-
+        ImGui::Checkbox("Use Global PBR consts", &m_UseGlobalPBRConsts);
+        TextureSelector(m_ORMTexture, &GfxDefaultAssets::Yellow2D);
     }
 }
 

@@ -13,10 +13,11 @@ static const float4   g_SceneLightIntensity = PerFrameConsts::GetSceneLightInten
 static const float    g_ConstPBRRoughness   = PerFrameConsts::GetConstPBRRoughness();
 static const float    g_ConstPBRMetallic    = PerFrameConsts::GetConstPBRMetallic();
 
-static const Texture2D g_DiffuseTexture = PerInstanceConsts::GetDiffuseTexture();
-static const Texture2D g_NormalTexture  = PerInstanceConsts::GetNormalTexture();
-static const Texture2D g_ORMTexture     = PerInstanceConsts::GetORMTexture();
-static const float4x4  g_WorldMatrix    = PerInstanceConsts::GetWorldMatrix();
+static const bool      g_UseGlobalPBRConsts = PerInstanceConsts::GetUseGlobalPBRConsts();
+static const Texture2D g_DiffuseTexture     = PerInstanceConsts::GetDiffuseTexture();
+static const Texture2D g_NormalTexture      = PerInstanceConsts::GetNormalTexture();
+static const Texture2D g_ORMTexture         = PerInstanceConsts::GetORMTexture();
+static const float4x4  g_WorldMatrix        = PerInstanceConsts::GetWorldMatrix();
 
 struct VS_OUT
 {
@@ -70,13 +71,15 @@ float4 PSMain(VS_OUT input) : SV_TARGET
     float ambientOcclusion = 1.0;
     float roughness = g_ConstPBRRoughness;
     float metallic = g_ConstPBRMetallic;
-#if !defined(USE_PBR_CONSTS)
-    // R = Occlusion, G = Roughness, B = Metalness
-    float3 ORM = g_ORMTexture.Sample(g_AnisotropicClampSampler, input.m_TexCoord).rgb;
-    ambientOcclusion = ORM.r;
-    roughness = ORM.g;
-    metallic = ORM.b;
-#endif
+
+    if (!g_UseGlobalPBRConsts)
+    {
+        // R = Occlusion, G = Roughness, B = Metalness
+        float3 ORM = g_ORMTexture.Sample(g_AnisotropicClampSampler, input.m_TexCoord).rgb;
+        ambientOcclusion = ORM.r;
+        roughness = ORM.g;
+        metallic = ORM.b;
+    }
 
     // blended base diffuse
     float4 baseAlbedo = g_DiffuseTexture.Sample(g_AnisotropicWrapSampler, input.m_TexCoord);

@@ -1,5 +1,7 @@
 Implement Async compute for GfxBodyGravityParticlesUpdate
 
+Proper fenced freeing for volatile heaps
+
 Dont stall CPU while waiting for a dependent renderer to complete
 - use TaskFlow's conditional tasking feature to implement a cmd list execution tree?
 
@@ -12,4 +14,3 @@ Change following to use Boost:
 Remove needless hlsl compilation for non-dirty shader files in ShaderCompiler
 
 Heap Pools in GfxMemory
-- Complete with 'Fenced' free-ing

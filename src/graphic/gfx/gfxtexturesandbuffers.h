@@ -47,7 +47,11 @@ class GfxTexture : public GfxResourceBase
 public:
     DeclareObjectModelFunctions(GfxTexture);
 
-    void InitializeTexture(const CD3DX12_RESOURCE_DESC1& desc, const void* initData = nullptr, D3D12_CLEAR_VALUE clearValue = D3D12_CLEAR_VALUE{}, D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_GENERIC_READ);
+    void InitializeTexture(const CD3DX12_RESOURCE_DESC1& desc, 
+                           const void* initData = nullptr,
+                           D3D12_CLEAR_VALUE clearValue = D3D12_CLEAR_VALUE{},
+                           D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_GENERIC_READ,
+                           bool immediate = false);
     void InitializeBuffer(const CD3DX12_RESOURCE_DESC1& desc, uint32_t numElements, uint32_t structureByteStride, D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_GENERIC_READ);
 
     template <typename T>

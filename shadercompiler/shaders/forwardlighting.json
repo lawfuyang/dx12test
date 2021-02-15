@@ -20,11 +20,6 @@
               ]
             }
           ]
-        },
-        "PS": {
-          "Permutations": [
-            "USE_PBR_CONSTS"
-          ]
         }
       }
     }
@@ -38,6 +33,10 @@
           {
             "Type": "float4x4",
             "Name": "WorldMatrix"
+          },
+          {
+            "Type": "int",
+            "Name": "UseGlobalPBRConsts"
           }
         ]
       },

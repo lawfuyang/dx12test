@@ -477,7 +477,9 @@ void GfxContext::PrepareGraphicsStates()
         {
             DSVDescHandle = AllocateStaticDescHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, "DSV");
 
-            D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc{ m_DSV->GetFormat(), D3D12_DSV_DIMENSION_TEXTURE2D, D3D12_DSV_FLAG_READ_ONLY_DEPTH };
+            const D3D12_DSV_FLAGS flags = (&m_PSO.DepthStencilState)->DepthWriteMask == D3D12_DEPTH_WRITE_MASK_ALL ? D3D12_DSV_FLAG_NONE : D3D12_DSV_FLAG_READ_ONLY_DEPTH;
+
+            D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc{ m_DSV->GetFormat(), D3D12_DSV_DIMENSION_TEXTURE2D, flags };
             g_GfxManager.GetGfxDevice().Dev()->CreateDepthStencilView(m_DSV->GetD3D12Resource(), &DSVDesc, DSVDescHandle);
         }
 
