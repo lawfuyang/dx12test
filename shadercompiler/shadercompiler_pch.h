@@ -55,12 +55,9 @@ struct GlobalStructure
 {
     std::string m_Name;
     std::vector<ShaderConstant> m_Constants;
+
+    bool operator<(const GlobalStructure& rhs) const { return m_Name < rhs.m_Name; }
 };
-namespace std
-{
-    template<> struct equal_to<GlobalStructure> { bool operator()(const GlobalStructure& lhs, const GlobalStructure& rhs) const { return lhs.m_Name == rhs.m_Name; } };
-    template<> struct hash<GlobalStructure> { std::size_t operator()(const GlobalStructure& s) const { return std::hash<std::string>{}(s.m_Name); } }; 
-}
 
 struct ShaderInputs
 {
@@ -80,7 +77,7 @@ struct ShaderInputs
     std::string m_Name;
     std::vector<Resource> m_Resources[ResourceType_Count];
     ConstantBuffer m_ConstantBuffer;
-    std::unordered_set<GlobalStructure> m_GlobalStructureDependencies;
+    FlatSet<GlobalStructure> m_GlobalStructureDependencies;
     std::vector<ShaderConstant> m_Consts;
 };
 

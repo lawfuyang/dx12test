@@ -35,7 +35,7 @@
             "Name": "WorldMatrix"
           },
           {
-            "Type": "int",
+            "Type": "uint",
             "Name": "UseGlobalPBRConsts"
           }
         ]

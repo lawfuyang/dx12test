@@ -35,13 +35,3 @@ void GfxShaderManager::Initialize()
         g_TasksExecutor.silent_async([this, &data] { m_ShaderContainers[data.m_ShaderType][data.m_BaseShaderID][data.m_ShaderKey].Initialize(data); });
     }
 }
-
-template <GfxShaderType Type>
-GfxShader& GfxShaderManager::GetNullShader()
-{
-    static GfxShader s_NullShaders[GfxShaderType_Count] = { {VS}, {PS}, {CS} };
-    return s_NullShaders[Type];
-}
-template GfxShader& GfxShaderManager::GetNullShader<VS>();
-template GfxShader& GfxShaderManager::GetNullShader<PS>();
-template GfxShader& GfxShaderManager::GetNullShader<CS>();

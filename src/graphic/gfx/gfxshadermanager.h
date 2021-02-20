@@ -33,8 +33,11 @@ public:
         return m_ShaderContainers[ShaderPermutations::ShaderType].at(ShaderPermutations::BaseShaderID).at(permutations.m_ShaderKey);
     }
 
-    template <GfxShaderType>
-    static GfxShader& GetNullShader();
+    static GfxShader& GetNullShader(GfxShaderType shaderType)
+    {
+        static GfxShader s_NullShaders[GfxShaderType_Count] = { {VS}, {PS}, {CS} };
+        return s_NullShaders[shaderType];
+    }
 
 private:
     // key == BaseShaderID, val = { ShaderKey, GfxShader }
